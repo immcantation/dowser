@@ -1,0 +1,60 @@
+Package: dowser
+Type: Package
+Version: 0.0.1
+Date: 2020-1-18
+Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"), 
+                    email="kenneth.hoehn@yale.edu"),
+             person("Steven", "Kleinstein", role=c("aut", "cph"), 
+                    email="steven.kleinstein@yale.edu"))
+Title: B cell receptor phylogenetics toolkit
+Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenies.
+License: CC BY-SA 4.0
+URL: https://bitbucket.org/kbhoehn/dowser
+BugReports: https://bitbucket.org/kbhoehn/dowser/issues
+LazyData: true
+BuildVignettes: true
+VignetteBuilder: knitr
+Encoding: UTF-8
+SystemRequirements: C++11
+Depends:
+    R (>= 3.1.2),
+    ggplot2 (>= 3.2.0)
+biocViews:
+    ggtree
+Imports:
+    alakazam,
+    ape,
+    dplyr (>= 0.8.1),
+    ggtree,
+    graphics,
+    grid,
+    gridExtra,
+    igraph (>= 1.0.0),
+    lazyeval,
+    Matrix,
+    methods,
+    phangorn,
+    phylotate,
+    progress,
+    RColorBrewer,
+    Rcpp (>= 0.12.12),
+    readr,
+    rlang,
+    scales,
+    seqinr,
+    stats,
+    stringi,
+    tibble,
+    tidyr,
+    utils
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat
+RoxygenNote: 7.0.2
+Collate: 
+    'Data.R'
+    'Dowser.R'
+    'Plotting.R'
+    'Statistics.R'
+    'TreeFunctions.R'
