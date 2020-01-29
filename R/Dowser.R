@@ -2,19 +2,7 @@
 
 #' The dowser package
 #' 
-#' \code{dowser} in a member of the Immcantation suite of tools and serves five main 
-#' purposes:
-#' \itemize{
-#'   \item  Providing core functionality for other R packages in the Change-O suite. This
-#'          includes common tasks such as file I/O, basic DNA sequence manipulation, and
-#'          interacting with V(D)J segment and gene annotations.
-#'   \item  Providing an R interface for interacting with the output of the pRESTO 
-#'          tool suite.
-#'   \item  Performing lineage reconstruction on clonal populations of immunoglobulin 
-#'          (Ig) sequences. 
-#'   \item  Performing clonal abundance and diversity analysis on lymphocyte repertoires.
-#'   \item  Performing physicochemical property analyses of lymphocyte receptor sequences.
-#' }
+#' \code{dowser} is a phylogenetic analysis package as part of the Immcantation suite of tools.
 #' For additional details regarding the use of the \code{dowser} package see the 
 #' vignettes:\cr
 #' \code{browseVignettes("dowser")}
@@ -24,7 +12,7 @@
 #' @references
 #' \enumerate{
 #'   \item  Hoehn, KB, Pybus, OG, Kleinstein SH (submitted) Phylogenetic analysis of 
-#' 		migration, differentiation, and class switching	in B cells using maximum parsimony.
+#' 		migration, differentiation, and class switching	in B cells.
 
 #' }
 #' 
