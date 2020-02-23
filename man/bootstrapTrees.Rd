@@ -6,7 +6,7 @@
 bootstrap replicate.}
 \usage{
 bootstrapTrees(
-  data,
+  clones,
   bootstraps,
   nproc = 1,
   trait = NULL,
@@ -18,7 +18,7 @@ bootstrapTrees(
   igphyml = NULL,
   trees = NULL,
   quiet = 0,
-  rm_files = TRUE,
+  rm_temp = TRUE,
   palette = NULL,
   resolve = 2,
   rep = NULL,
@@ -28,7 +28,7 @@ bootstrapTrees(
 )
 }
 \arguments{
-\item{data}{list of \code{changeoClone} objects, the output of \link{formatClones}}
+\item{clones}{tibble \code{changeoClone} objects, the output of \link{formatClones}}
 
 \item{bootstraps}{number of bootstrap replicates to perform}
 
@@ -52,7 +52,7 @@ bootstrapTrees(
 
 \item{quiet}{amount of rubbish to print to console}
 
-\item{rm_files}{remove temporary files (default=TRUE)}
+\item{rm_temp}{remove temporary files (default=TRUE)}
 
 \item{palette}{a named vector specifying colors for each state}
 

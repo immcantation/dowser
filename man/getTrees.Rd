@@ -18,7 +18,7 @@ getTrees(
   trees = NULL,
   nproc = 1,
   quiet = 0,
-  rm_files = TRUE,
+  rm_temp = TRUE,
   palette = NULL,
   resolve = 2,
   seq = NULL
@@ -49,7 +49,7 @@ getTrees(
 
 \item{quiet}{amount of rubbish to print to console}
 
-\item{rm_files}{remove temporary files (default=TRUE)}
+\item{rm_temp}{remove temporary files (default=TRUE)}
 
 \item{palette}{a named vector specifying colors for each state}
 

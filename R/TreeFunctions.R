@@ -954,7 +954,7 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' @param    trees 		tree topologies to use if laready available
 #' @param    nproc 		number of cores to parallelize computations
 #' @param    quiet		amount of rubbish to print to console
-#' @param    rm_files	remove temporary files (default=TRUE)
+#' @param    rm_temp	remove temporary files (default=TRUE)
 #' @param    palette 	a named vector specifying colors for each state
 #' @param    resolve 	how should polytomies be resolved?
 #' @param    seq        column name containing sequence information
@@ -988,26 +988,63 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' }
 #' @export
 getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
-	build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,nproc=1,quiet=0,rm_files=TRUE,
+	build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,nproc=1,quiet=0,rm_temp=TRUE,
 	palette=NULL,resolve=2,seq=NULL){
 
 	data = clones$DATA
+	if(is.null(id)){
+            id <- "sample"
+    }
+    if(class(data) != "list"){
+        data <- list(data)
+    }
+    if(class(data[[1]]) != "ChangeoClone"){
+        stop("Input data must be a list of ChangeoClone objects")
+    }
+    big <- FALSE
+    if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
+        big <- TRUE
+    }
+    if(!rm_temp && big){
+        warning("Large dataset - best to set rm_temp=TRUE")
+    }
 	if(!is.null(igphyml)){
-		igphyml = path.expand(igphyml)
-		if(is.null(trait) || is.null(dir) || is.null(id)){
-			stop("trait, dir, and id parameters must be specified when running igphyml")
-		}
+		igphyml <- path.expand(igphyml)
+        if(!is.null(dir)){
+            if(!dir.exists(dir)){
+                dir.create(dir)
+            }
+        }else{
+            dir <- alakazam::makeTempDir(id)
+            if(big){
+                warning("Large dataset - best to set dir and id params")
+            }
+        }
+        if(is.null(trait)){
+            stop("trait must be specified when running igphyml")
+        }
 		if(is.null(modelfile)){
 			states = unique(unlist(lapply(data,function(x)x@data[,trait])))
 			modelfile = makeModelFile(states,file=paste0(dir,"/",id,"_modelfile.txt"))
 		}else{
 			states = readModelFile(modelfile)
 		}
+		#if igphyml is specified, append trait value to sequence ids
+		data = lapply(data,function(x){
+			x@data$SEQUENCE_ID = paste0(x@data$SEQUENCE_ID,"_",x@data[[trait]])
+			x})
 	}
 	if(build=="dnapars"){
-		if(is.null(dir) || is.null(id)){
-			stop("dir, and id parameters must be specified when running dnapars")
-		}
+		if(!is.null(dir)){
+            if(!dir.exists(dir)){
+                dir.create(dir)
+            }
+        }else{
+            dir <- alakazam::makeTempDir(id)
+            if(big){
+                warning("Large dataset - best to set dir and id params")
+            }
+        }
 	}
 
 	if(class(data) != "list"){
@@ -1019,7 +1056,7 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 		}
 	}
 	rm_dir = NULL
-	if(rm_files){
+	if(rm_temp){
 		rm_dir=paste0(dir,"/",id,"_recon_trees")
 	}
 	
@@ -1035,7 +1072,7 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 				buildPhylo(data[[x]],
 					trait,exec,
 					temp_path=paste0(dir,"/",id,"_trees_",x),
-					rm_temp=rm_files,
+					rm_temp=rm_temp,
 					seq=seqs[x]),
 				mc.cores=nproc)
 		}else{
@@ -1051,7 +1088,7 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 	
 		mtrees = reconIgPhyML(file, modelfile, igphyml=igphyml, 
 			mode="trees", cloneid=NULL, quiet=quiet, nproc=nproc,
-			rm_files=rm_files, rm_dir=rm_dir, states=states, 
+			rm_files=rm_temp, rm_dir=rm_dir, states=states, 
 			palette=palette,resolve=resolve)
 	}else{
 		mtrees = trees
@@ -1123,7 +1160,7 @@ scaleBranches = function(clones,edge_type="mutations"){
 #' bootstrap replicate.
 #' 
 #' \code{bootstrapTrees} Phylogenetic bootstrap function.
-#' @param    data  		list of \code{changeoClone} objects, the output of \link{formatClones}
+#' @param    clones  	tibble \code{changeoClone} objects, the output of \link{formatClones}
 #' @param    bootstraps number of bootstrap replicates to perform
 #' @param    trait 		trait to use for parsimony models (required if \code{igphyml} specified)
 #' @param 	 build	    program to use for tree building (phangorn, dnapars)
@@ -1135,7 +1172,7 @@ scaleBranches = function(clones,edge_type="mutations"){
 #' @param    trees 		tree topologies to use if aready available (bootstrapping will not be perfomed)
 #' @param    nproc 		number of cores to parallelize computations
 #' @param    quiet		amount of rubbish to print to console
-#' @param    rm_files	remove temporary files (default=TRUE)
+#' @param    rm_temp	remove temporary files (default=TRUE)
 #' @param    palette 	a named vector specifying colors for each state
 #' @param    resolve 	how should polytomies be resolved?
 #' @param    keeptrees  keep trees estimated from bootstrap replicates? (TRUE)
@@ -1174,11 +1211,14 @@ scaleBranches = function(clones,edge_type="mutations"){
 #' PStest(btrees$switches)
 #' }
 #' @export
-bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL, 
+bootstrapTrees = function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
 	id=NULL, modelfile=NULL,build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,
-	quiet=0,rm_files=TRUE,palette=NULL,resolve=2,rep=NULL,
+	quiet=0,rm_temp=TRUE,palette=NULL,resolve=2,rep=NULL,
 	keeptrees=TRUE, lfile=NULL, seq="SEQUENCE"){
-
+	data = clones$DATA
+	if(is.null(id)){
+            id <- "sample"
+    }
 	if(class(data) != "list"){
 		data = list(data)
 	}
@@ -1187,17 +1227,41 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			dir.create(dir)
 		}
 	}
+	if(class(data[[1]]) != "ChangeoClone"){
+        stop("Input data must be a list of ChangeoClone objects")
+    }
+    big <- FALSE
+    if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
+        big <- TRUE
+    }
+    if(!rm_temp && big){
+        warning("Large dataset - best to set rm_temp=TRUE")
+    }
 	if(!is.null(igphyml)){
 		igphyml = path.expand(igphyml)
-		if(is.null(trait) || is.null(dir) || is.null(id)){
-			stop("trait, dir, and id parameters must be specified when running igphyml")
-		}
+		if(!is.null(dir)){
+            if(!dir.exists(dir)){
+                dir.create(dir)
+            }
+        }else{
+            dir <- alakazam::makeTempDir(id)
+            if(big){
+                warning("Large dataset - best to set dir and id params")
+            }
+        }
+        if(is.null(trait)){
+            stop("trait must be specified when running igphyml")
+        }
 		if(is.null(modelfile)){
 			states = unique(unlist(lapply(data,function(x)x@data[,trait])))
 			modelfile = makeModelFile(states,file=paste0(dir,"/",id,"_modelfile.txt"))
 		}else{
 			states = readModelFile(modelfile)
 		}
+		#if igphyml is specified, append trait value to sequence ids
+		data = lapply(data,function(x){
+			x@data$SEQUENCE_ID = paste0(x@data$SEQUENCE_ID,"_",x@data[[trait]])
+			x})
 	}
 	if(build=="dnapars"){
 		if(is.null(dir) || is.null(id)){
@@ -1207,11 +1271,11 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 	if(is.null(rep)){
 		reps = as.list(1:bootstraps)
 		l = parallel::mclapply(reps,function(x)
-			bootstrapTrees(data,rep=x, 
+			bootstrapTrees(clones,rep=x, 
 			trait=trait, modelfile=modelfile,build=build, 
 			exec=exec, igphyml=igphyml, 
 			id=id, dir=dir, bootstraps=bootstraps,
-			nproc=1, rm_files=rm_files, quiet=quiet,
+			nproc=1, rm_temp=rm_temp, quiet=quiet,
 			trees=trees,resolve=resolve,keeptrees=keeptrees,
 			lfile=lfile,seq=seq),
 			mc.cores=nproc)
@@ -1224,7 +1288,7 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 		if(keeptrees){
 			results$trees = lapply(l,function(x)x$trees)
 		}
-		if(rm_files){
+		if(rm_temp){
 			if(file.exists(paste0(dir,"/",id,"_modelfile.txt"))){
 				unlink(paste0(dir,"/",id,"_modelfile.txt"))
 			}
@@ -1251,7 +1315,7 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 					buildPhylo(data[[x]],
 						trait,exec,
 						temp_path=paste0(dir,"/",id,"_",rep,"_trees_",x),
-						rm_temp=rm_files,seq=seq))
+						rm_temp=rm_temp,seq=seq))
 			}else{
 				trees = parallel::mclapply(reps,function(x)
 					buildPratchet(data[[x]],seq),
@@ -1275,10 +1339,10 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 				mode="switches", type="permute", cloneid=rep, 
 				quiet=quiet, rm_files=FALSE, rm_dir=NULL, nproc=nproc,
 				resolve=resolve, rseed=rseed)
-			if(!rm_files){rm_dir=NULL}
+			if(!rm_temp){rm_dir=NULL}
 			permuteAll = reconIgPhyML(file, modelfile, igphyml=igphyml, 
 				mode="switches", type="permuteAll", cloneid=rep, 
-				quiet=quiet, rm_files=rm_files, rm_dir=rm_dir, nproc=nproc,
+				quiet=quiet, rm_files=rm_temp, rm_dir=rm_dir, nproc=nproc,
 				resolve=resolve, rseed=rseed)
 			switches = rbind(switches,permuted)
 			switches = rbind(switches,permuteAll)
