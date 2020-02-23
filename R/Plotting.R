@@ -88,6 +88,7 @@ condenseTrees = function(trees,states,palette){
 #' Plot a tree with colored internal node labels using ggtree
 #' 
 #' \code{plotTrees} plots a tree or group of trees
+#' @param    clones     A tibble containing \code{phylo} and \code{changeoClone} objects
 #' @param    tree     	A tree or list of \code{phylo} tree objects
 #' @param    nodes   	color internal nodes if possible?
 #' @param    tips 		color tips if possible?
@@ -115,7 +116,9 @@ condenseTrees = function(trees,states,palette){
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-plotTrees = function(tree,nodes=TRUE,tips=TRUE,trait=NULL,tipsize=NULL,data=NULL,scale=0.01){
+plotTrees = function(clones,tree=NULL,nodes=TRUE,tips=TRUE,trait=NULL,tipsize=NULL,data=NULL,scale=0.01){
+	tree = clones$TREE[[1]]
+	data = clones$DATA
 	p = ggtree::ggtree(tree)
 	if(!is.null(data)){
 		if(class(data) == "list"){

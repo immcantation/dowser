@@ -118,10 +118,14 @@ readSwitches = function(file){
 }
 
 #remove uniformative columns from data and germline
-cleanAlignment = function(clone){
-    g = strsplit(clone@germline[1],split="")[[1]]
+cleanAlignment = function(clone,seq="SEQUENCE"){
+	if(seq=="HLSEQUENCE"){
+    	g = strsplit(clone@hlgermline[1],split="")[[1]]
+    }else{
+    	g = strsplit(clone@germline[1],split="")[[1]]
+    }
     #g = g[1:(length(g) - length(g)%%3)]
-    sk = strsplit(clone@data$SEQUENCE,split="")
+    sk = strsplit(clone@data[[seq]],split="")
     sites=seq(1,length(g)-3,by=3)
     ns = c()
     for(i in sites){
@@ -131,8 +135,15 @@ cleanAlignment = function(clone){
     informative = ns != length(sk)
     l=lapply(sk,function(x) x=paste(x[informative],collapse=""))
     gm=paste(g[informative],collapse="")
-    clone@germline=gm
-    clone@data$SEQUENCE=unlist(l)
+    if(.hasSlot(clone,"region")){
+    	clone@region = clone@region[informative]	
+    }
+    if(seq=="HLSEQUENCE"){
+    	clone@hlgermline=gm
+    }else{
+    	clone@germline=gm
+    }
+    clone@data[[seq]]=unlist(l)
     return(clone)
 }
 
@@ -372,21 +383,39 @@ writeLineageFile = function(data,trees,dir=".",id="N",rep=NULL,trait=NULL){
 }
 
 #wrapper for build phylip lineage
-buildPhylo = function(clone,trait,dnapars,temp_path,verbose=FALSE,rm_temp=TRUE){
-	stop("Dowser is not yet compatible with buildPhylipLineage.")
+buildPhylo = function(clone,trait,dnapars,temp_path=NULL,verbose=FALSE,rm_temp=TRUE,seq="SEQUENCE"){
+	#stop("Dowser is not yet compatible with buildPhylipLineage.")
+	if(seq != "SEQUENCE"){
+		clone@data$SEQUENCE = clone@data[[seq]]
+		if(seq == "HLSEQUENCE"){
+		clone@germline = clone@hlgermline
+		}else if(seq == "LSEQUENCE"){
+			clone@germline = clone@lgermline
+		}
+	}
 	phylo = tryCatch({
 		alakazam::buildPhylipLineage(clone,dnapars,rm_temp=rm_temp,phylo=TRUE,verbose=verbose,
 			temp_path=temp_path)},
 		error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
 	phylo$name = clone@clone
+	phylo$tree_method = "phylip::dnapars"
+	phylo$edge_type = "genetic_distance"
+	phylo$seq = seq
 	phylo
 }
 
 #wrapper for pratchet + acctran
-buildPratchet = function(clone){
-	seqs = clone@data$SEQUENCE
+buildPratchet = function(clone,seq="SEQUENCE"){
+	seqs = clone@data[[seq]]
 	names = clone@data$SEQUENCE_ID
-	seqs = base::append(seqs,clone@germline)
+	if(seq == "HLSEQUENCE"){
+		germline = clone@hlgermline
+	}else if(seq == "LSEQUENCE"){
+		germline = clone@lgermline
+	}else{
+		germline = clone@germline
+	}
+	seqs = base::append(seqs,germline)
 	names = c(names,"Germline")
 	seqs = strsplit(seqs,split="")
 	names(seqs) = names
@@ -394,10 +423,302 @@ buildPratchet = function(clone){
 	tree = tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
 	tree = phangorn::acctran(ape::multi2di(tree),data)
 	tree = rerootGermline(tree,"Germline",resolve=TRUE)
-	tree$edge.length = tree$edge.length/nchar(clone@germline)
+	tree$edge.length = tree$edge.length/nchar(germline)
 	tree$name = clone@clone
 	tree$tree_method = "phangorn::prachet"
+	tree$edge_type = "genetic_distance"
+	tree$seq = seq
 	return(tree)
+}
+
+#' Generate a ChangeoClone object for lineage construction
+#' 
+#' \code{makeChangeoClone} takes a data.frame with AIRR or Change-O style columns as input and 
+#' masks gap positions, masks ragged ends, removes duplicates sequences, and merges 
+#' annotations associated with duplicate sequences. It returns a \code{ChangeoClone} 
+#' object which serves as input for lineage reconstruction.
+#' 
+#' @param    data         data.frame containing the AIRR or Change-O data for a clone. See Details
+#'                        for the list of required columns and their default values.
+#' @param    id           name of the column containing sequence identifiers.
+#' @param    seq          name of the column containing observed DNA sequences. All 
+#'                        sequences in this column must be multiple aligned.
+#' @param    germ         name of the column containing germline DNA sequences. All entries 
+#'                        in this column should be identical for any given clone, and they
+#'                        must be multiple aligned with the data in the \code{seq} column.
+#' @param    vcall        name of the column containing V-segment allele assignments. All 
+#'                        entries in this column should be identical to the gene level.
+#' @param    jcall        name of the column containing J-segment allele assignments. All 
+#'                        entries in this column should be identical to the gene level.
+#' @param    junc_len     name of the column containing the length of the junction as a 
+#'                        numeric value. All entries in this column should be identical 
+#'                        for any given clone.
+#' @param    clone        name of the column containing the identifier for the clone. All 
+#'                        entries in this column should be identical.
+#' @param    mask_char    character to use for masking and padding.
+#' @param    max_mask     maximum number of characters to mask at the leading and trailing
+#'                        sequence ends. If \code{NULL} then the upper masking bound will 
+#'                        be automatically determined from the maximum number of observed 
+#'                        leading or trailing Ns amongst all sequences. If set to \code{0} 
+#'                        (default) then masking will not be performed.
+#' @param    pad_end      if \code{TRUE} pad the end of each sequence with \code{mask_char}
+#'                        to make every sequence the same length.
+#' @param    text_fields  text annotation columns to retain and merge during duplicate removal.
+#' @param    num_fields   numeric annotation columns to retain and sum during duplicate removal.
+#' @param    seq_fields   sequence annotation columns to retain and collapse during duplicate 
+#'                        removal. Note, this is distinct from the \code{seq} and \code{germ} 
+#'                        arguments, which contain the primary sequence data for the clone
+#'                        and should not be repeated in this argument.
+#' @param    add_count    if \code{TRUE} add an additional annotation column called 
+#'                        \code{COLLAPSE_COUNT} during duplicate removal that indicates the 
+#'                        number of sequences that were collapsed.
+#' @param    verbose      passed on to \code{collapseDuplicates}. If \code{TRUE}, report the 
+#'                        numbers of input, discarded and output sequences; otherwise, process
+#'                        sequences silently.                        
+#' @param     collapse    iollapse identical sequences?
+#' @param     traits      column ids to keep distinct during sequence collapse 
+#' @param     region      if HL, include light chain information if available.
+#' @param     heavy       name of heavy chain locus (default = "IGH")
+#' @param     cell        name of the column containing cell assignment information
+#' @param     locus       name of the column containing locus information
+#' @return   A \link{ChangeoClone} object containing the modified clone.
+#'
+#' @details
+#' The input data.frame (\code{data}) must columns for each of the required column name 
+#' arguments: \code{id}, \code{seq}, \code{germ}, \code{vcall}, \code{jcall}, 
+#' \code{junc_len}, and \code{clone}.  The default values are as follows:
+#' \itemize{
+#'   \item  \code{id       = "sequence_id"}:         unique sequence identifier.
+#'   \item  \code{seq      = "sequence_alignment"}:  IMGT-gapped sample sequence.
+#'   \item  \code{germ     = "germline_alignment"}:  IMGT-gapped germline sequence.
+#'   \item  \code{vcall    = "v_call"}:              V segment allele call.
+#'   \item  \code{jcall    = "j_call"}:              J segment allele call.
+#'   \item  \code{junc_len = "junction_length"}:     junction sequence length.
+#'   \item  \code{clone    = "clone_id"}:            clone identifier.
+#' }
+#' Additional annotation columns specified in the \code{text_fields}, \code{num_fields} 
+#' or \code{seq_fields} arguments will be retained in the \code{data} slot of the return 
+#' object, but are not required. If the input data.frame \code{data} already contains a 
+#' column named \code{SEQUENCE}, which is not used as the \code{seq} argument, then that 
+#' column will not be retained.
+#' 
+#' The default columns are IMGT-gapped sequence columns, but this is not a requirement. 
+#' However, all sequences (both observed and germline) must be multiple aligned using
+#' some scheme for both proper duplicate removal and lineage reconstruction. 
+#'
+#' The value for the germline sequence, V-segment gene call, J-segment gene call, 
+#' junction length, and clone identifier are determined from the first entry in the 
+#' \code{germ}, \code{vcall}, \code{jcall}, \code{junc_len} and \code{clone} columns, 
+#' respectively. For any given clone, each value in these columns should be identical.
+#'  
+#' @seealso  Executes in order \link{maskSeqGaps}, \link{maskSeqEnds}, 
+#'           \link{padSeqEnds}, and \link{collapseDuplicates}. 
+#'           Returns a \link{ChangeoClone} object which serves as input to
+#'           \link{buildPhylipLineage}.
+#' 
+#' @export
+#requires one loci to be the "primary" which is present in all cells and 
+#is assumed to descend from a single common ancestor via point mutations
+#and allow for one other alternate loci, which is assumed to descend by
+#point mutations from a common ancestor
+makeNewChangeoClone = 
+function(data, id="sequence_id", seq="sequence_alignment", 
+    germ="germline_alignment_d_mask", vcall="v_call", jcall="j_call",
+    junc_len="junction_length", clone="clone_id", mask_char="N",
+    max_mask=0, pad_end=FALSE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
+    add_count=TRUE, verbose=FALSE,collapse=FALSE,region="H",heavy=NULL,
+    cell="cell",locus="locus",traits=NULL){
+
+	# Check for valid fields
+	check <- alakazam::checkColumns(data, c(id, seq, germ, vcall, jcall, junc_len, clone, 
+	                                  text_fields, num_fields, seq_fields,traits))
+	if (check != TRUE) { stop(check) }
+
+	if(region=="HL"){
+		check <- alakazam::checkColumns(data, c(cell,locus))
+		if (check != TRUE) { stop(check) }
+		if(is.null(heavy)){
+			stop(paste("clone",unique(dplyr::pull(data,clone)),
+				"heavy chain loci ID must be specified if combining loci!"))
+		}
+		# Ensure cell and loci columns are not duplicated
+		text_fields <- text_fields[text_fields != rlang::sym(cell)]
+		text_fields <- text_fields[text_fields != rlang::sym(locus)]
+		seq_fields <- seq_fields[seq_fields != rlang::sym(cell)]
+		seq_fields <- seq_fields[seq_fields != rlang::sym(locus)]
+		# Replace gaps with Ns and masked ragged ends
+		tmp_df <- data[, c(id, seq, text_fields, num_fields, seq_fields, cell, locus, traits)]
+		tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
+			outer_only=FALSE)
+		hc = dplyr::filter(tmp_df,!!rlang::sym(locus)==rlang::sym(heavy))
+		alt = dplyr::filter(tmp_df,!!rlang::sym(locus)!=rlang::sym(heavy))
+		if(nrow(hc) == 0){
+			stop(paste("clone",unique(dplyr::pull(data,clone)),
+				"heavy chain locus not found in dataset!"))
+		}
+		if(nrow(alt) == 0){
+			#print("Light chain not found")
+			region = "H"
+		}else{
+			if(length(unique(dplyr::pull(alt,rlang::sym(locus)))) > 1){
+				stop(paste("clone",unique(dplyr::pull(data,clone)),
+					"currently only one alternate loci per clone supported"))
+			}
+		}
+	}else{
+		# Replace gaps with Ns and masked ragged ends
+		tmp_df <- data[, c(id, seq, text_fields, num_fields, seq_fields, traits)]
+		tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
+			outer_only=FALSE)
+	}
+
+	if(region=="HL"){
+		#print("Concatenating H and L")
+		hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char, 
+			max_mask=max_mask, trim=FALSE)
+		alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
+			max_mask=max_mask, trim=FALSE)
+		# Pad ends
+		if(pad_end) {
+		    hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char)
+		    alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char)
+		}
+		hc_length = unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
+		alt_length = unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
+		if(length(hc_length) > 1){
+			stop(paste("clone",unique(dplyr::pull(data,clone)),
+				"Heavy chain sequences must be same length!"))
+		}
+		if(length(hc_length) > 1){
+			stop(paste("clone",unique(dplyr::pull(data,clone)),
+				"Light chain sequences must be same length!"))
+		}
+		hc$LSEQUENCE = ""
+		hc$HLSEQUENCE = ""
+		for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
+			if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
+				altseq = paste(rep(mask_char,alt_length),collapse="")
+			}else{
+				altseq = dplyr::pull(dplyr::filter(alt,
+					!!rlang::sym(cell) == cell_name),rlang::sym(seq))
+			}
+			hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$LSEQUENCE = altseq
+			hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$HLSEQUENCE = 
+				paste0(hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,seq],altseq)
+		}
+		hcd = dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
+		altd = dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+		germline = alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, outer_only=FALSE)
+		lgermline = alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, outer_only=FALSE)
+		hlgermline = paste0(germline,
+			alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, outer_only=FALSE))
+		tmp_df = hc
+		loci = unique(dplyr::pull(data,locus))
+		tmp_df[[rlang::sym(locus)]] = paste(loci,collapse=",")
+		regions = c(rep(unique(dplyr::pull(hc,rlang::sym(locus))),times=hc_length),
+				 rep(unique(dplyr::pull(alt,rlang::sym(locus))),times=alt_length))
+		if(length(regions) != unique(nchar(tmp_df$HLSEQUENCE))){
+			stop(paste("clone",unique(dplyr::pull(data,clone)),
+				"regions vector not equal to total sequence length!"))
+		}
+		if(length(regions) != nchar(hlgermline)){
+			stop(paste("clone",unique(dplyr::pull(data,clone)),
+				"regions vector not equal to germline sequence length!"))
+		}
+		new_seq = "HLSEQUENCE"
+	}else{
+		tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
+			mask_char=mask_char, max_mask=max_mask, trim=FALSE)
+		if(pad_end){
+        	tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], pad_char=mask_char)
+    	}
+		germline = alakazam::maskSeqGaps(data[[germ]][1], 
+			mask_char=mask_char, outer_only=FALSE)
+		check <- alakazam::checkColumns(data, c(locus))
+		if(check == TRUE){
+			loci = unique(dplyr::pull(data,locus))
+			if(length(loci) > 1){
+				warning(paste("clone",unique(dplyr::pull(data,clone)),
+					"mutliple loci present but not dealt with!"))
+				loci = paste(loci,collapse=",")
+			}
+		}else{
+			loci = "N"
+		}
+		regions = rep(loci,times=nchar(germline))
+		lgermline = ""
+		hlgermline = germline
+		tmp_df$LSEQUENCE = ""
+		tmp_df$HLSEQUENCE = tmp_df[[seq]]
+		new_seq = seq
+	}
+	
+	seq_len = nchar(tmp_df[[seq]])
+	if(any(seq_len != seq_len[1])){
+	    len_message <- paste0("All sequences are not the same length for data with first ", 
+	            id, " = ", tmp_df[[id]][1], ".")
+	    if (!pad_end) {
+	        len_message <- paste(len_message, 
+	            "Consider specifying pad_end=TRUE and verify the multiple alignment.")
+	    } else {
+	        len_message <- paste(len_message,
+	            "Verify that all sequences are properly multiple-aligned.")
+	    }
+	    stop(len_message)
+	}
+	
+	# Remove duplicates
+	if(collapse){
+	    if(is.null(traits)){
+	    	tmp_df <- alakazam::collapseDuplicates(tmp_df, id=id, seq=new_seq, 
+	        text_fields=text_fields, 
+	        num_fields=num_fields, seq_fields=seq_fields,
+	        add_count=add_count, verbose=verbose)
+	    }else{
+	    	tmp_df = tmp_df %>%
+	    		dplyr::group_by_at(dplyr::vars(tidyselect::all_of(traits))) %>%
+	    		dplyr::do(alakazam::collapseDuplicates(., id=id, seq=new_seq, 
+	        	text_fields=text_fields, 
+	        	num_fields=num_fields, seq_fields=seq_fields,
+	        	add_count=add_count, verbose=verbose)) %>%
+	        	dplyr::ungroup()
+	      }
+	}
+	
+	# Define return object
+	tmp_names <- names(tmp_df)
+	if ("SEQUENCE" %in% tmp_names & seq != "SEQUENCE") {
+	    tmp_df <- tmp_df[, tmp_names != "SEQUENCE"]
+	    tmp_names <- names(tmp_df)
+	}
+	names(tmp_df)[tmp_names == seq] <- "SEQUENCE"
+	names(tmp_df)[tmp_names == id] <- "SEQUENCE_ID"
+	
+	if(region=="HL"){
+		phylo_seq = "HLSEQUENCE"
+	}else if(region=="L"){
+		phylo_seq = "LSEQUENCE"
+	}else{
+		phylo_seq = "SEQUENCE"
+	}
+	
+	outclone <- new("ChangeoClone", 
+	             data=as.data.frame(tmp_df),
+	             clone=as.character(data[[clone]][1]),
+	             germline=alakazam::maskSeqGaps(germline, mask_char=mask_char, 
+	             	outer_only=FALSE),
+	             lgermline=alakazam::maskSeqGaps(lgermline, mask_char=mask_char, 
+	             	outer_only=FALSE),
+	             hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
+	             	outer_only=FALSE), 
+	             v_gene=alakazam::getGene(data[[vcall]][1]), 
+	             j_gene=alakazam::getGene(data[[jcall]][1]), 
+	             junc_len=data[[junc_len]][1],
+	             locus=unique(loci),
+	             region=regions,
+	             phylo_seq=phylo_seq)
+	
+	outclone
 }
 
 #### Preprocessing functions ####
@@ -411,8 +732,6 @@ buildPratchet = function(clone){
 #' 
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone. See Details
 #'                        for the list of required columns and their default values.
-#' @param    trait        data column to analyze using phylogenetic techniques. Identical sequences sharing this trait
-#' 						  will be un-collapsed.
 #' @param    id           name of the column containing sequence identifiers.
 #' @param    seq          name of the column containing observed DNA sequences. All 
 #'                        sequences in this column must be multiple aligned.
@@ -448,7 +767,13 @@ buildPratchet = function(clone){
 #' @param    verbose      passed on to \code{collapseDuplicates}. If \code{TRUE}, report the 
 #'                        numbers of input, discarded and output sequences; otherwise, process
 #'                        sequences silently.
-#' @param   nproc		  Number of cores to parallelize formating over.                        
+#' @param     collapse    iollapse identical sequences?
+#' @param     traits      column ids to keep distinct during sequence collapse 
+#' @param     region      if HL, include light chain information if available.
+#' @param     heavy       name of heavy chain locus (default = "IGH")
+#' @param     cell        name of the column containing cell assignment information
+#' @param     locus       name of the column containing locus information
+#' @param     nproc		  Number of cores to parallelize formating over.                        
 #'
 #' @return   A list of \link{ChangeoClone} objects containing modified clones.
 #'
@@ -496,76 +821,90 @@ formatClones <- function(data, id="sequence_id", seq="sequence_alignment",
                              germ="germline_alignment_d_mask", vcall="v_call", jcall="j_call",
                              junc_len="junction_length", clone="clone_id", mask_char="N",
                              max_mask=0, pad_end=FALSE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
-                             add_count=TRUE, verbose=FALSE, trait=NULL, nproc=1) {
+                             add_count=TRUE, verbose=FALSE, nproc=1, collapse=TRUE,
+                             region="H", heavy=NULL, cell="cell", locus="locus", traits=NULL) {
 
-    if(!is.null(trait)){
-        if(!is.null(seq_fields)){
-            seq_fields <- c(seq_fields,trait)
-        }else{
-            seq_fields <- c(trait)
-        }
-    }
+    #if(!is.null(traits)){
+    #    if(!is.null(seq_fields)){
+    #        seq_fields <- c(seq_fields,traits)
+    #    }else{
+    #        seq_fields <- c(traits)
+    #    }
+    #}
+    #print(seq_fields)
 
     clones <- data %>%
-        dplyr::group_by(!!rlang::sym("clone_id")) %>%
-        dplyr::do(CHANGEO=alakazam::makeChangeoClone(.,
+        dplyr::group_by(!!rlang::sym(clone)) %>%
+        dplyr::do(DATA=makeNewChangeoClone(.,
             id=id, seq=seq, germ=germ, vcall=vcall, jcall=jcall, junc_len=junc_len,
             clone=clone, mask_char=mask_char, max_mask=max_mask, pad_end=pad_end,
             text_fields=text_fields, num_fields=num_fields, seq_fields=seq_fields,
-            add_count=add_count, verbose=verbose))
+            add_count=add_count, verbose=verbose,collapse=collapse,
+            region=region, heavy=heavy, cell=cell, locus=locus, traits=traits))
+
+    if(region == "HL"){
+    	seq_name = "HLSEQUENCE"
+    }else{
+    	seq_name = "SEQUENCE"
+    }
     
-    fclones = processClones(clones$CHANGEO,trait=trait,nproc=nproc)
+    fclones = processClones(clones, nproc=nproc, seq=seq_name)
+    fclones
 }
 
 
 # Clean clonal alignments and deduplicate based on trait
-processClones = function(clones,trait=NULL,nproc=1){
-	if(class(clones) != "list"){
+processClones = function(clones,nproc=1,seq){
+	if(!"tbl" %in% class(clones)){
 		print(paste("clones is of class",class(clones)))
-		stop("clones must be a list of ChangeoClone objects!")
+		stop("clones must be a tibble of ChangeoClone objects!")
 	}else{
-		if(class(clones[[1]]) != "ChangeoClone"){
-			print(paste("clones is list of class",class(clones[[1]])))
-			stop("clones must be a list of ChangeoClone objects!")
+		if(class(clones$DATA[[1]]) != "ChangeoClone"){
+			print(paste("clones is list of class",class(clones$DATA[[1]])))
+			stop("clones$DATA must be a list of ChangeoClone objects!")
 		}
 	}
 
-	threshold = unlist(lapply(clones,function(x)
-	length(x@data$SEQUENCE) >= 2))
-	clones = clones[threshold]
+	threshold = unlist(lapply(clones$DATA,function(x)
+	length(x@data[[seq]]) >= 2))
+	clones = clones[threshold,]
 
-	clones = lapply(clones,function(x){
+	clones$DATA = lapply(clones$DATA,function(x){
 		x@data$SEQUENCE_ID=	gsub(":","_",x@data$SEQUENCE_ID);
-		x})
-
-	clones = lapply(clones,function(x){
+		x
+		})
+	clones$DATA = lapply(clones$DATA,function(x){
 		x@data$SEQUENCE_ID=gsub(";","_",x@data$SEQUENCE_ID);
-		x})
+		x
+		})
 	
-	clones = lapply(clones,function(x){
+	clones$DATA = lapply(clones$DATA,function(x){
 		x@data$SEQUENCE_ID=gsub(",","_",x@data$SEQUENCE_ID);
-		x})
+		x
+		})
 
-	max = max(unlist(lapply(clones,function(x)max(nchar(x@data$SEQUENCE_ID)))))
+	max = max(unlist(lapply(clones$DATA,function(x)max(nchar(x@data$SEQUENCE_ID)))))
 	if(max > 1000){
-		wc = which.max(unlist(lapply(clones,function(x)
+		wc = which.max(unlist(lapply(clones$DATA,function(x)
 			max(nchar(x@data$SEQUENCE_ID)))))
-		stop(paste("Sequence ID of clone",clones[[wc]]@clone,"index",
+		stop(paste("Sequence ID of clone",clones$DATA[[wc]]@clone,"index",
 			wc,"too long - over 1000 characters!"))
 	}
 
-	or = order(unlist(lapply(clones,function(x) nrow(x@data))),
+	or = order(unlist(lapply(clones$DATA,function(x) nrow(x@data))),
 		decreasing=TRUE)
-	clones = clones[or]
+	clones = clones[or,]
 
-	cclones = parallel::mclapply(clones,
-		function(x)cleanAlignment(x),mc.cores=nproc)
-	
-	if(!is.null(trait)){
-		cclones = parallel::mclapply(cclones,
-		function(x)uncollapse(x,trait),mc.cores=nproc)
+	clones$DATA = parallel::mclapply(clones$DATA,
+		function(x)cleanAlignment(x,seq),mc.cores=nproc)
+
+	if(.hasSlot(clones$DATA[[1]],"locus")){
+		clones$LOCUS = unlist(lapply(clones$DATA,function(x)paste(x@locus,collapse=",")))
 	}
-	cclones
+	clones$SEQS = unlist(lapply(clones$DATA,function(x)nrow(x@data)))
+	clones = dplyr::rowwise(clones)
+	clones = dplyr::ungroup(clones)
+	clones
 }
 
 # Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
@@ -603,9 +942,11 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' and internal node states if desired
 #' 
 #' \code{getTrees} Tree building function.
-#' @param    data  		list of \code{changeoClone} objects, the output of \link{formatClones}
+#' @param    clones  	a tiblle of \code{changeoClone} objects, the output of \link{formatClones}
+#' @param    data  		list of \code{changeoClone} objects, alternate input
 #' @param    trait 		trait to use for parsimony models (required if \code{igphyml} specified)
-#' @param 	 dnapars	location of phylip dnapars executible if desired (not yet supported)
+#' @param 	 build	    program to use for tree building (phangorn, dnapars)
+#' @param 	 exec	    location of desired phylogenetic executable
 #' @param    igphyml 	location of igphyml executible if trait models desired (optional)
 #' @param    id 		unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)
 #' @param    dir    	directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)
@@ -616,6 +957,7 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' @param    rm_files	remove temporary files (default=TRUE)
 #' @param    palette 	a named vector specifying colors for each state
 #' @param    resolve 	how should polytomies be resolved?
+#' @param    seq        column name containing sequence information
 #' 
 #' @return   A list of \code{phylo} objects in the same order as \code{data}.
 #'
@@ -645,10 +987,11 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
-	dnapars=NULL,igphyml=NULL,trees=NULL,nproc=1,quiet=0,rm_files=TRUE,
-	palette=NULL,resolve=2){
+getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
+	build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,nproc=1,quiet=0,rm_files=TRUE,
+	palette=NULL,resolve=2,seq=NULL){
 
+	data = clones$DATA
 	if(!is.null(igphyml)){
 		igphyml = path.expand(igphyml)
 		if(is.null(trait) || is.null(dir) || is.null(id)){
@@ -661,6 +1004,12 @@ getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 			states = readModelFile(modelfile)
 		}
 	}
+	if(build=="dnapars"){
+		if(is.null(dir) || is.null(id)){
+			stop("dir, and id parameters must be specified when running dnapars")
+		}
+	}
+
 	if(class(data) != "list"){
 		data = list(data)
 	}
@@ -676,16 +1025,22 @@ getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 	
 	if(is.null(trees)){
 		reps = as.list(1:length(data))
-		if(!is.null(dnapars)){
+		if(is.null(seq)){
+			seqs = unlist(lapply(data,function(x)x@phylo_seq))
+		}else{
+			seqs = rep(seq,length=length(data))
+		}
+		if(build=="dnapars"){
 			trees = parallel::mclapply(reps,function(x)
 				buildPhylo(data[[x]],
-					trait,dnapars,
+					trait,exec,
 					temp_path=paste0(dir,"/",id,"_trees_",x),
-					rm_temp=rm_files),
+					rm_temp=rm_files,
+					seq=seqs[x]),
 				mc.cores=nproc)
 		}else{
 			trees = parallel::mclapply(reps,function(x)
-				buildPratchet(data[[x]]),
+				buildPratchet(data[[x]],seq=seqs[x]),
 				mc.cores=nproc)
 		}
 	}
@@ -701,8 +1056,68 @@ getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 	}else{
 		mtrees = trees
 	}
-	mtrees
+	clones$TREE = mtrees
+	clones
 }
+
+
+
+#' Estimate lineage tree topologies, branch lengths,
+#' and internal node states if desired
+#' 
+#' \code{getTrees} Tree building function.
+#' @param    clones  	a tiblle of \code{changeoClone} objects, the output of \link{formatClones}
+#' @param    edge_type  Either \code{genetic_distance} (mutations per site) or \code{mutations}   
+#' 
+#' @return   A tibble with \code{phylo} objects that have had branch lengths rescaled.
+#'
+#' @details
+#' Uses clones$TREE[[1]]$edge_type to determine how branches are currently scaled.
+#'  
+#' @seealso \link{getTrees}
+#' @export
+scaleBranches = function(clones,edge_type="mutations"){
+	if(!"tbl" %in% class(clones)){
+		print(paste("clones is of class",class(clones)))
+		stop("clones must be a tibble of ChangeoClone objects!")
+	}else{
+		if(class(clones$DATA[[1]]) != "ChangeoClone"){
+			print(paste("clones is list of class",class(clones$DATA[[1]])))
+			stop("clones must be a list of ChangeoClone objects!")
+		}
+	}
+	if(!"TREE" %in% names(clones)){
+		stop("clones must have TREE column!")
+	}
+	# Need to add a variable storing whether branch lengths equal mutations or genetic distance
+	lengths = unlist(lapply(1:length(clones$TREE),
+		function(x){
+		if(clones$TREE[[x]]$seq == "HLSEQUENCE"){
+			return(nchar(clones$DATA[[x]]@hlgermline))
+		}else if(clones$TREE[[x]]$seq == "LSEQUENCE"){
+			return(nchar(clones$DATA[[x]]@lgermline))
+		}else{
+			return(nchar(clones$DATA[[x]]@germline))
+		}}))
+
+	TREE = lapply(1:length(clones$TREE),function(x){
+		if(clones$TREE[[x]]$edge_type == "mutations" && edge_type == "genetic_distance"){
+			clones$TREE[[x]]$edge.length = clones$TREE[[x]]$edge.length/lengths[x]
+			clones$TREE[[x]]$edge_type = "genetic_distance"
+			clones$TREE[[x]]
+		}else if(clones$TREE[[x]]$edge_type == "genetic_distance" && edge_type == "mutations"){
+			clones$TREE[[x]]$edge.length = clones$TREE[[x]]$edge.length*lengths[x]
+			clones$TREE[[x]]$edge_type = "mutations"
+			clones$TREE[[x]]
+		}else{
+			clones$TREE[[x]]
+		}})
+			
+	clones$TREE = TREE
+	clones
+}
+
+
 
 #' Create a bootstrap distribution for clone sequence alignments, and estimate trees for eac
 #' bootstrap replicate.
@@ -711,7 +1126,8 @@ getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 #' @param    data  		list of \code{changeoClone} objects, the output of \link{formatClones}
 #' @param    bootstraps number of bootstrap replicates to perform
 #' @param    trait 		trait to use for parsimony models (required if \code{igphyml} specified)
-#' @param 	 dnapars	location of phylip dnapars executible if desired (not yet supported)
+#' @param 	 build	    program to use for tree building (phangorn, dnapars)
+#' @param 	 exec	    location of desired phylogenetic executable
 #' @param    igphyml 	location of igphyml executible if trait models desired (optional)
 #' @param    id 		unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)
 #' @param    dir    	directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)
@@ -725,6 +1141,7 @@ getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 #' @param    keeptrees  keep trees estimated from bootstrap replicates? (TRUE)
 #' @param    lfile      lineage file input to igphyml if desired (experimental)
 #' @param    rep  		current bootstrap replicate (experimental)
+#' @param    seq        column name containing sequence information
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
 #'
@@ -758,9 +1175,10 @@ getTrees = function(data,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 #' }
 #' @export
 bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL, 
-	id=NULL, modelfile=NULL,dnapars=NULL,igphyml=NULL,trees=NULL,
+	id=NULL, modelfile=NULL,build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,
 	quiet=0,rm_files=TRUE,palette=NULL,resolve=2,rep=NULL,
-	keeptrees=TRUE, lfile=NULL){
+	keeptrees=TRUE, lfile=NULL, seq="SEQUENCE"){
+
 	if(class(data) != "list"){
 		data = list(data)
 	}
@@ -781,16 +1199,21 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			states = readModelFile(modelfile)
 		}
 	}
+	if(build=="dnapars"){
+		if(is.null(dir) || is.null(id)){
+			stop("dir, and id parameters must be specified when running dnapars")
+		}
+	}
 	if(is.null(rep)){
 		reps = as.list(1:bootstraps)
 		l = parallel::mclapply(reps,function(x)
 			bootstrapTrees(data,rep=x, 
-			trait=trait, modelfile=modelfile, 
-			dnapars=dnapars, igphyml=igphyml, 
+			trait=trait, modelfile=modelfile,build=build, 
+			exec=exec, igphyml=igphyml, 
 			id=id, dir=dir, bootstraps=bootstraps,
 			nproc=1, rm_files=rm_files, quiet=quiet,
 			trees=trees,resolve=resolve,keeptrees=keeptrees,
-			lfile=lfile),
+			lfile=lfile,seq=seq),
 			mc.cores=nproc)
 		results = list()
 		results$switches = NULL
@@ -818,15 +1241,20 @@ bootstrapTrees = function(data, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			}
 			if(quiet > 1){print("building trees")}
 			reps = as.list(1:length(data))
-			if(!is.null(dnapars)){
+			if(is.null(seq)){
+			      seqs = unlist(lapply(data,function(x)x@phylo_seq))
+		    }else{
+		          seqs = rep(seq,length=length(data))
+		    }
+			if(build=="dnapars"){
 				trees = lapply(reps,function(x)
 					buildPhylo(data[[x]],
-						trait,dnapars,
+						trait,exec,
 						temp_path=paste0(dir,"/",id,"_",rep,"_trees_",x),
-						rm_temp=rm_files))
+						rm_temp=rm_files,seq=seq))
 			}else{
 				trees = parallel::mclapply(reps,function(x)
-					buildPratchet(data[[x]]),
+					buildPratchet(data[[x]],seq),
 					mc.cores=nproc)
 			}
 		}
