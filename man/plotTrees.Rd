@@ -5,7 +5,8 @@
 \title{Plot a tree with colored internal node labels using ggtree}
 \usage{
 plotTrees(
-  tree,
+  clones,
+  tree = NULL,
   nodes = TRUE,
   tips = TRUE,
   trait = NULL,
@@ -15,6 +16,8 @@ plotTrees(
 )
 }
 \arguments{
+\item{clones}{A tibble containing \code{phylo} and \code{changeoClone} objects}
+
 \item{tree}{A tree or list of \code{phylo} tree objects}
 
 \item{nodes}{color internal nodes if possible?}

@@ -46,6 +46,7 @@ Imports:
     stringi,
     tibble,
     tidyr,
+    tidyselect,
     utils
 Suggests:
     knitr,
@@ -53,6 +54,7 @@ Suggests:
     testthat
 RoxygenNote: 7.0.2
 Collate: 
+    'Classes.R'
     'Data.R'
     'Dowser.R'
     'Plotting.R'

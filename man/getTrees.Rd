@@ -6,23 +6,28 @@
 and internal node states if desired}
 \usage{
 getTrees(
-  data,
+  clones,
+  data = NULL,
   trait = NULL,
   id = NULL,
   dir = NULL,
   modelfile = NULL,
-  dnapars = NULL,
+  build = "pratchet",
+  exec = NULL,
   igphyml = NULL,
   trees = NULL,
   nproc = 1,
   quiet = 0,
   rm_files = TRUE,
   palette = NULL,
-  resolve = 2
+  resolve = 2,
+  seq = NULL
 )
 }
 \arguments{
-\item{data}{list of \code{changeoClone} objects, the output of \link{formatClones}}
+\item{clones}{a tiblle of \code{changeoClone} objects, the output of \link{formatClones}}
+
+\item{data}{list of \code{changeoClone} objects, alternate input}
 
 \item{trait}{trait to use for parsimony models (required if \code{igphyml} specified)}
 
@@ -32,7 +37,9 @@ getTrees(
 
 \item{modelfile}{file specifying parsimony model to use}
 
-\item{dnapars}{location of phylip dnapars executible if desired (not yet supported)}
+\item{build}{program to use for tree building (phangorn, dnapars)}
+
+\item{exec}{location of desired phylogenetic executable}
 
 \item{igphyml}{location of igphyml executible if trait models desired (optional)}
 
@@ -47,6 +54,8 @@ getTrees(
 \item{palette}{a named vector specifying colors for each state}
 
 \item{resolve}{how should polytomies be resolved?}
+
+\item{seq}{column name containing sequence information}
 }
 \value{
 A list of \code{phylo} objects in the same order as \code{data}.

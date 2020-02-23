@@ -21,8 +21,13 @@ formatClones(
   seq_fields = NULL,
   add_count = TRUE,
   verbose = FALSE,
-  trait = NULL,
-  nproc = 1
+  nproc = 1,
+  collapse = TRUE,
+  region = "H",
+  heavy = NULL,
+  cell = "cell",
+  locus = "locus",
+  traits = NULL
 )
 }
 \arguments{
@@ -79,10 +84,19 @@ number of sequences that were collapsed.}
 numbers of input, discarded and output sequences; otherwise, process
 sequences silently.}
 
-\item{trait}{data column to analyze using phylogenetic techniques. Identical sequences sharing this trait
-will be un-collapsed.}
-
 \item{nproc}{Number of cores to parallelize formating over.}
+
+\item{collapse}{iollapse identical sequences?}
+
+\item{region}{if HL, include light chain information if available.}
+
+\item{heavy}{name of heavy chain locus (default = "IGH")}
+
+\item{cell}{name of the column containing cell assignment information}
+
+\item{locus}{name of the column containing locus information}
+
+\item{traits}{column ids to keep distinct during sequence collapse}
 }
 \value{
 A list of \link{ChangeoClone} objects containing modified clones.

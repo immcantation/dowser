@@ -13,7 +13,8 @@ bootstrapTrees(
   dir = NULL,
   id = NULL,
   modelfile = NULL,
-  dnapars = NULL,
+  build = "pratchet",
+  exec = NULL,
   igphyml = NULL,
   trees = NULL,
   quiet = 0,
@@ -22,7 +23,8 @@ bootstrapTrees(
   resolve = 2,
   rep = NULL,
   keeptrees = TRUE,
-  lfile = NULL
+  lfile = NULL,
+  seq = "SEQUENCE"
 )
 }
 \arguments{
@@ -40,7 +42,9 @@ bootstrapTrees(
 
 \item{modelfile}{file specifying parsimony model to use}
 
-\item{dnapars}{location of phylip dnapars executible if desired (not yet supported)}
+\item{build}{program to use for tree building (phangorn, dnapars)}
+
+\item{exec}{location of desired phylogenetic executable}
 
 \item{igphyml}{location of igphyml executible if trait models desired (optional)}
 
@@ -59,6 +63,8 @@ bootstrapTrees(
 \item{keeptrees}{keep trees estimated from bootstrap replicates? (TRUE)}
 
 \item{lfile}{lineage file input to igphyml if desired (experimental)}
+
+\item{seq}{column name containing sequence information}
 }
 \value{
 A list of trees and/or switch counts for each bootstrap replicate.
