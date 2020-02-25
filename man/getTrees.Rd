@@ -15,7 +15,7 @@ getTrees(
   build = "pratchet",
   exec = NULL,
   igphyml = NULL,
-  trees = NULL,
+  fixtrees = FALSE,
   nproc = 1,
   quiet = 0,
   rm_temp = TRUE,
@@ -43,7 +43,7 @@ getTrees(
 
 \item{igphyml}{location of igphyml executible if trait models desired (optional)}
 
-\item{trees}{tree topologies to use if laready available}
+\item{fixtrees}{if TRUE, use supplied tree topologies}
 
 \item{nproc}{number of cores to parallelize computations}
 

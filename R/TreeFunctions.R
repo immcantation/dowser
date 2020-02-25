@@ -270,6 +270,9 @@ reconIgPhyML = function(file, modelfile, cloneid,
 		results = lapply(results,function(x){
 			x$pars_recon="igphyml";
 			x})
+		results = lapply(results,function(x){
+			x$tip.label;
+			x})
 	}
 	if(rm_files){
 		lines = readLines(file)
@@ -652,7 +655,7 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' @param    id 		unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)
 #' @param    dir    	directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)
 #' @param    modelfile 	file specifying parsimony model to use
-#' @param    trees 		tree topologies to use if laready available
+#' @param    fixtrees 	if TRUE, use supplied tree topologies
 #' @param    nproc 		number of cores to parallelize computations
 #' @param    quiet		amount of rubbish to print to console
 #' @param    rm_temp	remove temporary files (default=TRUE)
@@ -689,10 +692,15 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' }
 #' @export
 getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
-	build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,nproc=1,quiet=0,rm_temp=TRUE,
+	build="pratchet",exec=NULL,igphyml=NULL,fixtrees=FALSE,nproc=1,quiet=0,rm_temp=TRUE,
 	palette=NULL,resolve=2,seq=NULL){
 
 	data = clones$DATA
+	if(fixtrees){
+		trees = clones$TREE
+	}else{
+		trees = NULL
+	}
 	if(is.null(id)){
             id <- "sample"
     }
@@ -731,6 +739,18 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 			states = readModelFile(modelfile)
 		}
 		#if igphyml is specified, append trait value to sequence ids
+		if(!is.null(trees)){
+			indexes = 1:length(data)
+			trees = lapply(indexes,function(x){
+				tree = trees[[x]]
+				datat = data[[x]]
+				for(id in datat@data$SEQUENCE_ID){
+					trait_temp = filter(datat@data,SEQUENCE_ID==id)[[trait]]
+					tree$tip.label[tree$tip.label == id] = 
+					paste0(id,"_",trait_temp)
+				}
+				tree})
+		}
 		data = lapply(data,function(x){
 			x@data$SEQUENCE_ID = paste0(x@data$SEQUENCE_ID,"_",x@data[[trait]])
 			x})
@@ -781,6 +801,10 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 				buildPratchet(data[[x]],seq=seqs[x]),
 				mc.cores=nproc)
 		}
+	}else{
+		if(!is.null(igphyml)){
+
+		}
 	}
 	
 	if(!is.null(igphyml)){
@@ -791,6 +815,16 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 			mode="trees", cloneid=NULL, quiet=quiet, nproc=nproc,
 			rm_files=rm_temp, rm_dir=rm_dir, states=states, 
 			palette=palette,resolve=resolve)
+
+		# remove trait value from tips
+		mtrees = lapply(mtrees,function(x){
+			ids = strsplit(x$tip.label,split="_")
+			x$tip.label = unlist(lapply(ids,function(t)
+				paste(t[1:(length(t)-1)],collapse="_")))
+			x$tip.label[x$tip.label == x$name] = "Germline"
+			x
+			})
+
 	}else{
 		mtrees = trees
 	}
@@ -1054,6 +1088,15 @@ bootstrapTrees = function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			clone_index = unlist(lapply(data,function(x)x@clone))
 			switches$CLONE = clone_index[switches$CLONE+1]
 			results$switches = switches
+			
+			# remove trait value from tips
+			trees = lapply(trees,function(x){
+			ids = strsplit(x$tip.label,split="_")
+			x$tip.label = unlist(lapply(ids,function(t)
+				paste(t[1:(length(t)-1)],collapse="_")))
+				x$tip.label[x$tip.label == x$name] = "Germline"
+				x
+				})
 		}
 		if(keeptrees){
 			results$trees = trees

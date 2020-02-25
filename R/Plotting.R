@@ -78,18 +78,59 @@ condenseTrees = function(trees,states,palette){
 	}
 	nt$unique = unique(unlist(combs))
 	cv = unlist(lapply(combs,function(x)combineColors(x,palette)))
-	margl = unlist(lapply(combs,function(x)paste(x,collapse=":")))
+	margl = unlist(lapply(combs,function(x)paste(x,collapse=",")))
 	nt$node.label = margl[(tipn+1):noden]
 	nt$node.color = cv
 	nt$state = margl
 	return(nt)
 }
 
+#' Get a color palette for a predefined set of trait values
+#' 
+#' \code{colorTree} Gets a color palette for a predefined set of trait values
+#' @param    trees   list of phylo objects with assigned internal node states
+#' @param    palette named vector of colors (see \link{getPalette})
+#' @param    ambig   how should ambiguous states be colored (blend or grey)
+#'
+#' @return   A list of colored trees
+#' 
+#' @details Trees must have node states represented in a "states" vector. By default,
+#' ambiguous states (separated by ",") have their colors blended. If 
+#' 
+#'
+#' @seealso \link{getPalette}, \link{getTrees}, \link{plotTrees}
+#' @export
+colorTrees <- function(trees,palette,ambig="blend"){
+    ntrees <- list()
+    if(ambig == "grey"){
+    	palette = c(palette,"ambig"="#808080")
+    }
+    for(n in 1:length(trees)){
+    	nt <- trees[[n]]
+		tipn <- length(nt$tip.label)
+		noden <- 2*tipn-1
+		combs <- strsplit(nt$state, split=",")
+		if(ambig == "blend"){
+			cv <- unlist(lapply(combs, function(x)combineColors(x, palette)))
+		}else if(ambig == "grey"){
+			combs[unlist(lapply(combs,function(x)length(x) > 1))] <- "ambig"
+			cv <- unlist(lapply(combs, function(x)combineColors(x, palette)))
+			nt$state <- unlist(combs)
+		}else{
+			stop("ambig parameter not specified")
+		}
+		nt$node.color <- cv
+		ntrees[[n]] = nt
+    }
+    #class(ntrees) <- "multiPhylo"
+    return(ntrees)
+}
+
 #' Plot a tree with colored internal node labels using ggtree
 #' 
 #' \code{plotTrees} plots a tree or group of trees
-#' @param    clones     A tibble containing \code{phylo} and \code{changeoClone} objects
-#' @param    tree     	A tree or list of \code{phylo} tree objects
+#' @param    trees      A tibble containing \code{phylo} and \code{changeoClone} objects
+#' @param    data     	(optional) 
 #' @param    nodes   	color internal nodes if possible?
 #' @param    tips 		color tips if possible?
 #' @param    trait    	trait to use to color the tips
@@ -116,49 +157,104 @@ condenseTrees = function(trees,states,palette){
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-plotTrees = function(clones,tree=NULL,nodes=TRUE,tips=TRUE,trait=NULL,tipsize=NULL,data=NULL,scale=0.01){
-	tree = clones$TREE[[1]]
-	data = clones$DATA
-	p = ggtree::ggtree(tree)
+#' # make tips the trait arugment
+#' # make separate nodes and tips color scale
+#' # make tip size variable
+plotTrees = function(trees,data=NULL,nodes=TRUE,tips=NULL,tipsize=NULL,scale=0.01,
+	node_palette="Dark2",tip_palette=node_palette,base=FALSE,layout="rectangular"){
+	if(!base){
+		if(!is.null(tips) && nodes && tip_palette == node_palette){
+			tipstates = unique(unlist(lapply(trees$DATA,function(x)unique(x@data[[tips]]))))
+			nodestates = unique(unlist(lapply(trees$TREE,function(x)
+					unique(unlist(strsplit(x$state,split=",")))
+					)))
+			combpalette = getPalette(node_palette,c(nodestates,tipstates))
+			trees$TREE = colorTrees(trees$TREE,palette=combpalette)
+			nodestates = unlist(lapply(trees$TREE,function(x){
+				colors = x$node.color
+				names(colors) = x$state
+				colors
+				}))
+			nodepalette = nodestates[unique(names(nodestates))]
+			cols = c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
+		}else{
+			if(!is.null(tips)){
+				tipstates = unique(unlist(lapply(trees$DATA,function(x)unique(x@data[[tips]]))))
+				if(is.atomic(tip_palette)){
+					tip_palette = getPalette(tip_palette,tipstates)
+					tip_palette = tip_palette[!is.na(names(tip_palette))]
+				}else{
+					nfound = tipstates[!tipstates %in% names(tip_palette)]
+					if(length(nfound) > 0){
+						stop(paste(nfound,"not found in tip_palette"))
+					}
+				}
+			}
+			if(nodes){
+				nodestates = unique(unlist(lapply(trees$TREE,function(x)
+					unique(unlist(strsplit(x$state,split=",")))
+					)))
+				statepalette = getPalette(node_palette,nodestates)
+				statepalette = statepalette[!is.na(names(statepalette))]
+				trees$TREE = colorTrees(trees$TREE,palette=statepalette)
+				
+				nodestates = unlist(lapply(trees$TREE,function(x){
+					colors = x$node.color
+					names(colors) = x$state
+					colors
+					}))
+				nodepalette = nodestates[unique(names(nodestates))]
+			}
+			cols = c(tip_palette,nodestates)
+		}
+		
+		ps = lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
+			nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,node_palette=node_palette,
+			tip_palette=tip_palette,base=TRUE,layout=layout))
+		
+		ps  = lapply(ps,function(x)
+				x = x + theme(legend.position="right",
+		    	legend.box.margin=margin(0, -10, 0, 0))+
+		    	scale_color_manual(values=cols)+
+		    	guides(color=guide_legend(title="State")))
+		return(ps)
+	}
+
+	tree = trees$TREE[[1]]
+	data = trees$DATA[[1]]
+	p = ggtree::ggtree(tree,layout=layout)
 	if(!is.null(data)){
-		if(class(data) == "list"){
-			index = which(unlist(lapply(data,function(x)x@clone == tree$name)))
-			if(length(index) == 0){
-				stop("clone",tree$name," not found in list of clone objects")
-			}
-			if(length(index) > 1){
-				stop("clone",tree$name," found more than once in list of clone objects")
-			}
-			data = data[[index]]
-			p = p %<+% data@data
+		if(class(data) != "list"){
+			data = list(data)
 		}
-	}
-
-	if(!is.null(trait)){
-		if(is.null(data)){
-			stop("dataframe must be provided when trait specified")
+		index = which(unlist(lapply(data,function(x)x@clone == tree$name)))
+		if(length(index) == 0){
+			stop("clone",tree$name," not found in list of clone objects")
 		}
-		p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(trait)),size=tipsize)
+		if(length(index) > 1){
+			stop("clone",tree$name," found more than once in list of clone objects")
+		}
+		data = data[[index]]
+		p = p %<+% data@data
 	}
-
 	if(!is.null(tree$pars_recon)){
 		if(nodes){
-			cols = unique(tree$node.color)
-			names(cols) = unique(tree$state)
 			p = p + aes(color=tree$state)
 		}
-		if(tips){
-			if(!is.null(tipsize)){
-				p = p + geom_tippoint(aes(color=tree$state,size=tipsize))
-			}else{
-				p = p + geom_tippoint(aes(color=tree$state))
-			}
+	}
+	if(!is.null(tips)){
+		if(is.null(data)){
+			stop("dataframe must be provided when tip trait specified")
 		}
-		if(tips || nodes){
-			p = p + theme(legend.position="right",
-			legend.box.margin=margin(0,-10,0,0))+
-			scale_color_manual(values=cols)+
-			guides(color=guide_legend(title="State"))
+		if(!is.null(tipsize)){
+			if(class(tipsize) == "numeric"){
+				p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)),size=tipsize)
+			}else if(class(tipsize) == "character"){
+				p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips),
+					size=!!rlang::sym(tipsize)))
+			}
+		}else{
+			p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)))
 		}
 	}
 	p = p + ggtree::geom_treescale(width=scale)
