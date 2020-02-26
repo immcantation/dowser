@@ -7,7 +7,7 @@
 plotTrees(
   trees,
   data = NULL,
-  nodes = TRUE,
+  nodes = FALSE,
   tips = NULL,
   tipsize = NULL,
   scale = 0.01,
@@ -18,6 +18,8 @@ plotTrees(
 )
 }
 \arguments{
+\item{trees}{A tibble containing \code{phylo} and \code{changeoClone} objects}
+
 \item{data}{list of \code{changeoClone} objects used to generate \code{tree}}
 
 \item{nodes}{color internal nodes if possible?}
@@ -27,10 +29,6 @@ plotTrees(
 \item{tipsize}{size of tip shape objects}
 
 \item{scale}{width of branch length scale bar}
-
-\item{clones}{A tibble containing \code{phylo} and \code{changeoClone} objects}
-
-\item{tree}{A tree or list of \code{phylo} tree objects}
 
 \item{trait}{trait to use to color the tips}
 }
