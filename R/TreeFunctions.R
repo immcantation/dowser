@@ -386,7 +386,8 @@ writeLineageFile = function(data,trees,dir=".",id="N",rep=NULL,trait=NULL){
 }
 
 #wrapper for build phylip lineage
-buildPhylo = function(clone,trait,dnapars,temp_path=NULL,verbose=FALSE,rm_temp=TRUE,seq="SEQUENCE"){
+buildPhylo = function(clone,trait,dnapars,temp_path=NULL,verbose=FALSE,rm_temp=TRUE,
+	seq="SEQUENCE",tree=NULL){
 	#stop("Dowser is not yet compatible with buildPhylipLineage.")
 	if(seq != "SEQUENCE"){
 		clone@data$SEQUENCE = clone@data[[seq]]
@@ -396,19 +397,41 @@ buildPhylo = function(clone,trait,dnapars,temp_path=NULL,verbose=FALSE,rm_temp=T
 			clone@germline = clone@lgermline
 		}
 	}
-	phylo = tryCatch({
-		alakazam::buildPhylipLineage(clone,dnapars,rm_temp=rm_temp,phylo=TRUE,verbose=verbose,
-			temp_path=temp_path)},
-		error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
-	phylo$name = clone@clone
-	phylo$tree_method = "phylip::dnapars"
-	phylo$edge_type = "genetic_distance"
-	phylo$seq = seq
-	phylo
+	if(is.null(tree)){
+		tree = tryCatch({
+			alakazam::buildPhylipLineage(clone,dnapars,rm_temp=rm_temp,phylo=TRUE,verbose=verbose,
+				temp_path=temp_path)},
+			error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
+		tree$name = clone@clone
+		tree$tree_method = "phylip::dnapars"
+		tree$edge_type = "genetic_distance"
+		tree$seq = seq
+	}
+	tree
 }
 
+#' @rdname    DNA_IUPAC_CODES
+#' @export
+DNA_IUPAC <- list(
+           "A"="A", 
+           "C"="C", 
+           "G"="G", 
+           "T"="T",
+           "AC"="M", 
+           "AG"="R", 
+           "AT"="W", 
+           "CG"="S", 
+           "CT"="Y", 
+           "GT"="K", 
+           "ACG"="V", 
+           "ACT"="H", 
+           "AGT"="D", 
+           "CGT"="B",
+           "ACGT"="N")
+
 #wrapper for pratchet + acctran
-buildPratchet = function(clone,seq="SEQUENCE"){
+buildPratchet = function(clone,seq="SEQUENCE",asr="seq",asr_thresh=0.05,tree=NULL,
+	asr_type="MPR"){
 	seqs = clone@data[[seq]]
 	names = clone@data$SEQUENCE_ID
 	if(seq == "HLSEQUENCE"){
@@ -423,14 +446,38 @@ buildPratchet = function(clone,seq="SEQUENCE"){
 	seqs = strsplit(seqs,split="")
 	names(seqs) = names
 	data = phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
-	tree = tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
-	tree = phangorn::acctran(ape::multi2di(tree),data)
-	tree = rerootGermline(tree,"Germline",resolve=TRUE)
-	tree$edge.length = tree$edge.length/nchar(germline)
+	if(is.null(tree)){
+		tree = tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
+		tree = phangorn::acctran(ape::multi2di(tree),data)
+		tree = rerootGermline(tree,"Germline",resolve=TRUE)
+		tree$edge.length = tree$edge.length/nchar(germline)
+		tree$tree_method = "phangorn::prachet"
+		tree$edge_type = "genetic_distance"
+	}
 	tree$name = clone@clone
-	tree$tree_method = "phangorn::prachet"
-	tree$edge_type = "genetic_distance"
 	tree$seq = seq
+	if(asr != "none"){
+		seqs_pars = phangorn::ancestral.pars(tree, data, 
+			type = asr_type, cost = NULL, return="prob")
+		ASR = list()
+		for(i in 1:max(tree$edge)){
+			patterns = t(subset(seqs_pars, i)[[1]])
+			pat = patterns[,attr(seqs_pars,"index")]
+			if(asr == "seq"){
+				thresh = pat > asr_thresh
+				#acgt = toupper(rownames(thresh))
+				acgt = c("A","C","G","T")
+				seq_ar = unlist(lapply(1:ncol(pat),function(x){
+					site = acgt[thresh[,x]]
+					site = DNA_IUPAC[[paste(sort(site),collapse="")]]
+					site}))
+				ASR[[as.character(i)]] = paste(seq_ar,collapse="")
+			}else{
+				ASR[[as.character(i)]] = pat
+			}
+		}
+		tree$sequences = ASR
+	}
 	return(tree)
 }
 
@@ -638,7 +685,6 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
     tree$edge.length[rootedge] <- 0
     tree$uca <- rootanc
     tree$germid <- germid
-    
     return(tree)
 }
 
@@ -693,7 +739,7 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' @export
 getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 	build="pratchet",exec=NULL,igphyml=NULL,fixtrees=FALSE,nproc=1,quiet=0,rm_temp=TRUE,
-	palette=NULL,resolve=2,seq=NULL){
+	palette=NULL,resolve=2,seq=NULL,asr="seq",asr_thresh=0.05,asr_type="MPR"){
 
 	data = clones$DATA
 	if(fixtrees){
@@ -781,7 +827,7 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 		rm_dir=paste0(dir,"/",id,"_recon_trees")
 	}
 	
-	if(is.null(trees)){
+	#if(is.null(trees)){
 		reps = as.list(1:length(data))
 		if(is.null(seq)){
 			seqs = unlist(lapply(data,function(x)x@phylo_seq))
@@ -789,23 +835,42 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 			seqs = rep(seq,length=length(data))
 		}
 		if(build=="dnapars"){
-			trees = parallel::mclapply(reps,function(x)
+			if(!fixtrees){
+				trees = parallel::mclapply(reps,function(x)
+					buildPhylo(data[[x]],
+						trait,exec,
+						temp_path=paste0(dir,"/",id,"_trees_",x),
+						rm_temp=rm_temp,
+						seq=seqs[x]),
+					mc.cores=nproc)
+			}else{
+				trees = parallel::mclapply(reps,function(x)
 				buildPhylo(data[[x]],
 					trait,exec,
 					temp_path=paste0(dir,"/",id,"_trees_",x),
 					rm_temp=rm_temp,
-					seq=seqs[x]),
+					seq=seqs[x],tree=trees[[x]]),
 				mc.cores=nproc)
+			}
 		}else{
-			trees = parallel::mclapply(reps,function(x)
-				buildPratchet(data[[x]],seq=seqs[x]),
-				mc.cores=nproc)
+			if(!fixtrees){
+				trees = parallel::mclapply(reps,function(x)
+					buildPratchet(data[[x]],seq=seqs[x],
+					asr=asr,asr_thresh=asr_thresh,asr_type=asr_type),
+					mc.cores=nproc)
+			}else{
+				trees = parallel::mclapply(reps,function(x)
+					buildPratchet(data[[x]],seq=seqs[x],
+					asr=asr,asr_thresh=asr_thresh,asr_type=asr_type,
+					tree=trees[[x]]),
+					mc.cores=nproc)
+			}
 		}
-	}else{
-		if(!is.null(igphyml)){
-
-		}
-	}
+#	}else{
+#		if(!is.null(igphyml)){
+#
+#		}
+#	}
 	
 	if(!is.null(igphyml)){
 		file = writeLineageFile(data=data, trees=trees, dir=dir,

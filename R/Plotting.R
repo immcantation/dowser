@@ -242,7 +242,7 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 		gl = tibble(SEQUENCE_ID="Germline")
 		for(n in names(data@data)){
 			if(class(data@data[[n]]) == "numeric"){
-				gl[[n]] = 1
+				gl[[n]] = 0
 			}else if(class(data@data[[n]]) == "character"){
 				gl[[n]] = "Germline"
 			}else{

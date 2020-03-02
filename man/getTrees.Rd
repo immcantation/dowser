@@ -21,7 +21,9 @@ getTrees(
   rm_temp = TRUE,
   palette = NULL,
   resolve = 2,
-  seq = NULL
+  seq = NULL,
+  asr = "seq",
+  asr_thresh = 0.05
 )
 }
 \arguments{
