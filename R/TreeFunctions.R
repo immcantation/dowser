@@ -406,11 +406,11 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
 	trait=NULL,	dummy=TRUE){
 
-	file <- paste0(dir,"/",id,"_lineages_pars.tsv")
+	file <- file.path(dir,paste0(id,"_lineages_pars.tsv"))
 	if(!is.null(rep)){
-		file <- paste0(dir,"/",id,"_lineages_",rep,"_pars.tsv")
+		file <- file.path(dir,paste0(id,"_lineages_",rep,"_pars.tsv"))
 	}
-	outdir <- paste0(dir,"/",id,"_recon_",rep)
+	outdir <- file.path(dir,paste0(id,"_recon_",rep))
 	dir.create(dir,showWarnings=FALSE)
 	dir.create(outdir,showWarnings=FALSE)
 
@@ -422,8 +422,8 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 	write(length(data),file=file)
 	for(i in 1:length(data)){
 		tree <- trees[[i]]
-		fastafile <- paste0(outdir,"/",data[[i]]@clone,".fasta")
-		treefile <- paste0(outdir,"/",data[[i]]@clone,".tree")
+		fastafile <- file.path(outdir,paste0(data[[i]]@clone,".fasta"))
+		treefile <- file.path(outdir,paste0(data[[i]]@clone,".tree"))
 		germid <- paste0(data[[i]]@clone,"_GERM")
 		f <- writeFasta(data[[i]],fastafile,germid,trait,dummy=dummy)
 		if(!is.null(trees)){
@@ -961,7 +961,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
         }
 		if(is.null(modelfile)){
 			states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
-			modelfile <- makeModelFile(states,file=paste0(dir,"/",id,"_modelfile.txt"))
+			modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
 		}else{
 			states <- readModelFile(modelfile)
 		}
@@ -1005,7 +1005,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 	}
 	rm_dir <- NULL
 	if(rm_temp){
-		rm_dir=paste0(dir,"/",id,"_recon_trees")
+		rm_dir=file.path(dir,paste0(id,"_recon_trees"))
 	}
 	
 	#if(is.null(trees)){
@@ -1020,7 +1020,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 				trees <- parallel::mclapply(reps,function(x)
 					buildPhylo(data[[x]],
 						exec=exec,
-						temp_path=paste0(dir,"/",id,"_trees_",x),
+						temp_path=file.path(dir,paste0(id,"_trees_",x)),
 						rm_temp=rm_temp,
 						seq=seqs[x]),
 					mc.cores=nproc)
@@ -1028,7 +1028,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 				trees <- parallel::mclapply(reps,function(x)
 				buildPhylo(data[[x]],
 					exec=exec,
-					temp_path=paste0(dir,"/",id,"_trees_",x),
+					temp_path=file.path(dir,paste0(id,"_trees_",x)),
 					rm_temp=rm_temp,
 					seq=seqs[x],tree=trees[[x]]),
 				mc.cores=nproc)
@@ -1064,7 +1064,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 				stop("igphyml build only currently supports heavy chain sequences")
 			}
 			if(rm_temp){
-				rm_dir <- paste0(dir,"/",id)
+				rm_dir <- file.path(dir,id)
 			}else{
 				rm_dir <- NULL
 			}
@@ -1072,7 +1072,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 				trees =
 					buildIgphyml(data,
 					igphyml=exec,
-					temp_path=paste0(dir,"/",id),
+					temp_path=file.path(dir,id),
 					rm_files=rm_temp,
 					rm_dir=rm_dir,
 					nproc=nproc,id=id)
@@ -1080,7 +1080,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 				trees <- 
 					buildIgphyml(data,
 					igphyml=exec,
-					temp_path=paste0(dir,"/",id),
+					temp_path=file.path(dir,id),
 					rm_files=rm_temp,
 					rm_dir=rm_dir,
 					trees=trees,nproc=nproc,id=id)
@@ -1449,7 +1449,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
         }
 		if(is.null(modelfile)){
 			states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
-			modelfile <- makeModelFile(states,file=paste0(dir,"/",id,"_modelfile.txt"))
+			modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
 		}else{
 			states <- readModelFile(modelfile)
 		}
@@ -1484,13 +1484,13 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			results$trees <- lapply(l,function(x)x$trees)
 		}
 		if(rm_temp){
-			if(file.exists(paste0(dir,"/",id,"_modelfile.txt"))){
-				unlink(paste0(dir,"/",id,"_modelfile.txt"))
+			if(file.exists(file.path(dir,paste0(id,"_modelfile.txt")))){
+				unlink(file.path(dir,paste0(id,"_modelfile.txt")))
 			}
 		}
 		return(results)
 	}else{
-		rm_dir=paste0(dir,"/",id,"_recon_",rep)
+		rm_dir=file.path(dir,paste0(id,"_recon_",rep))
 		if(is.null(trees)){
 			for(i in 1:length(data)){
 				if(quiet > 3){
@@ -1509,7 +1509,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 				trees <- lapply(reps,function(x)
 					buildPhylo(data[[x]],
 						trait,exec,
-						temp_path=paste0(dir,"/",id,"_",rep,"_trees_",x),
+						temp_path=file.path(dir,paste0(id,"_",rep,"_trees_",x)),
 						rm_temp=rm_temp,seq=seq))
 			}else{
 				trees <- parallel::mclapply(reps,function(x)
