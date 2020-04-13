@@ -4,7 +4,8 @@
 \name{ExampleDb}
 \alias{ExampleDb}
 \title{Example AIRR database}
-\format{A data.frame with the following AIRR style columns:
+\format{
+A data.frame with the following AIRR style columns:
   \itemize{
     \item  \code{sequence_id}:           Sequence identifier
     \item  \code{sequence_alignment}:    IMGT-gapped observed sequence.
@@ -24,7 +25,8 @@
     \item  \code{isotype}:               Isotype assignment.
     \item  \code{duplicate_count}:       Copy count (number of duplicates) of the sequence.
     \item  \code{clone_id}:              Change-O assignment clonal group identifier.
-}}
+}
+}
 \usage{
 ExampleDb
 }

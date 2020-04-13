@@ -2,8 +2,8 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{bootstrapTrees}
 \alias{bootstrapTrees}
-\title{Create a bootstrap distribution for clone sequence alignments, and estimate trees for eac
-bootstrap replicate.}
+\title{Create a bootstrap distribution for clone sequence alignments, and estimate 
+trees for each bootstrap replicate.}
 \usage{
 bootstrapTrees(
   clones,
@@ -24,21 +24,25 @@ bootstrapTrees(
   rep = NULL,
   keeptrees = TRUE,
   lfile = NULL,
-  seq = "SEQUENCE"
+  seq = "sequence"
 )
 }
 \arguments{
-\item{clones}{tibble \code{changeoClone} objects, the output of \link{formatClones}}
+\item{clones}{tibble \code{airrClone} objects, the output of 
+\link{formatClones}}
 
 \item{bootstraps}{number of bootstrap replicates to perform}
 
 \item{nproc}{number of cores to parallelize computations}
 
-\item{trait}{trait to use for parsimony models (required if \code{igphyml} specified)}
+\item{trait}{trait to use for parsimony models (required if 
+\code{igphyml} specified)}
 
-\item{dir}{directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)}
+\item{dir}{directory where temporary files will be placed (required
+if \code{igphyml} or \code{dnapars} specified)}
 
-\item{id}{unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)}
+\item{id}{unique identifer for this analysis (required if 
+\code{igphyml} or \code{dnapars} specified)}
 
 \item{modelfile}{file specifying parsimony model to use}
 
@@ -46,9 +50,10 @@ bootstrapTrees(
 
 \item{exec}{location of desired phylogenetic executable}
 
-\item{igphyml}{location of igphyml executible if trait models desired (optional)}
+\item{igphyml}{location of igphyml executible if trait models desired}
 
-\item{trees}{tree topologies to use if aready available (bootstrapping will not be perfomed)}
+\item{trees}{tree topologies to use if aready available 
+(bootstrapping will not be perfomed)}
 
 \item{quiet}{amount of rubbish to print to console}
 
@@ -74,13 +79,14 @@ A list of trees and/or switch counts for each bootstrap replicate.
 }
 \details{
 Tree building details are the same as \link{getTrees}. 
-If \code{keeptrees=TRUE} (default) the returned object will contain a list named "trees"
-which contains a list of estimated tree objects for each bootstrap replicate. The object is
-structured like: trees[[<replicate>]][[<tree index>]].
-If \code{igphyml} is specified (as well as \code{trait}, \code{temp}, and \code{id}), the
-returned object will contain a \code{tibble} named "switches" containing switch count information.
-This object can be passed to \link{PStest} and other functions to perform parsimony based trait value
-tests.
+If \code{keeptrees=TRUE} (default) the returned object will contain a list 
+named "trees" which contains a list of estimated tree objects for each 
+bootstrap replicate. The object is structured like: 
+trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
+(as well as \code{trait}, \code{temp}, and \code{id}), the returned object 
+will contain a \code{tibble} named "switches" containing switch count 
+information. This object can be passed to \link{PStest} and other functions 
+to perform parsimony based trait value tests.
 }
 \examples{
 \dontrun{
@@ -99,6 +105,7 @@ PStest(btrees$switches)
 }
 }
 \seealso{
-Uses output from \link{formatClones} with similar arguments to \link{getTrees}. Output can be 
-visualized with \link{plotTrees}, and tested with \link{PStest}, \link{SCtest}, and \link{SPtest}.
+Uses output from \link{formatClones} with similar arguments to 
+\link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
+with \link{PStest}, \link{SCtest}, and \link{SPtest}.
 }

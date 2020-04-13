@@ -4,7 +4,8 @@
 \name{ExampleDbChangeo}
 \alias{ExampleDbChangeo}
 \title{Example Change-O database}
-\format{A data.frame with the following Change-O style columns:
+\format{
+A data.frame with the following Change-O style columns:
   \itemize{
     \item  \code{SEQUENCE_ID}:           Sequence identifier
     \item  \code{SEQUENCE_IMGT}:         IMGT-gapped observed sequence.
@@ -24,7 +25,8 @@
     \item  \code{ISOTYPE}:               Isotype assignment.
     \item  \code{DUPCOUNT}:              Copy count (number of duplicates) of the sequence.
     \item  \code{CLONE}:                 Change-O assignment clonal group identifier.
-}}
+}
+}
 \usage{
 ExampleDbChangeo
 }

@@ -6,7 +6,6 @@
 \usage{
 plotTrees(
   trees,
-  data = NULL,
   nodes = FALSE,
   tips = NULL,
   tipsize = NULL,
@@ -14,13 +13,14 @@ plotTrees(
   node_palette = "Dark2",
   tip_palette = node_palette,
   base = FALSE,
-  layout = "rectangular"
+  layout = "rectangular",
+  nodeids = FALSE,
+  title = TRUE
 )
 }
 \arguments{
-\item{trees}{A tibble containing \code{phylo} and \code{changeoClone} objects}
-
-\item{data}{list of \code{changeoClone} objects used to generate \code{tree}}
+\item{trees}{A tibble containing \code{phylo} and \code{airrClone}
+objects}
 
 \item{nodes}{color internal nodes if possible?}
 
@@ -30,7 +30,17 @@ plotTrees(
 
 \item{scale}{width of branch length scale bar}
 
-\item{trait}{trait to use to color the tips}
+\item{node_palette}{color palette for nodes}
+
+\item{tip_palette}{color palette for tips}
+
+\item{base}{recursion base case (don't edit)}
+
+\item{layout}{rectangular or circular tree layout?}
+
+\item{nodeids}{plot internal node numbers?}
+
+\item{title}{use clone id as title?}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.

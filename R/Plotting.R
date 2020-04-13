@@ -1,6 +1,13 @@
-#Plotting functions for parsimony-labeled trees
+#Plotting functions for trees
 
-#blend set of colors
+# Blend set of colors
+# 
+# \code{combineColors} blends colors
+# @param    x    vector of states
+# @param    pal  The colorbrewer palette to use
+#
+# @return   A color hex code representing the average of input colors
+#
 combineColors = function(x,pal){
 	cols = rowMeans(grDevices::col2rgb(pal[x]))
 	col = grDevices::rgb(cols[1],cols[2],cols[3],maxColorValue=255)
@@ -54,7 +61,7 @@ getPalette = function(palette,states){
 #' @return   a \code{phylo} object representing all represented internal node states
 #'
 #' @export
-condenseTrees = function(trees,states,palette){
+condenseTrees = function(trees, states, palette){
 	if(class(trees) == "phylo"){
 		trees = list(trees)
 		class(trees) = "multiPhylo"
@@ -100,7 +107,7 @@ condenseTrees = function(trees,states,palette){
 #'
 #' @seealso \link{getPalette}, \link{getTrees}, \link{plotTrees}
 #' @export
-colorTrees <- function(trees,palette,ambig="blend"){
+colorTrees <- function(trees, palette, ambig="blend"){
     ntrees <- list()
     if(ambig == "grey"){
     	palette = c(palette,"ambig"="#808080")
@@ -129,14 +136,18 @@ colorTrees <- function(trees,palette,ambig="blend"){
 #' Plot a tree with colored internal node labels using ggtree
 #' 
 #' \code{plotTrees} plots a tree or group of trees
-#' @param    trees      A tibble containing \code{phylo} and \code{changeoClone} objects
-#' @param    data     	(optional) 
-#' @param    nodes   	color internal nodes if possible?
-#' @param    tips 		color tips if possible?
-#' @param    trait    	trait to use to color the tips
-#' @param 	 tipsize 	size of tip shape objects
-#' @param 	 data 		list of \code{changeoClone} objects used to generate \code{tree}
-#' @param  	 scale 		width of branch length scale bar
+#' @param    trees        A tibble containing \code{phylo} and \code{airrClone}
+#'                        objects
+#' @param    nodes   	  color internal nodes if possible?
+#' @param    tips 		  color tips if possible?
+#' @param 	 tipsize 	  size of tip shape objects
+#' @param  	 scale 		  width of branch length scale bar
+#' @param    node_palette color palette for nodes
+#' @param    tip_palette  color palette for tips
+#' @param    layout       rectangular or circular tree layout?
+#' @param    nodeids      plot internal node numbers?
+#' @param    title        use clone id as title?
+#' @param    base         recursion base case (don't edit)
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -157,18 +168,21 @@ colorTrees <- function(trees,palette,ambig="blend"){
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.01,
-	node_palette="Dark2",tip_palette=node_palette,base=FALSE,layout="rectangular"){
+plotTrees = function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
+	scale=0.01,	node_palette="Dark2", tip_palette=node_palette, base=FALSE,
+	layout="rectangular", nodeids=FALSE, title=TRUE){
+
 	if(!base){
 		cols = c()
 		if(!is.null(tips) && nodes && sum(tip_palette != node_palette) == 0){
-			tipstates = unique(c(unlist(lapply(trees$DATA,function(x)unique(x@data[[tips]]))),"Germline"))
-			nodestates = unique(unlist(lapply(trees$TREE,function(x)
+			tipstates = unique(c(unlist(lapply(trees$data,function(x)
+				unique(x@data[[tips]]))),"Germline"))
+			nodestates = unique(unlist(lapply(trees$trees,function(x)
 					unique(unlist(strsplit(x$state,split=",")))
 					)))
 			combpalette = getPalette(node_palette,c(nodestates,tipstates))
-			trees$TREE = colorTrees(trees$TREE,palette=combpalette)
-			nodestates = unlist(lapply(trees$TREE,function(x){
+			trees$trees = colorTrees(trees$trees,palette=combpalette)
+			nodestates = unlist(lapply(trees$trees,function(x){
 				colors = x$node.color
 				names(colors) = x$state
 				colors
@@ -177,7 +191,8 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 			cols = c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
 		}else{
 			if(!is.null(tips)){
-				tipstates = unique(c(unlist(lapply(trees$DATA,function(x)unique(x@data[[tips]]))),"Germline"))
+				tipstates = unique(c(unlist(lapply(trees$data,function(x)
+					unique(x@data[[tips]]))),"Germline"))
 				if(is.null(names(tip_palette))){
 					tip_palette = getPalette(tip_palette,tipstates)
 					tip_palette = tip_palette[!is.na(names(tip_palette))]
@@ -191,7 +206,7 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 			}
 			if(nodes){
 				if(is.null(names(node_palette))){
-					nodestates = unique(unlist(lapply(trees$TREE,function(x)
+					nodestates = unique(unlist(lapply(trees$trees,function(x)
 						unique(unlist(strsplit(x$state,split=",")))
 						)))
 					statepalette = getPalette(node_palette,nodestates)
@@ -199,9 +214,9 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 				}else{
 					statepalette = node_palette
 				}
-				trees$TREE = colorTrees(trees$TREE,palette=statepalette)
+				trees$trees = colorTrees(trees$trees,palette=statepalette)
 				
-				nodestates = unlist(lapply(trees$TREE,function(x){
+				nodestates = unlist(lapply(trees$trees,function(x){
 					colors = x$node.color
 					names(colors) = x$state
 					colors
@@ -213,7 +228,8 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 		
 		ps = lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
 			nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,node_palette=node_palette,
-			tip_palette=tip_palette,base=TRUE,layout=layout))
+			tip_palette=tip_palette,base=TRUE,layout=layout,nodeids=nodeids,
+			title=title))
 		if(!is.null(tips) || nodes){
 			ps  = lapply(ps,function(x)
 					x = x + theme(legend.position="right",
@@ -224,8 +240,8 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 		return(ps)
 	}
 
-	tree = trees$TREE[[1]]
-	data = trees$DATA[[1]]
+	tree = trees$trees[[1]]
+	data = trees$data[[1]]
 	p = ggtree::ggtree(tree,layout=layout)
 	if(!is.null(data)){
 		if(class(data) != "list"){
@@ -239,7 +255,7 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 			stop("clone",tree$name," found more than once in list of clone objects")
 		}
 		data = data[[index]]
-		gl = tibble(SEQUENCE_ID="Germline")
+		gl = dplyr::tibble(sequence_id="Germline")
 		for(n in names(data@data)){
 			if(class(data@data[[n]]) == "numeric"){
 				gl[[n]] = 0
@@ -273,9 +289,16 @@ plotTrees = function(trees,data=NULL,nodes=FALSE,tips=NULL,tipsize=NULL,scale=0.
 		}
 	}
 	p = p + ggtree::geom_treescale(width=scale)
+	if(title){
+		p = p + ggtitle(data@clone)
+	}
+	if(nodeids){
+		p = p + ggtree::geom_nodelab(aes(label=!!rlang::sym("node")),geom="label")
+	}
 	p
 }
 
+# Experimental
 # get position grid to arrange ggtree plots in a 
 # grid
 arrangeGrid = function(trees,transform="sqrt",

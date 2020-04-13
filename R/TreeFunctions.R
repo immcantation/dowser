@@ -1,18 +1,27 @@
 # Functions for performing discrete trait analysis on B cell lineage trees
 
-#Write a clone's sequence alignment to a fasta file
-writeFasta = function(c,fastafile,germid,trait=NULL,dummy=FALSE){
+# Write a clone's sequence alignment to a fasta file
+# 
+# \code{readModelFile} Filler
+# @param    c            airrClone object
+# @param    fastafile    file to be exported
+# @param    germid       sequence id of germline
+# @param    trait        trait to include in sequence ids
+# @param    dummy        Not include real sequence information
+#
+# @return   Name of exported fasta file.
+writeFasta = function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	clone = c@clone
 	append = FALSE
 	if(!is.null(trait)){
-		c@data$SEQUENCE_ID = paste(c@data$SEQUENCE_ID,c@data[,trait],sep="_")
+		c@data$sequence_id = paste(c@data$sequence_id,c@data[,trait],sep="_")
 	}
 	for(i in 1:nrow(c@data)){
 		if(i > 1){append=TRUE}
-		write(paste0(">",c@data[i,]$SEQUENCE_ID),
+		write(paste0(">",c@data[i,]$sequence_id),
 			file=fastafile,append=append)
 		if(!dummy){
-			write(c@data[i,]$SEQUENCE,file=fastafile,append=TRUE)
+			write(c@data[i,]$sequence,file=fastafile,append=TRUE)
 		}else{
 			write("ATG",file=fastafile,append=TRUE)
 		}
@@ -109,7 +118,13 @@ makeModelFile = function(file,states,constraints=NULL){
 	return(file)
 }
 
-#read in switches data set
+# Read in a switches file from IgPhyML
+# 
+# \code{readSwitches} Filler
+# @param    file  		IgPhyML output file.
+#
+# @return   A named vector containing the states of the model
+#
 readSwitches = function(file){
 	t = read.table(file,sep="\t",stringsAsFactors=FALSE)
 	names(t) = c("REP","FROM","TO","SWITCHES")
@@ -117,9 +132,16 @@ readSwitches = function(file){
 	switches
 }
 
-#remove uniformative columns from data and germline
-cleanAlignment = function(clone,seq="SEQUENCE"){
-	if(seq=="HLSEQUENCE"){
+# Remove uniformative columns from data and germline
+# 
+# \code{cleanAlignment} clean multiple sequence alignments
+# @param    clone   \code{airrClone} object
+# @param 	seq     column in \code{clone} object
+#
+# @return   \code{airrClone} object with cleaned alignment
+#
+cleanAlignment = function(clone,seq="sequence"){
+	if(seq=="hlsequence"){
     	g = strsplit(clone@hlgermline[1],split="")[[1]]
     }else{
     	g = strsplit(clone@germline[1],split="")[[1]]
@@ -138,7 +160,10 @@ cleanAlignment = function(clone,seq="SEQUENCE"){
     if(.hasSlot(clone,"region")){
     	clone@region = clone@region[informative]	
     }
-    if(seq=="HLSEQUENCE"){
+    if(.hasSlot(clone,"numbers")){
+    	clone@numbers = clone@numbers[informative]
+    }
+    if(seq=="hlsequence"){
     	clone@hlgermline=gm
     }else{
     	clone@germline=gm
@@ -147,36 +172,25 @@ cleanAlignment = function(clone,seq="SEQUENCE"){
     return(clone)
 }
 
-#uncollapse data based on trait column
-uncollapse = function(clone, trait){
-	data = clone@data
-	newdata = data.frame()
-	for(i in 1:nrow(data)){
-		row = data[i,]
-		types = strsplit(row[,trait],split=",")[[1]]
-		for(type in types){
-			newrow = row
-			newrow[,trait] = type
-			#newrow$DUPCOUNT = row$DUPCOUNT/length(types)
-			newrow$SEQUENCE_ID = paste0(newrow$SEQUENCE_ID,"_",type)
-			newdata = rbind(newdata,newrow)
-		}
-	}
-	clone@data = newdata
-	clone
-}
-
-#make bootstrap replicate clones
+# Make bootstrap replicate of clonal alignment
+# 
+# \code{bootstrapClones} Filler
+# @param    clone    \code{airrClone} object
+# @param    reps     Number of bootstrap replicates
+#
+# @return   A list of \code{airrClone} objects with 
+# bootstrapped sequneces
+#
 bootstrapClones  = function(clone, reps=100){
-	sarray = strsplit(clone@data$SEQUENCE,split="")
+	sarray = strsplit(clone@data$sequence,split="")
 	garray = strsplit(clone@germline,split="")[[1]]
-	index = 1:stats::median(nchar(clone@data$SEQUENCE))
+	index = 1:stats::median(nchar(clone@data$sequence))
 	bootstraps = list()
 	for(i in 1:reps){
 		clone_copy = clone
 		sindex = sample(index,length(index),replace=TRUE)
 		#print(paste(length(unique(sindex)),length(unique(index))))
-		clone_copy@data$SEQUENCE = unlist(lapply(sarray,
+		clone_copy@data$sequence = unlist(lapply(sarray,
 			function(x)paste(x[sindex],collapse="")))
 		clone_copy@germline = paste(garray[sindex],collapse="")
 		bootstraps[[i]] = clone_copy
@@ -184,9 +198,30 @@ bootstrapClones  = function(clone, reps=100){
 	bootstraps
 }
 
-#reconstruct using maximum parsimony implemented in igphyml
+# Do IgPhyML maximum parsimony reconstruction
+# 
+# \code{reconIgPhyML} IgPhyML parsimony reconstruction function
+# @param    file       IgPhyML lineage file (see writeLineageFile)
+# @param    modefile   File specifying parsimony model
+# @param    cloneid    id for IgPhyML run
+# @param    igphyml    location of igphyml executable
+# @param    mode       return trees or count switches? (switches or trees)
+# @param    type       get observed switches or permuted switches?
+# @param    nproc      cores to use for parallelization
+# @param    quiet      amount of rubbish to print
+# @param    rm_files   remove temporary files?
+# @param    rm_dir     remove temporary directory?
+# @param    states     states in parsimony model
+# @param    palette    palette for coloring tree (see getPallete)
+# @param    resolve    level of polytomy resolution. 0=none, 
+#                      1=maximum parsimony, 2=maximum ambiguity
+# @param    rseed      random number seed if desired
+#
+# @return   Either a tibble of switch counts or a list
+#           of trees with internal nodes predicted by parsimony.
+#
 reconIgPhyML = function(file, modelfile, cloneid, 
-	igphyml="igphymlp",	mode="switches", type="recon",
+	igphyml="igphyml",	mode="switches", type="recon",
 	nproc=1, quiet=0, rm_files=FALSE, rm_dir=NULL, 
 	states=NULL, palette=NULL, resolve=2, rseed=NULL){
 
@@ -292,9 +327,24 @@ reconIgPhyML = function(file, modelfile, cloneid,
 	return(results)
 }
 
-#read in all trees from a nexus file
+# Read in all trees from a lineages file
+# 
+# @param    file    IgPhyML lineage file
+# @param    states  states in parsimony model
+# @param    palette palette for coloring internal nodes
+# @param    run_id  id used for IgPhyML run
+# @param    quiet   avoid printing rubbish on screen?
+# @param    append  string appended to fasta files
+# @param    format  format of input file with trees
+# @param    type    Read in parsimony reconstructions or ancestral sequence
+#                   reconstructions? "jointpars" reads in parsimony states, 
+#                   others read in sequences in internal nodes
+#
+# @return   A list of phylo objects from \code{file}.
+#
 readLineages = function(file, states=NULL, palette="Dark2",
-	run_id="", quiet=TRUE, append=NULL, format="nexus"){
+	run_id="", quiet=TRUE, append=NULL, format="nexus", 
+	type="jointpars"){
 	trees = list()
 	switch = data.frame()
 	t = readLines(file)
@@ -307,55 +357,54 @@ readLineages = function(file, states=NULL, palette="Dark2",
 		if(is.null(append)){
 			if(run_id == ""){
 				tf = suppressWarnings(phylotate::read_annotated(
-					paste0(fasta,"_igphyml_jointpars.nex"),
+					paste0(fasta,"_igphyml_",type,".nex"),
 					format=format))
 			}else{
 				tf = suppressWarnings(phylotate::read_annotated(
-					paste0(fasta,"_igphyml_jointpars_",run_id,".nex"),
+					paste0(fasta,"_igphyml_",type,"_",run_id,".nex"),
 					format=format))
 			}
 		}else{
-			tf = suppressWarnings(read_annotated(paste0(fasta,append),format=format))
+			tf = suppressWarnings(read_annotated(paste0(fasta,append),
+				format=format))
 		}
 		if(!is.null(states)){
 			tf = condenseTrees(tf,states,palette)
 		}
 		germ = tf$tip.label[grep("_GERM",tf$tip.label)]
 		tf$name = strsplit(germ,split="_")[[1]][1]
-		tf = rerootGermline(tf,germ)
+		tf$tip.label[which(tf$tip.label == germ)] = "Germline"
+		nnodes = length(unique(c(tf$edge[,1],tf$edge[,2])))
+		tf$nodes = rep(list(sequence=NULL),times=nnodes)
+		if(type=="jointpars"){
+			tf = rerootTree(tf,"Germline")
+		}else{
+			tf$nodes = lapply(1:length(tf$nodes),function(x){
+				tf$nodes[[x]]$sequence = tf$node.comment[x]
+				tf$nodes[[x]]
+			})
+		}
 		trees[[i-1]] = tf
 	}
 	return(trees)
 }
 
-#write bootstapped lineage file input into igphyml
-writeBootstrapFile = function(data,trees,dir=".",id="",rep=NULL,trait=NULL){
-	file = paste0(dir,"/",id,"_blineages_pars.tsv")
-	if(!is.null(rep)){
-		file = paste0(dir,"/",id,"_blineages_",rep,"_pars.tsv")
-	}
-	outdir = paste0(dir,"/",id,"_",rep)
-	#print(paste("outdir: ",outdir))
-	dir.create(dir,showWarnings=FALSE)
-	dir.create(outdir,showWarnings=FALSE)
-	write(length(data),file=file)
-	for(i in 1:length(data)){
-		tree = ape::multi2di(trees[[i]])
-		germid = paste0(i,"_GERM")
-		tree$tip.label[which(tree$tip.label == "Germline")] = germid
-		fastafile = paste0(outdir,"/",i,".fasta")
-		treefile = paste0(outdir,"/",i,".tree")
-		f = writeFasta(data[[i]],fastafile,germid,trait,dummy=TRUE)
-		ape::write.tree(tree,file=treefile)
-		write(paste(fastafile,treefile,germid,"N",sep="\t"), file=file,
-			append=TRUE)
-	}
-	return(file)
-}
-
 
 # Write lineage file for IgPhyML use
-writeLineageFile = function(data,trees,dir=".",id="N",rep=NULL,trait=NULL){
+# 
+# @param    data    list of \code{airrClone} objects
+# @param    trees   list of \cde{phylo} objects corresponding to \code{data}
+# @param    dir     directory to write file
+# @param    id      id used for IgPhyML run
+# @param    rep     bootstrap replicate
+# @param    trait   string appended to sequence id in fasta files
+# @param    dummy   output uninformative sequences?
+#
+# @return   Name of created lineage file.
+#
+writeLineageFile = function(data, trees=NULL, dir=".", id="N", rep=NULL, 
+	trait=NULL,	dummy=TRUE){
+
 	file = paste0(dir,"/",id,"_lineages_pars.tsv")
 	if(!is.null(rep)){
 		file = paste0(dir,"/",id,"_lineages_",rep,"_pars.tsv")
@@ -375,68 +424,88 @@ writeLineageFile = function(data,trees,dir=".",id="N",rep=NULL,trait=NULL){
 		fastafile = paste0(outdir,"/",data[[i]]@clone,".fasta")
 		treefile = paste0(outdir,"/",data[[i]]@clone,".tree")
 		germid = paste0(data[[i]]@clone,"_GERM")
-		f = writeFasta(data[[i]],fastafile,germid,trait,dummy=TRUE)
-		tree$tip.label[which(tree$tip.label == "Germline")] = germid
-		tree = ape::multi2di(tree)
-		ape::write.tree(tree,file=treefile)
-		write(paste(fastafile,treefile,germid,"N",sep="\t"), file=file,
-			append=TRUE)
+		f = writeFasta(data[[i]],fastafile,germid,trait,dummy=dummy)
+		if(!is.null(trees)){
+			tree$tip.label[which(tree$tip.label == "Germline")] = germid
+			tree = ape::multi2di(tree)
+			ape::write.tree(tree,file=treefile)
+			write(paste(fastafile,treefile,germid,"N",sep="\t"), file=file,
+				append=TRUE)
+		}else{
+			write(paste(fastafile,"N",germid,"N",sep="\t"), file=file,
+				append=TRUE)
+		}
 	}
 	return(file)
 }
 
-#wrapper for build phylip lineage
-buildPhylo = function(clone,trait,dnapars,temp_path=NULL,verbose=FALSE,rm_temp=TRUE,
-	seq="SEQUENCE",tree=NULL){
-	#stop("Dowser is not yet compatible with buildPhylipLineage.")
-	if(seq != "SEQUENCE"){
-		clone@data$SEQUENCE = clone@data[[seq]]
-		if(seq == "HLSEQUENCE"){
+# Wrapper for alakazam::buildPhylipLineage
+# 
+# @param    clone      \code{airrClone} object
+# @param    exec       dnapars or dnaml executable
+# @param    temp_path  path to temporary directory
+# @param    verbose    amount of rubbish to print
+# @param    rm_temp    remove temporary files?
+# @param    seq        sequece column in \code{airrClone} object
+# @param    tree       fixed tree topology if desired (currently does nothing
+#                      if specified)
+#
+# @return  \code{phylo} object created by dnapars or dnaml with nodes attribute
+#          containing reconstructed sequences.
+#
+buildPhylo = function(clone, exec, temp_path=NULL, verbose=FALSE,
+	rm_temp=TRUE, seq="sequence", tree=NULL){
+
+	if(grepl("dnaml$",exec)){
+       method = "dnaml"
+    }else if(grepl("dnapars$",exec)){
+        method = "dnapars"
+    }else{
+        stop("executable not recognized! Must end with dnapars or dnaml")
+    }
+	if(seq != "sequence"){
+		clone@data$sequence = clone@data[[seq]]
+		if(seq == "hlsequence"){
 		clone@germline = clone@hlgermline
-		}else if(seq == "LSEQUENCE"){
+		}else if(seq == "lsequence"){
 			clone@germline = clone@lgermline
 		}
 	}
 	if(is.null(tree)){
 		tree = tryCatch({
-			alakazam::buildPhylipLineage(clone,dnapars,rm_temp=rm_temp,phylo=TRUE,verbose=verbose,
-				temp_path=temp_path)},
+			alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,phylo=TRUE,
+				verbose=verbose,temp_path=temp_path)},
 			error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
+		tree = rerootTree(tree, germline="Germline")
+        tree = ape::ladderize(tree,right=FALSE)
 		tree$name = clone@clone
-		tree$tree_method = "phylip::dnapars"
+		tree$tree_method = paste0("phylip::",method)
 		tree$edge_type = "genetic_distance"
 		tree$seq = seq
 	}
 	tree
 }
 
-#' @rdname    DNA_IUPAC_CODES
-#' @export
-DNA_IUPAC <- list(
-           "A"="A", 
-           "C"="C", 
-           "G"="G", 
-           "T"="T",
-           "AC"="M", 
-           "AG"="R", 
-           "AT"="W", 
-           "CG"="S", 
-           "CT"="Y", 
-           "GT"="K", 
-           "ACG"="V", 
-           "ACT"="H", 
-           "AGT"="D", 
-           "CGT"="B",
-           "ACGT"="N")
-
-#wrapper for pratchet + acctran
-buildPratchet = function(clone,seq="SEQUENCE",asr="seq",asr_thresh=0.05,tree=NULL,
-	asr_type="MPR"){
+# Wrapper for phangorn::pratchet
+# 
+# @param    clone      \code{airrClone} object
+# @param    seq        sequece column in \code{airrClone} object
+# @param    asr        return sequence or probability matrix?
+# @param    asr_thresh threshold for including a nucleotide as an alternative
+# @param    tree       fixed tree topology if desired.
+# @param    asr_type   MPR or ACCTRAN
+#
+# @return  \code{phylo} object created by phangorn::pratchetet with nodes
+#          attribute containing reconstructed sequences.
+#
+buildPratchet = function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
+	tree=NULL, asr_type="MPR"){
 	seqs = clone@data[[seq]]
-	names = clone@data$SEQUENCE_ID
-	if(seq == "HLSEQUENCE"){
+	names = clone@data$sequence_id
+	print(clone@clone)
+	if(seq == "hlsequence"){
 		germline = clone@hlgermline
-	}else if(seq == "LSEQUENCE"){
+	}else if(seq == "lsequence"){
 		germline = clone@lgermline
 	}else{
 		germline = clone@germline
@@ -449,10 +518,16 @@ buildPratchet = function(clone,seq="SEQUENCE",asr="seq",asr_thresh=0.05,tree=NUL
 	if(is.null(tree)){
 		tree = tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
 		tree = phangorn::acctran(ape::multi2di(tree),data)
-		tree = rerootGermline(tree,"Germline",resolve=TRUE)
+		tree = ape::unroot(tree)
+		#tree = rerootTree(tree,"Germline")
 		tree$edge.length = tree$edge.length/nchar(germline)
 		tree$tree_method = "phangorn::prachet"
 		tree$edge_type = "genetic_distance"
+		nnodes = length(unique(c(tree$edge[,1],tree$edge[,2])))
+		tree$nodes = rep(list(sequence=NULL),times=nnodes)
+	}else if(is.null(tree$nodes)){
+		nnodes = length(unique(c(tree$edge[,1],tree$edge[,2])))
+		tree$nodes = rep(list(sequence=NULL),times=nnodes)
 	}
 	tree$name = clone@clone
 	tree$seq = seq
@@ -469,222 +544,312 @@ buildPratchet = function(clone,seq="SEQUENCE",asr="seq",asr_thresh=0.05,tree=NUL
 				acgt = c("A","C","G","T")
 				seq_ar = unlist(lapply(1:ncol(pat),function(x){
 					site = acgt[thresh[,x]]
-					site = DNA_IUPAC[[paste(sort(site),collapse="")]]
+					site = alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
 					site}))
 				ASR[[as.character(i)]] = paste(seq_ar,collapse="")
 			}else{
 				ASR[[as.character(i)]] = pat
 			}
 		}
-		tree$sequences = ASR
+		tree$nodes = lapply(1:length(tree$nodes),function(x){
+			tree$nodes[[x]]$sequence = ASR[[x]]
+			tree$nodes[[x]]
+		})
 	}
+	tree = rerootTree(tree,"Germline")
 	return(tree)
 }
 
-#### Preprocessing functions ####
+# Wrapper for phangorn::optim.pml
+# 
+# @param    clone      \code{airrClone} object
+# @param    seq        sequece column in \code{airrClone} object
+# @param    model      substitution model to use
+# @param    gamma      gamma site rate variation?
+# @param    asr        return sequence or probability matrix?
+# @param    asr_thresh threshold for including a nucleotide as an alternative
+# @param    tree       fixed tree topology if desired.
+#
+# @return  \code{phylo} object created by phangorn::optim.pml with nodes
+#          attribute containing reconstructed sequences.
+#
+buildPML = function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq", 
+	asr_thresh=0.05, tree=NULL){
 
-#' Generate an ordered list of ChangeoClone objects for lineage construction
-#' 
-#' \code{formatClones} takes a \code{data.frame} or \code{tibble} with AIRR or Change-O style columns as input and 
-#' masks gap positions, masks ragged ends, removes duplicates sequences, and merges 
-#' annotations associated with duplicate sequences. If specified, it will un-merge duplicate sequences with different values specified in the \code{trait} option.
-#' It returns a list of \code{ChangeoClone} objects ordered by number of sequences which serve as input for lineage reconstruction.
-#' 
-#' @param    data         data.frame containing the AIRR or Change-O data for a clone. See Details
-#'                        for the list of required columns and their default values.
-#' @param    id           name of the column containing sequence identifiers.
-#' @param    seq          name of the column containing observed DNA sequences. All 
-#'                        sequences in this column must be multiple aligned.
-#' @param    germ         name of the column containing germline DNA sequences. All entries 
-#'                        in this column should be identical for any given clone, and they
-#'                        must be multiple aligned with the data in the \code{seq} column.
-#' @param    vcall        name of the column containing V-segment allele assignments. All 
-#'                        entries in this column should be identical to the gene level.
-#' @param    jcall        name of the column containing J-segment allele assignments. All 
-#'                        entries in this column should be identical to the gene level.
-#' @param    junc_len     name of the column containing the length of the junction as a 
-#'                        numeric value. All entries in this column should be identical 
-#'                        for any given clone.
-#' @param    clone        name of the column containing the identifier for the clone. All 
-#'                        entries in this column should be identical.
-#' @param    mask_char    character to use for masking and padding.
-#' @param    max_mask     maximum number of characters to mask at the leading and trailing
-#'                        sequence ends. If \code{NULL} then the upper masking bound will 
-#'                        be automatically determined from the maximum number of observed 
-#'                        leading or trailing Ns amongst all sequences. If set to \code{0} 
-#'                        (default) then masking will not be performed.
-#' @param    pad_end      if \code{TRUE} pad the end of each sequence with \code{mask_char}
-#'                        to make every sequence the same length.
-#' @param    text_fields  text annotation columns to retain and merge during duplicate removal.
-#' @param    num_fields   numeric annotation columns to retain and sum during duplicate removal.
-#' @param    seq_fields   sequence annotation columns to retain and collapse during duplicate 
-#'                        removal. Note, this is distinct from the \code{seq} and \code{germ} 
-#'                        arguments, which contain the primary sequence data for the clone
-#'                        and should not be repeated in this argument.
-#' @param    add_count    if \code{TRUE} add an additional annotation column called 
-#'                        \code{COLLAPSE_COUNT} during duplicate removal that indicates the 
-#'                        number of sequences that were collapsed.
-#' @param    verbose      passed on to \code{collapseDuplicates}. If \code{TRUE}, report the 
-#'                        numbers of input, discarded and output sequences; otherwise, process
-#'                        sequences silently.
-#' @param     collapse    iollapse identical sequences?
-#' @param     traits      column ids to keep distinct during sequence collapse 
-#' @param     region      if HL, include light chain information if available.
-#' @param     heavy       name of heavy chain locus (default = "IGH")
-#' @param     cell        name of the column containing cell assignment information
-#' @param     locus       name of the column containing locus information
-#' @param     nproc		  Number of cores to parallelize formating over.                        
+	seqs = clone@data[[seq]]
+	names = clone@data$sequence_id
+	if(seq == "hlsequence"){
+		germline = clone@hlgermline
+	}else if(seq == "lsequence"){
+		germline = clone@lgermline
+	}else{
+		germline = clone@germline
+	}
+	seqs = base::append(seqs,germline)
+	names = c(names,"Germline")
+	seqs = strsplit(seqs,split="")
+	names(seqs) = names
+	data = phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+	if(is.null(tree)){
+		dm  <- phangorn::dist.ml(data)
+		treeNJ  <- ape::multi2di(phangorn::NJ(dm))
+
+		#change negative edge lengths to zero!
+		treeNJ$edge.length[treeNJ$edge.length < 0] = 0
+		pml = phangorn::pml(treeNJ,data=data)
+		fit <- tryCatch(phangorn::optim.pml(pml, model=model, optInv=FALSE,
+		 optGamma=gamma, rearrangement = "NNI",control = phangorn::pml.control(epsilon = 1e-08,
+		  maxit = 10, trace = 1L)),
+			error=function(e)e)
+		tree = fit$tree
+		tree$tree_method = paste("phangorn::optim.pml::",model)
+		tree$edge_type = "genetic_distance"
+		nnodes = length(unique(c(tree$edge[,1],tree$edge[,2])))
+		tree$nodes = rep(list(sequence=NULL),times=nnodes)
+	}
+	tree$name = clone@clone
+	tree$seq = seq
+
+	if(asr != "none"){
+		seqs_ml = phangorn::ancestral.pml(fit,
+			type = "marginal",return="prob")
+		ASR = list()
+		for(i in 1:max(tree$edge)){
+			patterns = t(subset(seqs_ml, i)[[1]])
+			pat = patterns[,attr(seqs_ml,"index")]
+			if(asr == "seq"){
+				thresh = pat > asr_thresh
+				acgt = c("A","C","G","T")
+				seq_ar = unlist(lapply(1:ncol(pat),function(x){
+					site = acgt[thresh[,x]]
+					site = alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+					site}))
+				ASR[[as.character(i)]] = paste(seq_ar,collapse="")
+			}else{
+				ASR[[as.character(i)]] = pat
+			}
+		}
+		#tree$sequences = ASR
+		tree$nodes = lapply(1:length(tree$nodes),function(x){
+			tree$nodes[[x]]$sequence = ASR[[x]]
+			tree$nodes[[x]]
+		})
+	}
+	tree = rerootTree(tree,"Germline")
+	return(tree)
+}
+
+# Wrapper to build IgPhyML trees and infer intermediate nodes
+# 
+# @param    clone      \code{airrClone} object
+# @param    igphyml    igphyml executable
+# @param    trees      list of tree topologies if desired
+# @param    nproc      number of cores for parallelization
+# @param    temp_path  path to temporary directory
+# @param    id         IgPhyML run id
+# @param    rseed      random number seed if desired
+# @param    queit      amount of rubbish to print
+# @param    rm_files   remove temporary files?
+# @param    rm_dir     remove temporary directory?
+#
+# @return  \code{phylo} object created by igphyml with nodes attribute
+#          containing reconstructed sequences.
+#
+buildIgphyml = function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
+	id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL){
+
+	file = writeLineageFile(clone,trees,dir=temp_path,rep=id,dummy=FALSE)
+	igphyml <- path.expand(igphyml)
+	if(file.access(igphyml, mode=1) == -1) {
+        stop("The file ", igphyml, " cannot be executed.")
+    }
+	logfile = paste0(file,".log")
+	log = paste(">>",logfile)
+	if(is.null(rseed)){
+		rseed = ""
+	}else{
+		rseed = paste("--r_seed",rseed)
+	}
+	gyrep = paste0(file,"_gyrep")
+	if(!is.null(trees)){
+		command = paste("--repfile",file,"--outrep",gyrep,
+			"--threads",nproc,"-o lr -m GY --run_id gy",rseed,log)
+	}else{
+		command = paste("--repfile",file,"--outrep",gyrep,
+			"--threads",nproc,"-o tlr -m GY --run_id gy",rseed,log)
+	}
+	params = list(igphyml,command,stdout=TRUE,stderr=TRUE)
+	if(quiet > 2){
+		print(paste(params,collapse=" "))
+	}
+	status = tryCatch(do.call(base::system2, params), error=function(e){
+		print(paste("igphyml error, trying again: ",e));
+		cat(paste(readLines(logfile),"\n"))
+		return(e)
+		}, warning=function(w){
+		print(paste("igphyml warnings, trying again: ",w));
+		cat(paste(readLines(logfile),"\n"))
+		return(w)
+		})
+	if(length(status) != 0){
+		status = tryCatch(do.call(base::system2, params), error=function(e){
+		print(paste("igphyml error, again! quitting: ",e));
+		cat(paste(readLines(logfile),"\n"))
+		stop()
+		}, warning=function(w){
+		print(paste("igphyml warnings, again! quitting: ",w));
+		cat(paste(readLines(logfile),"\n"))
+		stop()
+		})
+	}
+	command = paste("--repfile",gyrep,
+		"--threads",nproc,"-m HLP -o lr --run_id hlp --ASR",rseed,log)
+	params = list(igphyml,command,stdout=TRUE,stderr=TRUE)
+	if(quiet > 2){
+		print(paste(params,collapse=" "))
+	}
+	status = tryCatch(do.call(base::system2, params), error=function(e){
+		print(paste("igphyml error, trying again: ",e));
+		cat(paste(readLines(logfile),"\n"))
+		return(e)
+		}, warning=function(w){
+		print(paste("igphyml warnings, trying again: ",w));
+		cat(paste(readLines(logfile),"\n"))
+		return(w)
+		})
+	if(length(status) != 0){
+		status = tryCatch(do.call(base::system2, params), error=function(e){
+		print(paste("igphyml error, again! quitting: ",e));
+		cat(paste(readLines(logfile),"\n"))
+		stop()
+		}, warning=function(w){
+		print(paste("igphyml warnings, again! quitting: ",w));
+		cat(paste(readLines(logfile),"\n"))
+		stop()
+		})
+	}
+	trees = readLineages(file=gyrep,run_id="hlp",type="asr")
+
+	if(rm_files){
+		lines = readLines(file)
+		for(i in 2:length(lines)){
+			temp = strsplit(lines[i],split="\t")[[1]]
+			unlink(paste0(temp[1],"*"))
+			unlink(paste0(temp[2],"*"))
+		}
+		unlink(paste0(file,"*"))
+	}
+	if(!is.null(rm_dir)){
+		if(quiet > 1){
+			print(paste("rming dir",rm_dir))
+		}
+		unlink(rm_dir,recursive=TRUE)
+	}
+	return(trees)
+}
+
+#' Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
+#' to a node which is the direct ancestor of the tree's UCA. Assigns \code{uca}
+#' to be the ancestral node to the tree's germline sequence, as \code{germid} as
+#' the tree's germline sequence ID. 
 #'
-#' @return   A list of \link{ChangeoClone} objects containing modified clones.
-#'
-#' @details
-#' This function is largely a wrapper for alakazam::makeChangeoClone.
-#' The input data.frame (\code{data}) must columns for each of the required column name 
-#' arguments: \code{id}, \code{seq}, \code{germ}, \code{vcall}, \code{jcall}, 
-#' \code{junc_len}, and \code{clone}.  The default values are as follows:
-#' \itemize{
-#'   \item  \code{id       = "sequence_id"}:           unique sequence identifier.
-#'   \item  \code{seq      = "sequence_alignment"}:         IMGT-gapped sample sequence.
-#'   \item  \code{germ     = "germline_alignment_d_mask"}:  IMGT-gapped germline sequence.
-#'   \item  \code{vcall    = "v_call"}:                V-segment allele call.
-#'   \item  \code{jcall    = "j_call"}:                J-segment allele call.
-#'   \item  \code{junc_len = "junction_length"}:       junction sequence length.
-#'   \item  \code{clone    = "clone_id"}:                 clone identifier.
-#' }
-#' Additional annotation columns specified in the \code{text_fields}, \code{num_fields} 
-#' or \code{seq_fields} arguments will be retained in the \code{data} slot of the return 
-#' object, but are not required. If the input data.frame \code{data} already contains a 
-#' column named \code{SEQUENCE}, which is not used as the \code{seq} argument, then that 
-#' column will not be retained.
+#' @param   tree      An ape \code{phylo} object
+#' @param   germline  ID of the tree's predicted germline sequence
 #' 
-#' The default columns are IMGT-gapped sequence columns, but this is not a requirement. 
-#' However, all sequences (both observed and germline) must be multiple aligned using
-#' some scheme for both proper duplicate removal and lineage reconstruction. 
-#'
-#' The value for the germline sequence, V-segment gene call, J-segment gene call, 
-#' junction length, and clone identifier are determined from the first entry in the 
-#' \code{germ}, \code{vcall}, \code{jcall}, \code{junc_len} and \code{clone} columns, 
-#' respectively. For any given clone, each value in these columns should be identical.
-#'  
-#' @seealso  Executes in order \code{alakazam::maskSeqGaps}, \code{alakazam::maskSeqEnds}, 
-#'           \code{alakazam::padSeqEnds}, \code{alakazam::collapseDuplicates},
-#' 			 and \code{processClones}. Returns a list of \link{ChangeoClone} objects 
-#' 			which serve as input to \link{getTrees} and \link{bootstrapTrees}.
+#' @return  \code{phylo} object rooted at the specified germline
 #' 
-#' @examples
-#' \dontrun{
-#' data(ExampleDb)
-#' clones = formatClones(ExampleDb,trait="sample_id")
-#' }
 #' @export
-formatClones <- function(data, id="sequence_id", seq="sequence_alignment", 
-                             germ="germline_alignment_d_mask", vcall="v_call", jcall="j_call",
-                             junc_len="junction_length", clone="clone_id", mask_char="N",
-                             max_mask=0, pad_end=FALSE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
-                             add_count=TRUE, verbose=FALSE, nproc=1, collapse=TRUE,
-                             region="H", heavy=NULL, cell="cell", locus="locus", traits=NULL) {
+rerootTree = function(tree,germline){
+    ntip = length(tree$tip.label)
+    uca = ntip+1
+    if(ape::is.rooted(tree)){
+        #stop("tree already rooted!")
+        print("unrooting tree!")
+        root = ape::getMRCA(tree,
+            tip=tree$tip.label)
+        max = max(tree$edge)
+        rindex = tree$edge[,1] == root
+        redge = tree$edge[rindex,]
+        parent = redge[1,2]
+        child = redge[2,2]
+        if(parent <= length(tree$tip.label)){
+            parent = redge[2,2]
+            child = redge[1,2]
+        }
+        tree$edge = tree$edge[!rindex,]
+        tree$edge = rbind(tree$edge,c(parent,child))
+        sumedge = sum(tree$edge.length[rindex])
+        tree$edge.length = tree$edge.length[!rindex]
+        tree$edge.length[length(tree$edge.length)+1] = sumedge
+        tree$Nnode = tree$Nnode - 1
+        if(parent != uca){
+            if(uca %in% tree$edge){
+                stop("something weird")
+            }
+            root = parent
+            tree$edge[tree$edge[,1]==parent,1] = uca
+            tree$edge[tree$edge[,2]==parent,2] = uca
+            if(!is.null(tree$nodes)){
+                s = tree$nodes[[uca]]
+                tree$nodes[[uca]] = tree$nodes[[parent]]
+                tree$nodes[[parent]] = s
+            }
+        }
+        tree$edge[tree$edge[,1]==max,1] = root
+        tree$edge[tree$edge[,2]==max,2] = root
+        if(!is.null(tree$nodes)){
+            tree$nodes[[max]] = tree$nodes[[root]]
+            tree$nodes[[max]] = NULL
+        }
+    }
+    edge = tree$edge
+    germid = which(tree$tip.label == germline)
+    
+    max = max(edge)
+    nnode = max+1
+    uca = ntip+1
+    
+    edge[edge[,1]==uca,1] = nnode
+    edge[edge[,2]==uca,2] = nnode
+    
+    edge[edge[,2] == germid,2] = uca
+    edge = rbind(edge,c(uca,germid))
+    tree$edge.length[length(tree$edge.length)+1] = 0
 
-    clones <- data %>%
-        dplyr::group_by(!!rlang::sym(clone)) %>%
-        dplyr::do(DATA=alakazam::makeChangeoClone(.,
-            id=id, seq=seq, germ=germ, vcall=vcall, jcall=jcall, junc_len=junc_len,
-            clone=clone, mask_char=mask_char, max_mask=max_mask, pad_end=pad_end,
-            text_fields=text_fields, num_fields=num_fields, seq_fields=seq_fields,
-            add_count=add_count, verbose=verbose,collapse=collapse,
-            region=region, heavy=heavy, cell=cell, locus=locus, traits=traits))
-
-    if(region == "HL"){
-    	seq_name = "HLSEQUENCE"
-    }else{
-    	seq_name = "SEQUENCE"
+    #recursive function to swap nodes while 
+    #preserving internal node ids
+    swap = function(tnode,edge,checked){
+        if(tnode %in% checked){
+            print("r edge")
+            return(edge)
+        }
+        checked = c(checked,tnode)
+        children = edge[edge[,1] == tnode,2]
+        parent = edge[edge[,2] == tnode,1]
+        if(length(children) < 2 || sum(!parent %in% checked) > 0){
+            parent = edge[edge[,2] == tnode,1]
+            parent = parent[!parent %in% checked]
+            edge[edge[,1] == parent & edge[,2] == tnode,] = c(tnode,parent)
+            children = edge[edge[,1] == tnode,2]
+        }
+        for(tnode in children){
+            if(!tnode %in% checked){
+                edge = swap(tnode,edge,checked)
+            }
+        }
+        return(edge)
     }
     
-    fclones = processClones(clones, nproc=nproc, seq=seq_name)
-    fclones
-}
+    edge = swap(uca,edge,checked=c(1:ntip))
 
-
-# Clean clonal alignments and deduplicate based on trait
-processClones = function(clones,nproc=1,seq){
-	if(!"tbl" %in% class(clones)){
-		print(paste("clones is of class",class(clones)))
-		stop("clones must be a tibble of ChangeoClone objects!")
-	}else{
-		if(class(clones$DATA[[1]]) != "ChangeoClone"){
-			print(paste("clones is list of class",class(clones$DATA[[1]])))
-			stop("clones$DATA must be a list of ChangeoClone objects!")
-		}
-	}
-
-	threshold = unlist(lapply(clones$DATA,function(x)
-	length(x@data[[seq]]) >= 2))
-	clones = clones[threshold,]
-
-	clones$DATA = lapply(clones$DATA,function(x){
-		x@data$SEQUENCE_ID=	gsub(":","_",x@data$SEQUENCE_ID);
-		x
-		})
-	clones$DATA = lapply(clones$DATA,function(x){
-		x@data$SEQUENCE_ID=gsub(";","_",x@data$SEQUENCE_ID);
-		x
-		})
-	
-	clones$DATA = lapply(clones$DATA,function(x){
-		x@data$SEQUENCE_ID=gsub(",","_",x@data$SEQUENCE_ID);
-		x
-		})
-
-	max = max(unlist(lapply(clones$DATA,function(x)max(nchar(x@data$SEQUENCE_ID)))))
-	if(max > 1000){
-		wc = which.max(unlist(lapply(clones$DATA,function(x)
-			max(nchar(x@data$SEQUENCE_ID)))))
-		stop(paste("Sequence ID of clone",clones$DATA[[wc]]@clone,"index",
-			wc,"too long - over 1000 characters!"))
-	}
-
-	or = order(unlist(lapply(clones$DATA,function(x) nrow(x@data))),
-		decreasing=TRUE)
-	clones = clones[or,]
-
-	clones$DATA = parallel::mclapply(clones$DATA,
-		function(x)cleanAlignment(x,seq),mc.cores=nproc)
-
-	if(.hasSlot(clones$DATA[[1]],"locus")){
-		clones$LOCUS = unlist(lapply(clones$DATA,function(x)paste(x@locus,collapse=",")))
-	}
-	clones$SEQS = unlist(lapply(clones$DATA,function(x)nrow(x@data)))
-	clones = dplyr::rowwise(clones)
-	clones = dplyr::ungroup(clones)
-	clones
-}
-
-# Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
-# to a node which is the direct ancestor of the tree's UCA. Assigns \code{uca}
-# to be the ancestral node to the tree's germline sequence, as \code{germid} as
-# the tree's germline sequence ID. Lifted from alakazam.
-#
-# @param   tree     An ape \code{phylo} object
-# @param   germid   ID of the tree's predicted germline sequence
-# @param   resolve  If \code{TRUE} reroots tree to specified germline sequnece.
-#                   usually not necessary with IgPhyML trees analyzed with HLP model.
-rerootGermline <- function(tree, germid, resolve=FALSE){
-    if(resolve) {
-        tree <- ape::root(tree, outgroup=germid, resolve.root=T, edge.label=TRUE)
+    tree$edge=edge
+    tree$Nnode = length(unique(edge[,1]))
+    tree = ape::reorder.phylo(tree,"postorder")
+    #print(paste(germid,uca,nnode))
+     if(!is.null(tree$nodes)){
+        tree$nodes[[nnode]] = tree$nodes[[uca]]
+        tree$nodes[[uca]] = tree$nodes[[germid]]
     }
-    tree <- ape::reorder.phylo(tree, "postorder")  
-    edges <- tree$edge
-    rootnode <- which(tree$tip.label==germid)
-    rootedge <- which(edges[, 2] == rootnode)
-    rootanc <- edges[edges[, 2] == rootnode, 1]
-    mrcaedge <- which(edges[, 1] == rootanc & edges[, 2] != rootnode)
-    if(length(mrcaedge) > 1){
-            print("POLYTOMY AT ROOT?!")
-            quit(save="no", status=1, runLast=FALSE)
-    }
-    tree$edge.length[mrcaedge] <- tree$edge.length[mrcaedge] + tree$edge.length[rootedge]
-    tree$edge.length[rootedge] <- 0
-    tree$uca <- rootanc
-    tree$germid <- germid
     return(tree)
 }
 
@@ -692,14 +857,18 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' and internal node states if desired
 #' 
 #' \code{getTrees} Tree building function.
-#' @param    clones  	a tiblle of \code{changeoClone} objects, the output of \link{formatClones}
-#' @param    data  		list of \code{changeoClone} objects, alternate input
-#' @param    trait 		trait to use for parsimony models (required if \code{igphyml} specified)
-#' @param 	 build	    program to use for tree building (phangorn, dnapars)
+#' @param    clones  	a tibble of \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
+#' @param    data  		list of \code{airrClone} objects, alternate input
+#' @param    trait 		trait to use for parsimony models (required if 
+#'                      \code{igphyml} specified)
+#' @param 	 build	    program to use for tree building (pratchet, pml, 
+#'                      dnapars, dnaml, igphyml)
 #' @param 	 exec	    location of desired phylogenetic executable
-#' @param    igphyml 	location of igphyml executible if trait models desired (optional)
-#' @param    id 		unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)
-#' @param    dir    	directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)
+#' @param    igphyml 	optional location of igphyml executible for parsimony 
+#' @param    id 		unique identifer for this analysis (required if 
+#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param    dir    	directory where temporary files will be placed.
 #' @param    modelfile 	file specifying parsimony model to use
 #' @param    fixtrees 	if TRUE, use supplied tree topologies
 #' @param    nproc 		number of cores to parallelize computations
@@ -708,20 +877,29 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' @param    palette 	a named vector specifying colors for each state
 #' @param    resolve 	how should polytomies be resolved?
 #' @param    seq        column name containing sequence information
+#' @param    model      substitution model to use if build='pml'
+#' @param    asr        return sequence or probability matrix?
+#' @param    asr_type   MPR or ACCTRAN? (only if build='pratchet')
+#' @param    asr_thresh threshold for including a nucleotide as an alternative
+#' @param    collapse   Collapse internal nodes with identical sequences?
 #' 
 #' @return   A list of \code{phylo} objects in the same order as \code{data}.
 #'
 #' @details
-#' Estimates phylogenetic tree topologies and branch lengths for a list of \code{changeoClone} objects.
-#' By default, it will use phangnorn::pratchet to estimate maximum parsimony tree topologies, and 
-#' ape::acctran to estimate branch lengths. If \code{igpyhml} is specified, internal node \code{trait} values
-#' will be predicted by maximum parsimony. In this case, \code{dir} will need to be specified as a temporary
-#' directory to place all the intermediate files (will be created if not available). Further, \code{id} will
-#' need to specified to serve as a unique identifier for the temporary files. This should be chosen to ensure
-#' that multiple \code{getTrees} calls using the same \code{dir} do not overwrite each others files. 
+#' Estimates phylogenetic tree topologies and branch lengths for a list of 
+#' \code{airrClone} objects. By default, it will use phangnorn::pratchet to 
+#' estimate maximum parsimony tree topologies, and ape::acctran to estimate 
+#' branch lengths. If \code{igpyhml} is specified, internal node \code{trait} 
+#' values will be predicted by maximum parsimony. In this case, \code{dir} will 
+#' need to be specified as a temporary directory to place all the intermediate 
+#' files (will be created if not available). Further, \code{id} will need to 
+#' specified to serve as a unique identifier for the temporary files. This 
+#' should be chosen to ensure that multiple \code{getTrees} calls using the same
+#' \code{dir} do not overwrite each others files. 
 #' 
-#' \code{modelfile} is written automatically if not specified, but doesn't include any constraints. Intermediate
-#' files are deleted by default. This can be toggled using (\code{rm_files}).
+#' \code{modelfile} is written automatically if not specified, but doesn't 
+#' include any constraints. Intermediate files are deleted by default. This can
+#' be toggled using (\code{rm_files}).
 #'  
 #' @seealso \link{formatClones}, \link{bootstrapTrees}
 #' @examples
@@ -733,17 +911,19 @@ rerootGermline <- function(tree, germid, resolve=FALSE){
 #' trees = getTrees(clones[1:2])
 #' plotTrees(trees[[1]])
 #' 
-#' trees = getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",trait="sample_id")
+#' trees = getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
+#'       trait="sample_id")
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
-	build="pratchet",exec=NULL,igphyml=NULL,fixtrees=FALSE,nproc=1,quiet=0,rm_temp=TRUE,
-	palette=NULL,resolve=2,seq=NULL,asr="seq",asr_thresh=0.05,asr_type="MPR"){
+getTrees = function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL, 
+	modelfile=NULL,	build="pratchet", exec=NULL, igphyml=NULL, fixtrees=FALSE, 
+	nproc=1, quiet=0, rm_temp=TRUE,	palette=NULL, resolve=2, seq=NULL, 
+	asr="seq", asr_thresh=0.05, asr_type="MPR", model="GTR", collapse=FALSE){
 
-	data = clones$DATA
+	data = clones$data
 	if(fixtrees){
-		trees = clones$TREE
+		trees = clones$trees
 	}else{
 		trees = NULL
 	}
@@ -753,8 +933,8 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
     if(class(data) != "list"){
         data <- list(data)
     }
-    if(class(data[[1]]) != "ChangeoClone"){
-        stop("Input data must be a list of ChangeoClone objects")
+    if(class(data[[1]]) != "airrClone"){
+        stop("Input data must be a list of airrClone objects")
     }
     big <- FALSE
     if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
@@ -790,18 +970,18 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 			trees = lapply(indexes,function(x){
 				tree = trees[[x]]
 				datat = data[[x]]
-				for(id in datat@data$SEQUENCE_ID){
-					trait_temp = filter(datat@data,SEQUENCE_ID==id)[[trait]]
+				for(id in datat@data$sequence_id){
+					trait_temp = filter(datat@data,rlang::sym("sequence_id")==id)[[trait]]
 					tree$tip.label[tree$tip.label == id] = 
 					paste0(id,"_",trait_temp)
 				}
 				tree})
 		}
 		data = lapply(data,function(x){
-			x@data$SEQUENCE_ID = paste0(x@data$SEQUENCE_ID,"_",x@data[[trait]])
+			x@data$sequence_id = paste0(x@data$sequence_id,"_",x@data[[trait]])
 			x})
 	}
-	if(build=="dnapars"){
+	if(build=="dnapars" || build=="igphyml" || build=="dnaml"){
 		if(!is.null(dir)){
             if(!dir.exists(dir)){
                 dir.create(dir)
@@ -834,11 +1014,11 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 		}else{
 			seqs = rep(seq,length=length(data))
 		}
-		if(build=="dnapars"){
+		if(build=="dnapars" || build=="dnaml"){
 			if(!fixtrees){
 				trees = parallel::mclapply(reps,function(x)
 					buildPhylo(data[[x]],
-						trait,exec,
+						exec=exec,
 						temp_path=paste0(dir,"/",id,"_trees_",x),
 						rm_temp=rm_temp,
 						seq=seqs[x]),
@@ -846,13 +1026,13 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 			}else{
 				trees = parallel::mclapply(reps,function(x)
 				buildPhylo(data[[x]],
-					trait,exec,
+					exec=exec,
 					temp_path=paste0(dir,"/",id,"_trees_",x),
 					rm_temp=rm_temp,
 					seq=seqs[x],tree=trees[[x]]),
 				mc.cores=nproc)
 			}
-		}else{
+		}else if(build=="pratchet"){
 			if(!fixtrees){
 				trees = parallel::mclapply(reps,function(x)
 					buildPratchet(data[[x]],seq=seqs[x],
@@ -865,13 +1045,49 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 					tree=trees[[x]]),
 					mc.cores=nproc)
 			}
+		}else if(build=="pml"){
+			if(!fixtrees){
+				trees = parallel::mclapply(reps,function(x)
+					buildPML(data[[x]],seq=seqs[x],
+					asr=asr,asr_thresh=asr_thresh,
+					model=model),mc.cores=nproc)
+			}else{
+				trees = parallel::mclapply(reps,function(x)
+					buildPML(data[[x]],seq=seqs[x],
+					asr=asr,asr_thresh=asr_thresh,
+					model=model,tree=trees[[x]]),
+					mc.cores=nproc)
+			}
+		}else if(build=="igphyml"){
+			if(sum(seqs != "sequence") != 0){
+				stop("igphyml build only currently supports heavy chain sequences")
+			}
+			if(rm_temp){
+				rm_dir = paste0(dir,"/",id)
+			}else{
+				rm_dir = NULL
+			}
+			if(!fixtrees){
+				trees =
+					buildIgphyml(data,
+					igphyml=exec,
+					temp_path=paste0(dir,"/",id),
+					rm_files=rm_temp,
+					rm_dir=rm_dir,
+					nproc=nproc,id=id)
+			}else{
+				trees = 
+					buildIgphyml(data,
+					igphyml=exec,
+					temp_path=paste0(dir,"/",id),
+					rm_files=rm_temp,
+					rm_dir=rm_dir,
+					trees=trees,nproc=nproc,id=id)
+			}
+		}else{
+			stop("build specification",build,"not recognized")
 		}
-#	}else{
-#		if(!is.null(igphyml)){
-#
-#		}
-#	}
-	
+
 	if(!is.null(igphyml)){
 		file = writeLineageFile(data=data, trees=trees, dir=dir,
 			id=id, trait=trait, rep="trees")
@@ -893,83 +1109,259 @@ getTrees = function(clones,data=NULL,trait=NULL,id=NULL,dir=NULL,modelfile=NULL,
 	}else{
 		mtrees = trees
 	}
-	clones$TREE = mtrees
+	clones$trees = mtrees
+	if(collapse){
+		clones = collapseNodes(clones)
+	}
 	clones
 }
 
 
 
-#' Estimate lineage tree topologies, branch lengths,
-#' and internal node states if desired
+#' Scale branch lengths to represent either mutations or mutations per site.
 #' 
-#' \code{getTrees} Tree building function.
-#' @param    clones  	a tiblle of \code{changeoClone} objects, the output of \link{formatClones}
-#' @param    edge_type  Either \code{genetic_distance} (mutations per site) or \code{mutations}   
+#' \code{scaleBranches} Branch length scaling function.
+#' @param    clones  	a tibble of \code{airrClone} and \code{phylo} objects,
+#'                      the output of \link{getTrees}.
+#' @param    edge_type  Either \code{genetic_distance} (mutations per site) or 
+#'                      \code{mutations}
 #' 
-#' @return   A tibble with \code{phylo} objects that have had branch lengths rescaled.
+#' @return   A tibble with \code{phylo} objects that have had branch lengths 
+#'           rescaled as specified.
 #'
 #' @details
-#' Uses clones$TREE[[1]]$edge_type to determine how branches are currently scaled.
+#' Uses clones$trees[[1]]$edge_type to determine how branches are currently scaled.
 #'  
 #' @seealso \link{getTrees}
 #' @export
-scaleBranches = function(clones,edge_type="mutations"){
+scaleBranches = function(clones, edge_type="mutations"){
 	if(!"tbl" %in% class(clones)){
 		print(paste("clones is of class",class(clones)))
-		stop("clones must be a tibble of ChangeoClone objects!")
+		stop("clones must be a tibble of airrClone objects!")
 	}else{
-		if(class(clones$DATA[[1]]) != "ChangeoClone"){
-			print(paste("clones is list of class",class(clones$DATA[[1]])))
-			stop("clones must be a list of ChangeoClone objects!")
+		if(class(clones$data[[1]]) != "airrClone"){
+			print(paste("clones is list of class",class(clones$data[[1]])))
+			stop("clones must be a list of airrClone objects!")
 		}
 	}
-	if(!"TREE" %in% names(clones)){
-		stop("clones must have TREE column!")
+	if(!"trees" %in% names(clones)){
+		stop("clones must have trees column!")
 	}
-	# Need to add a variable storing whether branch lengths equal mutations or genetic distance
-	lengths = unlist(lapply(1:length(clones$TREE),
+	lengths = unlist(lapply(1:length(clones$trees),
 		function(x){
-		if(clones$TREE[[x]]$seq == "HLSEQUENCE"){
-			return(nchar(clones$DATA[[x]]@hlgermline))
-		}else if(clones$TREE[[x]]$seq == "LSEQUENCE"){
-			return(nchar(clones$DATA[[x]]@lgermline))
+		if(clones$trees[[x]]$seq == "hlsequence"){
+			return(nchar(clones$data[[x]]@hlgermline))
+		}else if(clones$trees[[x]]$seq == "lsequence"){
+			return(nchar(clones$data[[x]]@lgermline))
 		}else{
-			return(nchar(clones$DATA[[x]]@germline))
+			return(nchar(clones$data[[x]]@germline))
 		}}))
 
-	TREE = lapply(1:length(clones$TREE),function(x){
-		if(clones$TREE[[x]]$edge_type == "mutations" && edge_type == "genetic_distance"){
-			clones$TREE[[x]]$edge.length = clones$TREE[[x]]$edge.length/lengths[x]
-			clones$TREE[[x]]$edge_type = "genetic_distance"
-			clones$TREE[[x]]
-		}else if(clones$TREE[[x]]$edge_type == "genetic_distance" && edge_type == "mutations"){
-			clones$TREE[[x]]$edge.length = clones$TREE[[x]]$edge.length*lengths[x]
-			clones$TREE[[x]]$edge_type = "mutations"
-			clones$TREE[[x]]
+	trees = lapply(1:length(clones$trees),function(x){
+		if(clones$trees[[x]]$edge_type == "mutations" && 
+			edge_type == "genetic_distance"){
+			clones$trees[[x]]$edge.length = 
+			    clones$trees[[x]]$edge.length/lengths[x]
+			clones$trees[[x]]$edge_type = "genetic_distance"
+			clones$trees[[x]]
+		}else if(clones$trees[[x]]$edge_type == "genetic_distance" &&
+		    edge_type == "mutations"){
+			clones$trees[[x]]$edge.length = 
+			    clones$trees[[x]]$edge.length*lengths[x]
+			clones$trees[[x]]$edge_type = "mutations"
+			clones$trees[[x]]
 		}else{
-			clones$TREE[[x]]
+			clones$trees[[x]]
 		}})
 			
-	clones$TREE = TREE
+	clones$trees = trees
 	clones
 }
 
+#' Collapse internal nodes with the same predicted sequence
+#' 
+#' \code{collapseNodes} Node collapsing function.
+#' @param    trees    a tibble of \code{airrClone} objects, the output of \link{getTrees}
+#' @param    tips     collapse tips to internal nodes? (experimental)  
+#' @param    check    check that collapsed nodes are consistent with original tree
+#' 
+#' @return   A tibble with \code{phylo} objects that have had internal nodes collapsed.
+#'
+#' @details
+#' Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
+#' node labels, and getSeq to return internal node sequences
+#'  
+#' @seealso \link{getTrees}
+#' @export
+collapseNodes = function(trees, tips=FALSE, check=TRUE){
+	if(!"phylo" %in% class(trees)){
+		trees$trees = lapply(trees$trees,function(x)
+			collapseNodes(x,tips))
+		return(trees)
+	}
+	otrees = trees
+	edges = trees$edge
+	ttips = trees$tip.label
+	edge_l = trees$edge.length
+	btip = length(trees$tip.label)
+	if(is.null(trees$node.label)){
+		trees$node.label = rep("",length(unique(edges)))
+	}
+	maxiter = 1000
+	while(maxiter > 0){
+		edges = cbind(edges[,1:2],unlist(lapply(1:nrow(edges),function(x)
+			trees$nodes[[edges[x,1]]]$sequence==trees$nodes[[edges[x,2]]]$sequence)))
+		if(!tips){
+			zedges = edges[edges[,2] > btip & edges[,3] == 1,]
+		}else{
+			mrca = ape::getMRCA(trees,tip=trees$tip.label)
+			zedges = edges[edges[,1] != mrca & edges[,3] == 1,]
+		}
+		if(length(zedges) > 0){
+			if(!is.matrix(zedges)){
+				dim(zedges) = c(1,3)
+			}
+		}else{
+			break
+		}
+		ms = c()
+		ns = c()
+		for(i in 1:nrow(zedges)){
+			m = min(zedges[i,1:2])
+			n = max(zedges[i,1:2])
+			edges[edges[,1] == n,1] = m
+			edges[edges[,2] == n,2] = m
+			ms = c(ms,m)
+			ns = c(ns,n)
+		}
+		edge_l = edge_l[edges[,1] != edges[,2]]
+		edges = edges[edges[,1] != edges[,2],]
+		maxiter = maxiter - 1
+	}
+	if(maxiter == 0){
+		stop("Exceeded maximum node collapse iterations")
+	}
+	# make collapsed tips into internal nodes
+	if(tips){
+		tnodes = unique(edges[edges[,1] <= btip,1])
+		m = max(edges)+1
+		for(n in tnodes){
+			edges[edges[,1] == n,1] = m
+			edges[edges[,2] == n,2] = m
+			trees$nodes[[m]] = trees$nodes[[n]]
+			trees$nodes[[m]]$id = ttips[n]
+			m = m + 1
+		}
+		tnode_ids = ttips[tnodes]
+		ttips = ttips[-tnodes]
+	}
+	nodes = sort(unique(c(edges[,1],edges[,2])))
+	nnodes = 1:length(nodes)
+	names(nnodes) = nodes
 
+	nedges = edges
+	nsequences = as.list(1:length(nodes))
+	for(n in names(nnodes)){
+		new = nnodes[n]
+		nedges[edges[,1] == as.numeric(n),1] = new
+		nedges[edges[,2] == as.numeric(n),2] = new
+		nsequences[[new]] = trees$nodes[[as.numeric(n)]]
+		if(is.null(nsequences[[new]]$id)){
+			nsequences[[new]]$id = ""
+		}
+	}
+	trees$edge = nedges[,1:2]
+	trees$edge.length = edge_l
+	trees$nodes = nsequences
+	trees$Nnode = length(nsequences)-length(ttips)
+	trees$tip.label = ttips
+	nodelabs = unlist(lapply(trees$nodes,function(x){
+		if(is.null(x$id)){
+			""
+		}else{
+			x$id
+		}}))
+	trees$node.label = nodelabs[(length(ttips)+1):length(nsequences)]
 
-#' Create a bootstrap distribution for clone sequence alignments, and estimate trees for eac
-#' bootstrap replicate.
+	if(check){
+		subt = ape::subtrees(otrees)
+		for(sub in subt){
+			seqs = sub$tip.label
+			node =  ape::getMRCA(otrees,tip=seqs)
+			cnode = ape::getMRCA(trees,tip=seqs)
+			oseq = otrees$nodes[[node]]$sequence
+			nseq = trees$nodes[[cnode]]$sequence
+			if(oseq != nseq){
+				stop(paste("Node",node,"in clone tree",trees$name,
+					"does not equal corresponding sequence in collapsed tree"))
+			}
+		}
+	}
+	return(trees)
+}
+
+#' Return IMGT gapped sequence of specified tree node
+#' 
+#' \code{getSeq} Sequence retrieval function.
+#' @param    node    numeric node in tree (see details)
+#' @param    data    a tibble of \code{airrClone} objects, the output of 
+#'                   \link{getTrees}
+#' @param    tree    a \code{phylo} tree object containing \code{node}
+#' @param    clone   if \code{tree} not specified, supply clone ID in \code{data}
+#' @param    gaps    add IMGT gaps to output sequences?
+#' @return   A vector with sequence for each locus at a specified \code{node}
+#'           in \code{tree}.
+#'
+#' @details
+#' Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
+#' node labels, and getSeq to return internal node sequences
+#'  
+#' @seealso \link{getTrees}
+#' @export
+getSeq = function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
+	if(is.null(tree)){
+		if(is.null(clone)){
+			stop("must provide either tree object or clone ID")
+		}
+		tree = filter(data,!!rlang::sym("clone_id")==clone)$trees[[1]]
+	}
+	clone = filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
+	seqs = c()
+	seq = strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
+	loci = unique(clone@region)
+	for(locus in loci){
+		lseq = seq[clone@region == locus]
+		if(gaps){
+			nums = clone@numbers[clone@region == locus]
+			nseq = rep(".",max(nums))
+			nseq[nums] = lseq
+			lseq = nseq
+		}
+		seqs = c(seqs,paste(lseq,collapse=""))
+	}
+	names(seqs) = loci
+	return(seqs)
+}
+
+#' Create a bootstrap distribution for clone sequence alignments, and estimate 
+#' trees for each bootstrap replicate.
 #' 
 #' \code{bootstrapTrees} Phylogenetic bootstrap function.
-#' @param    clones  	tibble \code{changeoClone} objects, the output of \link{formatClones}
+#' @param    clones  	tibble \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
 #' @param    bootstraps number of bootstrap replicates to perform
-#' @param    trait 		trait to use for parsimony models (required if \code{igphyml} specified)
+#' @param    trait 		trait to use for parsimony models (required if 
+#'                      \code{igphyml} specified)
 #' @param 	 build	    program to use for tree building (phangorn, dnapars)
 #' @param 	 exec	    location of desired phylogenetic executable
-#' @param    igphyml 	location of igphyml executible if trait models desired (optional)
-#' @param    id 		unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)
-#' @param    dir    	directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)
+#' @param    igphyml 	location of igphyml executible if trait models desired
+#' @param    id 		unique identifer for this analysis (required if 
+#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param    dir    	directory where temporary files will be placed (required
+#'                      if \code{igphyml} or \code{dnapars} specified)
 #' @param    modelfile 	file specifying parsimony model to use
-#' @param    trees 		tree topologies to use if aready available (bootstrapping will not be perfomed)
+#' @param    trees 		tree topologies to use if aready available 
+#'                      (bootstrapping will not be perfomed)
 #' @param    nproc 		number of cores to parallelize computations
 #' @param    quiet		amount of rubbish to print to console
 #' @param    rm_temp	remove temporary files (default=TRUE)
@@ -984,16 +1376,18 @@ scaleBranches = function(clones,edge_type="mutations"){
 #'
 #' @details
 #' Tree building details are the same as \link{getTrees}. 
-#' If \code{keeptrees=TRUE} (default) the returned object will contain a list named "trees"
-#' which contains a list of estimated tree objects for each bootstrap replicate. The object is
-#' structured like: trees[[<replicate>]][[<tree index>]].
-#' If \code{igphyml} is specified (as well as \code{trait}, \code{temp}, and \code{id}), the
-#' returned object will contain a \code{tibble} named "switches" containing switch count information.
-#' This object can be passed to \link{PStest} and other functions to perform parsimony based trait value
-#' tests. 
+#' If \code{keeptrees=TRUE} (default) the returned object will contain a list 
+#' named "trees" which contains a list of estimated tree objects for each 
+#' bootstrap replicate. The object is structured like: 
+#' trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
+#' (as well as \code{trait}, \code{temp}, and \code{id}), the returned object 
+#' will contain a \code{tibble} named "switches" containing switch count 
+#' information. This object can be passed to \link{PStest} and other functions 
+#' to perform parsimony based trait value tests. 
 #'  
-#' @seealso Uses output from \link{formatClones} with similar arguments to \link{getTrees}. Output can be 
-#' visualized with \link{plotTrees}, and tested with \link{PStest}, \link{SCtest}, and \link{SPtest}.
+#' @seealso Uses output from \link{formatClones} with similar arguments to 
+#' \link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
+#' with \link{PStest}, \link{SCtest}, and \link{SPtest}.
 #' 
 #' @examples
 #' \dontrun{
@@ -1012,10 +1406,11 @@ scaleBranches = function(clones,edge_type="mutations"){
 #' }
 #' @export
 bootstrapTrees = function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
-	id=NULL, modelfile=NULL,build="pratchet",exec=NULL,igphyml=NULL,trees=NULL,
-	quiet=0,rm_temp=TRUE,palette=NULL,resolve=2,rep=NULL,
-	keeptrees=TRUE, lfile=NULL, seq="SEQUENCE"){
-	data = clones$DATA
+	id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
+	trees=NULL,	quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
+	keeptrees=TRUE, lfile=NULL, seq="sequence"){
+
+	data = clones$data
 	if(is.null(id)){
             id <- "sample"
     }
@@ -1027,8 +1422,8 @@ bootstrapTrees = function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			dir.create(dir)
 		}
 	}
-	if(class(data[[1]]) != "ChangeoClone"){
-        stop("Input data must be a list of ChangeoClone objects")
+	if(class(data[[1]]) != "airrClone"){
+        stop("Input data must be a list of airrClone objects")
     }
     big <- FALSE
     if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
@@ -1060,7 +1455,7 @@ bootstrapTrees = function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 		}
 		#if igphyml is specified, append trait value to sequence ids
 		data = lapply(data,function(x){
-			x@data$SEQUENCE_ID = paste0(x@data$SEQUENCE_ID,"_",x@data[[trait]])
+			x@data$sequence_id = paste0(x@data$sequence_id,"_",x@data[[trait]])
 			x})
 	}
 	if(build=="dnapars"){

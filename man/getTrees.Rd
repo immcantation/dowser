@@ -23,27 +23,34 @@ getTrees(
   resolve = 2,
   seq = NULL,
   asr = "seq",
-  asr_thresh = 0.05
+  asr_thresh = 0.05,
+  asr_type = "MPR",
+  model = "GTR",
+  collapse = FALSE
 )
 }
 \arguments{
-\item{clones}{a tiblle of \code{changeoClone} objects, the output of \link{formatClones}}
+\item{clones}{a tibble of \code{airrClone} objects, the output of 
+\link{formatClones}}
 
-\item{data}{list of \code{changeoClone} objects, alternate input}
+\item{data}{list of \code{airrClone} objects, alternate input}
 
-\item{trait}{trait to use for parsimony models (required if \code{igphyml} specified)}
+\item{trait}{trait to use for parsimony models (required if 
+\code{igphyml} specified)}
 
-\item{id}{unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)}
+\item{id}{unique identifer for this analysis (required if 
+\code{igphyml} or \code{dnapars} specified)}
 
-\item{dir}{directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)}
+\item{dir}{directory where temporary files will be placed.}
 
 \item{modelfile}{file specifying parsimony model to use}
 
-\item{build}{program to use for tree building (phangorn, dnapars)}
+\item{build}{program to use for tree building (pratchet, pml, 
+dnapars, dnaml, igphyml)}
 
 \item{exec}{location of desired phylogenetic executable}
 
-\item{igphyml}{location of igphyml executible if trait models desired (optional)}
+\item{igphyml}{optional location of igphyml executible for parsimony}
 
 \item{fixtrees}{if TRUE, use supplied tree topologies}
 
@@ -58,6 +65,16 @@ getTrees(
 \item{resolve}{how should polytomies be resolved?}
 
 \item{seq}{column name containing sequence information}
+
+\item{asr}{return sequence or probability matrix?}
+
+\item{asr_thresh}{threshold for including a nucleotide as an alternative}
+
+\item{asr_type}{MPR or ACCTRAN? (only if build='pratchet')}
+
+\item{model}{substitution model to use if build='pml'}
+
+\item{collapse}{Collapse internal nodes with identical sequences?}
 }
 \value{
 A list of \code{phylo} objects in the same order as \code{data}.
@@ -66,16 +83,20 @@ A list of \code{phylo} objects in the same order as \code{data}.
 \code{getTrees} Tree building function.
 }
 \details{
-Estimates phylogenetic tree topologies and branch lengths for a list of \code{changeoClone} objects.
-By default, it will use phangnorn::pratchet to estimate maximum parsimony tree topologies, and 
-ape::acctran to estimate branch lengths. If \code{igpyhml} is specified, internal node \code{trait} values
-will be predicted by maximum parsimony. In this case, \code{dir} will need to be specified as a temporary
-directory to place all the intermediate files (will be created if not available). Further, \code{id} will
-need to specified to serve as a unique identifier for the temporary files. This should be chosen to ensure
-that multiple \code{getTrees} calls using the same \code{dir} do not overwrite each others files. 
+Estimates phylogenetic tree topologies and branch lengths for a list of 
+\code{airrClone} objects. By default, it will use phangnorn::pratchet to 
+estimate maximum parsimony tree topologies, and ape::acctran to estimate 
+branch lengths. If \code{igpyhml} is specified, internal node \code{trait} 
+values will be predicted by maximum parsimony. In this case, \code{dir} will 
+need to be specified as a temporary directory to place all the intermediate 
+files (will be created if not available). Further, \code{id} will need to 
+specified to serve as a unique identifier for the temporary files. This 
+should be chosen to ensure that multiple \code{getTrees} calls using the same
+\code{dir} do not overwrite each others files. 
 
-\code{modelfile} is written automatically if not specified, but doesn't include any constraints. Intermediate
-files are deleted by default. This can be toggled using (\code{rm_files}).
+\code{modelfile} is written automatically if not specified, but doesn't 
+include any constraints. Intermediate files are deleted by default. This can
+be toggled using (\code{rm_files}).
 }
 \examples{
 \dontrun{
@@ -86,7 +107,8 @@ clones = formatClones(ExampleDb,trait="sample_id")
 trees = getTrees(clones[1:2])
 plotTrees(trees[[1]])
 
-trees = getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",trait="sample_id")
+trees = getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
+      trait="sample_id")
 plotTrees(trees[[1]])
 }
 }

@@ -4,13 +4,15 @@
 \name{ExampleTrees}
 \alias{ExampleTrees}
 \title{Example Ig lineage trees}
-\format{A list of igraph objects output by \link{buildPhylipLineage}.
+\format{
+A list of igraph objects output by \link{buildPhylipLineage}.
           Each node of each tree has the following annotations (vertex attributes):
   \itemize{
     \item  \code{sample}:    Sample identifier(s). Time in relation to vaccination.
     \item  \code{isotype}:   Isotype assignment(s). 
     \item  \code{duplication_count}:  Copy count (number of duplicates) of the sequence.
-  }}
+  }
+}
 \usage{
 ExampleTrees
 }

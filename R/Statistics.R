@@ -276,6 +276,7 @@ SPtest <- function(switches, permuteAll=FALSE,
 #'	igphyml=igphyml,trait="sample_id",id="temp",dir="temp")
 #' SCtest(btrees$switches)
 #' }
+#' @export
 SCtest <- function(switches,dropzeros=TRUE,
 	bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
 	permuteAll=FALSE){

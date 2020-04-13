@@ -21,9 +21,11 @@
 #' @import      graphics
 #' @import      methods
 #' @import      utils
+#' @importFrom  tidyselect  all_of
+#' @importFrom  stringr     str_count    
 #' @importFrom  alakazam    makeChangeoClone
 #' @importFrom  phylotate   read_annotated
-#' @importFrom	ape 		read.tree di2multi reorder.phylo root ladderize
+#' @importFrom	ape 		read.tree di2multi reorder.phylo root ladderize subtrees
 #' @importFrom  dplyr       do n desc %>%
 #'                          bind_cols bind_rows combine arrange 
 #'                          group_by ungroup
