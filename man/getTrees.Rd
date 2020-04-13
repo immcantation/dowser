@@ -16,19 +16,22 @@ getTrees(
   trees = NULL,
   nproc = 1,
   quiet = 0,
-  rm_files = TRUE,
+  rm_temp = FALSE,
   palette = NULL,
   resolve = 2
 )
 }
 \arguments{
-\item{data}{list of \code{changeoClone} objects, the output of \link{formatClones}}
+\item{data}{list of \code{changeoClone} objects}
 
-\item{trait}{trait to use for parsimony models (required if \code{igphyml} specified)}
+\item{trait}{trait to use for parsimony models (required if 
+\code{igphyml} specified)}
 
-\item{id}{unique identifer for this analysis (required if \code{igphyml} or \code{dnapars} specified)}
+\item{id}{unique identifer for this analysis (required if 
+\code{igphyml} or \code{dnapars} specified)}
 
-\item{dir}{directory where temporary files will be placed (required if \code{igphyml} or \code{dnapars} specified)}
+\item{dir}{directory where temporary files will be placed (required 
+if \code{igphyml} or \code{dnapars} specified)}
 
 \item{modelfile}{file specifying parsimony model to use}
 
@@ -42,7 +45,7 @@ getTrees(
 
 \item{quiet}{amount of rubbish to print to console}
 
-\item{rm_files}{remove temporary files (default=TRUE)}
+\item{rm_temp}{remove temporary files (default=TRUE)}
 
 \item{palette}{a named vector specifying colors for each state}
 
@@ -55,27 +58,31 @@ A list of \code{phylo} objects in the same order as \code{data}.
 \code{getTrees} Tree building function.
 }
 \details{
-Estimates phylogenetic tree topologies and branch lengths for a list of \code{changeoClone} objects.
-By default, it will use phangnorn::pratchet to estimate maximum parsimony tree topologies, and 
-ape::acctran to estimate branch lengths. If \code{igpyhml} is specified, internal node \code{trait} values
-will be predicted by maximum parsimony. In this case, \code{dir} will need to be specified as a temporary
-directory to place all the intermediate files (will be created if not available). Further, \code{id} will
-need to specified to serve as a unique identifier for the temporary files. This should be chosen to ensure
-that multiple \code{getTrees} calls using the same \code{dir} do not overwrite each others files. 
+Estimates phylogenetic tree topologies and branch lengths for a list of 
+\code{changeoClone} objects. By default, it will use phangnorn::pratchet to 
+estimate maximum parsimony tree topologies, and  ape::acctran to estimate branch 
+lengths. If \code{igpyhml} is specified, internal node \code{trait} values will 
+be predicted by maximum parsimony. In this case, \code{dir} will need to be 
+specified as a temporary directory to place all the intermediate files (will 
+be created if not available). Further, \code{id} will need to specified to serve
+ as a unique identifier for the temporary files. This should be chosen to ensure
+ that multiple \code{getTrees} calls using the same \code{dir} do not overwrite 
+each others files. 
 
-\code{modelfile} is written automatically if not specified, but doesn't include any constraints. Intermediate
-files are deleted by default. This can be toggled using (\code{rm_files}).
+\code{modelfile} is written automatically if not specified, but doesn't include
+ any constraints. Intermediate files are deleted by default. This can be 
+toggled using (\code{rm_temp}).
 }
 \examples{
 \dontrun{
 data(ExampleDb)
 ExampleDb$sample_id = sample(ExampleDb$sample_id)
-clones = formatClones(ExampleDb,trait="sample_id")
+clones = formatClones(ExampleDb, trait="sample_id")
 
 trees = getTrees(clones[1:2])
 plotTrees(trees[[1]])
 
-trees = getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",trait="sample_id")
+trees = getTrees(clones[1:2], igphyml=igphyml, id="temp", dir="temp", trait="sample_id")
 plotTrees(trees[[1]])
 }
 }

@@ -79,8 +79,8 @@ number of sequences that were collapsed.}
 numbers of input, discarded and output sequences; otherwise, process
 sequences silently.}
 
-\item{trait}{data column to analyze using phylogenetic techniques. Identical sequences sharing this trait
-will be un-collapsed.}
+\item{trait}{data column to analyze using phylogenetic techniques. 
+Identical sequences sharing this trait will be un-collapsed.}
 
 \item{nproc}{Number of cores to parallelize formating over.}
 }
@@ -88,10 +88,12 @@ will be un-collapsed.}
 A list of \link{ChangeoClone} objects containing modified clones.
 }
 \description{
-\code{formatClones} takes a \code{data.frame} or \code{tibble} with AIRR or Change-O style columns as input and 
-masks gap positions, masks ragged ends, removes duplicates sequences, and merges 
-annotations associated with duplicate sequences. If specified, it will un-merge duplicate sequences with different values specified in the \code{trait} option.
-It returns a list of \code{ChangeoClone} objects ordered by number of sequences which serve as input for lineage reconstruction.
+\code{formatClones} takes a \code{data.frame} or \code{tibble} with AIRR or 
+Change-O style columns as input and masks gap positions, masks ragged ends, 
+removes duplicates sequences, and merges annotations associated with duplicate 
+sequences. If specified, it will un-merge duplicate sequences with different 
+values specified in the \code{trait} option. It returns a list of \code{ChangeoClone} 
+objects ordered by number of sequences which serve as input for lineage reconstruction.
 }
 \details{
 This function is largely a wrapper for alakazam::makeChangeoClone.
@@ -125,12 +127,12 @@ respectively. For any given clone, each value in these columns should be identic
 \examples{
 \dontrun{
 data(ExampleDb)
-clones = formatClones(ExampleDb,trait="sample_id")
+clones = formatClones(ExampleDb, trait="sample_id")
 }
 }
 \seealso{
 Executes in order \code{alakazam::maskSeqGaps}, \code{alakazam::maskSeqEnds}, 
           \code{alakazam::padSeqEnds}, \code{alakazam::collapseDuplicates},
-			 and \code{processClones}. Returns a list of \link{ChangeoClone} objects 
-			which serve as input to \link{getTrees} and \link{bootstrapTrees}.
+             and \code{processClones}. Returns a list of \link{ChangeoClone} objects 
+            which serve as input to \link{getTrees} and \link{bootstrapTrees}.
 }

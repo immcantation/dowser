@@ -4,12 +4,12 @@
 \alias{getPalette}
 \title{Get a color palette for a predefined set of trait values}
 \usage{
-getPalette(palette, states)
+getPalette(states, palette)
 }
 \arguments{
-\item{palette}{The colorbrewer palette to use}
-
 \item{states}{states in model}
+
+\item{palette}{The colorbrewer palette to use}
 }
 \value{
 A named vector with each state corresponding to a color

@@ -2,7 +2,7 @@
 
 #' Performs PS (parsimony score) test on switch data
 #' 
-#' \code{PStest} performs a PS test
+#' \code{testPS} performs a PS test
 #' @param    switches     Data frame from bootstrapTrees
 #' @param    bylineage    Perform test for each lineage individually? (FALSE)
 #' @param    pseudocount  Pseudocount for P value calculations
@@ -27,75 +27,76 @@
 #'   \item  \code{REPS}: Total number of ootstrap repetition.
 #'}
 #'  
-#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{SPtest}
-#' and \link{SCtest}.
+#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{testSP}
+#' and \link{testSC}.
 #' @examples
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' data(ExampleDb)
 #' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb,trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2],bootstraps=100,nproc=1,
-#'	igphyml=igphyml,trait="sample_id",id="temp",dir="temp")
-#' PStest(btrees$switches)
+#' clones = formatClones(ExampleDb, trait="sample_id")
+#' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+#'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+#' testPS(btrees$switches)
 #' }
 #' @export
-PStest <- function(switches,bylineage=FALSE,pseudocount=0){
-	switches <- switches %>% 
-		dplyr::filter(!!rlang::sym("TO") != "N" & 
-			!!rlang::sym("TO") != !!rlang::sym("FROM") &
-			 !!rlang::sym("FROM") != "UCA")
-	if(!bylineage){
-		reps <- switches  %>%
-			dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE")) %>% 
-			dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES"))) %>% 
-			dplyr::ungroup() %>% 
-			tidyr::spread(!!rlang::sym("TYPE"),!!rlang::sym("SWITCHES")) %>%
-			dplyr::mutate(DELTA = !!rlang::sym("RECON") - !!rlang::sym("PERMUTE"))
-	}else{
-		reps <- switches  %>%
-			dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), !!rlang::sym("REP")) %>% 
-			dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES"))) %>% 
-			dplyr::ungroup() %>% 
-			tidyr::spread(!!rlang::sym("TYPE"),!!rlang::sym("SWITCHES")) %>%
-			dplyr::mutate(DELTA = !!rlang::sym("RECON") - !!rlang::sym("PERMUTE"))
-	}
+testPS <- function(switches, bylineage=FALSE, pseudocount=0){
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != "N" & 
+            !!rlang::sym("TO") != !!rlang::sym("FROM") &
+             !!rlang::sym("FROM") != "UCA")
+    if(!bylineage){
+        reps <- switches  %>%
+            dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE")) %>% 
+            dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES"))) %>% 
+            dplyr::ungroup() %>% 
+            tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("SWITCHES")) %>%
+            dplyr::mutate(DELTA = !!rlang::sym("RECON") - !!rlang::sym("PERMUTE"))
+    }else{
+        reps <- switches  %>%
+            dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
+            	!!rlang::sym("REP")) %>% 
+            dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES"))) %>% 
+            dplyr::ungroup() %>% 
+            tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("SWITCHES")) %>%
+            dplyr::mutate(DELTA = !!rlang::sym("RECON") - !!rlang::sym("PERMUTE"))
+    }
 
-	if(!bylineage){
-		means <- reps %>% 
-			dplyr::summarize(
-				RECON = mean(!!rlang::sym("RECON")),
-				PERMUTE = mean(!!rlang::sym("PERMUTE")),
-				PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),	
-				DELTA = mean(!!rlang::sym("DELTA")))	
-	}else{
-		means <- reps %>% 
-			dplyr::group_by(!!rlang::sym("CLONE")) %>% 
-			dplyr::summarize(
-				RECON = mean(!!rlang::sym("RECON")),
-				PERMUTE = mean(!!rlang::sym("PERMUTE")),
-				PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),	
-				DELTA = mean(!!rlang::sym("DELTA")))	
-	}
+    if(!bylineage){
+        means <- reps %>% 
+            dplyr::summarize(
+                RECON = mean(!!rlang::sym("RECON")),
+                PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),    
+                DELTA = mean(!!rlang::sym("DELTA")))    
+    }else{
+        means <- reps %>% 
+            dplyr::group_by(!!rlang::sym("CLONE")) %>% 
+            dplyr::summarize(
+                RECON = mean(!!rlang::sym("RECON")),
+                PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),    
+                DELTA = mean(!!rlang::sym("DELTA")))    
+    }
 
-	means$STAT <- "PS"
-	reps$STAT <- "PS"
-	means$REPS = length(unique(reps$REP))
-	results <- list()
-	results$reps <- reps
-	results$means <- means
-	results
+    means$STAT <- "PS"
+    reps$STAT <- "PS"
+    means$REPS = length(unique(reps$REP))
+    results <- list()
+    results$reps <- reps
+    results$means <- means
+    results
 }
 
 #' Performs SP (switch proportion) test on switch data
 #' 
-#' \code{SPtest} performs an SP test
+#' \code{testSP} performs an SP test
 #' @param    switches     Data frame from bootstrapTrees
 #' @param    permuteAll   Permute among trees?
 #' @param    from         Include only switches from this state?
@@ -127,112 +128,120 @@ PStest <- function(switches,bylineage=FALSE,pseudocount=0){
 #'   \item  \code{REPS}: Total number of ootstrap repetition.
 #'}
 #'  
-#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{PStest}
-#' and \link{SCtest}.
+#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{testPS}
+#' and \link{testSC}.
 #' @examples
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' data(ExampleDb)
 #' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb,trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2],bootstraps=100,nproc=1,
-#'	igphyml=igphyml,trait="sample_id",id="temp",dir="temp")
-#' SPtest(btrees$switches)
+#' clones = formatClones(ExampleDb, trait="sample_id")
+#' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+#'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+#' testSP(btrees$switches)
 #' }
 #' @export
-SPtest <- function(switches, permuteAll=FALSE, 
-	from=NULL, to=NULL, dropzeros=TRUE,
-	bylineage=FALSE, pseudocount=0){
+testSP <- function(switches, permuteAll=FALSE, 
+    from=NULL, to=NULL, dropzeros=TRUE,
+    bylineage=FALSE, pseudocount=0){
 
-	permute <- dplyr::quo(!!rlang::sym("PERMUTE"))
-	if(permuteAll){
-		permute <- dplyr::quo(!!rlang::sym("PERMUTEALL"))
-	}
+    permute <- dplyr::quo(!!rlang::sym("PERMUTE"))
+    if(permuteAll){
+        permute <- dplyr::quo(!!rlang::sym("PERMUTEALL"))
+    }
 
-	switches <- switches %>% 
-		dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & !!rlang::sym("FROM") != "UCA")
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
+        	!!rlang::sym("FROM") != "UCA")
 
-	if(!is.null(from)){
-		from <- dplyr::enquo(from)
-		switches <- dplyr::filter(switches,!!rlang::sym("FROM") == !!from)
-	}
-	if(!is.null(to)){
-		to <- dplyr::enquo(to)
-		switches <- dplyr::filter(switches,!!rlang::sym("TO") == !!to)
-	}
+    if(!is.null(from)){
+        from <- dplyr::enquo(from)
+        switches <- dplyr::filter(switches, !!rlang::sym("FROM") == !!from)
+    }
+    if(!is.null(to)){
+        to <- dplyr::enquo(to)
+        switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
+    }
 
-	if(!bylineage){
-		reps <- switches  %>%
-			dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE"), !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-			dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES")))
-		reps <- reps %>% 
-			dplyr::filter(!!rlang::sym("TO") != "N") %>%
-			dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("REP")) %>% 
-			dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/sum(!!rlang::sym("SWITCHES"))) %>%
-			dplyr::select(-!!rlang::sym("SWITCHES")) %>% tidyr::spread(!!rlang::sym("TYPE"),!!rlang::sym("PROP"))
-	}else{		
-		reps <- switches  %>%
-			dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), !!rlang::sym("REP")) %>% 
-			dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/sum(!!rlang::sym("SWITCHES"))) %>% 
-			dplyr::select(-!!rlang::sym("SWITCHES")) %>% tidyr::spread(!!rlang::sym("TYPE"),!!rlang::sym("PROP"))
-	}
-	
-	reps <- reps %>% dplyr::mutate(DELTA = !!rlang::sym("RECON")-!!permute)
-	
-	if(dropzeros){
-		from_type <- 
-			reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
-			dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
-			dplyr::filter(!!rlang::sym("d") == 0) %>%
-			.$FROM
-		
-		to_type <- 
-			reps %>% dplyr::group_by(!!rlang::sym("TO")) %>%
-			dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
-			dplyr::filter(!!rlang::sym("d") == 0) %>%
-			.$TO
-		
-		remove <- to_type[to_type %in% from_type]
-		reps <- reps[!reps$FROM %in% remove &
-			!reps$TO %in% remove,]
-	}
+    if(!bylineage){
+        reps <- switches  %>%
+            dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE"), 
+            	!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+            dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES")))
+        reps <- reps %>% 
+            dplyr::filter(!!rlang::sym("TO") != "N") %>%
+            dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("REP")) %>% 
+            dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/
+            	sum(!!rlang::sym("SWITCHES"))) %>%
+            dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
+            tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("PROP"))
+    }else{        
+        reps <- switches  %>%
+            dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
+            	!!rlang::sym("REP")) %>% 
+            dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/
+            	sum(!!rlang::sym("SWITCHES"))) %>% 
+            dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
+            tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("PROP"))
+    }
+    
+    reps <- reps %>% dplyr::mutate(DELTA = !!rlang::sym("RECON")-!!permute)
+    
+    if(dropzeros){
+        from_type <- 
+            reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
+            dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
+            dplyr::filter(!!rlang::sym("d") == 0) %>%
+            .$FROM
+        
+        to_type <- 
+            reps %>% dplyr::group_by(!!rlang::sym("TO")) %>%
+            dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
+            dplyr::filter(!!rlang::sym("d") == 0) %>%
+            .$TO
+        
+        remove <- to_type[to_type %in% from_type]
+        reps <- reps[!reps$FROM %in% remove &
+            !reps$TO %in% remove, ]
+    }
 
-	if(!bylineage){
-		means <- reps %>% 
-			dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-			dplyr::summarize(
-				RECON = mean(!!rlang::sym("RECON")),
-				PERMUTE = mean(!!permute),
-				PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				DELTA = mean(!!rlang::sym("DELTA")))
-	}else{
-		means <- reps %>% 
-			dplyr::group_by(!!rlang::sym("CLONE"), !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-			dplyr::summarize(
-				RECON = mean(!!rlang::sym("RECON")),
-				PERMUTE = mean(!!permute),
-				PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				DELTA = mean(!!rlang::sym("DELTA")))		
-	}
+    if(!bylineage){
+        means <- reps %>% 
+            dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+            dplyr::summarize(
+                RECON = mean(!!rlang::sym("RECON")),
+                PERMUTE = mean(!!permute),
+                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                DELTA = mean(!!rlang::sym("DELTA")))
+    }else{
+        means <- reps %>% 
+            dplyr::group_by(!!rlang::sym("CLONE"), !!rlang::sym("FROM"), 
+            	!!rlang::sym("TO")) %>% 
+            dplyr::summarize(
+                RECON = mean(!!rlang::sym("RECON")),
+                PERMUTE = mean(!!permute),
+                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                DELTA = mean(!!rlang::sym("DELTA")))        
+    }
 
-	means$STAT <- "SP"
-	reps$STAT <- "SP"
-	means$REPS = length(unique(reps$REP))
-	results <- list()
-	results$reps <- reps
-	results$means <- means
-	results
+    means$STAT <- "SP"
+    reps$STAT <- "SP"
+    means$REPS = length(unique(reps$REP))
+    results <- list()
+    results$reps <- reps
+    results$means <- means
+    results
 }
 
 #' Performs SC (switch count) test on switch data
 #' 
-#' \code{SCtest} performs an SC test
+#' \code{testSC} performs an SC test
 #' @param    switches     Data frame from bootstrapTrees
 #' @param    permuteAll   Permute among trees?
 #' @param    from         Include only switches from this state?
@@ -264,104 +273,110 @@ SPtest <- function(switches, permuteAll=FALSE,
 #'   \item  \code{REPS}: Total number of ootstrap repetition.
 #'}
 #'  
-#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{PStest}
-#' and \link{SPtest}.
+#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{testPS}
+#' and \link{testSP}.
 #' @examples
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' data(ExampleDb)
 #' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb,trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2],bootstraps=100,nproc=1,
-#'	igphyml=igphyml,trait="sample_id",id="temp",dir="temp")
-#' SCtest(btrees$switches)
+#' clones = formatClones(ExampleDb, trait="sample_id")
+#' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+#'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+#' testSC(btrees$switches)
 #' }
-SCtest <- function(switches,dropzeros=TRUE,
-	bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
-	permuteAll=FALSE){
+testSC <- function(switches, dropzeros=TRUE,
+    bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
+    permuteAll=FALSE){
 
-	permute <-dplyr::quo(!!rlang::sym("PERMUTE"))
-	if(permuteAll){
-		permute <-dplyr::quo(!!rlang::sym("PERMUTEALL"))
-	}
+    permute <-dplyr::quo(!!rlang::sym("PERMUTE"))
+    if(permuteAll){
+        permute <-dplyr::quo(!!rlang::sym("PERMUTEALL"))
+    }
 
-	switches <- switches %>% 
-		dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & !!rlang::sym("FROM") != "UCA")
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
+        	!!rlang::sym("FROM") != "UCA")
 
-	if(!is.null(from)){
-		from <-dplyr::enquo(from)
-		switches <- dplyr::filter(switches,!!rlang::sym("FROM") == !!from)
-	}
-	if(!is.null(to)){
-		to <-dplyr::enquo(to)
-		switches <- dplyr::filter(switches,!!rlang::sym("TO") == !!to)
-	}
+    if(!is.null(from)){
+        from <-dplyr::enquo(from)
+        switches <- dplyr::filter(switches, !!rlang::sym("FROM") == !!from)
+    }
+    if(!is.null(to)){
+        to <-dplyr::enquo(to)
+        switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
+    }
 
-	if(!bylineage){
-		reps <- switches  %>%
-			dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE"), !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-			dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES")))
+    if(!bylineage){
+        reps <- switches  %>%
+            dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE"), 
+            	!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+            dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES")))
 
-		reps <- reps %>% 
-			dplyr::filter(!!rlang::sym("TO") != "N") %>%
-			dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("REP")) %>% 
-			dplyr::mutate(COUNT = !!rlang::sym("SWITCHES")) %>%
-			dplyr::select(-!!rlang::sym("SWITCHES")) %>% tidyr::spread(!!rlang::sym("TYPE"),!!rlang::sym("COUNT"))
-	}else{
-		reps <- switches  %>%
-			dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), !!rlang::sym("REP")) %>% 
-			dplyr::mutate(COUNT = !!rlang::sym("SWITCHES")) %>% 
-			dplyr::select(-!!rlang::sym("SWITCHES")) %>% tidyr::spread(!!rlang::sym("TYPE"),!!rlang::sym("COUNT"))
-	}
+        reps <- reps %>% 
+            dplyr::filter(!!rlang::sym("TO") != "N") %>%
+            dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("REP")) %>% 
+            dplyr::mutate(COUNT = !!rlang::sym("SWITCHES")) %>%
+            dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
+            tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("COUNT"))
+    }else{
+        reps <- switches  %>%
+            dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
+            	!!rlang::sym("REP")) %>% 
+            dplyr::mutate(COUNT = !!rlang::sym("SWITCHES")) %>% 
+            dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
+            tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("COUNT"))
+    }
 
-	reps <- reps %>% dplyr::mutate(DELTA = !!rlang::sym("RECON")-!!permute)
+    reps <- reps %>% dplyr::mutate(DELTA = !!rlang::sym("RECON")-!!permute)
 
-	if(dropzeros){
-		from_type <- 
-			reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
-			dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
-			dplyr::filter(!!rlang::sym("d") == 0) %>%
-			.$FROM
-		
-		to_type <- 
-			reps %>% dplyr::group_by(!!rlang::sym("TO")) %>%
-			dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
-			dplyr::filter(!!rlang::sym("d") == 0) %>%
-			.$TO
-		
-		remove <- to_type[to_type %in% from_type]
-		reps <- reps[!reps$FROM %in% remove &
-			!reps$TO %in% remove,]
-	}
+    if(dropzeros){
+        from_type <- 
+            reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
+            dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
+            dplyr::filter(!!rlang::sym("d") == 0) %>%
+            .$FROM
+        
+        to_type <- 
+            reps %>% dplyr::group_by(!!rlang::sym("TO")) %>%
+            dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
+            dplyr::filter(!!rlang::sym("d") == 0) %>%
+            .$TO
+        
+        remove <- to_type[to_type %in% from_type]
+        reps <- reps[!reps$FROM %in% remove &
+            !reps$TO %in% remove, ]
+    }
 
-	if(!bylineage){
-		means <- reps %>% 
-			dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-			dplyr::summarize(
-				RECON = mean(!!rlang::sym("RECON")),
-				PERMUTE = mean(!!permute),
-				PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				DELTA = mean(!!rlang::sym("DELTA")))
-	}else{
-		means <- reps %>% 
-			dplyr::group_by(!!rlang::sym("CLONE"), !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-			dplyr::summarize(
-				RECON = mean(!!rlang::sym("RECON")),
-				PERMUTE = mean(!!permute),
-				PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-					(dplyr::n() + pseudocount),
-				DELTA = mean(!!rlang::sym("DELTA")))		
-	}
-	means$STAT <- "SC"
-	reps$STAT <- "SC"
-	means$REPS = length(unique(reps$REP))
-	results <- list()
-	results$reps <- reps
-	results$means <- means
-	results
+    if(!bylineage){
+        means <- reps %>% 
+            dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+            dplyr::summarize(
+                RECON = mean(!!rlang::sym("RECON")),
+                PERMUTE = mean(!!permute),
+                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                DELTA = mean(!!rlang::sym("DELTA")))
+    }else{
+        means <- reps %>% 
+            dplyr::group_by(!!rlang::sym("CLONE"), !!rlang::sym("FROM"), 
+            	!!rlang::sym("TO")) %>% 
+            dplyr::summarize(
+                RECON = mean(!!rlang::sym("RECON")),
+                PERMUTE = mean(!!permute),
+                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
+                    (dplyr::n() + pseudocount),
+                DELTA = mean(!!rlang::sym("DELTA")))        
+    }
+    means$STAT <- "SC"
+    reps$STAT <- "SC"
+    means$REPS = length(unique(reps$REP))
+    results <- list()
+    results$reps <- reps
+    results$means <- means
+    results
 }

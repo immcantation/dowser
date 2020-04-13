@@ -36,16 +36,17 @@ a grob containing a tree plotted by \code{ggtree}.
 \code{plotTrees} plots a tree or group of trees
 }
 \details{
-Function uses \code{ggtree} functions to plot tree topologlies estimated by \link{getTrees},
-and \link{bootstrapTrees}. Object can be further modified with \code{ggtree} functions. Please
-check out https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.html and
+Function uses \code{ggtree} functions to plot tree topologlies estimated by 
+\link{getTrees}, and \link{bootstrapTrees}. Object can be further modified with 
+\code{ggtree} functions. Please check out 
+https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.html and
 cite \code{ggtree} in addition to \code{dowser} if you use this function.
 }
 \examples{
 \dontrun{
 data(ExampleDb)
 ExampleDb$sample_id = sample(ExampleDb$sample_id)
-clones = formatClones(ExampleDb,trait="sample_id")
+clones = formatClones(ExampleDb, trait="sample_id")
 
 trees = getTrees(clones[1:2])
 plotTrees(trees[[1]])

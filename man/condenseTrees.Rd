@@ -14,18 +14,9 @@ condenseTrees(trees, states, palette)
 \item{palette}{Named vector with a color per state}
 }
 \value{
-Unhelpful
+a \code{phylo} object representing all represented internal node states
 }
 \description{
-\code{condenseTrees} Condenses a set of equally parsimonious node labels into a single tree
-}
-\details{
-None right now.
-}
-\examples{
-# Example data
-
-}
-\seealso{
-Filler
+\code{condenseTrees} Condenses a set of equally parsimonious node labels 
+into a single tree
 }
