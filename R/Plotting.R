@@ -8,9 +8,9 @@
 #
 # @return   A color hex code representing the average of input colors
 #
-combineColors = function(x,pal){
-	cols = rowMeans(grDevices::col2rgb(pal[x]))
-	col = grDevices::rgb(cols[1],cols[2],cols[3],maxColorValue=255)
+combineColors <- function(x,pal){
+	cols <- rowMeans(grDevices::col2rgb(pal[x]))
+	col <- grDevices::rgb(cols[1],cols[2],cols[3],maxColorValue=255)
 	return(col)
 }
 
@@ -70,7 +70,7 @@ getPalette <- function(states,palette){
 colorTrees <- function(trees,palette,ambig="blend"){
     ntrees <- list()
     if(ambig == "grey"){
-    	palette = c(palette,"ambig"="#808080")
+    	palette <- c(palette,"ambig"="#808080")
     }
     for(n in 1:length(trees)){
     	nt <- trees[[n]]
@@ -87,7 +87,7 @@ colorTrees <- function(trees,palette,ambig="blend"){
 			stop("ambig parameter not specified")
 		}
 		nt$node.color <- cv
-		ntrees[[n]] = nt
+		ntrees[[n]] <- nt
     }
     class(ntrees) <- "multiPhylo"
     return(ntrees)
@@ -104,20 +104,20 @@ colorTrees <- function(trees,palette,ambig="blend"){
 #' @return   a \code{phylo} object representing all represented internal node states
 #'
 #' @export
-condenseTrees = function(trees, states, palette){
+condenseTrees <- function(trees, states, palette){
 	if(class(trees) == "phylo"){
-		trees = list(trees)
-		class(trees) = "multiPhylo"
+		trees <- list(trees)
+		class(trees) <- "multiPhylo"
 	}
 	if(is.null(names(states))){
-		names(states) = states
+		names(states) <- states
 	}
-	nt = trees[[1]]
-	tipn = length(trees[[1]]$tip.label)
-	noden = 2*tipn-1
-	combs = list()
+	nt <- trees[[1]]
+	tipn <- length(trees[[1]]$tip.label)
+	noden <- 2*tipn-1
+	combs <- list()
 	for(i in 1:(noden)){
-		combs[[i]] = sort(unique(states[
+		combs[[i]] <- sort(unique(states[
 			unlist(lapply(trees,function(x){
 				lab=x$node.comment[i]
 				if(!lab %in% names(states)){
@@ -126,12 +126,12 @@ condenseTrees = function(trees, states, palette){
 				lab
 				}))]))
 	}
-	nt$unique = unique(unlist(combs))
-	cv = unlist(lapply(combs,function(x)combineColors(x,palette)))
-	margl = unlist(lapply(combs,function(x)paste(x,collapse=",")))
-	nt$node.label = margl[(tipn+1):noden]
-	nt$node.color = cv
-	nt$state = margl
+	nt$unique <- unique(unlist(combs))
+	cv <- unlist(lapply(combs,function(x)combineColors(x,palette)))
+	margl <- unlist(lapply(combs,function(x)paste(x,collapse=",")))
+	nt$node.label <- margl[(tipn+1):noden]
+	nt$node.color <- cv
+	nt$state <- margl
 	return(nt)
 }
 
@@ -153,7 +153,7 @@ condenseTrees = function(trees, states, palette){
 colorTrees <- function(trees, palette, ambig="blend"){
     ntrees <- list()
     if(ambig == "grey"){
-    	palette = c(palette,"ambig"="#808080")
+    	palette <- c(palette,"ambig"="#808080")
     }
     for(n in 1:length(trees)){
     	nt <- trees[[n]]
@@ -170,7 +170,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 			stop("ambig parameter not specified")
 		}
 		nt$node.color <- cv
-		ntrees[[n]] = nt
+		ntrees[[n]] <- nt
     }
     #class(ntrees) <- "multiPhylo"
     return(ntrees)
@@ -205,78 +205,78 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @examples
 #' \dontrun{
 #' data(ExampleDb)
-#' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb, trait="sample_id")
+#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+#' clones <- formatClones(ExampleDb, trait="sample_id")
 #'
-#' trees = getTrees(clones[1:2])
+#' trees <- getTrees(clones[1:2])
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-plotTrees = function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
+plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
 	scale=0.01,	node_palette="Dark2", tip_palette=node_palette, base=FALSE,
 	layout="rectangular", nodeids=FALSE, title=TRUE){
 
 	if(!base){
-		cols = c()
+		cols <- c()
 		if(!is.null(tips) && nodes && sum(tip_palette != node_palette) == 0){
-			tipstates = unique(c(unlist(lapply(trees$data,function(x)
+			tipstates <- unique(c(unlist(lapply(trees$data,function(x)
 				unique(x@data[[tips]]))),"Germline"))
-			nodestates = unique(unlist(lapply(trees$trees,function(x)
+			nodestates <- unique(unlist(lapply(trees$trees,function(x)
 					unique(unlist(strsplit(x$state,split=",")))
 					)))
-			combpalette = getPalette(node_palette,c(nodestates,tipstates))
-			trees$trees = colorTrees(trees$trees,palette=combpalette)
-			nodestates = unlist(lapply(trees$trees,function(x){
-				colors = x$node.color
-				names(colors) = x$state
+			combpalette <- getPalette(node_palette,c(nodestates,tipstates))
+			trees$trees <- colorTrees(trees$trees,palette=combpalette)
+			nodestates <- unlist(lapply(trees$trees,function(x){
+				colors <- x$node.color
+				names(colors) <- x$state
 				colors
 				}))
-			nodepalette = nodestates[unique(names(nodestates))]
-			cols = c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
+			nodepalette <- nodestates[unique(names(nodestates))]
+			cols <- c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
 		}else{
 			if(!is.null(tips)){
-				tipstates = unique(c(unlist(lapply(trees$data,function(x)
+				tipstates <- unique(c(unlist(lapply(trees$data,function(x)
 					unique(x@data[[tips]]))),"Germline"))
 				if(is.null(names(tip_palette))){
-					tip_palette = getPalette(tip_palette,tipstates)
-					tip_palette = tip_palette[!is.na(names(tip_palette))]
+					tip_palette <- getPalette(tip_palette,tipstates)
+					tip_palette <- tip_palette[!is.na(names(tip_palette))]
 				}else{
-					nfound = tipstates[!tipstates %in% names(tip_palette)]
+					nfound <- tipstates[!tipstates %in% names(tip_palette)]
 					if(length(nfound) > 0){
 						stop(paste(nfound,"not found in tip_palette"))
 					}
 				}
-				cols = tip_palette
+				cols <- tip_palette
 			}
 			if(nodes){
 				if(is.null(names(node_palette))){
-					nodestates = unique(unlist(lapply(trees$trees,function(x)
+					nodestates <- unique(unlist(lapply(trees$trees,function(x)
 						unique(unlist(strsplit(x$state,split=",")))
 						)))
-					statepalette = getPalette(node_palette,nodestates)
-					statepalette = statepalette[!is.na(names(statepalette))]
+					statepalette <- getPalette(node_palette,nodestates)
+					statepalette <- statepalette[!is.na(names(statepalette))]
 				}else{
-					statepalette = node_palette
+					statepalette <- node_palette
 				}
-				trees$trees = colorTrees(trees$trees,palette=statepalette)
+				trees$trees <- colorTrees(trees$trees,palette=statepalette)
 				
-				nodestates = unlist(lapply(trees$trees,function(x){
-					colors = x$node.color
-					names(colors) = x$state
+				nodestates <- unlist(lapply(trees$trees,function(x){
+					colors <- x$node.color
+					names(colors) <- x$state
 					colors
 					}))
-				nodepalette = nodestates[unique(names(nodestates))]
-				cols = c(tip_palette,nodestates)
+				nodepalette <- nodestates[unique(names(nodestates))]
+				cols <- c(tip_palette,nodestates)
 			}
 		}
 		
-		ps = lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
+		ps <- lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
 			nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,node_palette=node_palette,
 			tip_palette=tip_palette,base=TRUE,layout=layout,nodeids=nodeids,
 			title=title))
 		if(!is.null(tips) || nodes){
-			ps  = lapply(ps,function(x)
-					x = x + theme(legend.position="right",
+			ps  <- lapply(ps,function(x)
+					x <- x + theme(legend.position="right",
 			    	legend.box.margin=margin(0, -10, 0, 0))+
 			    	scale_color_manual(values=cols)+
 			    	guides(color=guide_legend(title="State")))
@@ -284,37 +284,37 @@ plotTrees = function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 		return(ps)
 	}
 
-	tree = trees$trees[[1]]
-	data = trees$data[[1]]
-	p = ggtree::ggtree(tree,layout=layout)
+	tree <- trees$trees[[1]]
+	data <- trees$data[[1]]
+	p <- ggtree::ggtree(tree,layout=layout)
 	if(!is.null(data)){
 		if(class(data) != "list"){
-			data = list(data)
+			data <- list(data)
 		}
-		index = which(unlist(lapply(data,function(x)x@clone == tree$name)))
+		index <- which(unlist(lapply(data,function(x)x@clone == tree$name)))
 		if(length(index) == 0){
 			stop("clone",tree$name," not found in list of clone objects")
 		}
 		if(length(index) > 1){
 			stop("clone",tree$name," found more than once in list of clone objects")
 		}
-		data = data[[index]]
-		gl = dplyr::tibble(sequence_id="Germline")
+		data <- data[[index]]
+		gl <- dplyr::tibble(sequence_id="Germline")
 		for(n in names(data@data)){
 			if(class(data@data[[n]]) == "numeric"){
-				gl[[n]] = 0
+				gl[[n]] <- 0
 			}else if(class(data@data[[n]]) == "character"){
-				gl[[n]] = "Germline"
+				gl[[n]] <- "Germline"
 			}else{
-				gl[[n]] = "Germline"
+				gl[[n]] <- "Germline"
 			}
 		}
-		data@data = rbind(data@data,gl)
-		p = p %<+% data@data
+		data@data <- rbind(data@data,gl)
+		p <- p %<+% data@data
 	}
 	if(!is.null(tree$pars_recon)){
 		if(nodes){
-			p = p + aes(color=tree$state)
+			p <- p + aes(color=tree$state)
 		}
 	}
 	if(!is.null(tips)){
@@ -323,21 +323,21 @@ plotTrees = function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 		}
 		if(!is.null(tipsize)){
 			if(class(tipsize) == "numeric"){
-				p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)),size=tipsize)
+				p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)),size=tipsize)
 			}else if(class(tipsize) == "character"){
-				p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips),
+				p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips),
 					size=!!rlang::sym(tipsize)))
 			}
 		}else{
-			p = p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)))
+			p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)))
 		}
 	}
-	p = p + ggtree::geom_treescale(width=scale)
+	p <- p + ggtree::geom_treescale(width=scale)
 	if(title){
-		p = p + ggtitle(data@clone)
+		p <- p + ggtitle(data@clone)
 	}
 	if(nodeids){
-		p = p + ggtree::geom_nodelab(aes(label=!!rlang::sym("node")),geom="label")
+		p <- p + ggtree::geom_nodelab(aes(label=!!rlang::sym("node")),geom="label")
 	}
 	p
 }

@@ -33,9 +33,9 @@
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' data(ExampleDb)
-#' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb, trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
 #'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 #' testPS(btrees$switches)
 #' }
@@ -87,7 +87,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0){
 
     means$STAT <- "PS"
     reps$STAT <- "PS"
-    means$REPS = length(unique(reps$REP))
+    means$REPS <- length(unique(reps$REP))
     results <- list()
     results$reps <- reps
     results$means <- means
@@ -232,7 +232,7 @@ testSP <- function(switches, permuteAll=FALSE,
 
     means$STAT <- "SP"
     reps$STAT <- "SP"
-    means$REPS = length(unique(reps$REP))
+    means$REPS <- length(unique(reps$REP))
     results <- list()
     results$reps <- reps
     results$means <- means
@@ -375,7 +375,7 @@ SCtest <- function(switches,dropzeros=TRUE,
     }
     means$STAT <- "SC"
     reps$STAT <- "SC"
-    means$REPS = length(unique(reps$REP))
+    means$REPS <- length(unique(reps$REP))
     results <- list()
     results$reps <- reps
     results$means <- means
