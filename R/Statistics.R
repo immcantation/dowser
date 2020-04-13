@@ -285,9 +285,10 @@ testSP <- function(switches, permuteAll=FALSE,
 #'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 #' testSC(btrees$switches)
 #' }
-testSC <- function(switches, dropzeros=TRUE,
-    bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
-    permuteAll=FALSE){
+#' @export
+SCtest <- function(switches,dropzeros=TRUE,
+	bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
+	permuteAll=FALSE){
 
     permute <-dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){

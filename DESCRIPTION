@@ -44,17 +44,21 @@ Imports:
     seqinr,
     stats,
     stringi,
+    stringr,
     tibble,
+    tidyselect,
     tidyr,
     utils
 Suggests:
     knitr,
     rmarkdown,
     testthat
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Collate: 
     'Data.R'
     'Dowser.R'
+    'Clones.R'
+    'Classes.R'
     'Plotting.R'
     'Statistics.R'
     'TreeFunctions.R'

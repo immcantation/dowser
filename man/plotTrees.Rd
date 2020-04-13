@@ -5,29 +5,42 @@
 \title{Plot a tree with colored internal node labels using ggtree}
 \usage{
 plotTrees(
-  tree,
-  nodes = TRUE,
-  tips = TRUE,
-  trait = NULL,
+  trees,
+  nodes = FALSE,
+  tips = NULL,
   tipsize = NULL,
-  data = NULL,
-  scale = 0.01
+  scale = 0.01,
+  node_palette = "Dark2",
+  tip_palette = node_palette,
+  base = FALSE,
+  layout = "rectangular",
+  nodeids = FALSE,
+  title = TRUE
 )
 }
 \arguments{
-\item{tree}{A tree or list of \code{phylo} tree objects}
+\item{trees}{A tibble containing \code{phylo} and \code{airrClone}
+objects}
 
 \item{nodes}{color internal nodes if possible?}
 
 \item{tips}{color tips if possible?}
 
-\item{trait}{trait to use to color the tips}
-
 \item{tipsize}{size of tip shape objects}
 
-\item{data}{list of \code{changeoClone} objects used to generate \code{tree}}
-
 \item{scale}{width of branch length scale bar}
+
+\item{node_palette}{color palette for nodes}
+
+\item{tip_palette}{color palette for tips}
+
+\item{base}{recursion base case (don't edit)}
+
+\item{layout}{rectangular or circular tree layout?}
+
+\item{nodeids}{plot internal node numbers?}
+
+\item{title}{use clone id as title?}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
