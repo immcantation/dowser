@@ -10,6 +10,7 @@
 # @param    dummy        Not include real sequence information
 #
 # @return   Name of exported fasta file.
+# TODO: change to store as string and open file only once!
 writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	clone <- c@clone
 	append <- FALSE
@@ -300,7 +301,7 @@ reconIgPhyML <- function(file, modelfile, cloneid,
 			states <- readModelFile(modelfile)
 		}
 		if(is.null(palette)){
-			palette <- getPalette("Dark2",states)
+			palette <- getPalette(states,palette="Dark2")
 		}
 		results <- readLineages(file,states,palette,"recon",quiet)
 		results <- lapply(results,function(x){

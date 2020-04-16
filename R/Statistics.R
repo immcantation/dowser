@@ -40,7 +40,8 @@
 #' testPS(btrees$switches)
 #' }
 #' @export
-testPS <- function(switches, bylineage=FALSE, pseudocount=0){
+testPS <- function(switches, bylineage=FALSE, pseudocount=0,
+    alternative=c("less","two.sided","greater")){
     switches <- switches %>% 
         dplyr::filter(!!rlang::sym("TO") != "N" & 
             !!rlang::sym("TO") != !!rlang::sym("FROM") &
@@ -63,26 +64,72 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0){
     }
 
     if(!bylineage){
-        means <- reps %>% 
-            dplyr::summarize(
-                RECON = mean(!!rlang::sym("RECON")),
-                PERMUTE = mean(!!rlang::sym("PERMUTE")),
-                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),    
-                DELTA = mean(!!rlang::sym("DELTA")))    
+        if(alternative[1] == "two.sided"){
+            means <- reps %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "greater"){
+            means <- reps %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "less"){
+            means <- reps %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }
     }else{
-        means <- reps %>% 
-            dplyr::group_by(!!rlang::sym("CLONE")) %>% 
-            dplyr::summarize(
-                RECON = mean(!!rlang::sym("RECON")),
-                PERMUTE = mean(!!rlang::sym("PERMUTE")),
-                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),    
-                DELTA = mean(!!rlang::sym("DELTA")))    
+        if(alternative[1] == "two.sided"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("CLONE")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "greater"){
+            means <- reps %>% 
+                dplyr::group_by(!!rlang::sym("CLONE")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "less"){
+            means <- reps %>% 
+                dplyr::group_by(!!rlang::sym("CLONE")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }            
     }
 
     means$STAT <- "PS"
@@ -143,7 +190,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0){
 #' @export
 testSP <- function(switches, permuteAll=FALSE, 
     from=NULL, to=NULL, dropzeros=TRUE,
-    bylineage=FALSE, pseudocount=0){
+    bylineage=FALSE, pseudocount=0, alternative=c("two.sided","greater","less")){
 
     permute <- dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){
@@ -206,28 +253,78 @@ testSP <- function(switches, permuteAll=FALSE,
     }
 
     if(!bylineage){
-        means <- reps %>% 
-            dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-            dplyr::summarize(
-                RECON = mean(!!rlang::sym("RECON")),
-                PERMUTE = mean(!!permute),
-                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                DELTA = mean(!!rlang::sym("DELTA")))
+        if(alternative[1] == "two.sided"){
+            means <- reps %>% 
+                dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "greater"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "less"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }            
     }else{
-        means <- reps %>% 
-            dplyr::group_by(!!rlang::sym("CLONE"), !!rlang::sym("FROM"), 
-            	!!rlang::sym("TO")) %>% 
-            dplyr::summarize(
-                RECON = mean(!!rlang::sym("RECON")),
-                PERMUTE = mean(!!permute),
-                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                DELTA = mean(!!rlang::sym("DELTA")))        
+        if(alternative[1] == "two.sided"){
+            means <- reps %>% 
+                dplyr::group_by(!!rlang::sym("CLONE"), 
+                    !!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "greater"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("CLONE"),
+                    !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "less"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("CLONE"),
+                    !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }                            
     }
 
     means$STAT <- "SP"
@@ -288,7 +385,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #' @export
 testSC <- function(switches,dropzeros=TRUE,
 	bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
-	permuteAll=FALSE){
+	permuteAll=FALSE, alternative=c("two.sided","greater","less")){
 
     permute <-dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){
@@ -350,28 +447,78 @@ testSC <- function(switches,dropzeros=TRUE,
     }
 
     if(!bylineage){
-        means <- reps %>% 
-            dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
-            dplyr::summarize(
-                RECON = mean(!!rlang::sym("RECON")),
-                PERMUTE = mean(!!permute),
-                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                DELTA = mean(!!rlang::sym("DELTA")))
+        if(alternative[1] == "two.sided"){
+            means <- reps %>% 
+                dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "greater"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "less"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }            
     }else{
-        means <- reps %>% 
-            dplyr::group_by(!!rlang::sym("CLONE"), !!rlang::sym("FROM"), 
-            	!!rlang::sym("TO")) %>% 
-            dplyr::summarize(
-                RECON = mean(!!rlang::sym("RECON")),
-                PERMUTE = mean(!!permute),
-                PLT = (sum(!!rlang::sym("DELTA") >= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                PGT = (sum(!!rlang::sym("DELTA") <= 0) + pseudocount)/
-                    (dplyr::n() + pseudocount),
-                DELTA = mean(!!rlang::sym("DELTA")))        
+        if(alternative[1] == "two.sided"){
+            means <- reps %>% 
+                dplyr::group_by(!!rlang::sym("CLONE"), 
+                    !!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "greater"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("CLONE"),
+                    !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PGT = (sum(!!rlang::sym("DELTA") < 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),    
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }else if(alternative[1] == "less"){
+            means <- reps %>%
+                dplyr::group_by(!!rlang::sym("CLONE"),
+                    !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                dplyr::summarize(
+                    RECON = mean(!!rlang::sym("RECON")),
+                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PLT = (sum(!!rlang::sym("DELTA") > 0) + 
+                        sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
+                        (dplyr::n() + pseudocount),
+                    DELTA = mean(!!rlang::sym("DELTA")))
+        }                            
     }
     means$STAT <- "SC"
     reps$STAT <- "SC"
