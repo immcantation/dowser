@@ -9,7 +9,7 @@ Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"),
 Title: B cell receptor phylogenetics toolkit
 Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenies.
 License: CC BY-SA 4.0
-URL: https://bitbucket.org/kbhoehn/dowser
+URL: https://bitbucket.org/kleinstein/dowser
 BugReports: https://bitbucket.org/kbhoehn/dowser/issues
 LazyData: true
 BuildVignettes: true

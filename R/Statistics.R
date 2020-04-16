@@ -286,7 +286,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #' testSC(btrees$switches)
 #' }
 #' @export
-SCtest <- function(switches,dropzeros=TRUE,
+testSC <- function(switches,dropzeros=TRUE,
 	bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
 	permuteAll=FALSE){
 

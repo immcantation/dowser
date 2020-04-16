@@ -391,18 +391,18 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 }
 
 
-# Write lineage file for IgPhyML use
-# 
-# @param    data    list of \code{airrClone} objects
-# @param    trees   list of \cde{phylo} objects corresponding to \code{data}
-# @param    dir     directory to write file
-# @param    id      id used for IgPhyML run
-# @param    rep     bootstrap replicate
-# @param    trait   string appended to sequence id in fasta files
-# @param    dummy   output uninformative sequences?
-#
-# @return   Name of created lineage file.
-#
+#' Write lineage file for IgPhyML use
+#' 
+#' @param    data    list of \code{airrClone} objects
+#' @param    trees   list of \code{phylo} objects corresponding to \code{data}
+#' @param    dir     directory to write file
+#' @param    id      id used for IgPhyML run
+#' @param    rep     bootstrap replicate
+#' @param    trait   string appended to sequence id in fasta files
+#' @param    dummy   output uninformative sequences?
+#'
+#' @return   Name of created lineage file.
+#' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
 	trait=NULL,	dummy=TRUE){
 
@@ -1387,7 +1387,7 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #'  
 #' @seealso Uses output from \link{formatClones} with similar arguments to 
 #' \link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
-#' with \link{PStest}, \link{SCtest}, and \link{SPtest}.
+#' with \link{testPS}, \link{testSC}, and \link{testSP}.
 #' 
 #' @examples
 #' \dontrun{

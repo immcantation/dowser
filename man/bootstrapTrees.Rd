@@ -91,14 +91,14 @@ to perform parsimony based trait value tests.
 \examples{
 \dontrun{
 data(ExampleDb)
-ExampleDb$sample_id = sample(ExampleDb$sample_id)
-clones = formatClones(ExampleDb, trait="sample_id")
+ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+clones <- formatClones(ExampleDb, trait="sample_id")
 
-btrees = bootstrapTrees(clones[1:2], bootstraps=100)
+btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
 plotTrees(btrees$trees[[4]][[1]])
 
 igphyml <- "~/apps/igphyml/src/igphyml"
-btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 plotTrees(btrees$trees[[4]][[1]])
 testPS(btrees$switches)
@@ -107,5 +107,5 @@ testPS(btrees$switches)
 \seealso{
 Uses output from \link{formatClones} with similar arguments to 
 \link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
-with \link{PStest}, \link{SCtest}, and \link{SPtest}.
+with \link{testPS}, \link{testSC}, and \link{testSP}.
 }

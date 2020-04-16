@@ -58,10 +58,10 @@ cite \code{ggtree} in addition to \code{dowser} if you use this function.
 \examples{
 \dontrun{
 data(ExampleDb)
-ExampleDb$sample_id = sample(ExampleDb$sample_id)
-clones = formatClones(ExampleDb, trait="sample_id")
+ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+clones <- formatClones(ExampleDb, trait="sample_id")
 
-trees = getTrees(clones[1:2])
+trees <- getTrees(clones[1:2])
 plotTrees(trees[[1]])
 }
 }

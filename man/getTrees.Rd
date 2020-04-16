@@ -101,13 +101,13 @@ be toggled using (\code{rm_files}).
 \examples{
 \dontrun{
 data(ExampleDb)
-ExampleDb$sample_id = sample(ExampleDb$sample_id)
-clones = formatClones(ExampleDb, trait="sample_id")
+ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+clones <- formatClones(ExampleDb, trait="sample_id")
 
-trees = getTrees(clones[1:2])
+trees <- getTrees(clones[1:2])
 plotTrees(trees[[1]])
 
-trees = getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
+trees <- getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
       trait="sample_id")
 plotTrees(trees[[1]])
 }

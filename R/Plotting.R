@@ -301,7 +301,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 		data <- data[[index]]
 		gl <- dplyr::tibble(sequence_id="Germline")
 		for(n in names(data@data)){
-			if(class(data@data[[n]]) == "numeric"){
+			if(class(data@data[[n]]) == "numeric" || class(data@data[[n]]) == "integer"){
 				gl[[n]] <- 0
 			}else if(class(data@data[[n]]) == "character"){
 				gl[[n]] <- "Germline"
@@ -332,7 +332,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 			p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)))
 		}
 	}
-	p <- p + ggtree::geom_treescale(width=scale)
+	if(scale != FALSE){
+		p <- p + ggtree::geom_treescale(width=scale)
+	}
 	if(title){
 		p <- p + ggtitle(data@clone)
 	}

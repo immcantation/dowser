@@ -42,9 +42,9 @@ PGT = p value for DELTA < 0
 \dontrun{
 igphyml <- "~/apps/igphyml/src/igphyml"
 data(ExampleDb)
-ExampleDb$sample_id = sample(ExampleDb$sample_id)
-clones = formatClones(ExampleDb, trait="sample_id")
-btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+clones <- formatClones(ExampleDb, trait="sample_id")
+btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 testPS(btrees$switches)
 }
