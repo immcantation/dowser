@@ -464,7 +464,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 #          containing reconstructed sequences.
 #
 buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
-	rm_temp=TRUE, seq="sequence", tree=NULL){
+	rm_temp=TRUE, seq="sequence", tree=NULL, onetree=TRUE){
 
 	if(grepl("dnaml$",exec)){
        method <- "dnaml"
@@ -484,7 +484,7 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
 	if(is.null(tree)){
 		tree <- tryCatch({
 			alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,phylo=TRUE,
-				verbose=verbose,temp_path=temp_path)},
+				verbose=verbose,temp_path=temp_path,onetree=onetree)},
 			error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
 		tree <- rerootTree(tree, germline="Germline")
         tree <- ape::ladderize(tree,right=FALSE)
