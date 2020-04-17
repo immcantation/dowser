@@ -11,7 +11,8 @@ testSP(
   to = NULL,
   dropzeros = TRUE,
   bylineage = FALSE,
-  pseudocount = 0
+  pseudocount = 0,
+  alternative = c("two.sided", "greater", "less")
 )
 }
 \arguments{

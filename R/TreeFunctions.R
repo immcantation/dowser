@@ -14,25 +14,33 @@
 writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	clone <- c@clone
 	append <- FALSE
+	text = ""
 	if(!is.null(trait)){
 		c@data$sequence_id <- paste(c@data$sequence_id,c@data[,trait],sep="_")
 	}
 	for(i in 1:nrow(c@data)){
 		if(i > 1){append=TRUE}
-		write(paste0(">",c@data[i,]$sequence_id),
-			file=fastafile,append=append)
+		#write(paste0(">",c@data[i,]$sequence_id),
+		#	file=fastafile,append=append)
+		text = paste0(text,">",c@data[i,]$sequence_id,"\n")
 		if(!dummy){
-			write(c@data[i,]$sequence,file=fastafile,append=TRUE)
+			#write(c@data[i,]$sequence,file=fastafile,append=TRUE)
+			text = paste0(text,c@data[i,]$sequence,"\n")
 		}else{
-			write("ATG",file=fastafile,append=TRUE)
+			#write("ATG",file=fastafile,append=TRUE)
+			text = paste0(text,"ATG\n")
 		}
 	}
-	write(paste0(">",germid),file=fastafile,append=append)
+	#write(paste0(">",germid),file=fastafile,append=append)
+	text = paste0(text,">",germid,"\n")
 	if(!dummy){
-		write(c@germline,file=fastafile,append=TRUE)
+		#write(c@germline,file=fastafile,append=TRUE)
+		text = paste0(text,c@germline,"\n")
 	}else{
-		write("ATG",file=fastafile,append=TRUE)
+		#write("ATG",file=fastafile,append=TRUE)
+		text = paste0(text,"ATG\n")
 	}
+	write(text,file=fastafile,append=FALSE)
 	return(fastafile)
 }
 

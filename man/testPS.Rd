@@ -4,7 +4,12 @@
 \alias{testPS}
 \title{Performs PS (parsimony score) test on switch data}
 \usage{
-testPS(switches, bylineage = FALSE, pseudocount = 0)
+testPS(
+  switches,
+  bylineage = FALSE,
+  pseudocount = 0,
+  alternative = c("less", "two.sided", "greater")
+)
 }
 \arguments{
 \item{switches}{Data frame from bootstrapTrees}
