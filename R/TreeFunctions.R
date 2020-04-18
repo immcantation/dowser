@@ -786,6 +786,12 @@ rerootTree <- function(tree,germline){
             parent <- redge[2,2]
             child <- redge[1,2]
         }
+        if(tree$tip.label[child] == germline &&
+        	tree$edge.length[tree$edge[,1] == root &
+        	tree$edge[,2] == child] <= min){
+        	print("tree already rooted!")
+        	return(tree)
+        }
         tree$edge <- tree$edge[!rindex,]
         tree$edge <- rbind(tree$edge,c(parent,child))
         sumedge <- sum(tree$edge.length[rindex])

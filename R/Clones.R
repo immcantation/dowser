@@ -97,7 +97,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     junc_len="junction_length", clone="clone_id", mask_char="N",
     max_mask=0, pad_end=FALSE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
     add_count=TRUE, verbose=FALSE, collapse=TRUE, region="H", heavy=NULL,
-    cell="cell", locus="locus", traits=NULL, triple=FALSE){
+    cell="cell", locus="locus", traits=NULL, triple=FALSE, randomize=TRUE){
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, unique(c(id, seq, germ, vcall, jcall, junc_len, clone, 
@@ -261,6 +261,9 @@ function(data, id="sequence_id", seq="sequence_alignment",
                 dplyr::ungroup()
           }
     }
+    if(randomize){
+        tmp_df = tmp_df[sample(1:nrow(tmp_df),replace=FALSE),]
+    }
     
     # Define return object
     tmp_names <- names(tmp_df)
@@ -408,7 +411,7 @@ formatClones <- function(data, id="sequence_id", seq="sequence_alignment",
                 mask_char="N", max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, 
                 seq_fields=NULL, add_count=TRUE, verbose=FALSE, nproc=1, collapse=TRUE,
                 region="H", heavy=NULL, cell="cell_id", locus="locus", traits=NULL,
-                minseq=2, triple=TRUE, subclones="lump", majoronly=FALSE) {
+                minseq=2, triple=TRUE, subclones="lump", majoronly=FALSE,randomize=TRUE) {
 
 	if(majoronly){
 		if(!subclone %in% names(data)){
@@ -467,7 +470,8 @@ formatClones <- function(data, id="sequence_id", seq="sequence_alignment",
             clone=clone, mask_char=mask_char, max_mask=max_mask, pad_end=pad_end,
             text_fields=text_fields, num_fields=num_fields, seq_fields=seq_fields,
             add_count=add_count, verbose=verbose,collapse=collapse,
-            region=region, heavy=heavy, cell=cell, locus=locus, traits=traits,triple=TRUE))
+            region=region, heavy=heavy, cell=cell, locus=locus, traits=traits,triple=triple,
+            randomize=randomize))
 
     if(region == "HL"){
     	seq_name <- "hlsequence"
