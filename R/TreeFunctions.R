@@ -1523,7 +1523,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			if(build=="dnapars"){
 				trees <- lapply(reps,function(x)
 					buildPhylo(data[[x]],
-						trait,exec,
+						exec=exec,
 						temp_path=file.path(dir,paste0(id,"_",rep,"_trees_",x)),
 						rm_temp=rm_temp,seq=seq))
 			}else{
