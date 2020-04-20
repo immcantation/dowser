@@ -769,7 +769,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @return  \code{phylo} object rooted at the specified germline
 #' 
 #' @export
-rerootTree <- function(tree,germline){
+rerootTree <- function(tree,germline,min=0.001){
     ntip <- length(tree$tip.label)
     uca <- ntip+1
     if(ape::is.rooted(tree)){
