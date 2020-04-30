@@ -1,0 +1,44 @@
+site_name: doswer
+site_favicon: img/immcantation.ico
+repo_url: https://bitbucket.org/kleinstein/dowser
+theme: readthedocs
+markdown_extensions:
+  - def_list
+  - sane_lists
+  - smarty
+  - toc:
+      permalink: True
+docs_dir: 'docs'
+pages:
+  - 'About':
+    - 'Introduction': index.md
+    - 'Download & Installation': install.md
+    - 'Package Overview': topics/dowser.md
+    - 'Release Notes': news.md
+  - 'Vignettes':
+    - 'Quickstart': vignettes/Quickstart-Vignette.md
+  - 'Help Topics':
+    - 'Define Clones and Subclones':
+      - topics/getSubclones.md
+      - topics/formatClones.md
+      - topics/createGermlines.md
+      - topics/makeAirrClone.md
+      - topics/airrClone-class.md
+    - 'Build Lineage Trees':
+      - topics/getTrees.md
+      - topics/bootstrapTrees.md
+    - 'Visualize Trees':
+      - topics/plotTrees.md
+      - topics/colorTrees.md
+      - topics/getPalette.md
+      - topics/collapseNodes.md
+      - topics/scaleBranches.md
+      - topics/rerootTree.md
+    - 'Reconstruct Sequences':
+      - topics/getSeq.md
+    - 'Discrete Trait Analysis':
+      - topics/makeModelFile.md
+      - topics/readModelFile.md
+      - topics/testPS.md
+      - topics/testSC.md
+      - topics/testSP.md

@@ -224,7 +224,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 			nodestates <- unique(unlist(lapply(trees$trees,function(x)
 					unique(unlist(strsplit(x$state,split=",")))
 					)))
-			combpalette <- getPalette(node_palette,c(nodestates,tipstates))
+			combpalette <- getPalette(c(nodestates,tipstates),node_palette)
 			trees$trees <- colorTrees(trees$trees,palette=combpalette)
 			nodestates <- unlist(lapply(trees$trees,function(x){
 				colors <- x$node.color
@@ -238,7 +238,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 				tipstates <- unique(c(unlist(lapply(trees$data,function(x)
 					unique(x@data[[tips]]))),"Germline"))
 				if(is.null(names(tip_palette))){
-					tip_palette <- getPalette(tip_palette,tipstates)
+					tip_palette <- getPalette(tipstates,tip_palette)
 					tip_palette <- tip_palette[!is.na(names(tip_palette))]
 				}else{
 					nfound <- tipstates[!tipstates %in% names(tip_palette)]
@@ -253,7 +253,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 					nodestates <- unique(unlist(lapply(trees$trees,function(x)
 						unique(unlist(strsplit(x$state,split=",")))
 						)))
-					statepalette <- getPalette(node_palette,nodestates)
+					statepalette <- getPalette(nodestates,node_palette)
 					statepalette <- statepalette[!is.na(names(statepalette))]
 				}else{
 					statepalette <- node_palette

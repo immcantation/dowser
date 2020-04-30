@@ -1,0 +1,53 @@
+---
+title: 'Dowser: Simple lineage tree construction'
+author: "Kenneth B. Hoehn"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Quickstart}
+  %\usepackage[utf8]{inputenc}
+---
+
+Quick start of lineage tree reconstruction.
+
+```r
+# Load required packages
+library(alakazam)
+library(dowser)
+
+# load example AIRR tsv data
+data(ExampleDb)
+
+# Process example data into proper format
+clones = formatClones(ExampleDb)
+
+# Build maxmimum parsimony trees for first two clones using 
+# phangorn package in R
+trees <- getTrees(clones[1:2,])
+
+# simple tree plotting with ggtree R package
+plots <- plotTrees(trees)
+
+# plot tree of first clone
+plots[[1]]
+```
