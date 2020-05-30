@@ -3,8 +3,13 @@ Dowser
 
 Dowser is part of the [Immcantation](http://immcantation.readthedocs.io) 
 analysis framework for Adaptive Immune Receptor Repertoire sequencing 
-(AIRR-seq) and provides a set of tools for performing phylogenetic analysis
-on B cell receptor repertoires
+(AIRR-seq). Dowser provides a set of tools for performing phylogenetic analysis
+on B cell receptor repertoires. It supports building and visualizing trees using 
+multiple methods, and implements statistical tests for discrete trait analysis
+of B cell migration, differentiation, and isotype switching.
+
+Dowser is released under the AGPL-3 license.
+
 
 Notice
 -------------------------------------------------------------------------------
