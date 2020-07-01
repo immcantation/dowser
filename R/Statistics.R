@@ -528,3 +528,79 @@ testSC <- function(switches,dropzeros=TRUE,
     results$means <- means
     results
 }
+
+#' Performs root-to-tip regression test on set of trees
+#' 
+#' \code{rootToTop} performs root-to-tip regression permutation test
+#' @param    trees        Tibble with trees and data 
+#' @param    time         Column id for timepoint
+#' @param    permutations Number of permutations for test
+#' @param    germline     Germline sequence name
+#' @param    minlength    Branch lengths to collapse in trees
+#' @param    alternative   Perform test for each lineage individually?
+#'
+#' @return   A \code{tibble} with pearson correlation between divergene
+#' and time, mean permuted correlation, p value(s), number of permutations,
+#' and number of sequences
+#'
+#' @details
+#' Output data table columns:
+#' clone_id = clone id
+#' observed = observed pearson correlation
+#' permuted = mean permuted correlation
+#' pgt = p value for DELTA < 0
+#' plt = p value for DELTA > 0
+#'  
+#' @seealso Uses output from \link{getTrees}.
+#' @export
+rootToTip <- function(trees, time="time", permutations=1000,
+    germline="Germline", minlength=0.001,
+    alternative=c("two.sided","greater","less")){
+
+    # perform root-tip regressions
+    regressions <- tibble()
+    for(cloneid in unique(trees$clone_id)){
+        temp <- dplyr::filter(trees,clone_id == cloneid)
+        tree <- temp$trees[[1]]
+        data <- temp$data[[1]]@data
+    
+        if(n_distinct(data[[time]]) == 1 || 
+            n_distinct(data[[time]]) == 1){
+            next
+        }
+        
+        tips <- tree$tip.label
+        tree$edge.length[tree$edge.length < minlength] <- 0
+        tree <- ape::di2multi(tree,tol=minlength)
+        uca <- ape::getMRCA(tree,tip=tips[!grepl(germline,tips)])
+        co <- ape::dist.nodes(tree)
+        dist <- co[1:length(tree$tip.label),uca]
+        names(dist) <- tree$tip.label
+        dist <- dist[!grepl(germline,names(dist))]
+    
+        # add cophenetic distance to data tibble
+        data$divergence <- dist[data$sequence_id]
+    
+        # get observed and permuted correlation between divergence and time
+        observed_cor <- cor(data$divergence,data$time)
+        perm_temp <- data
+        perm_cor <- rep(1,length=permutations)
+        for(p in 1:permutations){
+            perm_temp[[time]] <- sample(data[[time]],replace=FALSE)
+            perm_cor[p] <- cor(perm_temp$divergence,perm_temp[[time]])
+        }
+    
+        # collect results
+        results <- tibble(
+            clone_id=cloneid,
+            observed=observed_cor,
+            permuted=mean(perm_cor),
+            pv_gt = sum(perm_cor >= observed_cor)/permutations,
+            pv_lt = sum(perm_cor <= observed_cor)/permutations,
+            nperm = permutations,
+            nseq = nrow(data)
+            )
+        regressions <- bind_rows(regressions,results)
+    }
+    return(regressions)
+}

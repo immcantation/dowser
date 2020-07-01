@@ -27,7 +27,8 @@ makeAirrClone(
   cell = "cell",
   locus = "locus",
   traits = NULL,
-  triple = FALSE
+  triple = FALSE,
+  randomize = TRUE
 )
 }
 \arguments{

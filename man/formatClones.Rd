@@ -32,7 +32,8 @@ formatClones(
   minseq = 2,
   triple = TRUE,
   subclones = "lump",
-  majoronly = FALSE
+  majoronly = FALSE,
+  randomize = TRUE
 )
 }
 \arguments{
