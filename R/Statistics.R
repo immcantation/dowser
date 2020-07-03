@@ -560,6 +560,7 @@ rootToTip <- function(trees, time="time", permutations=1000,
     # perform root-tip regressions
     regressions <- tibble()
     for(cloneid in unique(trees$clone_id)){
+        print(cloneid)
         temp <- dplyr::filter(trees,clone_id == cloneid)
         tree <- temp$trees[[1]]
         data <- temp$data[[1]]@data
@@ -567,6 +568,12 @@ rootToTip <- function(trees, time="time", permutations=1000,
         if(n_distinct(data[[time]]) == 1 || 
             n_distinct(data[[time]]) == 1){
             next
+        }
+
+        dseq = data[is.na(data[[time]]),]$sequence_id
+        if(length(dseq) > 0){
+            data <- dplyr::filter(data,!sequence_id %in% dseq)
+            tree <- ape::drop.tip(tree,tip=dseq)
         }
         
         tips <- tree$tip.label
@@ -582,7 +589,7 @@ rootToTip <- function(trees, time="time", permutations=1000,
         data$divergence <- dist[data$sequence_id]
     
         # get observed and permuted correlation between divergence and time
-        observed_cor <- cor(data$divergence,data$time)
+        observed_cor <- cor(data$divergence,data[[time]])
         perm_temp <- data
         perm_cor <- rep(1,length=permutations)
         for(p in 1:permutations){

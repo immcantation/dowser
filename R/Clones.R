@@ -638,10 +638,10 @@ getSubclones <- function(heavy, light, nproc=1, minseq=2,
 #' @export
 createGermlines <- function(data, exec, refs, file, cf="vj_clone",
 		format="airr",g="dmask",germ="germline_alignment_d_mask",rm_file=TRUE){
-	alakazam::writeChangeoDb(data,file=file)
+	alakazam::writeChangeoDb(data,file=paste0(file,".tsv"))
 	exec <- path.expand(exec)
 	r <- paste(path.expand(refs),collapse=" ")
-	command <- paste("-d",file,"-r",r,"--format",format,"--cloned --cf",cf,
+	command <- paste("-d",paste0(file,".tsv"),"-r",r,"--format",format,"--cloned --cf",cf,
 		"--outname",file,"-g",g)
 	params <- list(exec,command,stdout=TRUE,stderr=TRUE)
 	status <- tryCatch(do.call(base::system2, params), error=function(e){
