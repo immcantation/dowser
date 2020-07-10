@@ -602,11 +602,22 @@ rootToTip <- function(trees, time="time", permutations=1000,
             clone_id=cloneid,
             observed=observed_cor,
             permuted=mean(perm_cor),
-            pv_gt = sum(perm_cor >= observed_cor)/permutations,
-            pv_lt = sum(perm_cor <= observed_cor)/permutations,
             nperm = permutations,
             nseq = nrow(data)
             )
+
+        if(alternative[1] == "greater"){
+            results$p_gt = sum(perm_cor >= observed_cor)/permutations
+        }else if(alternative[1] == "less"){
+            results$p_lt = sum(perm_cor <= observed_cor)/permutations
+        }else if(alternative[1] == "two.sided"){
+            results$p_gt = (sum(perm_cor > observed_cor) +
+                    sum(perm_cor == observed_cor)*0.5)/permutations
+            results$p_lt = (sum(perm_cor < observed_cor) +
+                    sum(perm_cor == observed_cor)*0.5)/permutations
+        }else{
+            stop(paste(alternative,"not a valid hypothesis specification"))
+        }
         regressions <- bind_rows(regressions,results)
     }
     return(regressions)

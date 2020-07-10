@@ -643,6 +643,7 @@ createGermlines <- function(data, exec, refs, file, cf="vj_clone",
 	r <- paste(path.expand(refs),collapse=" ")
 	command <- paste("-d",paste0(file,".tsv"),"-r",r,"--format",format,"--cloned --cf",cf,
 		"--outname",file,"-g",g)
+    print(command)
 	params <- list(exec,command,stdout=TRUE,stderr=TRUE)
 	status <- tryCatch(do.call(base::system2, params), error=function(e){
 		return(e)
@@ -652,13 +653,17 @@ createGermlines <- function(data, exec, refs, file, cf="vj_clone",
 	if(class(status) != "character"){
 		print(paste(exec,command))
 		stop(status)
-	}
+	}else{
+        status = status[!grepl("PROGRESS",status)]
+        print(data.frame(status))
+    }
 	gl <- alakazam::readChangeoDb(paste0(file,"_germ-pass.tsv"))
 	if(rm_file){
-		unlink(file)
+		unlink(paste0(file,".tsv"))
 		unlink(paste0(file,"_germ-pass.tsv"))
 	}
 	if(g != "dmask"){
+        print("replacing germline alignment")
 		if("germline_alignment" %in% names(gl)){
 			gl[[germ]] <- gl$germline_alignment
 		}else if("GERMLINE_IMGT" %in% names(gl)){
