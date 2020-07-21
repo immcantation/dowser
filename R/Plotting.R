@@ -9,7 +9,7 @@
 # @return   A color hex code representing the average of input colors
 #
 combineColors <- function(x,pal){
-	cols <- rowMeans(grDevices::col2rgb(pal[x]))
+	cols <- rowMeans(grDevices::col2rgb(pal[as.character(x)]))
 	col <- grDevices::rgb(cols[1],cols[2],cols[3],maxColorValue=255)
 	return(col)
 }
@@ -47,7 +47,7 @@ getPalette <- function(states,palette){
         	"IgG", "IgA") 
     }else{
         pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
-        names(pal) <- unique(states)
+        names(pal) <- as.character(unique(states))
     }
     return(pal)
 }
