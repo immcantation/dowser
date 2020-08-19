@@ -15,7 +15,7 @@ makeAirrClone(
   clone = "clone_id",
   mask_char = "N",
   max_mask = 0,
-  pad_end = FALSE,
+  pad_end = TRUE,
   text_fields = NULL,
   num_fields = NULL,
   seq_fields = NULL,
@@ -24,10 +24,10 @@ makeAirrClone(
   collapse = TRUE,
   region = "H",
   heavy = NULL,
-  cell = "cell",
+  cell = "cell_id",
   locus = "locus",
   traits = NULL,
-  triple = FALSE,
+  triple = TRUE,
   randomize = TRUE,
   ...
 )

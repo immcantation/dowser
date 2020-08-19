@@ -954,11 +954,11 @@ rerootTree <- function(tree,germline,min=0.001){
 #' }
 #' @export
 getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
-	modelfile=NULL,	build="pratchet", exec=NULL, igphyml=NULL, fixtrees=FALSE, 
-	nproc=1, quiet=0, rm_temp=TRUE,	palette=NULL, seq=NULL, collapse=FALSE,
-	...){
+	modelfile=NULL,	build="pratchet", exec=NULL, igphyml=NULL,
+	fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,	palette=NULL,
+	seq=NULL, collapse=FALSE, ...){
+
 	args <- list(...)
-	print(args)
 	data <- clones$data
 	if(fixtrees){
 		if(!"trees" %in% names(clones)){
@@ -1053,80 +1053,48 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 		rm_dir=file.path(dir,paste0(id,"_recon_trees"))
 	}
 	
-	#if(is.null(trees)){
-		reps <- as.list(1:length(data))
-		if(is.null(seq)){
-			seqs <- unlist(lapply(data,function(x)x@phylo_seq))
-		}else{
-			seqs <- rep(seq,length=length(data))
-		}
-		if(build=="dnapars" || build=="dnaml"){
-			#if(!fixtrees){
-			#	trees <- parallel::mclapply(reps,function(x)
-			#		buildPhylo(data[[x]],
-			#			exec=exec,
-			#			temp_path=file.path(dir,paste0(id,"_trees_",x)),
-			#			rm_temp=rm_temp,seq=seqs[x]),
-			#		mc.cores=nproc)
-			#}else{
-			trees <- parallel::mclapply(reps,function(x)
-				buildPhylo(data[[x]],
-					exec=exec,
-					temp_path=file.path(dir,paste0(id,"_trees_",x)),
-					rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
-				mc.cores=nproc)
-			#}
-		}else if(build=="pratchet"){
-			#if(!fixtrees){
-			#	trees <- parallel::mclapply(reps,function(x)
-			#		buildPratchet(data[[x]],seq=seqs[x],...),
-			#		mc.cores=nproc)
-			#}else{
-			trees <- parallel::mclapply(reps,function(x)
-				buildPratchet(data[[x]],seq=seqs[x],
-						tree=trees[[x]],...),
-					mc.cores=nproc)
-			#}
-		}else if(build=="pml"){
-			#if(!fixtrees){
-			#	trees <- parallel::mclapply(reps,function(x)
-			#		buildPML(data[[x]],seq=seqs[x],
-			#		...),mc.cores=nproc)
-			#}else{
-			trees <- parallel::mclapply(reps,function(x)
-				buildPML(data[[x]],seq=seqs[x],
+	reps <- as.list(1:length(data))
+	if(is.null(seq)){
+		seqs <- unlist(lapply(data,function(x)x@phylo_seq))
+	}else{
+		seqs <- rep(seq,length=length(data))
+	}
+	if(build=="dnapars" || build=="dnaml"){
+		trees <- parallel::mclapply(reps,function(x)
+			buildPhylo(data[[x]],
+				exec=exec,
+				temp_path=file.path(dir,paste0(id,"_trees_",x)),
+				rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
+			mc.cores=nproc)
+	}else if(build=="pratchet"){
+		trees <- parallel::mclapply(reps,function(x)
+			buildPratchet(data[[x]],seq=seqs[x],
 					tree=trees[[x]],...),
-					mc.cores=nproc)
-			#}
-		}else if(build=="igphyml"){
-			if(sum(seqs != "sequence") != 0){
-				stop("igphyml build only currently supports heavy chain sequences")
-			}
-			if(rm_temp){
-				rm_dir <- file.path(dir,id)
-			}else{
-				rm_dir <- NULL
-			}
-			#if(!fixtrees){
-			#	trees =
-			#		buildIgphyml(data,
-			#		igphyml=exec,
-			#		temp_path=file.path(dir,id),
-			#		rm_files=rm_temp,
-			#		rm_dir=rm_dir,
-			#		nproc=nproc,id=id)
-			#}else{
-			trees <- 
-				buildIgphyml(data,
-					igphyml=exec,
-					temp_path=file.path(dir,id),
-					rm_files=rm_temp,
-					rm_dir=rm_dir,
-					trees=trees,nproc=nproc,id=id)
-			#}
-		}else{
-			stop("build specification",build,"not recognized")
+				mc.cores=nproc)
+	}else if(build=="pml"){
+		trees <- parallel::mclapply(reps,function(x)
+			buildPML(data[[x]],seq=seqs[x],
+				tree=trees[[x]],...),
+				mc.cores=nproc)
+	}else if(build=="igphyml"){
+		if(sum(seqs != "sequence") != 0){
+			stop("igphyml build only currently supports heavy chain sequences")
 		}
+		if(rm_temp){
+			rm_dir <- file.path(dir,id)
+		}else{
+			rm_dir <- NULL
+		}
+		trees <- 
+			buildIgphyml(data,
+				igphyml=exec,
+				temp_path=file.path(dir,id),
+				rm_files=rm_temp,
+				rm_dir=rm_dir,
+				trees=trees,nproc=nproc,id=id)
+	}else{
+		stop("build specification",build,"not recognized")
+	}
 
 	if(!is.null(igphyml)){
 		file <- writeLineageFile(data=data, trees=trees, dir=dir,
@@ -1512,13 +1480,13 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 	if(is.null(rep)){
 		reps <- as.list(1:bootstraps)
 		l <- parallel::mclapply(reps,function(x)
-			bootstrapTrees(clones,rep=x, 
-			trait=trait, modelfile=modelfile,build=build, 
+			bootstrapTrees(clones ,rep=x, 
+			trait=trait, modelfile=modelfile, build=build, 
 			exec=exec, igphyml=igphyml, 
 			id=id, dir=dir, bootstraps=bootstraps,
 			nproc=1, rm_temp=rm_temp, quiet=quiet,
-			trees=trees,resolve=resolve,keeptrees=keeptrees,
-			lfile=lfile,seq=seq),
+			trees=trees, resolve=resolve, keeptrees=keeptrees,
+			lfile=lfile, seq=seq),
 			mc.cores=nproc)
 		results <- list()
 		results$switches <- NULL
