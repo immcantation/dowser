@@ -35,7 +35,9 @@ heavy = NULL,
 cell = "cell",
 locus = "locus",
 traits = NULL,
-triple = FALSE
+triple = FALSE,
+randomize = TRUE,
+...
 )
 ```
 
@@ -132,6 +134,12 @@ traits
 triple
 :   pad sequences to length mutliple three?
 
+randomize
+:   randomize sequence order? Important if using PHYLIP
+
+...
+:   additional arguments, used by [formatClones](formatClones.md)
+
 
 
 
@@ -177,10 +185,7 @@ respectively. For any given clone, each value in these columns should be identic
 See also
 -------------------
 
-Executes in order maskSeqGaps, maskSeqEnds, 
-padSeqEnds, and collapseDuplicates. 
-Returns a [airrClone](airrClone-class.md) object which serves as input to
-buildPhylipLineage.
+Returns an [airrClone](airrClone-class.md)
 
 
 

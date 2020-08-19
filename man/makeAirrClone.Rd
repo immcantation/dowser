@@ -8,7 +8,7 @@ makeAirrClone(
   data,
   id = "sequence_id",
   seq = "sequence_alignment",
-  germ = "germline_alignment",
+  germ = "germline_alignment_d_mask",
   vcall = "v_call",
   jcall = "j_call",
   junc_len = "junction_length",
@@ -28,7 +28,8 @@ makeAirrClone(
   locus = "locus",
   traits = NULL,
   triple = FALSE,
-  randomize = TRUE
+  randomize = TRUE,
+  ...
 )
 }
 \arguments{
@@ -98,6 +99,10 @@ sequences silently.}
 \item{traits}{column ids to keep distinct during sequence collapse}
 
 \item{triple}{pad sequences to length mutliple three?}
+
+\item{randomize}{randomize sequence order? Important if using PHYLIP}
+
+\item{...}{additional arguments, used by \link{formatClones}}
 }
 \value{
 A \link{airrClone} object containing the modified clone.
@@ -137,8 +142,5 @@ junction length, and clone identifier are determined from the first entry in the
 respectively. For any given clone, each value in these columns should be identical.
 }
 \seealso{
-Executes in order \link{maskSeqGaps}, \link{maskSeqEnds}, 
-          \link{padSeqEnds}, and \link{collapseDuplicates}. 
-          Returns a \link{airrClone} object which serves as input to
-          \link{buildPhylipLineage}.
+Returns an \link{airrClone}
 }

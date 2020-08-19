@@ -16,7 +16,8 @@ bylineage = FALSE,
 pseudocount = 0,
 from = NULL,
 to = NULL,
-permuteAll = FALSE
+permuteAll = FALSE,
+alternative = c("two.sided", "greater", "less")
 )
 ```
 
@@ -43,6 +44,10 @@ to
 
 permuteAll
 :   Permute among trees?
+
+alternative
+:   Perform one-sided (`greater` or `less`)
+or `two.sided` test
 
 
 

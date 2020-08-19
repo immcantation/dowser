@@ -17,6 +17,9 @@ testPS(
 \item{bylineage}{Perform test for each lineage individually? (FALSE)}
 
 \item{pseudocount}{Pseudocount for P value calculations}
+
+\item{alternative}{Perform one-sided (\code{greater} or \code{less})
+or \code{two.sided} test}
 }
 \value{
 A list containing a \code{tibble} with mean PS statistics, and another 

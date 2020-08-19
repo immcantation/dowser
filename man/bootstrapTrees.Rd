@@ -85,7 +85,7 @@ bootstrap replicate. The object is structured like:
 trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
 (as well as \code{trait}, \code{temp}, and \code{id}), the returned object 
 will contain a \code{tibble} named "switches" containing switch count 
-information. This object can be passed to \link{PStest} and other functions 
+information. This object can be passed to \link{testPS} and other functions 
 to perform parsimony based trait value tests.
 }
 \examples{

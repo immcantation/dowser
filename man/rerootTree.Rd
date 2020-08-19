@@ -13,6 +13,8 @@ rerootTree(tree, germline, min = 0.001)
 \item{tree}{An ape \code{phylo} object}
 
 \item{germline}{ID of the tree's predicted germline sequence}
+
+\item{min}{Maximum allowed branch length from germline to root}
 }
 \value{
 \code{phylo} object rooted at the specified germline

@@ -12,7 +12,6 @@ Usage
 ```
 getTrees(
 clones,
-data = NULL,
 trait = NULL,
 id = NULL,
 dir = NULL,
@@ -25,13 +24,9 @@ nproc = 1,
 quiet = 0,
 rm_temp = TRUE,
 palette = NULL,
-resolve = 2,
 seq = NULL,
-asr = "seq",
-asr_thresh = 0.05,
-asr_type = "MPR",
-model = "GTR",
-collapse = FALSE
+collapse = FALSE,
+...
 )
 ```
 
@@ -41,9 +36,6 @@ Arguments
 clones
 :   a tibble of `airrClone` objects, the output of 
 [formatClones](formatClones.md)
-
-data
-:   list of `airrClone` objects, alternate input
 
 trait
 :   trait to use for parsimony models (required if 
@@ -84,26 +76,14 @@ rm_temp
 palette
 :   a named vector specifying colors for each state
 
-resolve
-:   how should polytomies be resolved?
-
 seq
 :   column name containing sequence information
 
-asr
-:   return sequence or probability matrix?
-
-asr_thresh
-:   threshold for including a nucleotide as an alternative
-
-asr_type
-:   MPR or ACCTRAN? (only if build='pratchet')
-
-model
-:   substitution model to use if build='pml'
-
 collapse
 :   Collapse internal nodes with identical sequences?
+
+...
+:   Additional arguments passed to tree building programs
 
 
 
@@ -156,7 +136,8 @@ data(ExampleDb)
 See also
 -------------------
 
-[formatClones](formatClones.md), [bootstrapTrees](bootstrapTrees.md)
+[formatClones](formatClones.md), [bootstrapTrees](bootstrapTrees.md), [buildPhylo](buildPhylo.md),
+[buildPratchet](buildPratchet.md), [buildPML](buildPML.md), [buildIgphyml](buildIgphyml.md)
 
 
 

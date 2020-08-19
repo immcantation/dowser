@@ -16,7 +16,8 @@ from = NULL,
 to = NULL,
 dropzeros = TRUE,
 bylineage = FALSE,
-pseudocount = 0
+pseudocount = 0,
+alternative = c("two.sided", "greater", "less")
 )
 ```
 
@@ -43,6 +44,10 @@ bylineage
 
 pseudocount
 :   Pseudocount for P value calculations
+
+alternative
+:   Perform one-sided (`greater` or `less`)
+or `two.sided` test
 
 
 

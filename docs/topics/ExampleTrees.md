@@ -19,7 +19,7 @@ ExampleTrees
 Format
 -------------------
 
-A list of igraph objects output by buildPhylipLineage.
+A list of igraph objects output by alakazam::buildPhylipLineage.
 Each node of each tree has the following annotations (vertex attributes):
 
 + `sample`:    Sample identifier(s). Time in relation to vaccination.

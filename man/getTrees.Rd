@@ -7,7 +7,6 @@ and internal node states if desired}
 \usage{
 getTrees(
   clones,
-  data = NULL,
   trait = NULL,
   id = NULL,
   dir = NULL,
@@ -20,20 +19,14 @@ getTrees(
   quiet = 0,
   rm_temp = TRUE,
   palette = NULL,
-  resolve = 2,
   seq = NULL,
-  asr = "seq",
-  asr_thresh = 0.05,
-  asr_type = "MPR",
-  model = "GTR",
-  collapse = FALSE
+  collapse = FALSE,
+  ...
 )
 }
 \arguments{
 \item{clones}{a tibble of \code{airrClone} objects, the output of 
 \link{formatClones}}
-
-\item{data}{list of \code{airrClone} objects, alternate input}
 
 \item{trait}{trait to use for parsimony models (required if 
 \code{igphyml} specified)}
@@ -62,19 +55,11 @@ dnapars, dnaml, igphyml)}
 
 \item{palette}{a named vector specifying colors for each state}
 
-\item{resolve}{how should polytomies be resolved?}
-
 \item{seq}{column name containing sequence information}
 
-\item{asr}{return sequence or probability matrix?}
-
-\item{asr_thresh}{threshold for including a nucleotide as an alternative}
-
-\item{asr_type}{MPR or ACCTRAN? (only if build='pratchet')}
-
-\item{model}{substitution model to use if build='pml'}
-
 \item{collapse}{Collapse internal nodes with identical sequences?}
+
+\item{...}{Additional arguments passed to tree building programs}
 }
 \value{
 A list of \code{phylo} objects in the same order as \code{data}.
@@ -113,5 +98,6 @@ plotTrees(trees[[1]])
 }
 }
 \seealso{
-\link{formatClones}, \link{bootstrapTrees}
+\link{formatClones}, \link{bootstrapTrees}, \link{buildPhylo},
+\link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 }

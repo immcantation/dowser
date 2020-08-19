@@ -9,7 +9,12 @@ Description
 Usage
 --------------------
 ```
-testPS(switches, bylineage = FALSE, pseudocount = 0)
+testPS(
+switches,
+bylineage = FALSE,
+pseudocount = 0,
+alternative = c("less", "two.sided", "greater")
+)
 ```
 
 Arguments
@@ -23,6 +28,10 @@ bylineage
 
 pseudocount
 :   Pseudocount for P value calculations
+
+alternative
+:   Perform one-sided (`greater` or `less`)
+or `two.sided` test
 
 
 

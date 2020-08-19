@@ -24,7 +24,8 @@ rootToTip(
 
 \item{minlength}{Branch lengths to collapse in trees}
 
-\item{alternative}{Perform test for each lineage individually?}
+\item{alternative}{Perform one-sided (\code{greater} or \code{less})
+or \code{two.sided} test}
 }
 \value{
 A \code{tibble} with pearson correlation between divergene

@@ -14,7 +14,7 @@
 writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	clone <- c@clone
 	append <- FALSE
-	text = ""
+	text <- ""
 	if(!is.null(trait)){
 		c@data$sequence_id <- paste(c@data$sequence_id,c@data[,trait],sep="_")
 	}
@@ -22,23 +22,23 @@ writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 		if(i > 1){append=TRUE}
 		#write(paste0(">",c@data[i,]$sequence_id),
 		#	file=fastafile,append=append)
-		text = paste0(text,">",c@data[i,]$sequence_id,"\n")
+		text <- paste0(text,">",c@data[i,]$sequence_id,"\n")
 		if(!dummy){
 			#write(c@data[i,]$sequence,file=fastafile,append=TRUE)
-			text = paste0(text,c@data[i,]$sequence,"\n")
+			text <- paste0(text,c@data[i,]$sequence,"\n")
 		}else{
 			#write("ATG",file=fastafile,append=TRUE)
-			text = paste0(text,"ATG\n")
+			text <- paste0(text,"ATG\n")
 		}
 	}
 	#write(paste0(">",germid),file=fastafile,append=append)
-	text = paste0(text,">",germid,"\n")
+	text <- paste0(text,">",germid,"\n")
 	if(!dummy){
 		#write(c@germline,file=fastafile,append=TRUE)
-		text = paste0(text,c@germline,"\n")
+		text <- paste0(text,c@germline,"\n")
 	}else{
 		#write("ATG",file=fastafile,append=TRUE)
-		text = paste0(text,"ATG\n")
+		text <- paste0(text,"ATG\n")
 	}
 	write(text,file=fastafile,append=FALSE)
 	return(fastafile)
@@ -233,8 +233,8 @@ bootstrapClones  <- function(clone, reps=100){
 reconIgPhyML <- function(file, modelfile, cloneid, 
 	igphyml="igphyml",	mode="switches", type="recon",
 	nproc=1, quiet=0, rm_files=FALSE, rm_dir=NULL, 
-	states=NULL, palette=NULL, resolve=2, rseed=NULL){
-
+	states=NULL, palette=NULL, resolve=2, rseed=NULL,...){
+	args <- list(...)
     igphyml <- path.expand(igphyml)
     if(file.access(igphyml, mode=1) == -1) {
         stop("The file ", igphyml, " cannot be executed.")
@@ -337,21 +337,21 @@ reconIgPhyML <- function(file, modelfile, cloneid,
 	return(results)
 }
 
-# Read in all trees from a lineages file
-# 
-# @param    file    IgPhyML lineage file
-# @param    states  states in parsimony model
-# @param    palette palette for coloring internal nodes
-# @param    run_id  id used for IgPhyML run
-# @param    quiet   avoid printing rubbish on screen?
-# @param    append  string appended to fasta files
-# @param    format  format of input file with trees
-# @param    type    Read in parsimony reconstructions or ancestral sequence
-#                   reconstructions? "jointpars" reads in parsimony states, 
-#                   others read in sequences in internal nodes
-#
-# @return   A list of phylo objects from \code{file}.
-#
+#' Read in all trees from a lineages file
+#' 
+#' @param    file    IgPhyML lineage file
+#' @param    states  states in parsimony model
+#' @param    palette palette for coloring internal nodes
+#' @param    run_id  id used for IgPhyML run
+#' @param    quiet   avoid printing rubbish on screen?
+#' @param    append  string appended to fasta files
+#' @param    format  format of input file with trees
+#' @param    type    Read in parsimony reconstructions or ancestral sequence
+#'                   reconstructions? "jointpars" reads in parsimony states, 
+#'                   others read in sequences in internal nodes
+#'
+#' @return   A list of phylo objects from \code{file}.
+#' @export
 readLineages <- function(file, states=NULL, palette="Dark2",
 	run_id="", quiet=TRUE, append=NULL, format="nexus", 
 	type="jointpars"){
@@ -449,20 +449,21 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 	return(file)
 }
 
-# Wrapper for alakazam::buildPhylipLineage
-# 
-# @param    clone      \code{airrClone} object
-# @param    exec       dnapars or dnaml executable
-# @param    temp_path  path to temporary directory
-# @param    verbose    amount of rubbish to print
-# @param    rm_temp    remove temporary files?
-# @param    seq        sequece column in \code{airrClone} object
-# @param    tree       fixed tree topology if desired (currently does nothing
-#                      if specified)
-#
-# @return  \code{phylo} object created by dnapars or dnaml with nodes attribute
-#          containing reconstructed sequences.
-#
+#' Wrapper for alakazam::buildPhylipLineage
+#' 
+#' @param    clone      \code{airrClone} object
+#' @param    exec       dnapars or dnaml executable
+#' @param    temp_path  path to temporary directory
+#' @param    verbose    amount of rubbish to print
+#' @param    rm_temp    remove temporary files?
+#' @param    seq        sequece column in \code{airrClone} object
+#' @param    tree       fixed tree topology if desired (currently does nothing
+#'                      if specified)
+#' @param    onetree    Only sample one tree if multiple found.
+#'
+#' @return  \code{phylo} object created by dnapars or dnaml with nodes attribute
+#'          containing reconstructed sequences.
+#' @export
 buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
 	rm_temp=TRUE, seq="sequence", tree=NULL, onetree=TRUE){
 
@@ -496,20 +497,22 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
 	tree
 }
 
-# Wrapper for phangorn::pratchet
-# 
-# @param    clone      \code{airrClone} object
-# @param    seq        sequece column in \code{airrClone} object
-# @param    asr        return sequence or probability matrix?
-# @param    asr_thresh threshold for including a nucleotide as an alternative
-# @param    tree       fixed tree topology if desired.
-# @param    asr_type   MPR or ACCTRAN
-#
-# @return  \code{phylo} object created by phangorn::pratchetet with nodes
-#          attribute containing reconstructed sequences.
-#
+#' Wrapper for phangorn::pratchet
+#' 
+#' @param    clone      \code{airrClone} object
+#' @param    seq        sequece column in \code{airrClone} object
+#' @param    asr        return sequence or probability matrix?
+#' @param    asr_thresh threshold for including a nucleotide as an alternative
+#' @param    tree       fixed tree topology if desired.
+#' @param    asr_type   MPR or ACCTRAN
+#' @param    ...        Additional arguments (not currently used)
+#' @return  \code{phylo} object created by phangorn::pratchetet with nodes
+#'          attribute containing reconstructed sequences.
+#' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
-	tree=NULL, asr_type="MPR"){
+	tree=NULL, asr_type="MPR",...){
+	args <- list(...)
+	#print(asr)
 	seqs <- clone@data[[seq]]
 	names <- clone@data$sequence_id
 	print(clone@clone)
@@ -570,22 +573,23 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 	return(tree)
 }
 
-# Wrapper for phangorn::optim.pml
-# 
-# @param    clone      \code{airrClone} object
-# @param    seq        sequece column in \code{airrClone} object
-# @param    model      substitution model to use
-# @param    gamma      gamma site rate variation?
-# @param    asr        return sequence or probability matrix?
-# @param    asr_thresh threshold for including a nucleotide as an alternative
-# @param    tree       fixed tree topology if desired.
-#
-# @return  \code{phylo} object created by phangorn::optim.pml with nodes
-#          attribute containing reconstructed sequences.
-#
+#' Wrapper for phangorn::optim.pml
+#' 
+#' @param    clone      \code{airrClone} object
+#' @param    seq        sequece column in \code{airrClone} object
+#' @param    model      substitution model to use
+#' @param    gamma      gamma site rate variation?
+#' @param    asr        return sequence or probability matrix?
+#' @param    asr_thresh threshold for including a nucleotide as an alternative
+#' @param    tree       fixed tree topology if desired.
+#' @param    ...        Additional arguments (not currently used)
+#'
+#' @return  \code{phylo} object created by phangorn::optim.pml with nodes
+#'          attribute containing reconstructed sequences.
+#' @export
 buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq", 
-	asr_thresh=0.05, tree=NULL){
-
+	asr_thresh=0.05, tree=NULL, ...){
+	args <- list(...)
 	seqs <- clone@data[[seq]]
 	names <- clone@data$sequence_id
 	if(seq == "hlsequence"){
@@ -649,26 +653,31 @@ buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq",
 	return(tree)
 }
 
-# Wrapper to build IgPhyML trees and infer intermediate nodes
-# 
-# @param    clone      \code{airrClone} object
-# @param    igphyml    igphyml executable
-# @param    trees      list of tree topologies if desired
-# @param    nproc      number of cores for parallelization
-# @param    temp_path  path to temporary directory
-# @param    id         IgPhyML run id
-# @param    rseed      random number seed if desired
-# @param    queit      amount of rubbish to print
-# @param    rm_files   remove temporary files?
-# @param    rm_dir     remove temporary directory?
-#
-# @return  \code{phylo} object created by igphyml with nodes attribute
-#          containing reconstructed sequences.
-#
+#' Wrapper to build IgPhyML trees and infer intermediate nodes
+#' 
+#' @param    clone      \code{airrClone} object
+#' @param    igphyml    igphyml executable
+#' @param    trees      list of tree topologies if desired
+#' @param    nproc      number of cores for parallelization
+#' @param    temp_path  path to temporary directory
+#' @param    id         IgPhyML run id
+#' @param    rseed      random number seed if desired
+#' @param    quiet      amount of rubbish to print
+#' @param    rm_files   remove temporary files?
+#' @param    rm_dir     remove temporary directory?
+#' @param    ...        Additional arguments (not currently used)
+#'
+#' @return  \code{phylo} object created by igphyml with nodes attribute
+#'          containing reconstructed sequences.
+#' @export
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
-	id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL){
+	id=NULL, rseed=NULL, quiet=0 , rm_files=TRUE, rm_dir=NULL, ...){
 
-	file <- writeLineageFile(clone,trees,dir=temp_path,rep=id,dummy=FALSE)
+	warning("Dowser igphyml doesn't mask split codons!")
+
+	args <- list(...)
+
+	file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE)
 	igphyml <- path.expand(igphyml)
 	if(file.access(igphyml, mode=1) == -1) {
         stop("The file ", igphyml, " cannot be executed.")
@@ -713,7 +722,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		})
 	}
 	command <- paste("--repfile",gyrep,
-		"--threads",nproc,"-m HLP -o lr --run_id hlp --ASR",rseed,log)
+		"--threads",nproc,"-m HLP -o lr --run_id hlp --oformat tab --ASR",rseed,log)
 	params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
 	if(quiet > 2){
 		print(paste(params,collapse=" "))
@@ -738,7 +747,21 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		stop()
 		})
 	}
-	trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
+	#trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
+	ofile <- file.path(temp_path,paste0(id,"_lineages_",id,
+		"_pars.tsv_gyrep_igphyml_stats_hlp.tab"))
+	results <- alakazam::readIgphyml(ofile,format="phylo")
+	trees <- results$trees
+	params <- results$param[-1,]
+	for(i in 1:nrow(params)){
+		clone_id <- params[i,]$clone
+		trees[[i]]$name <- clone_id
+		trees[[i]]$tip.label[which(trees[[i]]$tip.label 
+			== paste0(clone_id,"_GERM"))] <- "Germline"
+		trees[[i]]$tree_method <- paste("igphyml::gy94,hlp19")
+		trees[[i]]$edge_type <- "genetic_distance_codon"
+		trees[[i]]$seq <- "sequence"
+	}
 
 	if(rm_files){
 		lines <- readLines(file)
@@ -748,6 +771,8 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 			unlink(paste0(temp[2],"*"))
 		}
 		unlink(paste0(file,"*"))
+		unlink(file.path(temp_path,paste0(id,"_lineages_",id,
+		"_pars_hlp_asr.fasta")))
 	}
 	if(!is.null(rm_dir)){
 		if(quiet > 1){
@@ -765,7 +790,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #'
 #' @param   tree      An ape \code{phylo} object
 #' @param   germline  ID of the tree's predicted germline sequence
-#' 
+#' @param   min       Maximum allowed branch length from germline to root
 #' @return  \code{phylo} object rooted at the specified germline
 #' 
 #' @export
@@ -873,9 +898,8 @@ rerootTree <- function(tree,germline,min=0.001){
 #' and internal node states if desired
 #' 
 #' \code{getTrees} Tree building function.
-#' @param    clones  	a tibble of \code{airrClone} objects, the output of 
+#' @param    clones     a tibble of \code{airrClone} objects, the output of 
 #'                      \link{formatClones}
-#' @param    data  		list of \code{airrClone} objects, alternate input
 #' @param    trait 		trait to use for parsimony models (required if 
 #'                      \code{igphyml} specified)
 #' @param 	 build	    program to use for tree building (pratchet, pml, 
@@ -891,13 +915,9 @@ rerootTree <- function(tree,germline,min=0.001){
 #' @param    quiet		amount of rubbish to print to console
 #' @param    rm_temp	remove temporary files (default=TRUE)
 #' @param    palette 	a named vector specifying colors for each state
-#' @param    resolve 	how should polytomies be resolved?
 #' @param    seq        column name containing sequence information
-#' @param    model      substitution model to use if build='pml'
-#' @param    asr        return sequence or probability matrix?
-#' @param    asr_type   MPR or ACCTRAN? (only if build='pratchet')
-#' @param    asr_thresh threshold for including a nucleotide as an alternative
 #' @param    collapse   Collapse internal nodes with identical sequences?
+#' @param    ...        Additional arguments passed to tree building programs
 #' 
 #' @return   A list of \code{phylo} objects in the same order as \code{data}.
 #'
@@ -917,7 +937,8 @@ rerootTree <- function(tree,germline,min=0.001){
 #' include any constraints. Intermediate files are deleted by default. This can
 #' be toggled using (\code{rm_files}).
 #'  
-#' @seealso \link{formatClones}, \link{bootstrapTrees}
+#' @seealso \link{formatClones}, \link{bootstrapTrees}, \link{buildPhylo},
+#' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 #' @examples
 #' \dontrun{
 #' data(ExampleDb)
@@ -932,13 +953,20 @@ rerootTree <- function(tree,germline,min=0.001){
 #' plotTrees(trees[[1]])
 #' }
 #' @export
-getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL, 
+getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
 	modelfile=NULL,	build="pratchet", exec=NULL, igphyml=NULL, fixtrees=FALSE, 
-	nproc=1, quiet=0, rm_temp=TRUE,	palette=NULL, resolve=2, seq=NULL, 
-	asr="seq", asr_thresh=0.05, asr_type="MPR", model="GTR", collapse=FALSE){
-
+	nproc=1, quiet=0, rm_temp=TRUE,	palette=NULL, seq=NULL, collapse=FALSE,
+	...){
+	args <- list(...)
+	print(args)
 	data <- clones$data
 	if(fixtrees){
+		if(!"trees" %in% names(clones)){
+			stop("trees column must be specified if fixtrees=TRUE")
+		}
+		if(class(clones$trees[[1]]) != "phylo"){
+        	stop("Trees must be a list of class phylo")
+		}
 		trees <- clones$trees
 	}else{
 		trees <- NULL
@@ -976,7 +1004,8 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
         }
 		if(is.null(modelfile)){
 			states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
-			modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
+			modelfile <- makeModelFile(states,
+				file=file.path(dir,paste0(id,"_modelfile.txt")))
 		}else{
 			states <- readModelFile(modelfile)
 		}
@@ -987,7 +1016,8 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 				tree <- trees[[x]]
 				datat <- data[[x]]
 				for(id in datat@data$sequence_id){
-					trait_temp <- filter(datat@data,rlang::sym("sequence_id")==id)[[trait]]
+					trait_temp <- filter(datat@data,
+						rlang::sym("sequence_id")==id)[[trait]]
 					tree$tip.label[tree$tip.label == id] <- 
 					paste0(id,"_",trait_temp)
 				}
@@ -1031,49 +1061,43 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 			seqs <- rep(seq,length=length(data))
 		}
 		if(build=="dnapars" || build=="dnaml"){
-			if(!fixtrees){
-				trees <- parallel::mclapply(reps,function(x)
-					buildPhylo(data[[x]],
-						exec=exec,
-						temp_path=file.path(dir,paste0(id,"_trees_",x)),
-						rm_temp=rm_temp,
-						seq=seqs[x]),
-					mc.cores=nproc)
-			}else{
-				trees <- parallel::mclapply(reps,function(x)
+			#if(!fixtrees){
+			#	trees <- parallel::mclapply(reps,function(x)
+			#		buildPhylo(data[[x]],
+			#			exec=exec,
+			#			temp_path=file.path(dir,paste0(id,"_trees_",x)),
+			#			rm_temp=rm_temp,seq=seqs[x]),
+			#		mc.cores=nproc)
+			#}else{
+			trees <- parallel::mclapply(reps,function(x)
 				buildPhylo(data[[x]],
 					exec=exec,
 					temp_path=file.path(dir,paste0(id,"_trees_",x)),
-					rm_temp=rm_temp,
-					seq=seqs[x],tree=trees[[x]]),
+					rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
 				mc.cores=nproc)
-			}
+			#}
 		}else if(build=="pratchet"){
-			if(!fixtrees){
-				trees <- parallel::mclapply(reps,function(x)
-					buildPratchet(data[[x]],seq=seqs[x],
-					asr=asr,asr_thresh=asr_thresh,asr_type=asr_type),
+			#if(!fixtrees){
+			#	trees <- parallel::mclapply(reps,function(x)
+			#		buildPratchet(data[[x]],seq=seqs[x],...),
+			#		mc.cores=nproc)
+			#}else{
+			trees <- parallel::mclapply(reps,function(x)
+				buildPratchet(data[[x]],seq=seqs[x],
+						tree=trees[[x]],...),
 					mc.cores=nproc)
-			}else{
-				trees <- parallel::mclapply(reps,function(x)
-					buildPratchet(data[[x]],seq=seqs[x],
-					asr=asr,asr_thresh=asr_thresh,asr_type=asr_type,
-					tree=trees[[x]]),
-					mc.cores=nproc)
-			}
+			#}
 		}else if(build=="pml"){
-			if(!fixtrees){
-				trees <- parallel::mclapply(reps,function(x)
-					buildPML(data[[x]],seq=seqs[x],
-					asr=asr,asr_thresh=asr_thresh,
-					model=model),mc.cores=nproc)
-			}else{
-				trees <- parallel::mclapply(reps,function(x)
-					buildPML(data[[x]],seq=seqs[x],
-					asr=asr,asr_thresh=asr_thresh,
-					model=model,tree=trees[[x]]),
+			#if(!fixtrees){
+			#	trees <- parallel::mclapply(reps,function(x)
+			#		buildPML(data[[x]],seq=seqs[x],
+			#		...),mc.cores=nproc)
+			#}else{
+			trees <- parallel::mclapply(reps,function(x)
+				buildPML(data[[x]],seq=seqs[x],
+					tree=trees[[x]],...),
 					mc.cores=nproc)
-			}
+			#}
 		}else if(build=="igphyml"){
 			if(sum(seqs != "sequence") != 0){
 				stop("igphyml build only currently supports heavy chain sequences")
@@ -1083,23 +1107,23 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 			}else{
 				rm_dir <- NULL
 			}
-			if(!fixtrees){
-				trees =
-					buildIgphyml(data,
-					igphyml=exec,
-					temp_path=file.path(dir,id),
-					rm_files=rm_temp,
-					rm_dir=rm_dir,
-					nproc=nproc,id=id)
-			}else{
-				trees <- 
-					buildIgphyml(data,
+			#if(!fixtrees){
+			#	trees =
+			#		buildIgphyml(data,
+			#		igphyml=exec,
+			#		temp_path=file.path(dir,id),
+			#		rm_files=rm_temp,
+			#		rm_dir=rm_dir,
+			#		nproc=nproc,id=id)
+			#}else{
+			trees <- 
+				buildIgphyml(data,
 					igphyml=exec,
 					temp_path=file.path(dir,id),
 					rm_files=rm_temp,
 					rm_dir=rm_dir,
 					trees=trees,nproc=nproc,id=id)
-			}
+			#}
 		}else{
 			stop("build specification",build,"not recognized")
 		}
@@ -1111,7 +1135,7 @@ getTrees <- function(clones, data=NULL, trait=NULL, id=NULL, dir=NULL,
 		mtrees <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
 			mode="trees", cloneid=NULL, quiet=quiet, nproc=nproc,
 			rm_files=rm_temp, rm_dir=rm_dir, states=states, 
-			palette=palette,resolve=resolve)
+			palette=palette,...)
 
 		# remove trait value from tips
 		mtrees <- lapply(mtrees,function(x){
@@ -1185,7 +1209,14 @@ scaleBranches <- function(clones, edge_type="mutations"){
 			    clones$trees[[x]]$edge.length*lengths[x]
 			clones$trees[[x]]$edge_type <- "mutations"
 			clones$trees[[x]]
+		}else if(clones$trees[[x]]$edge_type == "genetic_distance_codon" &&
+		    edge_type == "mutations"){
+			clones$trees[[x]]$edge.length <- 
+			    clones$trees[[x]]$edge.length*lengths[x]/3
+			clones$trees[[x]]$edge_type <- "mutations"
+			clones$trees[[x]]
 		}else{
+			warning("edge conversion type not yet supported")
 			clones$trees[[x]]
 		}})
 			
@@ -1397,7 +1428,7 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #' trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
 #' (as well as \code{trait}, \code{temp}, and \code{id}), the returned object 
 #' will contain a \code{tibble} named "switches" containing switch count 
-#' information. This object can be passed to \link{PStest} and other functions 
+#' information. This object can be passed to \link{testPS} and other functions 
 #' to perform parsimony based trait value tests. 
 #'  
 #' @seealso Uses output from \link{formatClones} with similar arguments to 

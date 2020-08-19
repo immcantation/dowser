@@ -6,6 +6,8 @@
 #' @param    switches     Data frame from bootstrapTrees
 #' @param    bylineage    Perform test for each lineage individually? (FALSE)
 #' @param    pseudocount  Pseudocount for P value calculations
+#' @param    alternative  Perform one-sided (\code{greater} or \code{less})
+#'                          or \code{two.sided} test
 #'
 #' @return   A list containing a \code{tibble} with mean PS statistics, and another 
 #' with PS statistics per repetition.
@@ -151,7 +153,8 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @param    dropzeros    Drop switches with zero counts?
 #' @param    bylineage    Perform test for each lineage individually?
 #' @param    pseudocount  Pseudocount for P value calculations
-#'
+#' @param    alternative  Perform one-sided (\code{greater} or \code{less})
+#'                          or \code{two.sided} test
 #' @return   A list containing a \code{tibble} with mean SP statistics, and another 
 #' with SP statistics per repetition.
 #'
@@ -346,7 +349,8 @@ testSP <- function(switches, permuteAll=FALSE,
 #' @param    dropzeros    Drop switches with zero counts?
 #' @param    bylineage    Perform test for each lineage individually?
 #' @param    pseudocount  Pseudocount for P value calculations
-#'
+#' @param    alternative  Perform one-sided (\code{greater} or \code{less})
+#'                          or \code{two.sided} test
 #' @return   A list containing a \code{tibble} with mean SC statistics, and another 
 #' with SC statistics per repetition.
 #'
@@ -537,8 +541,8 @@ testSC <- function(switches,dropzeros=TRUE,
 #' @param    permutations Number of permutations for test
 #' @param    germline     Germline sequence name
 #' @param    minlength    Branch lengths to collapse in trees
-#' @param    alternative   Perform test for each lineage individually?
-#'
+#' @param    alternative  Perform one-sided (\code{greater} or \code{less})
+#'                          or \code{two.sided} test
 #' @return   A \code{tibble} with pearson correlation between divergene
 #' and time, mean permuted correlation, p value(s), number of permutations,
 #' and number of sequences
@@ -558,21 +562,21 @@ rootToTip <- function(trees, time="time", permutations=1000,
     alternative=c("two.sided","greater","less")){
 
     # perform root-tip regressions
-    regressions <- tibble()
+    regressions <- dplyr::tibble()
     for(cloneid in unique(trees$clone_id)){
         print(cloneid)
-        temp <- dplyr::filter(trees,clone_id == cloneid)
+        temp <- dplyr::filter(trees,!!rlang::sym("clone_id") == cloneid)
         tree <- temp$trees[[1]]
         data <- temp$data[[1]]@data
     
-        if(n_distinct(data[[time]]) == 1 || 
-            n_distinct(data[[time]]) == 1){
+        if(dplyr::n_distinct(data[[time]]) == 1 || 
+            dplyr::n_distinct(data[[time]]) == 1){
             next
         }
 
         dseq = data[is.na(data[[time]]),]$sequence_id
         if(length(dseq) > 0){
-            data <- dplyr::filter(data,!sequence_id %in% dseq)
+            data <- dplyr::filter(data,! !!rlang::sym("sequence_id") %in% dseq)
             tree <- ape::drop.tip(tree,tip=dseq)
         }
         
@@ -589,16 +593,16 @@ rootToTip <- function(trees, time="time", permutations=1000,
         data$divergence <- dist[data$sequence_id]
     
         # get observed and permuted correlation between divergence and time
-        observed_cor <- cor(data$divergence,data[[time]])
+        observed_cor <- stats::cor(data$divergence,data[[time]])
         perm_temp <- data
         perm_cor <- rep(1,length=permutations)
         for(p in 1:permutations){
             perm_temp[[time]] <- sample(data[[time]],replace=FALSE)
-            perm_cor[p] <- cor(perm_temp$divergence,perm_temp[[time]])
+            perm_cor[p] <- stats::cor(perm_temp$divergence,perm_temp[[time]])
         }
     
         # collect results
-        results <- tibble(
+        results <- dplyr::tibble(
             clone_id=cloneid,
             observed=observed_cor,
             permuted=mean(perm_cor),

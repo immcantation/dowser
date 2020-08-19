@@ -27,6 +27,10 @@ pages:
     - 'Build Lineage Trees':
       - topics/getTrees.md
       - topics/bootstrapTrees.md
+      - topics/buildIgphyml.md
+      - topics/buildPML.md
+      - topics/buildPhylo.md
+      - topics/buildPratchet.md
     - 'Visualize Trees':
       - topics/plotTrees.md
       - topics/colorTrees.md
@@ -42,3 +46,4 @@ pages:
       - topics/testPS.md
       - topics/testSC.md
       - topics/testSP.md
+      - topics/rootToTip.md

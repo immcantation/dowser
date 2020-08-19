@@ -117,7 +117,7 @@ bootstrap replicate. The object is structured like:
 trees[[<replicate>]][[<tree index>]]. If `igphyml` is specified 
 (as well as `trait`, `temp`, and `id`), the returned object 
 will contain a `tibble` named "switches" containing switch count 
-information. This object can be passed to PStest and other functions 
+information. This object can be passed to [testPS](testPS.md) and other functions 
 to perform parsimony based trait value tests.
 
 

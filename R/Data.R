@@ -94,7 +94,7 @@
 #' A set of Ig lineage trees generated from the \code{ExampleDb} file, subset to
 #' only those trees with at least four nodes.
 #'
-#' @format   A list of igraph objects output by \link{buildPhylipLineage}.
+#' @format   A list of igraph objects output by alakazam::buildPhylipLineage.
 #'           Each node of each tree has the following annotations (vertex attributes):
 #'   \itemize{
 #'     \item  \code{sample}:    Sample identifier(s). Time in relation to vaccination.

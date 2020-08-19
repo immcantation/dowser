@@ -29,6 +29,9 @@ testSC(
 \item{to}{Include only switches to this state?}
 
 \item{permuteAll}{Permute among trees?}
+
+\item{alternative}{Perform one-sided (\code{greater} or \code{less})
+or \code{two.sided} test}
 }
 \value{
 A list containing a \code{tibble} with mean SC statistics, and another 
