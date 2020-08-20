@@ -53,6 +53,9 @@ if \code{igphyml} or \code{dnapars} specified)}
 
 \item{igphyml}{location of igphyml executible if trait models desired}
 
+\item{fixtrees}{keep tree topologies fixed?
+(bootstrapping will not be perfomed)}
+
 \item{quiet}{amount of rubbish to print to console}
 
 \item{rm_temp}{remove temporary files (default=TRUE)}
@@ -70,9 +73,6 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{seq}{column name containing sequence information}
 
 \item{...}{additional arguments to be passed to tree building program}
-
-\item{trees}{tree topologies to use if aready available 
-(bootstrapping will not be perfomed)}
 }
 \value{
 A list of trees and/or switch counts for each bootstrap replicate.

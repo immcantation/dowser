@@ -464,7 +464,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 #' @return  \code{phylo} object created by dnapars or dnaml with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
-buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
+buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 	rm_temp=TRUE, seq="sequence", tree=NULL, onetree=TRUE){
 
 	if(grepl("dnaml$",exec)){
@@ -485,7 +485,7 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
 	if(is.null(tree)){
 		tree <- tryCatch({
 			alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,phylo=TRUE,
-				verbose=verbose,temp_path=temp_path,onetree=onetree)},
+				verbose=verbose>0,temp_path=temp_path,onetree=onetree)},
 			error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
 		tree <- rerootTree(tree, germline="Germline")
         tree <- ape::ladderize(tree,right=FALSE)
@@ -505,17 +505,19 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=FALSE,
 #' @param    asr_thresh threshold for including a nucleotide as an alternative
 #' @param    tree       fixed tree topology if desired.
 #' @param    asr_type   MPR or ACCTRAN
+#' @param    verbose    amount of rubbish to print
 #' @param    ...        Additional arguments (not currently used)
 #' @return  \code{phylo} object created by phangorn::pratchetet with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
-	tree=NULL, asr_type="MPR",...){
+	tree=NULL, asr_type="MPR", verbose=0, ...){
 	args <- list(...)
-	#print(asr)
 	seqs <- clone@data[[seq]]
 	names <- clone@data$sequence_id
-	print(clone@clone)
+	if(verbose > 0){
+		print(clone@clone)
+	}
 	if(seq == "hlsequence"){
 		germline <- clone@hlgermline
 	}else if(seq == "lsequence"){
@@ -791,15 +793,18 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @param   tree      An ape \code{phylo} object
 #' @param   germline  ID of the tree's predicted germline sequence
 #' @param   min       Maximum allowed branch length from germline to root
+#' @param   verbose    amount of rubbish to print
 #' @return  \code{phylo} object rooted at the specified germline
 #' 
 #' @export
-rerootTree <- function(tree,germline,min=0.001){
+rerootTree <- function(tree, germline, min=0.001, verbose=0){
     ntip <- length(tree$tip.label)
     uca <- ntip+1
     if(ape::is.rooted(tree)){
         #stop("tree already rooted!")
-        print("unrooting tree!")
+        if(verbose > 0){
+        	print("unrooting tree!")
+        }
         root <- ape::getMRCA(tree,
             tip=tree$tip.label)
         max <- max(tree$edge)
@@ -814,7 +819,9 @@ rerootTree <- function(tree,germline,min=0.001){
         if(tree$tip.label[child] == germline &&
         	tree$edge.length[tree$edge[,1] == root &
         	tree$edge[,2] == child] <= min){
-        	print("tree already rooted!")
+        	if(verbose > 0){
+        		print("tree already rooted!")
+        	}
         	return(tree)
         }
         tree$edge <- tree$edge[!rindex,]
@@ -1374,7 +1381,7 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #' @param    dir    	directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
 #' @param    modelfile 	file specifying parsimony model to use
-#' @param    trees 		tree topologies to use if aready available 
+#' @param    fixtrees 	keep tree topologies fixed?
 #'                      (bootstrapping will not be perfomed)
 #' @param    nproc 		number of cores to parallelize computations
 #' @param    quiet		amount of rubbish to print to console
