@@ -1385,6 +1385,7 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #' @param    lfile      lineage file input to igphyml if desired (experimental)
 #' @param    rep  		current bootstrap replicate (experimental)
 #' @param    seq        column name containing sequence information
+#' @param    ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
 #'
@@ -1421,10 +1422,22 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #' @export
 bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
 	id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
-	trees=NULL,	quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
-	keeptrees=TRUE, lfile=NULL, seq="sequence"){
+	fixtrees=FALSE,	quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
+	keeptrees=TRUE, lfile=NULL, seq="sequence", ...){
 
+	args <- list(...)
 	data <- clones$data
+	if(fixtrees){
+		if(!"trees" %in% names(clones)){
+			stop("trees column must be specified if fixtrees=TRUE")
+		}
+		if(class(clones$trees[[1]]) != "phylo"){
+        	stop("Trees must be a list of class phylo")
+		}
+		trees <- clones$trees
+	}else{
+		trees <- NULL
+	}
 	if(is.null(id)){
             id <- "sample"
     }
@@ -1485,8 +1498,8 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			exec=exec, igphyml=igphyml, 
 			id=id, dir=dir, bootstraps=bootstraps,
 			nproc=1, rm_temp=rm_temp, quiet=quiet,
-			trees=trees, resolve=resolve, keeptrees=keeptrees,
-			lfile=lfile, seq=seq),
+			fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
+			lfile=lfile, seq=seq, ...),
 			mc.cores=nproc)
 		results <- list()
 		results$switches <- NULL
@@ -1505,7 +1518,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 		return(results)
 	}else{
 		rm_dir=file.path(dir,paste0(id,"_recon_",rep))
-		if(is.null(trees)){
+		if(!fixtrees){
 			for(i in 1:length(data)){
 				if(quiet > 3){
 					print(table(data[[i]]@data[,trait]))
@@ -1519,16 +1532,41 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 		    }else{
 		          seqs <- rep(seq,length=length(data))
 		    }
-			if(build=="dnapars"){
-				trees <- lapply(reps,function(x)
+			if(build=="dnapars" || build=="dnaml"){
+				trees <- parallel::mclapply(reps,function(x)
 					buildPhylo(data[[x]],
 						exec=exec,
 						temp_path=file.path(dir,paste0(id,"_",rep,"_trees_",x)),
-						rm_temp=rm_temp,seq=seq))
-			}else{
-				trees <- parallel::mclapply(reps,function(x)
-					buildPratchet(data[[x]],seq),
+						rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
 					mc.cores=nproc)
+			}else if(build=="pratchet"){
+				trees <- parallel::mclapply(reps,function(x)
+					buildPratchet(data[[x]],seq=seqs[x],
+							tree=trees[[x]],...),
+						mc.cores=nproc)
+			}else if(build=="pml"){
+				trees <- parallel::mclapply(reps,function(x)
+					buildPML(data[[x]],seq=seqs[x],
+						tree=trees[[x]],...),
+						mc.cores=nproc)
+			}else if(build=="igphyml"){
+				if(sum(seqs != "sequence") != 0){
+					stop("igphyml build only currently supports heavy chain sequences")
+				}
+				if(rm_temp){
+					rm_dir <- file.path(dir,paste0(id,rep))
+				}else{
+					rm_dir <- NULL
+				}
+				trees <- 
+					buildIgphyml(data,
+						igphyml=exec,
+						temp_path=file.path(dir,paste0(id,rep)),
+						rm_files=rm_temp,
+						rm_dir=rm_dir,
+						trees=trees,nproc=nproc,id=id)
+			}else{
+				stop("build specification",build,"not recognized")
 			}
 		}
 		results <- list()

@@ -16,7 +16,7 @@ bootstrapTrees(
   build = "pratchet",
   exec = NULL,
   igphyml = NULL,
-  trees = NULL,
+  fixtrees = FALSE,
   quiet = 0,
   rm_temp = TRUE,
   palette = NULL,
@@ -24,7 +24,8 @@ bootstrapTrees(
   rep = NULL,
   keeptrees = TRUE,
   lfile = NULL,
-  seq = "sequence"
+  seq = "sequence",
+  ...
 )
 }
 \arguments{
@@ -52,9 +53,6 @@ if \code{igphyml} or \code{dnapars} specified)}
 
 \item{igphyml}{location of igphyml executible if trait models desired}
 
-\item{trees}{tree topologies to use if aready available 
-(bootstrapping will not be perfomed)}
-
 \item{quiet}{amount of rubbish to print to console}
 
 \item{rm_temp}{remove temporary files (default=TRUE)}
@@ -70,6 +68,11 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{lfile}{lineage file input to igphyml if desired (experimental)}
 
 \item{seq}{column name containing sequence information}
+
+\item{...}{additional arguments to be passed to tree building program}
+
+\item{trees}{tree topologies to use if aready available 
+(bootstrapping will not be perfomed)}
 }
 \value{
 A list of trees and/or switch counts for each bootstrap replicate.
