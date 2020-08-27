@@ -27,7 +27,7 @@ makeAirrClone(
   cell = "cell_id",
   locus = "locus",
   traits = NULL,
-  triple = TRUE,
+  mod3 = TRUE,
   randomize = TRUE,
   ...
 )
@@ -98,7 +98,7 @@ sequences silently.}
 
 \item{traits}{column ids to keep distinct during sequence collapse}
 
-\item{triple}{pad sequences to length mutliple three?}
+\item{mod3}{pad sequences to length mutliple three?}
 
 \item{randomize}{randomize sequence order? Important if using PHYLIP}
 

@@ -30,7 +30,7 @@ To install the latest development code via devtools, along with a development br
 
 ```R
 library(devtools)
-install_bitbucket("kleinstein/alakazam@dowser")
+install_bitbucket("kleinstein/alakazam@master")
 install_bitbucket("kleinstein/dowser@master")
 ```
 

@@ -50,7 +50,7 @@
 #' @param     heavy       name of heavy chain locus (default = "IGH")
 #' @param     cell        name of the column containing cell assignment information
 #' @param     locus       name of the column containing locus information
-#' @param     triple      pad sequences to length mutliple three?
+#' @param     mod3      pad sequences to length mutliple three?
 #' @param     randomize   randomize sequence order? Important if using PHYLIP
 #' @param     ...         additional arguments, used by \link{formatClones}
 #' @return   A \link{airrClone} object containing the modified clone.
@@ -96,7 +96,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     junc_len="junction_length", clone="clone_id", mask_char="N",
     max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
     add_count=TRUE, verbose=FALSE, collapse=TRUE, region="H", heavy=NULL,
-    cell="cell_id", locus="locus", traits=NULL, triple=TRUE, randomize=TRUE,
+    cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
      ...){
 
     args <- list(...)
@@ -151,8 +151,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
             max_mask=max_mask, trim=FALSE)
         # Pad ends
         if(pad_end) {
-            hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char, triple=triple)
-            alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char, triple=triple)
+            hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char, mod3=mod3)
+            alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char, mod3=mod3)
         }
         hc_length <- unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
         alt_length <- unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
@@ -182,8 +182,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
         germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, outer_only=FALSE)
         lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, outer_only=FALSE)
         if(pad_end){
-             germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, triple=triple)
-            lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, triple=triple)
+             germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
+            lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
         }
         hlgermline <- paste0(germline,lgermline)
         tmp_df <- hc
@@ -205,12 +205,12 @@ function(data, id="sequence_id", seq="sequence_alignment",
         tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
             mask_char=mask_char, max_mask=max_mask, trim=FALSE)
         if(pad_end){
-            tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], pad_char=mask_char, triple=triple)
+            tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], pad_char=mask_char, mod3=mod3)
         }
         germline <- alakazam::maskSeqGaps(data[[germ]][1], 
             mask_char=mask_char, outer_only=FALSE)
         if(pad_end){
-            germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, triple=triple)
+            germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
         }
         check <- alakazam::checkColumns(data, c(locus))
         if(check == TRUE){

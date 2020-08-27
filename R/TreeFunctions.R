@@ -484,9 +484,10 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 	}
 	if(is.null(tree)){
 		tree <- tryCatch({
-			alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,phylo=TRUE,
+			alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,branch_length="distance",
 				verbose=verbose>0,temp_path=temp_path,onetree=onetree)},
 			error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
+		tree <- alakazam::graphToPhylo(tree)
 		tree <- rerootTree(tree, germline="Germline")
         tree <- ape::ladderize(tree,right=FALSE)
 		tree$name <- clone@clone
