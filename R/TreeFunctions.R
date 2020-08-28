@@ -500,19 +500,20 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 
 #' Wrapper for phangorn::pratchet
 #' 
-#' @param    clone      \code{airrClone} object
-#' @param    seq        sequece column in \code{airrClone} object
-#' @param    asr        return sequence or probability matrix?
-#' @param    asr_thresh threshold for including a nucleotide as an alternative
-#' @param    tree       fixed tree topology if desired.
-#' @param    asr_type   MPR or ACCTRAN
-#' @param    verbose    amount of rubbish to print
+#' @param    clone           \code{airrClone} object
+#' @param    seq             sequece column in \code{airrClone} object
+#' @param    asr             return sequence or probability matrix?
+#' @param    asr_thresh      threshold for including a nucleotide as an alternative
+#' @param    tree            fixed tree topology if desired.
+#' @param    asr_type        MPR or ACCTRAN
+#' @param    verbose         amount of rubbish to print
+#' @param    resolve_random  randomly resolve polytomies?
 #' @param    ...        Additional arguments (not currently used)
 #' @return  \code{phylo} object created by phangorn::pratchetet with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
-	tree=NULL, asr_type="MPR", verbose=0, ...){
+	tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,...){
 	args <- list(...)
 	seqs <- clone@data[[seq]]
 	names <- clone@data$sequence_id
@@ -533,7 +534,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 	data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
 	if(is.null(tree)){
 		tree <- tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
-		tree <- phangorn::acctran(ape::multi2di(tree),data)
+		tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
 		tree <- ape::unroot(tree)
 		#tree <- rerootTree(tree,"Germline")
 		tree$edge.length <- tree$edge.length/nchar(germline)
