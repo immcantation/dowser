@@ -62,8 +62,6 @@ test_that("makeAirrClone",{
     expect_equal(clone@hlgermline,"CCCCAGGGN")
     expect_equal(clone@germline,"CCCCAGGGN")
     expect_equal(clone@data, exp_trait, tolerance=0.001)
-
-    
 })
 
 test_that("getTreesPhangorn", {
