@@ -1,10 +1,13 @@
 image: 
-  name: immcantation/suite:devel
+  name: immcantation/test:devel
 
 pipelines:
   default:
     - step:
         script:
           - sed -i '/test/ d' .Rbuildignore
+          - Rscript -e "install.packages(c('phangorn' ,'phylotate', 'BiocManager'))"
+          - Rscript -e "BiocManager::install('ggtree')"
+          - Rscript -e "devtools::install_bitbucket('kleinstein/alakazam@master')"
           - R CMD build .
           - R CMD check *.tar.gz --as-cran --run-donttest --timings
