@@ -1,5 +1,5 @@
 image: 
-  name: immcantation/test:devel
+  name: immcantation/suite:devel
 
 pipelines:
   default:
