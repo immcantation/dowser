@@ -216,11 +216,17 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 	scale=0.01,	node_palette="Dark2", tip_palette=node_palette, base=FALSE,
 	layout="rectangular", nodeids=FALSE, title=TRUE){
 
+	tiptype = "character"
+	nodetype = "character"
 	if(!base){
 		cols <- c()
 		if(!is.null(tips) && nodes && sum(tip_palette != node_palette) == 0){
 			tipstates <- unique(c(unlist(lapply(trees$data,function(x)
-				unique(x@data[[tips]]))),"Germline"))
+				unique(x@data[[tips]])))))
+			if(is.numeric(tipstates)){
+				stop("Can't currently plot numeric tip values and node values")
+			}
+			tipstates = c(tipstates,"Germline")
 			nodestates <- unique(unlist(lapply(trees$trees,function(x)
 					unique(unlist(strsplit(x$state,split=",")))
 					)))
@@ -236,17 +242,23 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 		}else{
 			if(!is.null(tips)){
 				tipstates <- unique(c(unlist(lapply(trees$data,function(x)
-					unique(x@data[[tips]]))),"Germline"))
-				if(is.null(names(tip_palette))){
-					tip_palette <- getPalette(tipstates,tip_palette)
-					tip_palette <- tip_palette[!is.na(names(tip_palette))]
+					unique(x@data[[tips]])))))
+				if(is.numeric(tipstates)){
+					tiptype <- "numeric"
+					cols <- range(tipstates)
 				}else{
-					nfound <- tipstates[!tipstates %in% names(tip_palette)]
-					if(length(nfound) > 0){
-						stop(paste(nfound,"not found in tip_palette"))
+					tipstates = c(tipstates,"Germline")
+					if(is.null(names(tip_palette))){
+						tip_palette <- getPalette(tipstates,tip_palette)
+						tip_palette <- tip_palette[!is.na(names(tip_palette))]
+					}else{
+						nfound <- tipstates[!tipstates %in% names(tip_palette)]
+						if(length(nfound) > 0){
+							stop(paste(nfound,"not found in tip_palette"))
+						}
 					}
+					cols <- tip_palette
 				}
-				cols <- tip_palette
 			}
 			if(nodes){
 				if(is.null(names(node_palette))){
@@ -275,11 +287,16 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 			tip_palette=tip_palette,base=TRUE,layout=layout,nodeids=nodeids,
 			title=title))
 		if(!is.null(tips) || nodes){
-			ps  <- lapply(ps,function(x)
+			ps  <- lapply(ps,function(x){
 					x <- x + theme(legend.position="right",
 			    	legend.box.margin=margin(0, -10, 0, 0))+
-			    	scale_color_manual(values=cols)+
-			    	guides(color=guide_legend(title="State")))
+			    	guides(color=guide_legend(title="State"))
+					if(tiptype == "character"){
+			    		x <- x + scale_color_manual(values=cols)
+					}else{
+						x <- x + scale_color_distiller(limits=cols,
+							palette=tip_palette)
+					}})
 		}
 		return(ps)
 	}
@@ -302,7 +319,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 		gl <- dplyr::tibble(sequence_id="Germline")
 		for(n in names(data@data)){
 			if(class(data@data[[n]]) == "numeric" || class(data@data[[n]]) == "integer"){
-				gl[[n]] <- 0
+				gl[[n]] <- NA
 			}else if(class(data@data[[n]]) == "character"){
 				gl[[n]] <- "Germline"
 			}else{
