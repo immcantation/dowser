@@ -562,6 +562,9 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 				seq_ar <- unlist(lapply(1:ncol(pat),function(x){
 					site <- acgt[thresh[,x]]
 					site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+					if(length(site) == 0){
+						site = "N"
+					}
 					site}))
 				ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
 			}else{
@@ -641,6 +644,9 @@ buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq",
 				seq_ar <- unlist(lapply(1:ncol(pat),function(x){
 					site <- acgt[thresh[,x]]
 					site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+					if(length(site) == 0){
+						site = "N"
+					}
 					site}))
 				ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
 			}else{
@@ -1353,7 +1359,14 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 	seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
 	loci <- unique(clone@region)
 	for(locus in loci){
+		if(length(seq) < length(clone@region)){
+			warning("Sequences are shorter than region vector. Exiting")
+		}
+		if(length(seq) > length(clone@region)){
+			stop("Sequences are longer than region vector. Exiting")
+		}
 		lseq <- seq[clone@region == locus]
+		lseq[is.na(lseq)] <- "N"
 		if(gaps){
 			nums <- clone@numbers[clone@region == locus]
 			nseq <- rep(".",max(nums))
