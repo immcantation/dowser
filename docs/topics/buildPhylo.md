@@ -13,7 +13,7 @@ buildPhylo(
 clone,
 exec,
 temp_path = NULL,
-verbose = FALSE,
+verbose = 0,
 rm_temp = TRUE,
 seq = "sequence",
 tree = NULL,

@@ -33,6 +33,7 @@ pages:
       - topics/buildPratchet.md
     - 'Visualize Trees':
       - topics/plotTrees.md
+      - topics/treesToPDF.md
       - topics/colorTrees.md
       - topics/getPalette.md
       - topics/collapseNodes.md

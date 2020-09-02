@@ -19,25 +19,28 @@ Dowser isn’t officially released yet, so please let us know if you’re planni
 Install
 -------------------------------------------------------------------------------
 
-Currently dowser can only be built from the [source code](http://bitbucket.org/kleinstein/dowser),
-first install the build dependencies:
+Dowser can be built from the [source code](http://bitbucket.org/kleinstein/dowser), or used in the Immcantation Docker container development build. The Docker container currently the only way to use the igphyml dependent features of Dowser on Windows.
+
+To use Dowser in the Docker image, simply pull and run the immcantation/suite:devel [Docker image](https://immcantation.readthedocs.io/en/stable/docker/intro.html). Instructions in hyperlink.
+
+Alternatively, to install the source code, first install the build dependencies:
 
 ```R
 install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown", "Rcpp"))
 ```
 
-To install the latest development code via devtools, along with a development branch of alakazam:
+To install the latest development code via devtools, along with the development version of Alakazam:
 
 ```R
 library(devtools)
-install_bitbucket("kleinstein/alakazam@dowser")
+install_bitbucket("kleinstein/alakazam@master")
 install_bitbucket("kleinstein/dowser@master")
 ```
 
 Quick start: lineage tree reconstruction and discrete trait analysis
 ----------------------------------------------------------------------------
 
-The following commands, entered into an R terminal, go through basic operations of building B cell lineage trees and discrete trait analysis using the PS, SC, and SP tests. By default, trees are built using maximum parsimony (using the `pratchet` function of the R package `phangorn`). Switches among trait values are calculated using [IgPhyML](https://igphyml.readthedocs.io) (>v1.1.0). You must supply the path to the compiled IgPhyML executible for function `bootstrapTrees` to work. See https://igphyml.readthedocs.io for IgPhyML installation details.
+The following commands, entered into an R terminal, go through basic operations of building B cell lineage trees and discrete trait analysis using the PS, SC, and SP tests. By default, trees are built using maximum parsimony (using the `pratchet` function of the R package `phangorn`). Switches among trait values are calculated using [IgPhyML](https://igphyml.readthedocs.io) (>v1.1.0). You must supply the path to the compiled IgPhyML executible for function `bootstrapTrees` to work. If using the Docker container, IgPhyML will already be installed. If using the source code version, see https://igphyml.readthedocs.io for IgPhyML installation details.
 
 ```R
 # Load required packages
@@ -60,8 +63,10 @@ plots <- plotTrees(trees, tips="c_call")
 # plot tree of first clone
 plots[[1]]
 
-# path to igphyml executible
-igphyml <- "PATH/TO/IGPHYML"
+# Path to igphyml executible
+# The path in Docker image is supplied. If installed from 
+# source this will likely be different.
+igphyml <- "/usr/local/share/igphyml/src/igphyml"
 
 # Count switches across bootstrap distribution of trees
 bootstraps <- bootstrapTrees(clones[1:2,], trait="c_call",

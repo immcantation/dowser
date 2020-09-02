@@ -26,6 +26,7 @@ locus = "locus",
 minseq = 2,
 subclones = "lump",
 majoronly = FALSE,
+columns = NULL,
 ...
 )
 ```
@@ -68,6 +69,9 @@ subclones
 majoronly
 :   only return largest subclone and sequences without light chains
 
+columns
+:   additional data columns to include in output
+
 ...
 :   additional arguments to pass to makeAirrClone
 
@@ -83,7 +87,7 @@ A tibble of [airrClone](airrClone-class.md) objects containing modified clones.
 Details
 -------------------
 
-This function is a wrapper for [makeAirrClone](makeAirrClone.md)
+This function is a wrapper for [makeAirrClone](makeAirrClone.md). Also removes whitespace, ;, :, and = from ids
 
 
 

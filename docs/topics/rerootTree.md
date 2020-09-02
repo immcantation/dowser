@@ -15,7 +15,7 @@ the tree's germline sequence ID.
 Usage
 --------------------
 ```
-rerootTree(tree, germline, min = 0.001)
+rerootTree(tree, germline, min = 0.001, verbose = 0)
 ```
 
 Arguments
@@ -29,6 +29,9 @@ germline
 
 min
 :   Maximum allowed branch length from germline to root
+
+verbose
+:   amount of rubbish to print
 
 
 

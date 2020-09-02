@@ -16,6 +16,8 @@ asr = "seq",
 asr_thresh = 0.05,
 tree = NULL,
 asr_type = "MPR",
+verbose = 0,
+resolve_random = TRUE,
 ...
 )
 ```
@@ -40,6 +42,12 @@ tree
 
 asr_type
 :   MPR or ACCTRAN
+
+verbose
+:   amount of rubbish to print
+
+resolve_random
+:   randomly resolve polytomies?
 
 ...
 :   Additional arguments (not currently used)

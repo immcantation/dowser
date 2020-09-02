@@ -16,14 +16,14 @@ makeAirrClone(
 data,
 id = "sequence_id",
 seq = "sequence_alignment",
-germ = "germline_alignment",
+germ = "germline_alignment_d_mask",
 vcall = "v_call",
 jcall = "j_call",
 junc_len = "junction_length",
 clone = "clone_id",
 mask_char = "N",
 max_mask = 0,
-pad_end = FALSE,
+pad_end = TRUE,
 text_fields = NULL,
 num_fields = NULL,
 seq_fields = NULL,
@@ -32,10 +32,10 @@ verbose = FALSE,
 collapse = TRUE,
 region = "H",
 heavy = NULL,
-cell = "cell",
+cell = "cell_id",
 locus = "locus",
 traits = NULL,
-triple = FALSE,
+mod3 = TRUE,
 randomize = TRUE,
 ...
 )
@@ -131,7 +131,7 @@ locus
 traits
 :   column ids to keep distinct during sequence collapse
 
-triple
+mod3
 :   pad sequences to length mutliple three?
 
 randomize

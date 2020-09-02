@@ -21,7 +21,7 @@ modelfile = NULL,
 build = "pratchet",
 exec = NULL,
 igphyml = NULL,
-trees = NULL,
+fixtrees = FALSE,
 quiet = 0,
 rm_temp = TRUE,
 palette = NULL,
@@ -29,7 +29,8 @@ resolve = 2,
 rep = NULL,
 keeptrees = TRUE,
 lfile = NULL,
-seq = "sequence"
+seq = "sequence",
+...
 )
 ```
 
@@ -70,8 +71,8 @@ exec
 igphyml
 :   location of igphyml executible if trait models desired
 
-trees
-:   tree topologies to use if aready available 
+fixtrees
+:   keep tree topologies fixed?
 (bootstrapping will not be perfomed)
 
 quiet
@@ -97,6 +98,9 @@ lfile
 
 seq
 :   column name containing sequence information
+
+...
+:   additional arguments to be passed to tree building program
 
 
 

@@ -22,6 +22,7 @@
 #' @import      methods
 #' @import      utils
 #' @importFrom  tidyselect  all_of
+#' @importFrom  gridExtra   grid.arrange
 #' @importFrom  stringr     str_count    
 #' @importFrom  alakazam    makeChangeoClone
 #' @importFrom  phylotate   read_annotated

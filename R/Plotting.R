@@ -361,6 +361,46 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 	p
 }
 
+#' Simple function for plotting a lot of trees into a pdf
+#' 
+#' \code{treesToPDF} exports trees to a pdf in an orderly fashion
+#' @param    plots        list of tree plots (from plotTrees)
+#' @param    file   	  output file name
+#' @param    nrow 		  number of rows per page
+#' @param 	 ncol 	      size of tip shape objects
+#' @param  	 ... 		  optional arguments passed to grDevices::pdf
+#' 
+#' @return   a PDF of tree plots
+#'  
+#' @seealso \link{plotTrees}
+#' @examples
+#' \dontrun{
+#' data(ExampleDb)
+#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' trees <- getTrees(clones)
+#' plotTrees(trees)
+#' treesToPDF(trees$trees,"test.pdf",width=5,height=6)
+#' }
+#' @export
+treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
+	treepage = nrow*ncol
+	rm = treepage - length(plots) %% treepage
+	if(rm != treepage){
+		for(i in (length(plots)+1):(length(plots)+rm)){
+			plots[[i]] = ggplot(data.frame())
+		}
+	}
+	s = seq(1,length(plots),by=treepage)
+	grDevices::pdf(file,...)
+	for(start in s){
+		gridExtra::grid.arrange(grobs=
+			plots[start:(start + treepage -1)], ncol=ncol)	
+	}
+	grDevices::dev.off()
+}
+
+
 # Experimental
 # get position grid to arrange ggtree plots in a 
 # grid

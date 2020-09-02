@@ -1,0 +1,67 @@
+**treesToPDF** - *Simple function for plotting a lot of trees into a pdf*
+
+Description
+--------------------
+
+`treesToPDF` exports trees to a pdf in an orderly fashion
+
+
+Usage
+--------------------
+```
+treesToPDF(plots, file, nrow = 2, ncol = 2, ...)
+```
+
+Arguments
+-------------------
+
+plots
+:   list of tree plots (from plotTrees)
+
+file
+:   output file name
+
+nrow
+:   number of rows per page
+
+ncol
+:   size of tip shape objects
+
+...
+:   arguments passed to grDevices::pdf
+
+
+
+
+Value
+-------------------
+
+a PDF of tree plots
+
+
+
+Examples
+-------------------
+
+```R
+### Not run:
+data(ExampleDb)
+# ExampleDb$sample_id <- sample(ExampleDb$sample_id)
+# clones <- formatClones(ExampleDb, trait="sample_id")
+# trees <- getTrees(clones)
+# plotTrees(trees)
+# treesToPDF(trees$trees,"test.pdf",width=5,height=6)
+```
+
+
+
+See also
+-------------------
+
+[plotTrees](plotTrees.md)
+
+
+
+
+
+
