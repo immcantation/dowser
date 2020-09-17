@@ -102,7 +102,7 @@ makeModelFile <- function(file, states, constraints=NULL){
     write("", file=file, append=TRUE)
     write("#STATES", file=file, append=TRUE)
     for(a in states){
-        write(a, file=file, append=TRUE)
+        write(paste(a), file=file, append=TRUE)
     }
     write("", file=file, append=TRUE)
     write("#CONSTRAINTS", file=file, append=TRUE)
