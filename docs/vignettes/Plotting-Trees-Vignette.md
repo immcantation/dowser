@@ -29,6 +29,7 @@ The `plotTrees` function will return a list of tree plots in the same order as i
 plots = plotTrees(clones)
 
 #Plot the largest tree
+#To plot second largest tree, use plots[[2]], and so on
 plots[[1]]
 ```
 

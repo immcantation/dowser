@@ -1,31 +1,26 @@
 Download
 
+Dowser can be built from the [source code](http://bitbucket.org/kleinstein/dowser), or used in the Immcantation Docker container development build. The Docker container currently the only way to use the igphyml dependent features of Dowser on Windows.
+
+Using Docker image
+-------------------------------------------------------------------------------
+
+To use Dowser in the Docker image, simply pull and run the immcantation/suite:devel [Docker image](https://immcantation.readthedocs.io/en/stable/docker/intro.html). Instructions in hyperlink. Note this might not always be the latest version of Dowser.
+
+
 Building Development Versions
 -------------------------------------------------------------------------------
 
-Currently dowser can only be built from the [source code](http://bitbucket.org/kleinstein/dowser),
-first install the build dependencies:
+Alternatively, to install the latest version source code, first install the build dependencies:
 
 ```R
 install.packages(c("devtools", "roxygen2", "testthat", "knitr", "rmarkdown", "Rcpp"))
 ```
 
-To install the latest development code via devtools, along with a development branch of alakazam:
+To install the latest development code via devtools, along with the development version of Alakazam:
 
 ```R
 library(devtools)
-install_bitbucket("kleinstein/alakazam@dowser")
+install_bitbucket("kleinstein/alakazam@master")
 install_bitbucket("kleinstein/dowser@master")
-```
-
-Note, using `install_bitbucket` will not build the documentation. To generate the 
-documentation, clone the repository and build as normal using devtools, 
-roxygen and knitr:
-
-```R
-library(devtools)
-install_deps()
-document()
-build()
-install()
 ```
