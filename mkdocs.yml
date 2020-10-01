@@ -17,6 +17,8 @@ pages:
     - 'Release Notes': news.md
   - 'Vignettes':
     - 'Quickstart': vignettes/Quickstart-Vignette.md
+    - 'Build trees': vignettes/Building-Trees-Vignette.md
+    - 'Plot trees': vignettes/Plotting-Trees-Vignette.md
   - 'Help Topics':
     - 'Define Clones and Subclones':
       - topics/getSubclones.md
