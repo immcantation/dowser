@@ -1502,10 +1502,26 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 		}else{
 			states <- readModelFile(modelfile)
 		}
-		#if igphyml is specified, append trait value to sequence ids
-		data <- lapply(data,function(x){
-			x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
-			x})
+		# if trees are fixed, add trait value to tree tips
+        if(fixtrees){
+            for(i in 1:length(data)){
+                da = data[[i]]
+                tr = trees[[i]]
+                tips = tr$tip.label[tr$tip.label != "Germline"]
+                m = match(tips, da@data$sequence_id)
+                if(sum(is.na(m)) > 0){
+                    stop(paste("Tips",tips[!tips %in% da@data$sequence_id],
+                        "not found in clone object",da@clone))
+                }
+                tr$tip.label[tr$tip.label != "Germline"] = 
+                    paste0(tips, "_", da@data[[trait]][m])
+                trees[[i]] = tr
+            }
+        }
+        #if igphyml is specified, append trait value to sequence ids
+        data <- lapply(data,function(x){
+            x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
+            x})
 	}
 	if(build=="dnapars"){
 		if(is.null(dir) || is.null(id)){

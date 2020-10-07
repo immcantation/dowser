@@ -15,7 +15,7 @@ treesToPDF(plots, file, nrow = 2, ncol = 2, ...)
 
 \item{ncol}{size of tip shape objects}
 
-\item{...}{arguments passed to grDevices::pdf}
+\item{...}{optional arguments passed to grDevices::pdf}
 }
 \value{
 a PDF of tree plots
