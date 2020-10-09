@@ -345,6 +345,7 @@ testSP <- function(switches, permuteAll=FALSE,
 
     if(binom){
         means = means %>%
+            filter(RECON != 0 | PERMUTE != 0) %>%
             dplyr::group_by(FROM,TO) %>%
             summarize(CLONES=n(),
                 POSITIVE=sum(DELTA > 0),
