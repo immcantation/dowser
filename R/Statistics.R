@@ -193,7 +193,19 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @export
 testSP <- function(switches, permuteAll=FALSE, 
     from=NULL, to=NULL, dropzeros=TRUE,
-    bylineage=FALSE, pseudocount=0, alternative=c("two.sided","greater","less")){
+    bylineage=FALSE, pseudocount=0, alternative=c("two.sided","greater","less"),
+    binom=FALSE){
+
+    if(binom){
+        if(!bylineage){
+            warning("binom=TRUE, setting bylineage to TRUE")
+            bylineage = TRUE
+        }
+        if(alternative[1] != "greater"){
+            warning("binom=TRUE, setting alternative to greater")
+            alternative = "greater"
+        }
+    }
 
     permute <- dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){
@@ -227,6 +239,7 @@ testSP <- function(switches, permuteAll=FALSE,
             tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("PROP"))
     }else{        
         reps <- switches  %>%
+            dplyr::filter(!!rlang::sym("TO") != "N") %>%
             dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
             	!!rlang::sym("REP")) %>% 
             dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/
@@ -330,6 +343,16 @@ testSP <- function(switches, permuteAll=FALSE,
         }                            
     }
 
+    if(binom){
+        means = means %>%
+            dplyr::group_by(FROM,TO) %>%
+            summarize(CLONES=n(),
+                POSITIVE=sum(DELTA > 0),
+                P=stats::binom.test(POSITIVE,CLONES,
+                    alternative="greater")$p.value)
+        means$TEST = "BINOM"
+    }
+
     means$STAT <- "SP"
     reps$STAT <- "SP"
     means$REPS <- length(unique(reps$REP))
@@ -423,6 +446,7 @@ testSC <- function(switches,dropzeros=TRUE,
             tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("COUNT"))
     }else{
         reps <- switches  %>%
+            dplyr::filter(!!rlang::sym("TO") != "N") %>%
             dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
             	!!rlang::sym("REP")) %>% 
             dplyr::mutate(COUNT = !!rlang::sym("SWITCHES")) %>% 
