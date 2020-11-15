@@ -760,7 +760,8 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 	#trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
 	ofile <- file.path(temp_path,paste0(id,"_lineages_",id,
 		"_pars.tsv_gyrep_igphyml_stats_hlp.tab"))
-	results <- alakazam::readIgphyml(ofile,format="phylo")
+	results <- alakazam::readIgphyml(ofile,format="phylo",
+        branches="distance")
 	trees <- results$trees
 	params <- results$param[-1,]
 	for(i in 1:nrow(params)){

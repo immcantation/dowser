@@ -155,6 +155,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @param    pseudocount  Pseudocount for P value calculations
 #' @param    alternative  Perform one-sided (\code{greater} or \code{less})
 #'                          or \code{two.sided} test
+#' @param    binom        Calculate binomial p value
 #' @return   A list containing a \code{tibble} with mean SP statistics, and another 
 #' with SP statistics per repetition.
 #'
@@ -344,12 +345,16 @@ testSP <- function(switches, permuteAll=FALSE,
     }
 
     if(binom){
+        if(dropzeros){
+            means = means %>%
+                filter(!!rlang::sym("RECON") != 0 | !!rlang::sym("PERMUTE") != 0)
+        }
         means = means %>%
-            filter(RECON != 0 | PERMUTE != 0) %>%
-            dplyr::group_by(FROM,TO) %>%
+            dplyr::group_by(!!rlang::sym("FROM"),!!rlang::sym("TO")) %>%
             summarize(CLONES=n(),
-                POSITIVE=sum(DELTA > 0),
-                P=stats::binom.test(POSITIVE,CLONES,
+                POSITIVE=sum(!!rlang::sym("DELTA") > 0),
+                P=stats::binom.test(!!rlang::sym("POSITIVE"),
+                    !!rlang::sym("CLONES"),
                     alternative="greater")$p.value)
         means$TEST = "BINOM"
     }
@@ -558,96 +563,330 @@ testSC <- function(switches,dropzeros=TRUE,
     results
 }
 
-#' Performs root-to-tip regression test on set of trees
+
+#' Get divergence from MRCA for each tip
 #' 
 #' \code{rootToTop} performs root-to-tip regression permutation test
-#' @param    trees        Tibble with trees and data 
-#' @param    time         Column id for timepoint
-#' @param    permutations Number of permutations for test
+#' @param    phy          Tree object
+#' @param    minlength    Branch lengths to collapse in trees
+#' @return   A named vector of each tip's divergence from the tree's MRCA.
+#'
+#' @export
+getDivergence = function(phy, minlength=0.001){
+    tips <- phy$tip.label
+    phy$edge.length[phy$edge.length < minlength] <- 0
+    phy <- ape::di2multi(phy,tol=minlength)
+    uca <- ape::getMRCA(phy,tip=tips)
+    co <- ape::dist.nodes(phy)
+    dist <- co[1:length(tips),uca]
+    names(dist) <- tips
+    dist
+}
+
+#' Resolve polytomies to have the minimum number of single timepoint clades
+#' 
+#' \code{rootToTop} performs root-to-tip regression permutation test
+#' @param    phy          Tree object
+#' @param    clone        airrClone data object corresponding to \code{phy}
+#' @param    time         Column name holding numeric time information
+#' @param    sequence     Column name holding sequence ID
 #' @param    germline     Germline sequence name
 #' @param    minlength    Branch lengths to collapse in trees
-#' @param    alternative  Perform one-sided (\code{greater} or \code{less})
-#'                          or \code{two.sided} test
-#' @return   A \code{tibble} with pearson correlation between divergene
-#' and time, mean permuted correlation, p value(s), number of permutations,
-#' and number of sequences
+#' @param    verbose      Print lots of rubbish while running?
+#' @return   A \code{phylo} tree object in which polytomies are resolved to 
+#' have the minimum number of single timepoint clades.
 #'
 #' @details
-#' Output data table columns:
-#' clone_id = clone id
-#' observed = observed pearson correlation
-#' permuted = mean permuted correlation
-#' pgt = p value for DELTA < 0
-#' plt = p value for DELTA > 0
+#' Iteratively identifies polytomies (clusters of < minlength branches),
+#' prunes each descendant branch, combines clades with the same timepoint
+#' before grouping them back together. Checks to make sure that the divergence
+#' of each tip is the same after resolution.
 #'  
-#' @seealso Uses output from \link{getTrees}.
+#' @seealso Uses output from \link{getTrees} during \link{correlationTest}.
 #' @export
-rootToTip <- function(trees, time="time", permutations=1000,
-    germline="Germline", minlength=0.001,
-    alternative=c("two.sided","greater","less")){
-
-    # perform root-tip regressions
-    regressions <- dplyr::tibble()
-    for(cloneid in unique(trees$clone_id)){
-        print(cloneid)
-        temp <- dplyr::filter(trees,!!rlang::sym("clone_id") == cloneid)
-        tree <- temp$trees[[1]]
-        data <- temp$data[[1]]@data
+resolvePolytomies = function(phy, clone, minlength=0.001,
+    time="time", sequence="sequence_id", germline = "Germline",
+    verbose=FALSE){
     
-        if(dplyr::n_distinct(data[[time]]) == 1 || 
-            dplyr::n_distinct(data[[time]]) == 1){
-            next
-        }
-
-        dseq = data[is.na(data[[time]]),]$sequence_id
-        if(length(dseq) > 0){
-            data <- dplyr::filter(data,! !!rlang::sym("sequence_id") %in% dseq)
-            tree <- ape::drop.tip(tree,tip=dseq)
-        }
-        
-        tips <- tree$tip.label
-        tree$edge.length[tree$edge.length < minlength] <- 0
-        tree <- ape::di2multi(tree,tol=minlength)
-        uca <- ape::getMRCA(tree,tip=tips[!grepl(germline,tips)])
-        co <- ape::dist.nodes(tree)
-        dist <- co[1:length(tree$tip.label),uca]
-        names(dist) <- tree$tip.label
-        dist <- dist[!grepl(germline,names(dist))]
-    
-        # add cophenetic distance to data tibble
-        data$divergence <- dist[data$sequence_id]
-    
-        # get observed and permuted correlation between divergence and time
-        observed_cor <- stats::cor(data$divergence,data[[time]])
-        perm_temp <- data
-        perm_cor <- rep(1,length=permutations)
-        for(p in 1:permutations){
-            perm_temp[[time]] <- sample(data[[time]],replace=FALSE)
-            perm_cor[p] <- stats::cor(perm_temp$divergence,perm_temp[[time]])
-        }
-    
-        # collect results
-        results <- dplyr::tibble(
-            clone_id=cloneid,
-            observed=observed_cor,
-            permuted=mean(perm_cor),
-            nperm = permutations,
-            nseq = nrow(data)
-            )
-
-        if(alternative[1] == "greater"){
-            results$p_gt = sum(perm_cor >= observed_cor)/permutations
-        }else if(alternative[1] == "less"){
-            results$p_lt = sum(perm_cor <= observed_cor)/permutations
-        }else if(alternative[1] == "two.sided"){
-            results$p_gt = (sum(perm_cor > observed_cor) +
-                    sum(perm_cor == observed_cor)*0.5)/permutations
-            results$p_lt = (sum(perm_cor < observed_cor) +
-                    sum(perm_cor == observed_cor)*0.5)/permutations
-        }else{
-            stop(paste(alternative,"not a valid hypothesis specification"))
-        }
-        regressions <- bind_rows(regressions,results)
+    data <- clone@data
+    phy <- rerootTree(di2multi(phy,tol=minlength),
+        germline=germline)
+    tips <- phy$tip.label
+    if(sum(!data[[sequence]] %in% phy$tip.label) > 0){
+        stop("Tree and data sequence ids don't match")
     }
-    return(regressions)
+
+    odivergence <- getDivergence(phy,minlength)
+    polytomies <- table(phy$edge[,1])
+    polytomies <- names(polytomies[polytomies > 2])
+    while(length(polytomies) > 0){
+        if(verbose){
+            print(polytomies)
+        }
+        # for first polytomy in list, remove each subclade
+        # and record the time of its sequences
+        target_node <- as.numeric(polytomies[1])
+        node_index <- which(phy$edge[,1] == target_node)
+        node_ns <- phy$edge[node_index,2]
+        edge_ls <- phy$edge.length[node_index]
+        clades <- list()
+        times <- list()
+        for(i in 1:length(node_ns)){
+            nc <- node_ns[i]
+            # unfortuantely processing is different if clade is > 1 tip.
+            if(nc <= length(phy$tip.label)){
+                clades[[i]] <- ape::keep.tip(phy, tip = nc)
+                times[[i]] <- unique(data[data[[sequence]] %in%
+                    clades[[i]]$tip.label,][[time]])
+                clades[[i]]$root.edge <- edge_ls[[i]] #store root edge
+                clades[[i]]$edge.length <- 0
+            }else{
+                tips <- ape::extract.clade(phy, node = nc, 
+                    collapse.singles=TRUE)$tip.label
+                clades[[i]] <- ape::keep.tip(phy, tip = tips)
+                clades[[i]]$root.edge <- edge_ls[[i]] #store root edge
+                times[[i]] <- unique(data[data[[sequence]] %in%
+                    clades[[i]]$tip.label,][[time]])
+                if(length(times[[i]]) > 1){
+                    times[[i]] <- "multi"
+                }
+            }
+        }
+
+        # combine all clades of each time type in a balanced
+        # manner, so they remain clades
+        topclades <- list()
+        distinct_times <- unique(unlist(times))
+        for(ctime in distinct_times){
+            tclades <- clades[unlist(lapply(times,
+                function(x)x==ctime))]
+            clade <- tclades[[1]]
+            if(length(tclades) > 1){
+                for(i in 2:length(tclades)){
+                    clade <- ape::bind.tree(clade,tclades[[i]],
+                        position=clade$root.edge)
+                    clade <- ape::collapse.singles(clade)
+                    clade$root.edge <- 1e-7
+                }
+            }
+            topclades[[as.character(ctime)]] <- clade
+        }
+
+        # combine top clades into a polytomy
+        polytomy <- topclades[[1]]
+        if(length(topclades) > 1){
+            for(i in 2:length(topclades)){
+                polytomy <- ape::bind.tree(polytomy,topclades[[i]],
+                            position=polytomy$root.edge)
+                polytomy <- ape::collapse.singles(polytomy)
+                polytomy$root.edge <- 1e-7
+            }
+        }
+        tphy <- ape::drop.tip(phy, collapse.singles=TRUE, trim.internal=FALSE, tip = 
+            ape::extract.clade(phy, node = target_node)$tip.label, subtree=TRUE)
+        dumb_tip <- paste0("[",length(polytomy$tip.label),"_tips]")
+        ntree <- ape::bind.tree(tphy, polytomy, where=which(tphy$tip.label==dumb_tip),
+            position=polytomy$root.edge)
+        ntree <- ape::drop.tip(ntree, tip=dumb_tip)
+        phy <- ntree
+        polytomies <- table(phy$edge[,1])
+        polytomies <- names(polytomies[polytomies > 2])
+    }
+
+    ndivergence <- getDivergence(phy,minlength)
+
+    if(length(ndivergence) != length(odivergence)){
+        stop("Number of tips corrupted during polytomy resolution")
+    }
+    if(sum(odivergence[names(ndivergence)] != ndivergence)){
+        stop("Divergence corrupted during polytomy resolution")   
+    }
+    phy
+}
+
+#' Resolve polytomies to have the minimum number of single timepoint clades
+#' 
+#' \code{rootToTop} performs root-to-tip regression permutation test
+#' @param    phy          Tree object
+#' @param    clone        airrClone data object corresponding to \code{phy}
+#' @param    permutations Number of permutations to run
+#' @param    polyresolve  Resolve polytomies to have a minimum number of 
+#'                         single timepoint clades
+#' @param    permutation  Permute among single timepoint clades or uniformly
+#'                         among tips
+#' @param    time         Column name holding numeric time information
+#' @param    sequence     Column name holding sequence ID
+#' @param    germline     Germline sequence name
+#' @param    minlength    Branch lengths to collapse in trees
+#' @param    verbose      Print lots of rubbish while running?
+#' @param    alternative  Is alternative that the randomized correlation are greater than 
+#'                         or equal to observed, or greater/less than?
+#' @return   A list of statistics from running the permutation test.
+#'
+#' @details
+#'  See \link{correlationTest} for details
+#' @seealso \link{correlationTest}.
+runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
+    polyresolve = TRUE, permutation = c("clustered", "uniform"), 
+    time="time", sequence="sequence_id", germline = "Germline",
+    verbose=TRUE, alternative = c("greater","two.sided")){
+
+    data <- clone@data
+    if(verbose){
+        print(paste("Analyzing clone: ",clone@clone))
+    }
+
+    if(polyresolve){
+        if(verbose){
+            print("resolving polytomies to single timepoint clades")
+        }
+        phy <- resolvePolytomies(phy, clone, minlength,
+            time=time, sequence=sequence, germline = germline,
+            verbose=verbose)
+    }
+
+    phy <- ape::drop.tip(phy,germline)
+    tips <- phy$tip.label
+    if(sum(!data[[sequence]] %in% phy$tip.label) > 0){
+        stop("Tree and data sequence ids don't match")
+    }
+
+    # dates is named and ordered by tree tips
+    dates <- data[[time]]
+    names(dates) <- data[[sequence]]
+    dates <- dates[tips]
+
+    divergence <- getDivergence(phy, minlength)
+    data$divergence <- divergence[data[[sequence]]]
+
+    cl <- 1:length(dates) # each tip is its own cluster
+    if(permutation[1] == "clustered"){
+        # define all monophyletic clades with > 1 tips
+        gc <- lapply(ape::subtrees(phy),function(x)x$tip.label)
+        # identify which clades are single timepoint
+        single.date.clades <- which(unlist(lapply(gc,function(x)
+            dplyr::n_distinct(dates[x])))==1)
+        if(length(single.date.clades)>0){
+            for(i in 1:length(single.date.clades)){
+                m <- match(gc[[single.date.clades[i]]],phy$tip.label)
+                cl[m] <- cl[m[1]] # assign clusters to be the same across single timepoint clades
+            }
+        }
+        cl <- match(cl,unique(cl)) #make clusters 1:(number of clusters)
+        if(length(unique(cl))==1) stop("Only one cluster in data.")
+    }
+    # assign clusters to each sequence
+    names(cl) <- tips
+    m <- match(data[[sequence]],names(cl))
+    data$cluster <- cl[data$sequence_id]
+
+    counts <- table(data$cluster,data$time)
+    if(sum(rowSums(counts > 0) > 1) > 0){
+        stop("Clusters are not single timepoint!")
+    }
+
+    # get ordered list of times for each cluster
+    ctimes <- unlist(lapply(sort(unique(data$cluster)), function(x)
+        unique(data[data$cluster == x,][[time]])))
+
+    true <- stats::cor(data$time,data$divergence)
+    random <- rep(0, length=permutations)
+    for(i in 1:permutations){
+        times <- ctimes[sample(1:length(ctimes))]
+        data$random_time <- times[data$cluster]
+        random[i] <- stats::cor(data$divergence, data$random_time)
+    }
+
+    nclust <- dplyr::n_distinct(cl)
+    nposs <-exp(lfactorial(nclust)-sum(lfactorial(table(ctimes))))
+
+    minp <- 1
+    if(alternative[1] == "two.sided"){
+        minp <- 0.5
+    }
+
+    clone@data <- data
+    slope <- summary(stats::lm(data$divergence ~ data$time))$coefficients[2,1]
+    results <- list(correlation=true)
+    results[["clone"]] <- clone
+    results[["tree"]] <- phy
+    results[["random"]] <- random
+    results[["random_correlation"]] <- mean(random)
+    random <- c(random,true)
+    results[["p_gt"]] <- (sum(true < random) + 
+        sum(true == random)*0.5)/length(random)
+    results[["p_lt"]] <- (sum(true > random) + 
+        sum(true == random)*0.5)/length(random)
+    results[["nposs"]] <- nposs
+    results[["nclust"]] <- nclust
+    results[["p"]] <- mean(true <= random)
+    results[["min_p"]] <- max(minp/nposs, minp/(permutations+1))
+    results[["slope"]] <- slope
+    results
+}
+
+#' Run date randomization test for temporal signal on a set of trees.
+#' 
+#' \code{correlationTest} performs root-to-tip regression date randomization test
+#' @param    clones       A \code{tibble} object containing airrClone and \code{phylo} objects
+#' @param    permutations Number of permutations to run
+#' @param    polyresolve  Resolve polytomies to have a minimum number of 
+#'                         single timepoint clades
+#' @param    permutation  Permute among single timepoint clades or uniformly
+#'                         among tips
+#' @param    time         Column name holding numeric time information
+#' @param    sequence     Column name holding sequence ID
+#' @param    germline     Germline sequence name
+#' @param    minlength    Branch lengths to collapse in trees
+#' @param    verbose      Print lots of rubbish while running?
+#' @param    alternative  Is alternative that the randomized correlation are greater than 
+#'                         or equal to observed, or greater/less than?
+#' @return   A \code{tibble} with the same columns as clones, but additional
+#' columns corresponding to test statistics for each clone. 
+#'
+#' @details
+#'  Object returned contains these columns which are added or modified from input:
+#'  \itemize{
+#'   \item  \code{data}: airrClone object, same as input but with additional columns 
+#'        "cluster" which correspond to permutation cluster, and "divergence."
+#'   \item  \code{trees}:  \link{phylo} tree object, possibly with resolved polytomies.
+#'   \item  \code{slope}: Slope of linear regression between divergence and time.
+#'   \item  \code{correlation}: Correlation between divergence and time.
+#'   \item  \code{p}: p value of correlation compared to permuted correlations.
+#'   \item  \code{random_correlation}: Mean correlation of permutation replicates.
+#'   \item  \code{min_p}: Minimum p value of data, determined by either the number of
+#'         distinct clade/timepoint combinations or number of permutations.
+#'   \item  \code{nposs}: Number of possible distinct timepoint/clade combinations.
+#'   \item  \code{nclust}: Number of clusters used in permutation. If permutation="uniform"
+#'         this is the number of tips.
+#'   \item  \code{p_gt/p_lt}: P value that permuted correlations are greater or less 
+#'         than observed correlation. Only returned if alternative = "two.sided"
+#' }
+#' @seealso Uses output from \code{getTrees}.
+#' @export
+correlationTest = function(clones, permutations=1000, minlength=0.001,
+    permutation = c("clustered", "uniform"), time="time", 
+    sequence="sequence_id", germline = "Germline",
+    verbose=FALSE, polyresolve = TRUE,
+    alternative = c("greater","two.sided")){
+
+    results <- lapply(1:nrow(clones),function(x)
+        runCorrelationTest(clones$trees[[x]], clones$data[[x]],
+        permutations, minlength=minlength, polyresolve=polyresolve,
+        permutation=permutation, time= time, 
+        sequence=sequence, germline=germline,
+        verbose=verbose, alternative=alternative))
+
+    clones$data <- lapply(results,function(x)x$clone)
+    clones$trees <- lapply(results,function(x)x$tree)
+
+    cols <- c("slope", "p", "correlation", "random_correlation",
+        "min_p", "nposs", "nclust")
+    if(alternative[1] == "two.sided"){
+        cols <- c(cols, c("p_gt", "p_lt"))
+    }
+    for(col in cols){
+        clones[[col]] <- unlist(lapply(results,function(x)x[[col]]))
+    }
+    clones
 }

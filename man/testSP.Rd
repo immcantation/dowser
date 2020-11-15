@@ -12,7 +12,8 @@ testSP(
   dropzeros = TRUE,
   bylineage = FALSE,
   pseudocount = 0,
-  alternative = c("two.sided", "greater", "less")
+  alternative = c("two.sided", "greater", "less"),
+  binom = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ testSP(
 
 \item{alternative}{Perform one-sided (\code{greater} or \code{less})
 or \code{two.sided} test}
+
+\item{binom}{Calculate binomial p value}
 }
 \value{
 A list containing a \code{tibble} with mean SP statistics, and another 
