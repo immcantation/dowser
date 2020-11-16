@@ -616,6 +616,10 @@ resolvePolytomies = function(phy, clone, minlength=0.001,
         stop("Tree and data sequence ids don't match")
     }
 
+    ittybitty_branch = 1e-7
+    # ape does weird things with zero branches
+    phy$edge.length[phy$edge.length == 0] = ittybitty_branch
+
     odivergence <- getDivergence(phy,minlength)
     polytomies <- table(phy$edge[,1])
     polytomies <- names(polytomies[polytomies > 2])
@@ -666,7 +670,7 @@ resolvePolytomies = function(phy, clone, minlength=0.001,
                     clade <- ape::bind.tree(clade,tclades[[i]],
                         position=clade$root.edge)
                     clade <- ape::collapse.singles(clade)
-                    clade$root.edge <- 1e-7
+                    clade$root.edge <- ittybitty_branch
                 }
             }
             topclades[[as.character(ctime)]] <- clade
@@ -679,7 +683,7 @@ resolvePolytomies = function(phy, clone, minlength=0.001,
                 polytomy <- ape::bind.tree(polytomy,topclades[[i]],
                             position=polytomy$root.edge)
                 polytomy <- ape::collapse.singles(polytomy)
-                polytomy$root.edge <- 1e-7
+                polytomy$root.edge <- ittybitty_branch
             }
         }
         tphy <- ape::drop.tip(phy, collapse.singles=TRUE, trim.internal=FALSE, tip = 
