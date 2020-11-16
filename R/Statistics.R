@@ -585,7 +585,6 @@ getDivergence = function(phy, minlength=0.001){
 
 #' Resolve polytomies to have the minimum number of single timepoint clades
 #' 
-#' \code{rootToTop} performs root-to-tip regression permutation test
 #' @param    phy          Tree object
 #' @param    clone        airrClone data object corresponding to \code{phy}
 #' @param    time         Column name holding numeric time information
@@ -843,6 +842,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
 #' @param    germline     Germline sequence name
 #' @param    minlength    Branch lengths to collapse in trees
 #' @param    verbose      Print lots of rubbish while running?
+#' @param    storeTree    Store the tree used?
 #' @param    alternative  Is alternative that the randomized correlation are greater than 
 #'                         or equal to observed, or greater/less than?
 #' @return   A \code{tibble} with the same columns as clones, but additional
@@ -853,7 +853,6 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
 #'  \itemize{
 #'   \item  \code{data}: airrClone object, same as input but with additional columns 
 #'        "cluster" which correspond to permutation cluster, and "divergence."
-#'   \item  \code{trees}:  \link{phylo} tree object, possibly with resolved polytomies.
 #'   \item  \code{slope}: Slope of linear regression between divergence and time.
 #'   \item  \code{correlation}: Correlation between divergence and time.
 #'   \item  \code{p}: p value of correlation compared to permuted correlations.
@@ -865,6 +864,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
 #'         this is the number of tips.
 #'   \item  \code{p_gt/p_lt}: P value that permuted correlations are greater or less 
 #'         than observed correlation. Only returned if alternative = "two.sided"
+#'   \item  \code{test_trees}:  The \link{phylo} tree objects used, possibly with resolved polytomies.
 #' }
 #' @seealso Uses output from \code{getTrees}.
 #' @export
@@ -872,7 +872,8 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
     permutation = c("clustered", "uniform"), time="time", 
     sequence="sequence_id", germline = "Germline",
     verbose=FALSE, polyresolve = TRUE,
-    alternative = c("greater","two.sided")){
+    alternative = c("greater","two.sided"),
+    storeTree=FALSE){
 
     results <- lapply(1:nrow(clones),function(x)
         runCorrelationTest(clones$trees[[x]], clones$data[[x]],
@@ -882,7 +883,9 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
         verbose=verbose, alternative=alternative))
 
     clones$data <- lapply(results,function(x)x$clone)
-    clones$trees <- lapply(results,function(x)x$tree)
+    if(storeTree){
+        clones$test_trees <- lapply(results,function(x)x$tree)
+    }
 
     cols <- c("slope", "p", "correlation", "random_correlation",
         "min_p", "nposs", "nclust")
