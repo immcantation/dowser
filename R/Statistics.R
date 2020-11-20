@@ -845,6 +845,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
 #' @param    storeTree    Store the tree used?
 #' @param    alternative  Is alternative that the randomized correlation are greater than 
 #'                         or equal to observed, or greater/less than?
+#' @param    nproc        Number of cores to use for calculations. Parallelizes by tree.
 #' @return   A \code{tibble} with the same columns as clones, but additional
 #' columns corresponding to test statistics for each clone. 
 #'
@@ -873,14 +874,15 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
     sequence="sequence_id", germline = "Germline",
     verbose=FALSE, polyresolve = TRUE,
     alternative = c("greater","two.sided"),
-    storeTree=FALSE){
+    storeTree = TRUE, nproc=1){
 
-    results <- lapply(1:nrow(clones),function(x)
+    results <- parallel::mclapply(1:nrow(clones),function(x)
         runCorrelationTest(clones$trees[[x]], clones$data[[x]],
         permutations, minlength=minlength, polyresolve=polyresolve,
         permutation=permutation, time= time, 
         sequence=sequence, germline=germline,
-        verbose=verbose, alternative=alternative))
+        verbose=verbose, alternative=alternative),
+        mc.cores=nproc)
 
     clones$data <- lapply(results,function(x)x$clone)
     if(storeTree){
