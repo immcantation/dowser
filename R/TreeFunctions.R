@@ -809,6 +809,9 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 rerootTree <- function(tree, germline, min=0.001, verbose=0){
     ntip <- length(tree$tip.label)
     uca <- ntip+1
+    if(!germline %in% tree$tip.label){
+        stop(paste(germline,"not found in tip labels!"))
+    }
     if(ape::is.rooted(tree)){
         #stop("tree already rooted!")
         if(verbose > 0){
