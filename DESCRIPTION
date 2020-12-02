@@ -1,7 +1,7 @@
 Package: dowser
 Type: Package
-Version: 0.0.2
-Date: 2020-8-28
+Version: 0.0.3
+Date: 2020-12-01
 Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"), 
                     email="kenneth.hoehn@yale.edu"),
              person("Steven", "Kleinstein", role=c("aut", "cph"), 
@@ -16,36 +16,24 @@ BuildVignettes: true
 VignetteBuilder: knitr
 Encoding: UTF-8
 SystemRequirements: C++11
+biocViews:
 Depends:
     R (>= 3.1.2),
     ggplot2 (>= 3.2.0)
-biocViews:
-    ggtree
 Imports:
     alakazam,
     ape,
     dplyr (>= 0.8.1),
     ggtree,
     graphics,
-    grid,
     gridExtra,
-    igraph (>= 1.0.0),
-    lazyeval,
-    Matrix,
     methods,
     phangorn,
     phylotate,
-    progress,
     RColorBrewer,
-    Rcpp (>= 0.12.12),
-    readr,
     rlang,
-    scales,
-    seqinr,
     stats,
-    stringi,
     stringr,
-    tibble,
     tidyselect,
     tidyr,
     utils

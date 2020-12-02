@@ -256,13 +256,13 @@ testSP <- function(switches, permuteAll=FALSE,
             reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
             dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
             dplyr::filter(!!rlang::sym("d") == 0) %>%
-            .$FROM
+            dplyr::pull(rlang::sym("FROM"))
         
         to_type <- 
             reps %>% dplyr::group_by(!!rlang::sym("TO")) %>%
             dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
             dplyr::filter(!!rlang::sym("d") == 0) %>%
-            .$TO
+            dplyr::pull(rlang::sym("TO"))
         
         remove <- to_type[to_type %in% from_type]
         reps <- reps[!reps$FROM %in% remove &
@@ -467,13 +467,13 @@ testSC <- function(switches,dropzeros=TRUE,
             reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
             dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
             dplyr::filter(!!rlang::sym("d") == 0) %>%
-            .$FROM
+            dplyr::pull(rlang::sym("FROM"))
         
         to_type <- 
             reps %>% dplyr::group_by(!!rlang::sym("TO")) %>%
             dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
             dplyr::filter(!!rlang::sym("d") == 0) %>%
-            .$TO
+            dplyr::pull(rlang::sym("TO"))
         
         remove <- to_type[to_type %in% from_type]
         reps <- reps[!reps$FROM %in% remove &
@@ -874,7 +874,7 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
     sequence="sequence_id", germline = "Germline",
     verbose=FALSE, polyresolve = TRUE,
     alternative = c("greater","two.sided"),
-    storeTree = TRUE, nproc=1){
+    storeTree = FALSE, nproc=1){
 
     results <- parallel::mclapply(1:nrow(clones),function(x)
         runCorrelationTest(clones$trees[[x]], clones$data[[x]],

@@ -407,7 +407,7 @@ formatClones <- function(data,clone="clone_id", subclone="subclone_id",
 
     clones <- data %>%
         dplyr::group_by(!!rlang::sym(clone)) %>%
-        dplyr::do(data=makeAirrClone(.,
+        dplyr::do(data=makeAirrClone(.data,
             clone=clone, region=region, heavy=heavy, cell=cell,...))
 
     if(region == "HL"){
