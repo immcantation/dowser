@@ -39,8 +39,10 @@ Dowser isn’t officially released yet, so please let us know if you’re planni
 To cite the dowser package in publications, please use:
 
 Hoehn K, Pybus O, Kleinstein S (2020). “Phylogenetic analysis of
-migration, differentiation, and class switching in B cells.”
-_Submitted_, 0.
+migration, differentiation, and class switching in B cells.” _bioRxiv_.
+doi: 10.1101/2020.05.30.124446 (URL:
+https://doi.org/10.1101/2020.05.30.124446), <URL:
+https://doi.org/10.1101/2020.05.30.124446>.
 
 A BibTeX entry for LaTeX users is
 
@@ -49,7 +51,8 @@ A BibTeX entry for LaTeX users is
     title = {Phylogenetic analysis of migration, differentiation, and class switching in B cells.},
     author = {Kenneth B. Hoehn and Oliver G. Pybus and Steven H. Kleinstein},
     year = {2020},
-    journal = {Submitted},
-    pages = {0},
+    journal = {bioRxiv},
+    url = {https://doi.org/10.1101/2020.05.30.124446},
+    doi = {10.1101/2020.05.30.124446},
   }
 
