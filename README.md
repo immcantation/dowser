@@ -10,7 +10,7 @@ of B cell migration, differentiation, and isotype switching.
 
 Dowser is released under the AGPL-3 license.
 
-For detailed instructions on usage, check out: https://dowser.readthedocs.io
+For detailed instructions on usage, check out the [Dowser documentation site](https://dowser.readthedocs.io)
 
 Notice
 -------------------------------------------------------------------------------
