@@ -83,7 +83,7 @@ testSP(bootstraps$switches)
 # Dependencies
 
 **Depends:** ggplot2  
-**Imports:** alakazam, ape, dplyr, ggtree, graphics, grid, gridExtra, igraph, lazyeval, Matrix, methods, phangorn, phylotate, progress, RColorBrewer, Rcpp, readr, rlang, scales, seqinr, stats, stringi, stringr, tibble, tidyselect, tidyr, utils  
+**Imports:** alakazam, ape, dplyr, ggtree, graphics, gridExtra, methods, phangorn, phylotate, RColorBrewer, rlang, stats, stringr, tidyselect, tidyr, utils  
 **Suggests:** knitr, rmarkdown, testthat  
 **Extends:** FALSE
 
@@ -101,7 +101,7 @@ To cite the dowser package in publications, please use:
 
 Hoehn K, Pybus O, Kleinstein S (2020). “Phylogenetic analysis of
 migration, differentiation, and class switching in B cells.”
-_bioRxiv_, doi: https://doi.org/10.1101/2020.05.30.124446.
+_Submitted_, 0.
 
 A BibTeX entry for LaTeX users is
 
@@ -110,7 +110,7 @@ A BibTeX entry for LaTeX users is
     title = {Phylogenetic analysis of migration, differentiation, and class switching in B cells.},
     author = {Kenneth B. Hoehn and Oliver G. Pybus and Steven H. Kleinstein},
     year = {2020},
-    journal = {bioRxiv},
-    DOI = {https://doi.org/10.1101/2020.05.30.124446},
+    journal = {Submitted},
+    pages = {0},
   }
 

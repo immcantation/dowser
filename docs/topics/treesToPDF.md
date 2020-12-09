@@ -28,7 +28,7 @@ ncol
 :   size of tip shape objects
 
 ...
-:   arguments passed to grDevices::pdf
+:   optional arguments passed to grDevices::pdf
 
 
 

@@ -17,7 +17,8 @@ to = NULL,
 dropzeros = TRUE,
 bylineage = FALSE,
 pseudocount = 0,
-alternative = c("two.sided", "greater", "less")
+alternative = c("two.sided", "greater", "less"),
+binom = FALSE
 )
 ```
 
@@ -48,6 +49,9 @@ pseudocount
 alternative
 :   Perform one-sided (`greater` or `less`)
 or `two.sided` test
+
+binom
+:   Calculate binomial p value
 
 
 
