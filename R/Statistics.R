@@ -155,7 +155,6 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @param    pseudocount  Pseudocount for P value calculations
 #' @param    alternative  Perform one-sided (\code{greater} or \code{less})
 #'                          or \code{two.sided} test
-#' @param    binom        Calculate binomial p value
 #' @return   A list containing a \code{tibble} with mean SP statistics, and another 
 #' with SP statistics per repetition.
 #'
@@ -195,23 +194,15 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 testSP <- function(switches, permuteAll=FALSE, 
     from=NULL, to=NULL, dropzeros=TRUE,
     bylineage=FALSE, pseudocount=0, alternative=c("two.sided","greater","less"),
-    binom=FALSE){
-
-    if(binom){
-        if(!bylineage){
-            warning("binom=TRUE, setting bylineage to TRUE")
-            bylineage = TRUE
-        }
-        if(alternative[1] != "greater"){
-            warning("binom=TRUE, setting alternative to greater")
-            alternative = "greater"
-        }
-    }
+    tip_switch=20, exclude=TRUE){
 
     permute <- dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){
         permute <- dplyr::quo(!!rlang::sym("PERMUTEALL"))
     }
+
+    tips <- dplyr::filter(switches, !!rlang::sym("TO")=="NTIP" &
+        !!rlang::sym("TYPE")=="RECON")
 
     switches <- switches %>% 
         dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
@@ -224,6 +215,22 @@ testSP <- function(switches, permuteAll=FALSE,
     if(!is.null(to)){
         to <- dplyr::enquo(to)
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
+    }
+
+    counts <- testSC(switches,bylineage=TRUE)$means %>%
+        dplyr::group_by(CLONE) %>%
+        dplyr::summarize(switches=sum(RECON)) %>%
+        dplyr::filter(!!rlang::sym("switches") > 0)
+    m <- match(counts$CLONE, tips$CLONE)
+    counts$tips <- tips[m,]$SWITCHES
+    counts$ratio <- counts$tips/counts$switches
+
+    excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tips_switches)$CLONE
+    if(length(excluded) > 0 & exclude){
+        warning(paste("Excluding clone",excluded,"due to high tip/switch ratio",
+            collapse=","))
+
+        switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% exclude))
     }
 
     if(!bylineage){
@@ -342,21 +349,6 @@ testSP <- function(switches, permuteAll=FALSE,
                         (dplyr::n() + pseudocount),
                     DELTA = mean(!!rlang::sym("DELTA")))
         }                            
-    }
-
-    if(binom){
-        if(dropzeros){
-            means = means %>%
-                filter(!!rlang::sym("RECON") != 0 | !!rlang::sym("PERMUTE") != 0)
-        }
-        means = means %>%
-            dplyr::group_by(!!rlang::sym("FROM"),!!rlang::sym("TO")) %>%
-            summarize(CLONES=n(),
-                POSITIVE=sum(!!rlang::sym("DELTA") > 0),
-                P=stats::binom.test(!!rlang::sym("POSITIVE"),
-                    !!rlang::sym("CLONES"),
-                    alternative="greater")$p.value)
-        means$TEST = "BINOM"
     }
 
     means$STAT <- "SP"
@@ -707,9 +699,9 @@ resolvePolytomies = function(phy, clone, minlength=0.001,
     phy
 }
 
-#' Resolve polytomies to have the minimum number of single timepoint clades
+#' Run correlationTest, based on https://doi.org/10.1111/2041-210X.12466
 #' 
-#' \code{rootToTop} performs root-to-tip regression permutation test
+#' \code{runCorrelationTest} performs root-to-tip regression permutation test
 #' @param    phy          Tree object
 #' @param    clone        airrClone data object corresponding to \code{phy}
 #' @param    permutations Number of permutations to run
