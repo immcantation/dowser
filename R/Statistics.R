@@ -225,7 +225,7 @@ testSP <- function(switches, permuteAll=FALSE,
     counts$tips <- tips[m,]$SWITCHES
     counts$ratio <- counts$tips/counts$switches
 
-    excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tips_switches)$CLONE
+    excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tip_switch)$CLONE
     if(length(excluded) > 0 & exclude){
         warning(paste("Excluding clone",excluded,"due to high tip/switch ratio",
             collapse=","))
