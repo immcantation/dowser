@@ -1394,13 +1394,13 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #' @return   A vector with sequence for each locus at a specified \code{node}
 #'           in \code{tree}.
 #' @export
-rarefyClone = function(clone, trait, tip_switch=20, tree=NULL){
+rarefyClone <- function(clone, trait, tip_switch=20, tree=NULL){
 
-    cdata = clone@data
+    cdata <- clone@data
     if(!trait %in% names(cdata)){
         stop(paste(trait,"not found in clone data columns"))
     }
-    states = unique(cdata[[trait]])
+    states <- unique(cdata[[trait]])
 
     if(length(states) > 1){
         # if at least one of each state is preserved, there is a minimum
@@ -1411,19 +1411,19 @@ rarefyClone = function(clone, trait, tip_switch=20, tree=NULL){
                 length(states),"states"))
         }
 
-        ntips = nrow(cdata)
+        ntips <- nrow(cdata)
         
         # randomly select one sequence of each type
-        saved = unlist(lapply(states, function(x)
+        saved <- unlist(lapply(states, function(x)
             sample(cdata[cdata[[trait]] == x,]$sequence_id,size=1)))
         
         # if too many tips, downsample
         if(ntips/(length(states)-1) > tip_switch){
-            target = tip_switch*(length(states)-1)
-            tips = cdata$sequence_id
-            tips = tips[!tips %in% saved]
-            rm = sample(tips, size=ntips-target)
-            cdata = cdata[!cdata$sequence_id %in% rm,]
+            target <- tip_switch*(length(states)-1)
+            tips <- cdata$sequence_id
+            tips <- tips[!tips %in% saved]
+            rm <- sample(tips, size=ntips-target)
+            cdata <- cdata[!cdata$sequence_id %in% rm,]
 
             # check that results are good
             if(nrow(cdata)/(dplyr::n_distinct(cdata[[trait]])-1) != tip_switch){
@@ -1431,7 +1431,7 @@ rarefyClone = function(clone, trait, tip_switch=20, tree=NULL){
             }
             # if tree provided, drop selected tips
             if(!is.null(tree)){
-                tree = ape::drop.tip(tree, tip=rm)
+                tree <- ape::drop.tip(tree, tip=rm)
                 if(sum(!cdata$sequence_id %in% tree$tip.label) == 0 &
                     sum(!tree$tip.label %in% c(cdata$sequence_id, "Germline"))){
                         stop(paste("clone",clone@clone," tree downsampling failed!"))       
@@ -1439,10 +1439,10 @@ rarefyClone = function(clone, trait, tip_switch=20, tree=NULL){
             }
         }
     }
-    clone@data = cdata
-    results = list()
-    results$clone = clone
-    results$tree = tree
+    clone@data <- cdata
+    results <- list()
+    results$clone <- clone
+    results$tree <- tree
     results
 }
 
