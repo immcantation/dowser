@@ -34,6 +34,10 @@ testSP(
 
 \item{alternative}{Perform one-sided (\code{greater} or \code{less})
 or \code{two.sided} test}
+
+\item{tip_switch}{maximum tip/switch ratio}
+
+\item{exclude}{exclude clones with tip/switch ratio > \code{tip_switch}?}
 }
 \value{
 A list containing a \code{tibble} with mean SP statistics, and another 

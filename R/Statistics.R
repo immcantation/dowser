@@ -155,6 +155,8 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @param    pseudocount  Pseudocount for P value calculations
 #' @param    alternative  Perform one-sided (\code{greater} or \code{less})
 #'                          or \code{two.sided} test
+#' @param    tip_switch   maximum tip/switch ratio
+#' @param    exclude      exclude clones with tip/switch ratio > \code{tip_switch}?
 #' @return   A list containing a \code{tibble} with mean SP statistics, and another 
 #' with SP statistics per repetition.
 #'
@@ -194,7 +196,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 testSP <- function(switches, permuteAll=FALSE, 
     from=NULL, to=NULL, dropzeros=TRUE,
     bylineage=FALSE, pseudocount=0, alternative=c("two.sided","greater","less"),
-    tip_switch=20, exclude=TRUE){
+    tip_switch=20, exclude=FALSE){
 
     permute <- dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){
@@ -218,8 +220,8 @@ testSP <- function(switches, permuteAll=FALSE,
     }
 
     counts <- testSC(switches,bylineage=TRUE)$means %>%
-        dplyr::group_by(CLONE) %>%
-        dplyr::summarize(switches=sum(RECON)) %>%
+        dplyr::group_by(!!rlang::sym("CLONE")) %>%
+        dplyr::summarize(switches=sum(!!rlang::sym("RECON"))) %>%
         dplyr::filter(!!rlang::sym("switches") > 0)
     m <- match(counts$CLONE, tips$CLONE)
     counts$tips <- tips[m,]$SWITCHES
