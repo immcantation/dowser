@@ -1385,7 +1385,7 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 
 #' Rarefy clone to the set maximum tip/switch ratio
 #' Add support for weighting by collapseCount?
-#' \code{rarefyClone} Experimental
+#' \code{downsampleClone} Experimental
 #' @param    clone       an \link{airrClone} object
 #' @param    trait       trait considered for rarefaction
 #'                       \link{getTrees}
@@ -1394,7 +1394,7 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 #' @return   A vector with sequence for each locus at a specified \code{node}
 #'           in \code{tree}.
 #' @export
-rarefyClone <- function(clone, trait, tip_switch=20, tree=NULL){
+downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 
     cdata <- clone@data
     if(!trait %in% names(cdata)){
@@ -1474,8 +1474,8 @@ rarefyClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' @param    lfile      lineage file input to igphyml if desired (experimental)
 #' @param    rep  		current bootstrap replicate (experimental)
 #' @param    seq        column name containing sequence information
-#' @param    rarefy     downsample clones to have a maximum specified tip/switch ratio?
-#' @param    tip_switch maximum allowed tip/switch ratio if rarefy=TRUE
+#' @param    downsample downsample clones to have a maximum specified tip/switch ratio?
+#' @param    tip_switch maximum allowed tip/switch ratio if downsample=TRUE
 #' @param    ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
@@ -1514,7 +1514,7 @@ rarefyClone <- function(clone, trait, tip_switch=20, tree=NULL){
 bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
 	id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
 	fixtrees=FALSE,	quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
-	keeptrees=TRUE, lfile=NULL, seq="sequence", rarefy=FALSE, tip_switch=20, ...){
+	keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20, ...){
 
 	args <- list(...)
 	data <- clones$data
@@ -1606,7 +1606,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 			id=id, dir=dir, bootstraps=bootstraps,
 			nproc=1, rm_temp=rm_temp, quiet=quiet,
 			fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
-			lfile=lfile, seq=seq, rarefy=rarefy, tip_switch=tip_switch,
+			lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
             ...),
 			mc.cores=nproc)
 		results <- list()
@@ -1627,10 +1627,10 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 	}else{
 		rm_dir=file.path(dir,paste0(id,"_recon_",rep))
 
-        if(rarefy){
-            if(quiet > 3){print("rarefying clones")}
+        if(downsample){
+            if(quiet > 3){print("downsampling clones")}
             rarefied <- lapply(1:length(data), function(x)
-                rarefyClone(clone=data[[x]], 
+                downsampleClone(clone=data[[x]], 
                 tree=trees[[x]], trait=trait,
                 tip_switch=tip_switch))
             if(fixtrees){

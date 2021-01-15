@@ -25,7 +25,7 @@ bootstrapTrees(
   keeptrees = TRUE,
   lfile = NULL,
   seq = "sequence",
-  rarefy = FALSE,
+  downsample = FALSE,
   tip_switch = 20,
   ...
 )
@@ -74,9 +74,9 @@ if \code{igphyml} or \code{dnapars} specified)}
 
 \item{seq}{column name containing sequence information}
 
-\item{rarefy}{downsample clones to have a maximum specified tip/switch ratio?}
+\item{downsample}{downsample clones to have a maximum specified tip/switch ratio?}
 
-\item{tip_switch}{maximum allowed tip/switch ratio if rarefy=TRUE}
+\item{tip_switch}{maximum allowed tip/switch ratio if downsample=TRUE}
 
 \item{...}{additional arguments to be passed to tree building program}
 }

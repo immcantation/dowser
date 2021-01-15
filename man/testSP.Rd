@@ -14,7 +14,7 @@ testSP(
   pseudocount = 0,
   alternative = c("two.sided", "greater", "less"),
   tip_switch = 20,
-  exclude = TRUE
+  exclude = FALSE
 )
 }
 \arguments{
