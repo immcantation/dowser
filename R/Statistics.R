@@ -602,7 +602,7 @@ resolvePolytomies = function(phy, clone, minlength=0.001,
     verbose=FALSE){
     
     data <- clone@data
-    phy <- rerootTree(di2multi(phy,tol=minlength),
+    phy <- rerootTree(ape::di2multi(phy,tol=minlength),
         germline=germline)
     tips <- phy$tip.label
     if(sum(!data[[sequence]] %in% phy$tip.label) > 0){
@@ -777,7 +777,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
     m <- match(data[[sequence]],names(cl))
     data$cluster <- cl[data$sequence_id]
 
-    counts <- table(data$cluster,data$time)
+    counts <- table(data$cluster,data[[time]])
     if(sum(rowSums(counts > 0) > 1) > 0){
         stop("Clusters are not single timepoint!")
     }
@@ -786,7 +786,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
     ctimes <- unlist(lapply(sort(unique(data$cluster)), function(x)
         unique(data[data$cluster == x,][[time]])))
 
-    true <- stats::cor(data$time,data$divergence)
+    true <- stats::cor(data[[time]],data$divergence)
     random <- rep(0, length=permutations)
     for(i in 1:permutations){
         times <- ctimes[sample(1:length(ctimes))]
@@ -803,7 +803,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
     }
 
     clone@data <- data
-    slope <- summary(stats::lm(data$divergence ~ data$time))$coefficients[2,1]
+    slope <- summary(stats::lm(data$divergence ~ data[[time]]))$coefficients[2,1]
     results <- list(correlation=true)
     results[["clone"]] <- clone
     results[["tree"]] <- phy
