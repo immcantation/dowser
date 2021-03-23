@@ -7,11 +7,12 @@
 buildPML(
   clone,
   seq = "sequence",
-  model = "GTR",
+  sub_model = "GTR",
   gamma = FALSE,
   asr = "seq",
   asr_thresh = 0.05,
   tree = NULL,
+  data_type = "DNA",
   ...
 )
 }
@@ -20,7 +21,7 @@ buildPML(
 
 \item{seq}{sequece column in \code{airrClone} object}
 
-\item{model}{substitution model to use}
+\item{sub_model}{substitution model to use}
 
 \item{gamma}{gamma site rate variation?}
 
@@ -29,6 +30,8 @@ buildPML(
 \item{asr_thresh}{threshold for including a nucleotide as an alternative}
 
 \item{tree}{fixed tree topology if desired.}
+
+\item{data_type}{Are sequences DNA or AA?}
 
 \item{...}{Additional arguments (not currently used)}
 }

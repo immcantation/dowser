@@ -115,7 +115,12 @@ makeModelFile <- function(file, states, constraints=NULL){
                 }
             }
         }else{
-            stop("Contraint not recognized.")
+            #stop("Contraint not recognized.")
+            for(constraint in constraints){
+            	cons = strsplit(constraint,split=",")[[1]]
+            	write(paste(cons[1], cons[2], "1000"), 
+                        file=file, append=TRUE)
+            }
         }
     }
     write("", file=file, append=TRUE)
@@ -508,12 +513,14 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 #' @param    asr_type        MPR or ACCTRAN
 #' @param    verbose         amount of rubbish to print
 #' @param    resolve_random  randomly resolve polytomies?
+#' @param    data_type       Are sequences DNA or AA?
 #' @param    ...        Additional arguments (not currently used)
 #' @return  \code{phylo} object created by phangorn::pratchetet with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
-	tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,...){
+	tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,
+	data_type="DNA", ...){
 	args <- list(...)
 	seqs <- clone@data[[seq]]
 	names <- clone@data$sequence_id
@@ -531,7 +538,12 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 	names <- c(names,"Germline")
 	seqs <- strsplit(seqs,split="")
 	names(seqs) <- names
-	data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+	if(data_type=="DNA"){
+		data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+	}else{
+		data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows(seqs)))),
+			type="AA")
+	}
 	if(is.null(tree)){
 		tree <- tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
 		tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
@@ -548,7 +560,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 	}
 	tree$name <- clone@clone
 	tree$seq <- seq
-	if(asr != "none"){
+	if(asr != "none" && data_type=="DNA"){
 		seqs_pars <- phangorn::ancestral.pars(tree, data, 
 			type=asr_type, cost=NULL, return="prob")
 		ASR <- list()
@@ -584,18 +596,19 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' 
 #' @param    clone      \code{airrClone} object
 #' @param    seq        sequece column in \code{airrClone} object
-#' @param    model      substitution model to use
+#' @param    sub_model  substitution model to use
 #' @param    gamma      gamma site rate variation?
 #' @param    asr        return sequence or probability matrix?
 #' @param    asr_thresh threshold for including a nucleotide as an alternative
 #' @param    tree       fixed tree topology if desired.
+#' @param    data_type  Are sequences DNA or AA?
 #' @param    ...        Additional arguments (not currently used)
 #'
 #' @return  \code{phylo} object created by phangorn::optim.pml with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
-buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq", 
-	asr_thresh=0.05, tree=NULL, ...){
+buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
+	asr_thresh=0.05, tree=NULL, data_type="DNA",...){
 	args <- list(...)
 	seqs <- clone@data[[seq]]
 	names <- clone@data$sequence_id
@@ -610,7 +623,16 @@ buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq",
 	names <- c(names,"Germline")
 	seqs <- strsplit(seqs,split="")
 	names(seqs) <- names
-	data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+	if(data_type=="DNA"){
+		data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+	}else{
+		data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
+			type="AA")
+		print(sub_model)
+		if(sub_model == "GTR"){
+			warning("GTR model shouldn't be used for AA.")
+		}
+	}
 	if(is.null(tree)){
 		dm  <- phangorn::dist.ml(data)
 		treeNJ  <- ape::multi2di(phangorn::NJ(dm))
@@ -618,12 +640,12 @@ buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq",
 		#change negative edge lengths to zero!
 		treeNJ$edge.length[treeNJ$edge.length < 0] <- 0
 		pml <- phangorn::pml(treeNJ,data=data)
-		fit <- tryCatch(phangorn::optim.pml(pml, model=model, optInv=FALSE,
+		fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optInv=FALSE,
 		 optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
 		  maxit=10, trace=1L)),
 			error=function(e)e)
 		tree <- fit$tree
-		tree$tree_method <- paste("phangorn::optim.pml::",model)
+		tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
 		tree$edge_type <- "genetic_distance"
 		nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
 		tree$nodes <- rep(list(sequence=NULL),times=nnodes)
@@ -631,7 +653,7 @@ buildPML <- function(clone, seq="sequence", model="GTR", gamma=FALSE, asr="seq",
 	tree$name <- clone@clone
 	tree$seq <- seq
 
-	if(asr != "none"){
+	if(asr != "none" && data_type=="DNA"){
 		seqs_ml <- phangorn::ancestral.pml(fit,
 			type="marginal",return="prob")
 		ASR <- list()

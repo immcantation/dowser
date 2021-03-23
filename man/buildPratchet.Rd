@@ -13,6 +13,7 @@ buildPratchet(
   asr_type = "MPR",
   verbose = 0,
   resolve_random = TRUE,
+  data_type = "DNA",
   ...
 )
 }
@@ -32,6 +33,8 @@ buildPratchet(
 \item{verbose}{amount of rubbish to print}
 
 \item{resolve_random}{randomly resolve polytomies?}
+
+\item{data_type}{Are sequences DNA or AA?}
 
 \item{...}{Additional arguments (not currently used)}
 }
