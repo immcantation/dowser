@@ -232,7 +232,7 @@ testSP <- function(switches, permuteAll=FALSE,
         warning(paste("Excluding clone",excluded,"due to high tip/switch ratio",
             collapse=","))
 
-        switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% exclude))
+        switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% excluded))
     }
 
     if(!bylineage){
