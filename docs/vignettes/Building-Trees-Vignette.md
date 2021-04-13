@@ -62,6 +62,8 @@ In all cases, the output is the same tibble as the input, but with a `trees` col
 ```r
 
 # Build trees using the pratchet maximum parsimony function in phangnorn
+# NOTE we are currently having issues with the most recent phangorn version
+# please use dnapars (below) if you encounter issues.
 clones = getTrees(clones)
 
 clones
