@@ -18,7 +18,7 @@ clones = formatClones(ExampleDb, traits=c("c_call"),
     minseq=10)
 
 # build maximum parsimony trees
-clones = getTrees(clones)
+clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars")
 ```
 
 ## Basic plotting
