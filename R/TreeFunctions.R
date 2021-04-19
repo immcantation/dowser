@@ -472,9 +472,9 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 	rm_temp=TRUE, seq="sequence", tree=NULL, onetree=TRUE){
 
-	if(grepl("dnaml$",exec) | grepl("dnaml\.exe$",exec)){
+	if(grepl("dnaml$",exec) | grepl("dnaml\\.exe$",exec)){
        method <- "dnaml"
-    }else if(grepl("dnapars$",exec) | grepl("dnaml\.exe$",exec)){
+    }else if(grepl("dnapars$",exec) | grepl("dnapars\\.exe$",exec)){
         method <- "dnapars"
     }else{
         stop("executable not recognized! Must end with dnapars or dnaml")
