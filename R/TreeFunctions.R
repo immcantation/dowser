@@ -835,7 +835,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 	ASR <- ape::read.dna(file.path(temp_path,
 		paste0(id,"_lineages_",id,
 		"_pars_hlp_asr.fasta")),format="fasta",as.character=TRUE)
-	ASR = lapply(ASR,function(x)paste(toupper(x),collapse=""))
+	ASR <- apply(ASR,1,function(x)toupper(paste0(x,collapse="")))
 	trees <- results$trees
 	params <- results$param[-1,]
 	for(i in 1:nrow(params)){
@@ -865,7 +865,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		labs[labs == ""] <- gline_id
 		if(sum(!labs %in% names(ASR)) != 0){
 			stop(paste("Labels not in reconstructed clone",clone_id,":",
-				labs[!labs %in% names(ASR)]))	
+				paste(labs[!labs %in% names(ASR)],collapse=", ")))
 		}
 		# also add tip sequences to tip nodes
 		tipseqs <- clone[[i]]@data[[clone[[i]]@phylo_seq]]

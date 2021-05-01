@@ -753,6 +753,23 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
     names(dates) <- data[[sequence]]
     dates <- dates[tips]
 
+    if(dplyr::n_distinct(dates)==1){
+        warning(paste("Only one timepoint cluster in clone",clone@clone))
+        results <- list(correlation=NA)
+        results[["clone"]] <- clone
+        results[["tree"]] <- phy
+        results[["random"]] <- NA
+        results[["random_correlation"]] <- NA
+        results[["p_gt"]] <- NA
+        results[["p_lt"]] <- NA
+        results[["nposs"]] <- NA
+        results[["nclust"]] <- NA
+        results[["p"]] <- NA
+        results[["min_p"]] <- NA
+        results[["slope"]] <- NA
+        return(results)
+    }
+
     divergence <- getDivergence(phy, minlength)
     data$divergence <- divergence[data[[sequence]]]
 
@@ -770,7 +787,6 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
             }
         }
         cl <- match(cl,unique(cl)) #make clusters 1:(number of clusters)
-        if(length(unique(cl))==1) stop("Only one cluster in data.")
     }
     # assign clusters to each sequence
     names(cl) <- tips
