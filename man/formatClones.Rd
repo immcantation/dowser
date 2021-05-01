@@ -6,10 +6,11 @@
 \usage{
 formatClones(
   data,
+  seq = "sequence_alignment",
   clone = "clone_id",
   subclone = "subclone_id",
   nproc = 1,
-  region = "H",
+  chain = "H",
   heavy = NULL,
   cell = "cell_id",
   locus = "locus",
@@ -24,6 +25,8 @@ formatClones(
 \item{data}{data.frame containing the AIRR or Change-O data for a clone. See Details
 for the list of required columns and their default values.}
 
+\item{seq}{sequence alignment column name.}
+
 \item{clone}{name of the column containing the identifier for the clone. All 
 entries in this column should be identical.}
 
@@ -31,7 +34,7 @@ entries in this column should be identical.}
 
 \item{nproc}{number of cores to parallelize formating over.}
 
-\item{region}{if HL, include light chain information if available.}
+\item{chain}{if HL, include light chain information if available.}
 
 \item{heavy}{name of heavy chain locus (default = "IGH")}
 

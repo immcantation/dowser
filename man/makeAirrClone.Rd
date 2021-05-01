@@ -22,7 +22,7 @@ makeAirrClone(
   add_count = TRUE,
   verbose = FALSE,
   collapse = TRUE,
-  region = "H",
+  chain = "H",
   heavy = NULL,
   cell = "cell_id",
   locus = "locus",
@@ -88,7 +88,7 @@ sequences silently.}
 
 \item{collapse}{iollapse identical sequences?}
 
-\item{region}{if HL, include light chain information if available.}
+\item{chain}{if HL, include light chain information if available.}
 
 \item{heavy}{name of heavy chain locus (default = "IGH")}
 

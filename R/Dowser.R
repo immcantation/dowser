@@ -21,12 +21,14 @@
 #' @import      graphics
 #' @import      methods
 #' @import      utils
+#' @importFrom  shazam      makeRegion
 #' @importFrom  tidyselect  all_of
 #' @importFrom  gridExtra   grid.arrange
 #' @importFrom  stringr     str_count    
 #' @importFrom  alakazam    makeChangeoClone DNA_IUPAC
 #' @importFrom  phylotate   read_annotated
 #' @importFrom	ape 		read.tree di2multi reorder.phylo root ladderize subtrees
+#' @importFrom  Biostrings  pairwiseAlignment
 #' @importFrom  dplyr       do n desc %>% pull
 #'                          bind_cols bind_rows combine arrange 
 #'                          group_by ungroup

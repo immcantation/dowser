@@ -32,7 +32,9 @@ sequence-specific annotation columns}
 
 \item{\code{locus}}{the loci represented in this clone object}
 
-\item{\code{region}}{index showing which regions represent which site}
+\item{\code{chain}}{index showing which chain represent which site}
+
+\item{\code{region}}{index showing FWR/CDR region for each site}
 
 \item{\code{phylo_seq}}{sequence column used for phylogenetic tree building}
 

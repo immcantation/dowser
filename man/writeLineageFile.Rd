@@ -11,7 +11,8 @@ writeLineageFile(
   id = "N",
   rep = NULL,
   trait = NULL,
-  dummy = TRUE
+  dummy = TRUE,
+  partition = 1
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ writeLineageFile(
 \item{trait}{string appended to sequence id in fasta files}
 
 \item{dummy}{output uninformative sequences?}
+
+\item{partition}{estimate 1 or 2 (cdr/fwr) omegas?}
 }
 \value{
 Name of created lineage file.

@@ -172,6 +172,9 @@ cleanAlignment <- function(clone,seq="sequence"){
     informative <- ns != length(sk)
     l=lapply(sk,function(x) x=paste(x[informative],collapse=""))
     gm=paste(g[informative],collapse="")
+    if(.hasSlot(clone,"chain")){
+    	clone@chain <- clone@chain[informative]	
+    }
     if(.hasSlot(clone,"region")){
     	clone@region <- clone@region[informative]	
     }
@@ -407,18 +410,19 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 
 #' Write lineage file for IgPhyML use
 #' 
-#' @param    data    list of \code{airrClone} objects
-#' @param    trees   list of \code{phylo} objects corresponding to \code{data}
-#' @param    dir     directory to write file
-#' @param    id      id used for IgPhyML run
-#' @param    rep     bootstrap replicate
-#' @param    trait   string appended to sequence id in fasta files
-#' @param    dummy   output uninformative sequences?
+#' @param    data      list of \code{airrClone} objects
+#' @param    trees     list of \code{phylo} objects corresponding to \code{data}
+#' @param    dir       directory to write file
+#' @param    id        id used for IgPhyML run
+#' @param    rep       bootstrap replicate
+#' @param    trait     string appended to sequence id in fasta files
+#' @param    partition estimate 1 or 2 (cdr/fwr) omegas?
+#' @param    dummy     output uninformative sequences?
 #'
 #' @return   Name of created lineage file.
 #' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
-	trait=NULL,	dummy=TRUE){
+	trait=NULL,	dummy=TRUE, partition=1){
 
 	file <- file.path(dir,paste0(id,"_lineages_pars.tsv"))
 	if(!is.null(rep)){
@@ -438,16 +442,39 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 		tree <- trees[[i]]
 		fastafile <- file.path(outdir,paste0(data[[i]]@clone,".fasta"))
 		treefile <- file.path(outdir,paste0(data[[i]]@clone,".tree"))
+		partfile <- "N"
 		germid <- paste0(data[[i]]@clone,"_GERM")
 		f <- writeFasta(data[[i]],fastafile,germid,trait,dummy=dummy)
+
+		if(partition > 1){ #make file specifying sequence regions
+			partfile <- file.path(outdir,paste0(data[[i]]@clone,".part.txt"))
+			g = data[[i]]@germline
+			regions = data[[i]]@region
+			if(dplyr::n_distinct(regions) == 1){
+				warning(paste("Only one region found in clone",data[[i]]@clone))
+			}
+			cdrs = rep(0,length(regions))
+			cdrs[regions == "fwr1"] = 13
+			cdrs[regions == "cdr1"] = 30
+			cdrs[regions == "fwr2"] = 45
+			cdrs[regions == "cdr2"] = 60
+			cdrs[regions == "fwr3"] = 80
+			cdrs[regions == "cdr3"] = 108
+			cdrs[regions == "fwr4"] = 120
+			write(paste(2,nchar(g)/3), file=partfile)
+			write("FWR:IMGT\nCDR:IMGT", file=partfile, append=TRUE)
+			write(paste(data[[i]]@v_gene,data[[i]]@j_gene,sep="\n"), file=partfile, append=TRUE)
+			write(paste(cdrs[1:length(cdrs) %% 3 == 0],collapse=","), file=partfile, append=TRUE)
+		}
+
 		if(!is.null(trees)){
 			tree$tip.label[which(tree$tip.label == "Germline")] <- germid
 			tree <- ape::multi2di(tree)
 			ape::write.tree(tree,file=treefile)
-			write(paste(fastafile,treefile,germid,"N",sep="\t"), file=file,
+			write(paste(fastafile,treefile,germid,partfile,sep="\t"), file=file,
 				append=TRUE)
 		}else{
-			write(paste(fastafile,"N",germid,"N",sep="\t"), file=file,
+			write(paste(fastafile,"N",germid,partfile,sep="\t"), file=file,
 				append=TRUE)
 		}
 	}
@@ -697,19 +724,38 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    quiet      amount of rubbish to print
 #' @param    rm_files   remove temporary files?
 #' @param    rm_dir     remove temporary directory?
+#' @param    omega      omega parameters to estimate (see IgPhyML docs)
+#' @param    optimize   optimize HLP rates (r), lengths (l), topology (t)
+#' @param    motifs     motifs to consider (see IgPhyML docs)
+#' @param    hotness    hotness parameters to estimate (see IgPhyML docs)
+#' @param    asrc       Intermediate sequence cutoff probability
 #' @param    ...        Additional arguments (not currently used)
 #'
 #' @return  \code{phylo} object created by igphyml with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
-	id=NULL, rseed=NULL, quiet=0 , rm_files=TRUE, rm_dir=NULL, ...){
+	id=NULL, rseed=NULL, quiet=0 , rm_files=TRUE, rm_dir=NULL,
+	omega="e", optimize="lr",motifs="FCH",hotness="e,e,e,e,e,e",asrc=0.95,
+	...){
 
 	warning("Dowser igphyml doesn't mask split codons!")
 
 	args <- list(...)
 
-	file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE)
+	valid_o = c("r","lr","tlr")
+	if(!optimize %in% valid_o){
+		stop(paste("Invalid otpimize specification, must be one of:",valid_o))
+	}
+	os = strsplit(omega,split=",")[[1]]
+	if(length(os) == 1){
+		file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE)
+	}else if(length(os) == 2){
+		file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE,
+			partition=2)
+	}else{
+		stop("At most two omegas may be specified")
+	}
 	igphyml <- path.expand(igphyml)
 	if(file.access(igphyml, mode=1) == -1) {
         stop("The file ", igphyml, " cannot be executed.")
@@ -754,7 +800,9 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		})
 	}
 	command <- paste("--repfile",gyrep,
-		"--threads",nproc,"-m HLP -o lr --run_id hlp --oformat tab --ASR",rseed,log)
+		"--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
+		"hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
+		rseed,log)
 	params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
 	if(quiet > 2){
 		print(paste(params,collapse=" "))
@@ -771,7 +819,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 	if(length(status) != 0){
 		status <- tryCatch(do.call(base::system2, params), error=function(e){
 		print(paste("igphyml error, again! quitting: ",e));
-		cat(paste(readLines(logfile),"\n"))
+		cat(paste(readLines(logfile),"\n") )
 		stop()
 		}, warning=function(w){
 		print(paste("igphyml warnings, again! quitting: ",w));
@@ -784,6 +832,10 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		"_pars.tsv_gyrep_igphyml_stats_hlp.tab"))
 	results <- alakazam::readIgphyml(ofile,format="phylo",
         branches="distance")
+	ASR <- ape::read.dna(file.path(temp_path,
+		paste0(id,"_lineages_",id,
+		"_pars_hlp_asr.fasta")),format="fasta",as.character=TRUE)
+	ASR = lapply(ASR,function(x)paste(toupper(x),collapse=""))
 	trees <- results$trees
 	params <- results$param[-1,]
 	for(i in 1:nrow(params)){
@@ -794,6 +846,54 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		trees[[i]]$tree_method <- paste("igphyml::gy94,hlp19")
 		trees[[i]]$edge_type <- "genetic_distance_codon"
 		trees[[i]]$seq <- "sequence"
+		trees[[i]]$parameters = c(params[i,])
+		# add sequences to internal nodes
+		gline_id <- paste0(clone_id,"_GERM")
+		ntips <- length(trees[[i]]$tip.label)
+		nint  <- dplyr::n_distinct(trees[[i]]$edge[,1])
+		nnodes <- ntips + nint
+		if(nnodes != length(unique(c(trees[[i]]$edge[,1],
+			trees[[i]]$edge[,2])))){
+			stop(paste("Internal node count error, clone ",clone_id))
+		}
+		trees[[i]]$nodes <- rep(list(sequence=NULL),times=nnodes)
+		# blank node should be MRCA, and all labels should be in ASR file
+		labs = trees[[i]]$node.label
+		if(sum(labs == "") != 1 || sum(labs == gline_id) > 0){
+			stop(paste("Error in reading node labels, clone",clone_id))
+		}
+		labs[labs == ""] <- gline_id
+		if(sum(!labs %in% names(ASR)) != 0){
+			stop(paste("Labels not in reconstructed clone",clone_id,":",
+				labs[!labs %in% names(ASR)]))	
+		}
+		# also add tip sequences to tip nodes
+		tipseqs <- clone[[i]]@data[[clone[[i]]@phylo_seq]]
+		names(tipseqs) <- clone[[i]]@data$sequence_id
+		if(clone[[i]]@phylo_seq == "sequence"){
+			tipseqs <- c(tipseqs,"Germline"=clone[[i]]@germline)
+		}else if(clone[[i]]@phylo_seq == "lsequence"){
+			tipseqs <- c(tipseqs,"Germline"=clone[[i]]@lgermline)
+		}else if(clone[[i]]@phylo_seq == "hlsequence"){
+			tipseqs <- c(tipseqs,"Germline"=clone[[i]]@hlgermline)
+		}else{
+			stop(paste("phylo_seq not recognized",clone_id))
+		}
+		if(sum(!trees[[i]]$tip.label %in% names(tipseqs)) != 0 ||
+			sum(!names(tipseqs) %in% trees[[i]]$tip.label) != 0){
+			stop(paste("Tip sequences do not match in clone",clone_id))
+		}
+		trees[[i]]$nodes <- lapply(1:nnodes,function(x){
+			if(x <= ntips){ # if a tip, just add sequence
+				trees[[i]]$nodes[[x]]$sequence <- tipseqs[trees[[i]]$tip.label[x]]
+				trees[[i]]$nodes[[x]]$id <- trees[[i]]$tip.label[x]
+			}else{ # if internal node, add reconstructed sequence
+				trees[[i]]$nodes[[x]]$sequence <- ASR[[labs[x-ntips]]]
+				trees[[i]]$nodes[[x]]$id <- labs[x-ntips]
+				if(labs[x-ntips] == gline_id){trees[[i]]$nodes[[x]]$id <- "Germline_Inferred"}
+			}
+			trees[[i]]$nodes[[x]]
+		})
 	}
 
 	if(rm_files){
@@ -802,6 +902,9 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 			temp <- strsplit(lines[i],split="\t")[[1]]
 			unlink(paste0(temp[1],"*"))
 			unlink(paste0(temp[2],"*"))
+			if(temp[3] != "N"){
+				unlink(paste0(temp[3],"*"))
+			}
 		}
 		unlink(paste0(file,"*"))
 		unlink(file.path(temp_path,paste0(id,"_lineages_",id,
@@ -1137,6 +1240,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 				rm_files=rm_temp,
 				rm_dir=rm_dir,
 				trees=trees,nproc=nproc,id=id)
+		clones$parameters <- lapply(trees,function(x)x$parameters)
 	}else{
 		stop("build specification",build,"not recognized")
 	}
@@ -1387,18 +1491,18 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
 	clone <- filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
 	seqs <- c()
 	seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
-	loci <- unique(clone@region)
+	loci <- unique(clone@chain)
 	for(locus in loci){
-		if(length(seq) < length(clone@region)){
-			warning("Sequences are shorter than region vector. Exiting")
+		if(length(seq) < length(clone@chain)){
+			warning("Sequences are shorter than chain vector. Exiting")
 		}
-		if(length(seq) > length(clone@region)){
-			stop("Sequences are longer than region vector. Exiting")
+		if(length(seq) > length(clone@chain)){
+			stop("Sequences are longer than chain vector. Exiting")
 		}
-		lseq <- seq[clone@region == locus]
+		lseq <- seq[clone@chain == locus]
 		lseq[is.na(lseq)] <- "N"
 		if(gaps){
-			nums <- clone@numbers[clone@region == locus]
+			nums <- clone@numbers[clone@chain == locus]
 			nseq <- rep(".",max(nums))
 			nseq[nums] <- lseq
 			lseq <- nseq

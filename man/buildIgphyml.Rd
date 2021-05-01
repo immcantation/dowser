@@ -15,6 +15,11 @@ buildIgphyml(
   quiet = 0,
   rm_files = TRUE,
   rm_dir = NULL,
+  omega = "e",
+  optimize = "lr",
+  motifs = "FCH",
+  hotness = "e,e,e,e,e,e",
+  asrc = 0.95,
   ...
 )
 }
@@ -38,6 +43,16 @@ buildIgphyml(
 \item{rm_files}{remove temporary files?}
 
 \item{rm_dir}{remove temporary directory?}
+
+\item{omega}{omega parameters to estimate (see IgPhyML docs)}
+
+\item{optimize}{optimize HLP rates (r), lengths (l), topology (t)}
+
+\item{motifs}{motifs to consider (see IgPhyML docs)}
+
+\item{hotness}{hotness parameters to estimate (see IgPhyML docs)}
+
+\item{asrc}{Intermediate sequence cutoff probability}
 
 \item{...}{Additional arguments (not currently used)}
 }
