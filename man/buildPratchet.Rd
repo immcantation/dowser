@@ -39,7 +39,7 @@ buildPratchet(
 \item{...}{Additional arguments (not currently used)}
 }
 \value{
-\code{phylo} object created by phangorn::pratchetet with nodes
+\code{phylo} object created by phangorn::pratchet with nodes
          attribute containing reconstructed sequences.
 }
 \description{

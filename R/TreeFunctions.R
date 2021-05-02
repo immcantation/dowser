@@ -542,7 +542,7 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 #' @param    resolve_random  randomly resolve polytomies?
 #' @param    data_type       Are sequences DNA or AA?
 #' @param    ...        Additional arguments (not currently used)
-#' @return  \code{phylo} object created by phangorn::pratchetet with nodes
+#' @return  \code{phylo} object created by phangorn::pratchet with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 

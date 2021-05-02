@@ -22,12 +22,17 @@
 #' @import      methods
 #' @import      utils
 #' @importFrom  shazam      makeRegion
+#' @importFrom  phangorn    phyDat acctran pratchet ancestral.pars dist.ml
+#'                          NJ pml optim.pml pml.control ancestral.pml
 #' @importFrom  tidyselect  all_of
 #' @importFrom  gridExtra   grid.arrange
 #' @importFrom  stringr     str_count    
 #' @importFrom  alakazam    makeChangeoClone DNA_IUPAC
 #' @importFrom  phylotate   read_annotated
 #' @importFrom	ape 		read.tree di2multi reorder.phylo root ladderize subtrees
+#'                          as.AAbin as.DNAbin getMRCA dist.nodes multi2di extract.clade
+#'                          keep.tip bind.tree collapse.singles bind.tree unroot read.dna
+#'                          is.rooted
 #' @importFrom  Biostrings  pairwiseAlignment
 #' @importFrom  dplyr       do n desc %>% pull
 #'                          bind_cols bind_rows combine arrange 
