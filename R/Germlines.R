@@ -442,9 +442,9 @@ buildGermline = function(receptor, references,
    
     # Stitch complete germlines
     germ_seq = stitchVDJ(receptor, germ_vseq, germ_dseq, germ_jseq, 
-      np1_length="np1_length", np2_length="np2_length", amino_acid=amino_acid)
+      np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
     regions = stitchRegions(receptor, germ_vseq, germ_dseq, germ_jseq,
-       np1_length="np1_length", np2_length="np2_length", amino_acid=amino_acid)
+       np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
 
     if(nchar(receptor[[seq_field]]) == 0){
       stop(paste("Sequence is missing from the sequence field",
@@ -615,6 +615,7 @@ buildClonalGermline = function(receptors, references,
     return(receptors)
  }
 
+
 #' \link{createGermlines} Determine consensus clone sequence and create germline for clone
 #' @param data     AIRR-table containing sequences from one clone
 #' @param references    Full list of reference segments, see \link{readIMGT}
@@ -627,6 +628,12 @@ buildClonalGermline = function(receptors, references,
 #' @param v_field       Column name for V gene segment gene call
 #' @param d_field       Column name for D gene segment gene call
 #' @param j_field       Column name for J gene segment gene call
+#' @param v_germ_start  Column name of index of V segment start within germline
+#' @param v_germ_end    Column name of index of V segment end within germline
+#' @param v_germ_length Column name of index of V segment length within germline
+#' @param d_germ_start  Column name of index of D segment start within germline
+#' @param d_germ_end    Column name of index of D segment end within germline
+#' @param d_germ_length Column name of index of D segment length within germline
 #' @param j_germ_start  Column name of index of J segment start within germline
 #' @param j_germ_end    Column name of index of J segment end within germline
 #' @param j_germ_length Column name of index of J segment length within germline
@@ -648,13 +655,19 @@ buildClonalGermline = function(receptors, references,
 createGermlines = function(data, references, organism="human",locus="IGH",
   nproc=1, seq_field="sequence_alignment", 
   v_field="v_call", d_field="d_call", j_field="j_call", amino_acid=FALSE,
-  id_field = "sequence_id", clone_field="clone_id",j_germ_start="j_germline_start",
-  j_germ_end="j_germline_end",j_germ_length="j_germline_length",
+  id_field = "sequence_id", clone_field="clone_id",
+  v_germ_start="v_germline_start",v_germ_end="v_germline_end",v_germ_length="v_germline_length",
+  d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
+  j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length", ...){
 
   complete = dplyr::tibble()
-  required = c(seq_field, v_field, d_field, j_field,id_field, np1_length, np1_length,
-    clone_field, j_germ_start, j_germ_end, j_germ_length)
+  required = c(seq_field, id_field, clone_field, 
+    np1_length, np1_length, 
+    v_field, d_field, j_field,
+    v_germ_start, v_germ_end, v_germ_length,
+    d_germ_start, d_germ_end, d_germ_length,
+    j_germ_start, j_germ_end, j_germ_length)
   if(sum(!required %in% names(data)) != 0){
     stop(paste("Required columns not found in data:",
       paste(required[!required %in% names(data)],collapse=", ")))
@@ -672,6 +685,12 @@ createGermlines = function(data, references, organism="human",locus="IGH",
       amino_acid=amino_acid,
       id_field =id_field ,
       clone_field=clone_field,
+      v_germ_start=v_germ_start,
+      v_germ_end=v_germ_end,
+      v_germ_length=v_germ_length,
+      d_germ_start=d_germ_start,
+      d_germ_end=d_germ_end,
+      d_germ_length=d_germ_length,
       j_germ_start=j_germ_start,
       j_germ_end=j_germ_end,
       j_germ_length=j_germ_length,

@@ -17,6 +17,12 @@ createGermlines(
   amino_acid = FALSE,
   id_field = "sequence_id",
   clone_field = "clone_id",
+  v_germ_start = "v_germline_start",
+  v_germ_end = "v_germline_end",
+  v_germ_length = "v_germline_length",
+  d_germ_start = "d_germline_start",
+  d_germ_end = "d_germline_end",
+  d_germ_length = "d_germline_length",
   j_germ_start = "j_germline_start",
   j_germ_end = "j_germline_end",
   j_germ_length = "j_germline_length",
@@ -49,6 +55,18 @@ createGermlines(
 \item{id_field}{Column name for sequence ID}
 
 \item{clone_field}{Column name for clone ID}
+
+\item{v_germ_start}{Column name of index of V segment start within germline}
+
+\item{v_germ_end}{Column name of index of V segment end within germline}
+
+\item{v_germ_length}{Column name of index of V segment length within germline}
+
+\item{d_germ_start}{Column name of index of D segment start within germline}
+
+\item{d_germ_end}{Column name of index of D segment end within germline}
+
+\item{d_germ_length}{Column name of index of D segment length within germline}
 
 \item{j_germ_start}{Column name of index of J segment start within germline}
 
