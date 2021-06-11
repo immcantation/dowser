@@ -44,6 +44,33 @@ writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	return(fastafile)
 }
 
+
+#' Read a fasta file into a list of sequences
+#' \code{readFasta} reads a fasta file
+#' @param    file      FASTA file
+#'
+#' @return   List of sequences
+#' @export
+readFasta <- function(file){
+  f <- readLines(file)
+  seqs <- list()
+  id <- NA
+  for(line in f){
+    if(grepl("^>",line)){
+      id <- line
+      seqs[[id]] <- ""
+    }else{
+      if(is.na(id)){
+        stop(paste("Error reading",file))
+      }
+      seqs[[id]] <- paste0(seqs[[id]],
+        line)
+    }
+  }
+  seqs
+}
+
+
 #' Read in a parsimony model file
 #' 
 #' \code{readModelFile} Filler
@@ -117,7 +144,7 @@ makeModelFile <- function(file, states, constraints=NULL){
         }else{
             #stop("Contraint not recognized.")
             for(constraint in constraints){
-            	cons = strsplit(constraint,split=",")[[1]]
+            	cons <- strsplit(constraint,split=",")[[1]]
             	write(paste(cons[1], cons[2], "1000"), 
                         file=file, append=TRUE)
             }
@@ -448,19 +475,19 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 
 		if(partition > 1){ #make file specifying sequence regions
 			partfile <- file.path(outdir,paste0(data[[i]]@clone,".part.txt"))
-			g = data[[i]]@germline
-			regions = data[[i]]@region
+			g <- data[[i]]@germline
+			regions <- data[[i]]@region
 			if(dplyr::n_distinct(regions) == 1){
 				warning(paste("Only one region found in clone",data[[i]]@clone))
 			}
-			cdrs = rep(0,length(regions))
-			cdrs[regions == "fwr1"] = 13
-			cdrs[regions == "cdr1"] = 30
-			cdrs[regions == "fwr2"] = 45
-			cdrs[regions == "cdr2"] = 60
-			cdrs[regions == "fwr3"] = 80
-			cdrs[regions == "cdr3"] = 108
-			cdrs[regions == "fwr4"] = 120
+			cdrs <- rep(0,length(regions))
+			cdrs[regions == "fwr1"] <- 13
+			cdrs[regions == "cdr1"] <- 30
+			cdrs[regions == "fwr2"] <- 45
+			cdrs[regions == "cdr2"] <- 60
+			cdrs[regions == "fwr3"] <- 80
+			cdrs[regions == "cdr3"] <- 108
+			cdrs[regions == "fwr4"] <- 120
 			write(paste(2,nchar(g)/3), file=partfile)
 			write("FWR:IMGT\nCDR:IMGT", file=partfile, append=TRUE)
 			write(paste(data[[i]]@v_gene,data[[i]]@j_gene,sep="\n"), file=partfile, append=TRUE)
@@ -581,6 +608,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 		tree$edge_type <- "genetic_distance"
 		nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
 		tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+		tree$node.label <- NULL
 	}else if(is.null(tree$nodes)){
 		nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
 		tree$nodes <- rep(list(sequence=NULL),times=nnodes)
@@ -602,7 +630,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 					site <- acgt[thresh[,x]]
 					site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
 					if(length(site) == 0){
-						site = "N"
+						site <- "N"
 					}
 					site}))
 				ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
@@ -615,7 +643,13 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 			tree$nodes[[x]]
 		})
 	}
+	opars <- phangorn::parsimony(ape::di2multi(tree),data)
 	tree <- rerootTree(tree,"Germline")
+	npars <- phangorn::parsimony(ape::di2multi(tree),data)
+	if(npars != opars){
+		stop(paste("Error in rerooting tree",tree$name,
+			"parsimony score not consistent:",opars,npars))
+	}
 	return(tree)
 }
 
@@ -694,7 +728,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 					site <- acgt[thresh[,x]]
 					site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
 					if(length(site) == 0){
-						site = "N"
+						site <- "N"
 					}
 					site}))
 				ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
@@ -743,11 +777,11 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 
 	args <- list(...)
 
-	valid_o = c("r","lr","tlr")
+	valid_o <- c("r","lr","tlr")
 	if(!optimize %in% valid_o){
 		stop(paste("Invalid otpimize specification, must be one of:",valid_o))
 	}
-	os = strsplit(omega,split=",")[[1]]
+	os <- strsplit(omega,split=",")[[1]]
 	if(length(os) == 1){
 		file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE)
 	}else if(length(os) == 2){
@@ -846,7 +880,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		trees[[i]]$tree_method <- paste("igphyml::gy94,hlp19")
 		trees[[i]]$edge_type <- "genetic_distance_codon"
 		trees[[i]]$seq <- "sequence"
-		trees[[i]]$parameters = c(params[i,])
+		trees[[i]]$parameters <- c(params[i,])
 		# add sequences to internal nodes
 		gline_id <- paste0(clone_id,"_GERM")
 		ntips <- length(trees[[i]]$tip.label)
@@ -858,7 +892,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		}
 		trees[[i]]$nodes <- rep(list(sequence=NULL),times=nnodes)
 		# blank node should be MRCA, and all labels should be in ASR file
-		labs = trees[[i]]$node.label
+		labs <- trees[[i]]$node.label
 		if(sum(labs == "") != 1 || sum(labs == gline_id) > 0){
 			stop(paste("Error in reading node labels, clone",clone_id))
 		}
@@ -937,6 +971,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
     if(!germline %in% tree$tip.label){
         stop(paste(germline,"not found in tip labels!"))
     }
+    olength <- sum(tree$edge.length)
     if(ape::is.rooted(tree)){
         #stop("tree already rooted!")
         if(verbose > 0){
@@ -1030,10 +1065,14 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
     tree$edge=edge
     tree$Nnode <- length(unique(edge[,1]))
     tree <- ape::reorder.phylo(tree,"postorder")
-    #print(paste(germid,uca,nnode))
      if(!is.null(tree$nodes)){
         tree$nodes[[nnode]] <- tree$nodes[[uca]]
         tree$nodes[[uca]] <- tree$nodes[[germid]]
+    }
+    nlength <- sum(tree$edge.length)
+    if(abs(nlength - olength) > 0.001){
+    	stop(paste("Error in rerooting tree",tree$name,
+    		"Tree length not consistent"))
     }
     return(tree)
 }
@@ -1305,9 +1344,9 @@ scaleBranches <- function(clones, edge_type="mutations"){
 	}
 	lengths <- unlist(lapply(1:length(clones$trees),
 		function(x){
-		if(clones$trees[[x]]$seq == "hlsequence"){
+		if(clones$data[[x]]@phylo_seq == "hlsequence"){
 			return(nchar(clones$data[[x]]@hlgermline))
-		}else if(clones$trees[[x]]$seq == "lsequence"){
+		}else if(clones$data[[x]]@phylo_seq == "lsequence"){
 			return(nchar(clones$data[[x]]@lgermline))
 		}else{
 			return(nchar(clones$data[[x]]@germline))
@@ -1708,17 +1747,17 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 		# if trees are fixed, add trait value to tree tips
         if(fixtrees){
             for(i in 1:length(data)){
-                da = data[[i]]
-                tr = trees[[i]]
-                tips = tr$tip.label[tr$tip.label != "Germline"]
-                m = match(tips, da@data$sequence_id)
+                da <- data[[i]]
+                tr <- trees[[i]]
+                tips <- tr$tip.label[tr$tip.label != "Germline"]
+                m <- match(tips, da@data$sequence_id)
                 if(sum(is.na(m)) > 0){
                     stop(paste("Tips",tips[!tips %in% da@data$sequence_id],
                         "not found in clone object",da@clone))
                 }
-                tr$tip.label[tr$tip.label != "Germline"] = 
+                tr$tip.label[tr$tip.label != "Germline"] <- 
                     paste0(tips, "_", da@data[[trait]][m])
-                trees[[i]] = tr
+                trees[[i]] <- tr
             }
         }
         #if igphyml is specified, append trait value to sequence ids

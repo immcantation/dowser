@@ -232,10 +232,20 @@ function(data, id="sequence_id", seq="sequence_alignment",
         tmp_df$lsequence <- ""
         tmp_df$hlsequence <- tmp_df[[seq]]
         new_seq <- seq
-        regions <- as.character(
-            shazam::makeRegion(unique(data[[junc_len]]),
-            germline,
-            shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+        #if(nchar(germline) >= 310 + unique(data[[junc_len]])){
+            regions <- as.character(
+                shazam::makeRegion(unique(data[[junc_len]]),
+                germline,
+                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+        #}else{
+        #    warning(paste(
+        #        "Sequence alignment doesn't contain full junction region",
+        #        as.character(data[[clone]][1])))
+        #    regions <- as.character(
+        #        shazam::makeRegion(unique(data[[junc_len]]),
+        #        germline,
+        #        shazam::IMGT_V)@boundaries)
+        #}
     }
     
     seq_len <- nchar(tmp_df[[seq]])
