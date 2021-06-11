@@ -29,6 +29,7 @@ makeAirrClone(
   traits = NULL,
   mod3 = TRUE,
   randomize = TRUE,
+  useRegions = TRUE,
   ...
 )
 }
@@ -101,6 +102,8 @@ sequences silently.}
 \item{mod3}{pad sequences to length mutliple three?}
 
 \item{randomize}{randomize sequence order? Important if using PHYLIP}
+
+\item{useRegions}{assign CDR/FWR regions?}
 
 \item{...}{additional arguments, used by \link{formatClones}}
 }

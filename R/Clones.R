@@ -52,6 +52,7 @@
 #' @param     locus       name of the column containing locus information
 #' @param     mod3      pad sequences to length mutliple three?
 #' @param     randomize   randomize sequence order? Important if using PHYLIP
+#' @param     useRegions  assign CDR/FWR regions?
 #' @param     ...         additional arguments, used by \link{formatClones}
 #' @return   A \link{airrClone} object containing the modified clone.
 #'
@@ -97,7 +98,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
     add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-     ...){
+    useRegions=TRUE, ...){
 
     args <- list(...)
 
@@ -232,20 +233,14 @@ function(data, id="sequence_id", seq="sequence_alignment",
         tmp_df$lsequence <- ""
         tmp_df$hlsequence <- tmp_df[[seq]]
         new_seq <- seq
-        #if(nchar(germline) >= 310 + unique(data[[junc_len]])){
+        if(useRegions){
             regions <- as.character(
                 shazam::makeRegion(unique(data[[junc_len]]),
                 germline,
                 shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
-        #}else{
-        #    warning(paste(
-        #        "Sequence alignment doesn't contain full junction region",
-        #        as.character(data[[clone]][1])))
-        #    regions <- as.character(
-        #        shazam::makeRegion(unique(data[[junc_len]]),
-        #        germline,
-        #        shazam::IMGT_V)@boundaries)
-        #}
+        }else{
+            regions <- rep("N", times=nchar(germline))
+        }
     }
     
     seq_len <- nchar(tmp_df[[seq]])

@@ -29,7 +29,8 @@ test_that("makeAirrClone",{
                       stringsAsFactors=FALSE)
     
     # Without splitting by trait value
-    clones <- formatClones(db,germ="germline_alignment",randomize=FALSE)
+    clones <- formatClones(db,germ="germline_alignment",randomize=FALSE,
+      useRegions=FALSE)
     clone <- clones$data[[1]]
     
     expect_equal(clone@clone, "1")
@@ -38,7 +39,7 @@ test_that("makeAirrClone",{
     expect_equal(clone@j_gene, "IGKJ5")
     expect_equal(clone@junc_len, 2)
     expect_equal(clone@locus,"N")
-    expect_equal(clone@region,rep("N",length=9))
+    expect_equal(clone@chain,rep("N",length=9))
     expect_equal(clone@phylo_seq,"sequence")
     expect_equal(clone@lgermline,"")
     expect_equal(clone@hlgermline,"CCCCAGGGN")
@@ -47,7 +48,7 @@ test_that("makeAirrClone",{
 
     # With splitting by trait value
     clones <- formatClones(db,germ="germline_alignment",randomize=FALSE,
-      trait="isotype",add_count=TRUE)
+      trait="isotype",add_count=TRUE,useRegions=FALSE)
     clone <- clones$data[[1]]
     
     expect_equal(clone@clone, "1")
@@ -56,7 +57,7 @@ test_that("makeAirrClone",{
     expect_equal(clone@j_gene, "IGKJ5")
     expect_equal(clone@junc_len, 2)
     expect_equal(clone@locus,"N")
-    expect_equal(clone@region,rep("N",length=9))
+    expect_equal(clone@chain,rep("N",length=9))
     expect_equal(clone@phylo_seq,"sequence")
     expect_equal(clone@lgermline,"")
     expect_equal(clone@hlgermline,"CCCCAGGGN")
@@ -76,7 +77,8 @@ test_that("getTreesPhangorn", {
                      isotype=c("IgG", "IgG", "IgM", "IgA"),
                      stringsAsFactors=FALSE)
 
-    clones <- formatClones(db,germ="germline_alignment",randomize=FALSE)
+    clones <- formatClones(db,germ="germline_alignment",
+      randomize=FALSE, useRegions=FALSE)
 
     # build parsimony tree with phangorn
     trees <- getTrees(clones, resolve_random=FALSE)
@@ -84,11 +86,11 @@ test_that("getTreesPhangorn", {
     seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
 
     expect_equal(trees$trees[[1]]$edge.length,
-      c(0,2,1,0))
+      c(0,1,2,0))
     expect_equal(trees$trees[[1]]$edge[,1],
-      c(5,5,4,4))
+      c(5,4,5,4))
     expect_equal(trees$trees[[1]]$edge[,2],
-      c(2,1,5,3))
+      c(2,5,1,3))
     expect_equal(trees$trees[[1]]$tip.label,
       c("C","A","Germline"))
     expect_equal(seqs,c("NAACTGGNN","CCCCTGGGN","CCCCAGGGN",

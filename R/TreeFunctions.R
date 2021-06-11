@@ -1141,9 +1141,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 	fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,	palette=NULL,
 	seq=NULL, collapse=FALSE, ...){
 
-	if(build == "pratchet"){
-		warning("We are experiencing compatability issues with the most recent\nversion of phangorn. Please use dnapars if encountering problems.")
-	}
+	#if(build == "pratchet"){
+	#	warning("We are experiencing compatability issues with the most recent\nversion of phangorn. Please use dnapars if encountering problems.")
+	#}
 
 	args <- list(...)
 	data <- clones$data
@@ -1685,9 +1685,9 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 	fixtrees=FALSE,	quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
 	keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20, ...){
 
-	if(build == "pratchet"){
-		warning("We are experiencing compatability issues with the most recent\nversion of phangorn. Please use dnapars if encountering problems.")
-	}
+	#if(build == "pratchet"){
+	#	warning("We are experiencing compatability issues with the most recent\nversion of phangorn. Please use dnapars if encountering problems.")
+	#}
 
 	args <- list(...)
 	data <- clones$data
