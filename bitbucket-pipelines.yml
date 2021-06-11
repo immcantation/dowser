@@ -8,8 +8,7 @@ pipelines:
           - sed -i '/test/ d' .Rbuildignore
           - Rscript -e "install.packages(c('phylotate', 'BiocManager'))"
           - Rscript -e "BiocManager::install('ggtree')"
-          - Rscript -e "devtools::install_bitbucket('kleinstein/alakazam@master')"
-          - Rscript -e "devtools::install_bitbucket('kleinstein/shazam@master')"
           - Rscript -e "devtools::install_github('KlausVigo/phangorn@master')"
+          - Rscript tests/setup/install_dep.R
           - R CMD build .
           - R CMD check *.tar.gz --as-cran --run-donttest --timings
