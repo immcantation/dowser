@@ -11,35 +11,35 @@
 #' See https://changeo.readthedocs.io/en/stable/examples/igblast.html for example
 #' of how to download.
 #' @export
-readIMGT = function(dir){
-  database = list()
-  files = list.files(dir, full.names=TRUE)
+readIMGT <- function(dir){
+  database <- list()
+  files <- list.files(dir, full.names=TRUE)
   for(file in files){
-    fasta = readFasta(file)
+    fasta <- readFasta(file)
     fasta <- unlist(lapply(fasta,
       function(x)toupper(paste0(x,collapse=""))))
     
-    names = unlist(lapply(strsplit(names(fasta), split="\\|"),
+    names <- unlist(lapply(strsplit(names(fasta), split="\\|"),
       function(x)x[2]))
-    names(fasta) = names
+    names(fasta) <- names
 
     if(max(table(names(fasta))) != 1){
       stop(paste("Names not unique", file))
     }
 
-    info = strsplit(gsub("\\.fasta","",file), split="_")[[1]]
-    organism = info[2]
-    locus = info[3]
-    segment = substr(info[3],4,4)
-    locus = substr(info[3],1,3)
+    info <- strsplit(gsub("\\.fasta","",file), split="_")[[1]]
+    organism <- info[2]
+    locus <- info[3]
+    segment <- substr(info[3],4,4)
+    locus <- substr(info[3],1,3)
 
     if(!organism %in% names(database)){
-      database[[organism]] = list()
+      database[[organism]] <- list()
     }
     if(!locus %in% names(database[[organism]])){
-      database[[organism]][[locus]] = list()
+      database[[organism]][[locus]] <- list()
     }
-    database[[organism]][[locus]][[segment]] = fasta
+    database[[organism]][[locus]][[segment]] <- fasta
   }
   database
 }
@@ -56,8 +56,8 @@ readIMGT = function(dir){
 #'
 #' @seealso \link{getAllele}
 #' @export
-parseGeneCall = function(gene, regex, action='first'){
-    match = stringr::str_match_all(gene,regex)
+parseGeneCall <- function(gene, regex, action='first'){
+    match <- stringr::str_match_all(gene,regex)
     if(nrow(match[[1]]) > 0){
       if(action == 'first'){
           return(match[[1]][1,1])
@@ -83,13 +83,13 @@ parseGeneCall = function(gene, regex, action='first'){
 #' @return Allele call for given gene segment
 #' @seealso \link{parseGeneCall}, \link{buildClonalGermline}
 #' @export
-getAllele = function(gene, segment, action='first'){
+getAllele <- function(gene, segment, action='first'){
   if(segment == "V"){
-    allele_regex = '(IG[HLK]|TR[ABGD])V[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
+    allele_regex <- '(IG[HLK]|TR[ABGD])V[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
   }else if(segment == "D"){
-    allele_regex = '(IG[HLK]|TR[ABGD])D[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
+    allele_regex <- '(IG[HLK]|TR[ABGD])D[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
   }else if(segment == "J"){
-    allele_regex = '(IG[HLK]|TR[ABGD])J[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
+    allele_regex <- '(IG[HLK]|TR[ABGD])J[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
   }else{
     stop(paste(segment,"not found"))
   }
@@ -119,53 +119,53 @@ getAllele = function(gene, segment, action='first'){
 #' @return String of germline sequence from specified segment aligned with the 
 #' sequence in the seq_field column of \code{receptor}.
 #' @export
-getGermline = function(receptor, references, segment, field, 
+getGermline <- function(receptor, references, segment, field, 
   germ_start, germ_end, germ_length, germ_aa_start,germ_aa_length, 
   amino_acid=FALSE){
     # Extract allele call
-    gene = getAllele(receptor[[field]], segment=segment, action='first')
+    gene <- getAllele(receptor[[field]], segment=segment, action='first')
 
     # Get germline start and length
     if(!amino_acid){
-        pad_char = 'N'
-        start = receptor[[germ_start]]
-        len = receptor[[germ_length]]
+        pad_char <- 'N'
+        start <- receptor[[germ_start]]
+        len <- receptor[[germ_length]]
     }else{
-        pad_char = 'X'
-        start = receptor[[germ_aa_start]]
-        len = receptor[[germ_aa_length]]
+        pad_char <- 'X'
+        start <- receptor[[germ_aa_start]]
+        len <- receptor[[germ_aa_length]]
     }
     if(is.na(start)){
-      start = 1
+      start <- 1
     }
     if(is.na(len)){
-      len = 0
+      len <- 0
     }
 
     # Build segment germline sequence
     if(segment == "V" || segment == "J"){
       if(is.na(gene)){
-          germ_seq = paste(rep(pad_char,len),collapse="")
+          germ_seq <- paste(rep(pad_char,len),collapse="")
       }else if(gene %in% names(references)){
-        seq = references[gene]
-        seq_sub = substr(seq, start, nchar(seq))
-        pad = len - nchar(seq_sub)
+        seq <- references[gene]
+        seq_sub <- substr(seq, start, nchar(seq))
+        pad <- len - nchar(seq_sub)
           if(pad < 0){
-            pad = 0
+            pad <- 0
           }
-          germ_seq = paste0(substr(seq,start,start + len -1), 
+          germ_seq <- paste0(substr(seq,start,start + len -1), 
             paste(rep(pad_char, pad),collapse=""))
       }else{
-          germ_seq = NA
+          germ_seq <- NA
       }
   }else if(segment == "D"){
     if(is.na(gene)){
-          germ_seq = ""
+          germ_seq <- ""
       }else if(gene %in% names(references)){
-        seq = references[gene]
-        germ_seq = substr(seq, start, start + len -1)
+        seq <- references[gene]
+        germ_seq <- substr(seq, start, start + len -1)
       }else{
-          germ_seq = NA
+          germ_seq <- NA
       }
   }else{
     stop(paste("Segment",segment,"not found"))
@@ -205,32 +205,32 @@ getGermline = function(receptor, references, segment, field,
 #' @return Full length germline VDJ sequence aligned with aligned with the 
 #' sequence in the \code{seq_field} column of \code{receptor}.
 #' @export
-stitchVDJ = function(receptor, v_seq, d_seq, j_seq, 
+stitchVDJ <- function(receptor, v_seq, d_seq, j_seq, 
   np1_length="np1_length", np2_length="np2_length",
   np1_aa_length="np1_aa_length", np2_aa_length="np2_aa_length",
   amino_acid=FALSE){
     # Get N/P lengths
     if(!amino_acid){
-        np_char = 'N'
-        np1_len = receptor[[np1_length]]
-        np2_len = receptor[[np2_length]]
+        np_char <- 'N'
+        np1_len <- receptor[[np1_length]]
+        np2_len <- receptor[[np2_length]]
     }else{
-        np_char = 'X'
-        np1_len = receptor[[np1_aa_length]]
-    np2_len = receptor[[np2_aa_length]]
+        np_char <- 'X'
+        np1_len <- receptor[[np1_aa_length]]
+    np2_len <- receptor[[np2_aa_length]]
     }
     if(is.na(np1_len)){
-      np1_len = 0
+      np1_len <- 0
     }
     if(is.na(np2_len)){
-      np2_len = 0
+      np2_len <- 0
     }
     # Assemble pieces starting with V segment
-    sequence = v_seq
-    sequence = paste0(sequence, paste(rep(np_char, np1_len),collapse=""))
-    sequence = paste0(sequence, d_seq)
-    sequence = paste0(sequence, paste(rep(np_char, np2_len),collapse=""))
-    sequence = paste0(sequence, j_seq)
+    sequence <- v_seq
+    sequence <- paste0(sequence, paste(rep(np_char, np1_len),collapse=""))
+    sequence <- paste0(sequence, d_seq)
+    sequence <- paste0(sequence, paste(rep(np_char, np2_len),collapse=""))
+    sequence <- paste0(sequence, j_seq)
 
     return(sequence)
  }
@@ -277,104 +277,104 @@ stitchVDJ = function(receptor, v_seq, d_seq, j_seq,
 #' nucleotides.
 #' @seealso \link{stitchVDJ}
 #' @export
-stitchRegions = function(receptor, v_seq, d_seq, j_seq, 
+stitchRegions <- function(receptor, v_seq, d_seq, j_seq, 
   np1_length="np1_length", np2_length="np1_length",
   n1_length="n1_length", p3v_length="p3v_length",
-  p5d_length="p5d_length", p3d_length = "p3d_length",
+  p5d_length="p5d_length", p3d_length="p3d_length",
   n2_length="n2_length",p5j_length="p5j_length",
   np1_aa_length="np1_aa_length", np2_aa_length="np2_aa_length",
   amino_acid=FALSE){
 
     # Set mode for region definitions
      if(!is.null(receptor[[n1_length]])){
-      full_junction = TRUE
+      full_junction <- TRUE
     }else{
-      full_junction = FALSE
+      full_junction <- FALSE
     }
 
     # For now, don't support full_junction
-    full_junction = FALSE
+    full_junction <- FALSE
 
     # Assemble pieces starting with V segment
-    regions = paste(rep('V',nchar(v_seq)),collapse="")
+    regions <- paste(rep('V',nchar(v_seq)),collapse="")
 
     # NP nucleotide additions after V
     if(amino_acid){
         # PNP nucleotide additions after V
-          np1_len = receptor[[np1_aa_length]]
+          np1_len <- receptor[[np1_aa_length]]
         if(is.na(np1_len)){
-          np1_len = 0
+          np1_len <- 0
         }
-        regions = paste0(regions, 
+        regions <- paste0(regions, 
           paste(rep('N', np1_len), collapse=""))
     }else if(!full_junction){
         # PNP nucleotide additions after V
-        np1_len = receptor[[np1_length]]
+        np1_len <- receptor[[np1_length]]
         if(is.na(np1_len)){
-          np1_len = 0
+          np1_len <- 0
         }
-        regions = paste0(regions, 
+        regions <- paste0(regions, 
           paste(rep('N', np1_len), collapse=""))
     }else{
         # P nucleotide additions before N1
-        p3v_len = receptor[[p3v_length]]
-        n1_len = receptor[[n1_length]]
-        p5d_len = receptor[[p5d_length]]
+        p3v_len <- receptor[[p3v_length]]
+        n1_len <- receptor[[n1_length]]
+        p5d_len <- receptor[[p5d_length]]
         if(is.na(p3v_len)){
-          p3v_len = 0
+          p3v_len <- 0
         }
         if(is.na(n1_len)){
-          n1_len = 0
+          n1_len <- 0
         }
         if(is.na(p5d_len)){
-          p5d_len = 0
+          p5d_len <- 0
         }
 
         # Update regions
-        regions = paste0(regions,paste(rep('P',p3v_len),collapse=""))
-        regions = paste0(regions,paste(rep('N',n1_len),collapse=""))
-        regions = paste0(regions,paste(rep('P',p5d_len),collapse=""))
+        regions <- paste0(regions,paste(rep('P',p3v_len),collapse=""))
+        regions <- paste0(regions,paste(rep('N',n1_len),collapse=""))
+        regions <- paste0(regions,paste(rep('P',p5d_len),collapse=""))
     }
     # Add D segment
-    regions = paste0(regions, paste(rep('D', 
+    regions <- paste0(regions, paste(rep('D', 
       nchar(d_seq)),collapse=""))
 
     # NP nucleotide additions before J
     if(amino_acid){
-          np2_len = receptor[[np2_aa_length]]
+          np2_len <- receptor[[np2_aa_length]]
         if(is.na(np2_len)){
-          np2_len = 0
+          np2_len <- 0
         }
-        regions = paste0(regions, 
+        regions <- paste0(regions, 
           paste(rep('N', np2_len), collapse=""))
     }else if(!full_junction){
-        np2_len = receptor[[np2_length]]
+        np2_len <- receptor[[np2_length]]
         if(is.na(np2_len)){
-          np2_len = 0
+          np2_len <- 0
         }
-        regions = paste0(regions, 
+        regions <- paste0(regions, 
           paste(rep('N', np2_len), collapse=""))
     }else{
-        p3d_len = receptor[[p3d_length]]
-        n2_len = receptor[[n2_length]]
-        p5j_len = receptor[[p5j_length]]
+        p3d_len <- receptor[[p3d_length]]
+        n2_len <- receptor[[n2_length]]
+        p5j_len <- receptor[[p5j_length]]
     if(is.na(p3d_len)){
-          p3d_len = 0
+          p3d_len <- 0
         }
         if(is.na(n2_len)){
-          n2_len = 0
+          n2_len <- 0
         }
         if(is.na(p5j_len)){
-          p5j_len = 0
+          p5j_len <- 0
         }
 
         # Update regions
-        regions = paste0(regions,paste(rep('P',p3d_len),collapse=""))
-        regions = paste0(regions,paste(rep('N',n2_len),collapse=""))
-        regions = paste0(regions,paste(rep('P',p5j_len),collapse=""))
+        regions <- paste0(regions,paste(rep('P',p3d_len),collapse=""))
+        regions <- paste0(regions,paste(rep('N',n2_len),collapse=""))
+        regions <- paste0(regions,paste(rep('P',p5j_len),collapse=""))
     }
     # Add J segment
-    regions = paste0(regions, paste(rep('J', 
+    regions <- paste0(regions, paste(rep('J', 
       nchar(j_seq)),collapse=""))
 
     return(regions)
@@ -414,8 +414,8 @@ stitchRegions = function(receptor, v_seq, d_seq, j_seq,
 #' }
 #' @seealso \link{buildClonalGermline}, \link{stitchVDJ}
 #' @export
-buildGermline = function(receptor, references, 
-  seq_field="sequence_alignment", id_field = "sequence_id", clone_field="clone_id",
+buildGermline <- function(receptor, references, 
+  seq_field="sequence_alignment", id_field="sequence_id", clone_field="clone_id",
   v_field="v_call", d_field="d_call", j_field="j_call",
   v_germ_start="v_germline_start",v_germ_end="v_germline_end",v_germ_length="v_germline_length",
   d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
@@ -423,27 +423,27 @@ buildGermline = function(receptor, references,
   np1_length="np1_length", np2_length="np2_length",
   amino_acid=FALSE, ...){
 
-    args = list(...)
+    args <- list(...)
 
     # Build V segment germline sequence
-    germ_vseq = getGermline(receptor, references$V, segment="V",
+    germ_vseq <- getGermline(receptor, references$V, segment="V",
       field=v_field, germ_start=v_germ_start,germ_end=v_germ_end,
     germ_length=v_germ_length, amino_acid=amino_acid)
    
     # Build D segment germline sequence
-    germ_dseq = getGermline(receptor, references$D, segment="D",
+    germ_dseq <- getGermline(receptor, references$D, segment="D",
       field=d_field, germ_start=d_germ_start,germ_end=d_germ_end,
     germ_length=d_germ_length, amino_acid=amino_acid)
     
     # Build J segment germline sequence
-    germ_jseq = getGermline(receptor, references$J, segment="J",
+    germ_jseq <- getGermline(receptor, references$J, segment="J",
       field=j_field, germ_start=j_germ_start,germ_end=j_germ_end,
     germ_length=j_germ_length, amino_acid=amino_acid)
    
     # Stitch complete germlines
-    germ_seq = stitchVDJ(receptor, germ_vseq, germ_dseq, germ_jseq, 
+    germ_seq <- stitchVDJ(receptor, germ_vseq, germ_dseq, germ_jseq, 
       np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
-    regions = stitchRegions(receptor, germ_vseq, germ_dseq, germ_jseq,
+    regions <- stitchRegions(receptor, germ_vseq, germ_dseq, germ_jseq,
        np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
 
     if(nchar(receptor[[seq_field]]) == 0){
@@ -451,7 +451,7 @@ buildGermline = function(receptor, references,
         receptor[[clone_field]]))
     }
 
-    len_check = nchar(germ_seq) - nchar(receptor[[seq_field]])
+    len_check <- nchar(germ_seq) - nchar(receptor[[seq_field]])
     if(len_check != 0){
       stop(paste("Germline sequence differs from input sequence by",
         len_check,"in clone", receptor[[clone_field]]))
@@ -459,29 +459,29 @@ buildGermline = function(receptor, references,
 
     # Define return germlines object
     if(amino_acid){
-      pad_char = "X"
+      pad_char <- "X"
     }else{
-      pad_char = "N"
+      pad_char <- "N"
     }
 
-    germ_dmask = paste0(substr(germ_seq, 1, nchar(germ_vseq)),
+    germ_dmask <- paste0(substr(germ_seq, 1, nchar(germ_vseq)),
            paste(rep(pad_char,
             nchar(germ_seq) - nchar(germ_vseq) - nchar(germ_jseq)),
            collapse=""))
-    germ_dmask = paste0(germ_dmask, substr(germ_seq, nchar(germ_dmask) + 1,
+    germ_dmask <- paste0(germ_dmask, substr(germ_seq, nchar(germ_dmask) + 1,
       nchar(germ_seq)))
 
-    len_check = nchar(germ_dmask) - nchar(receptor[[seq_field]])
+    len_check <- nchar(germ_dmask) - nchar(receptor[[seq_field]])
     if(len_check != 0){
       stop(paste("Germline dmask sequence differs from input sequence by",
         len_check,"in clone", receptor[[clone_field]]))
     }
 
-    germlines = list()
-    germlines$full = germ_seq
-    germlines$dmask = germ_dmask
-    germlines$vonly = germ_vseq
-    germlines$regions = regions
+    germlines <- list()
+    germlines$full <- germ_seq
+    germlines$dmask <- germ_dmask
+    germlines$vonly <- germ_vseq
+    germlines$regions <- regions
 
     return(germlines)
 }
@@ -513,53 +513,53 @@ buildGermline = function(receptor, references,
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
 #' @export
-buildClonalGermline = function(receptors, references, 
+buildClonalGermline <- function(receptors, references, 
   organism="human", locus="IGH", useRegions=FALSE, vonly=FALSE,
-  seq_field="sequence_alignment", id_field = "sequence_id", clone_field="clone_id",
+  seq_field="sequence_alignment", id_field="sequence_id", clone_field="clone_id",
   v_field="v_call", j_field="j_call", j_germ_length="j_germline_length",
   j_germ_aa_length= "j_germline_aa_length",amino_acid=FALSE,...){
   
-  args = list(...)
+  args <- list(...)
     
     if(amino_acid){
       stop("Amino acid mode not yet supported")
     }
     # Log
-    log = c()
+    log <- c()
 
     # Create dictionaries to count observed V/J calls
-    v_dict = c()
-    j_dict = c()
+    v_dict <- c()
+    j_dict <- c()
 
     # Amino acid settings
     if(amino_acid){
-      pad_char = 'X'
+      pad_char <- 'X'
     }else{
-      pad_char = "N"
+      pad_char <- "N"
     }
 
     # Find longest sequence in clone, as well as V/J calls
     # note - always uses "first" for v/j calls
-    v_dict = unlist(lapply(receptors[[v_field]],function(x)
+    v_dict <- unlist(lapply(receptors[[v_field]],function(x)
       getAllele(x, segment="V", action='first')))
-    j_dict = unlist(lapply(receptors[[j_field]],function(x)
+    j_dict <- unlist(lapply(receptors[[j_field]],function(x)
       getAllele(x, segment="J", action='first')))
-    seq_len = unlist(lapply(receptors[[seq_field]],function(x)
+    seq_len <- unlist(lapply(receptors[[seq_field]],function(x)
       nchar(x)))
 
     # Consensus V and J having most observations
-    vcounts = table(v_dict)
-    jcounts = table(j_dict)
-    v_cons = names(vcounts)[vcounts == max(vcounts)]
-    j_cons = names(jcounts)[jcounts == max(jcounts)]
-    max_len = max(seq_len)
+    vcounts <- table(v_dict)
+    jcounts <- table(j_dict)
+    v_cons <- names(vcounts)[vcounts == max(vcounts)]
+    j_cons <- names(jcounts)[jcounts == max(jcounts)]
+    max_len <- max(seq_len)
 
     # Consensus sequence(s) with consensus V/J calls and longest sequence
-    cons_index = v_dict %in% v_cons & j_dict %in% j_cons & seq_len == max_len
+    cons_index <- v_dict %in% v_cons & j_dict %in% j_cons & seq_len == max_len
 
     # Consensus sequence(s) with consensus V/J calls but not the longest sequence
     if(sum(cons_index) == 0){
-         cons_index = v_dict == v_cons & j_dict == j_cons
+         cons_index <- v_dict == v_cons & j_dict == j_cons
     }
 
     # Return without germline if no sequence has both consensus V and J call
@@ -570,23 +570,23 @@ buildClonalGermline = function(receptors, references,
     }
 
     # Select consensus Receptor, resolving ties by alphabetical ordering of sequence id.
-    cons_id = sort(receptors[cons_index,][[id_field]])[1]
-    cons = receptors[receptors[[id_field]] == cons_id,]
+    cons_id <- sort(receptors[cons_index,][[id_field]])[1]
+    cons <- receptors[receptors[[id_field]] == cons_id,]
     
     # Pad end of consensus sequence with gaps to make it the max length
-    gap_length = max_len - nchar(cons[[seq_field]])
+    gap_length <- max_len - nchar(cons[[seq_field]])
     if(gap_length > 0){
         if(amino_acid){
-          cons[[j_germ_aa_length]] = cons[[j_germ_aa_length]] + gap_length  
+          cons[[j_germ_aa_length]] <- cons[[j_germ_aa_length]] + gap_length  
         }else{
-          cons[[j_germ_length]] = cons[[j_germ_length]] + gap_length
+          cons[[j_germ_length]] <- cons[[j_germ_length]] + gap_length
         }  
-        cons[[seq_field]] = paste0(cons[[seq_field]],
+        cons[[seq_field]] <- paste0(cons[[seq_field]],
           paste0(rep(pad_char,gap_length),collapse=""))
     }
 
     # Update lengths padded to longest sequence in clone
-    receptors[[seq_field]] = unlist(lapply(1:nrow(receptors),
+    receptors[[seq_field]] <- unlist(lapply(1:nrow(receptors),
      function(x){
       l = max_len - nchar(receptors[[seq_field]][x])
         if(amino_acid){
@@ -598,19 +598,19 @@ buildClonalGermline = function(receptors, references,
           paste0(rep(pad_char,gap_length),collapse=""))
      }))
 
-    sub_db = references[[organism]][[locus]]
+    sub_db <- references[[organism]][[locus]]
     # Stitch consensus germline
-    germlines = buildGermline(cons, references=sub_db, seq_field=seq_field, 
+    germlines <- buildGermline(cons, references=sub_db, seq_field=seq_field, 
       v_field=v_field, j_field=j_field, j_germ_length=j_germ_length,j_germ_aa_length=j_germ_aa_length,
       amino_acid=amino_acid, useRegions=useRegions, ...)
 
-    receptors$germline_alignment = germlines$full
-    receptors$germline_alignment_d_mask = germlines$dmask
+    receptors$germline_alignment <- germlines$full
+    receptors$germline_alignment_d_mask <- germlines$dmask
     if(useRegions){
-      receptors$regions = germlines$regions
+      receptors$regions <- germlines$regions
     }
     if(vonly){
-      receptors$germline_alignment_vonly = germlines$vonly
+      receptors$germline_alignment_vonly <- germlines$vonly
     }
     return(receptors)
  }
@@ -652,17 +652,17 @@ buildClonalGermline = function(receptors, references,
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
 #' @export
-createGermlines = function(data, references, organism="human",locus="IGH",
+createGermlines <- function(data, references, organism="human",locus="IGH",
   nproc=1, seq_field="sequence_alignment", 
   v_field="v_call", d_field="d_call", j_field="j_call", amino_acid=FALSE,
-  id_field = "sequence_id", clone_field="clone_id",
+  id_field="sequence_id", clone_field="clone_id",
   v_germ_start="v_germline_start",v_germ_end="v_germline_end",v_germ_length="v_germline_length",
   d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
   j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length", ...){
 
-  complete = dplyr::tibble()
-  required = c(seq_field, id_field, clone_field, 
+  complete <- dplyr::tibble()
+  required <- c(seq_field, id_field, clone_field, 
     np1_length, np1_length, 
     v_field, d_field, j_field,
     v_germ_start, v_germ_end, v_germ_length,
@@ -672,9 +672,9 @@ createGermlines = function(data, references, organism="human",locus="IGH",
     stop(paste("Required columns not found in data:",
       paste(required[!required %in% names(data)],collapse=", ")))
   }
-  complete = parallel::mclapply(unique(data[[clone_field]]), function(clone){
-    sub = data[data[[clone_field]] == clone,]
-    gline = buildClonalGermline(sub, 
+  complete <- parallel::mclapply(unique(data[[clone_field]]), function(clone){
+    sub <- data[data[[clone_field]] == clone,]
+    gline <- buildClonalGermline(sub, 
       references=references,
       organism=organism,
       locus=locus,
