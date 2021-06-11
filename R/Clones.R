@@ -190,7 +190,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
         hlgermline <- paste0(germline,lgermline)
         tmp_df <- hc
         loci <- unique(dplyr::pull(data,!!locus))
-        tmp_df[[rlang::sym(locus)]] <- paste(loci,collapse=",")
+        tmp_df[[locus]] <- NULL
+        tmp_df[[locus]] <- paste(loci,collapse=",")
         chains <- c(rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
                  rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
         numbers <- c(1:hc_length,1:alt_length)
@@ -359,7 +360,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",
-                nproc=1, chain="H", heavy=NULL, cell="cell_id", 
+                nproc=1, chain="H", heavy="IGH", cell="cell_id", 
                 locus="locus", minseq=2, subclones="lump", majoronly=FALSE,
                 columns=NULL, ...) {
 

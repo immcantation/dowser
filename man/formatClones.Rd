@@ -11,7 +11,7 @@ formatClones(
   subclone = "subclone_id",
   nproc = 1,
   chain = "H",
-  heavy = NULL,
+  heavy = "IGH",
   cell = "cell_id",
   locus = "locus",
   minseq = 2,

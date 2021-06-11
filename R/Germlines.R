@@ -661,17 +661,29 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length", ...){
 
+
   complete <- dplyr::tibble()
   required <- c(seq_field, id_field, clone_field, 
     np1_length, np1_length, 
     v_field, d_field, j_field,
-    v_germ_start, v_germ_end, v_germ_length,
-    d_germ_start, d_germ_end, d_germ_length,
-    j_germ_start, j_germ_end, j_germ_length)
+    v_germ_start, v_germ_end,
+    d_germ_start, d_germ_end,
+    j_germ_start, j_germ_end)
   if(sum(!required %in% names(data)) != 0){
     stop(paste("Required columns not found in data:",
       paste(required[!required %in% names(data)],collapse=", ")))
   }
+
+  if(!v_germ_length %in% names(data)){
+    data[[v_germ_length]] <- data[[v_germ_end]] - data[[v_germ_start]] + 1
+  }
+  if(!d_germ_length %in% names(data)){
+    data[[d_germ_length]] <- data[[d_germ_end]] - data[[d_germ_start]] + 1
+  }
+  if(!j_germ_length %in% names(data)){
+    data[[j_germ_length]] <- data[[j_germ_end]] - data[[j_germ_start]] + 1
+  }
+
   complete <- parallel::mclapply(unique(data[[clone_field]]), function(clone){
     sub <- data[data[[clone_field]] == clone,]
     gline <- buildClonalGermline(sub, 
