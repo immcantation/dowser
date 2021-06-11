@@ -923,62 +923,6 @@ getSubclones <- function(heavy, light, nproc=1, minseq=2,
 	return(paired)
 }
 
-#' Wrapper for CreateGermlines.py
-#' 
-#' \code{createGermlines} reconstructs clonal and subclonal germlines
-#' 
-#' @param    data         tibble containing sequence information
-#' @param    exec         location of CreateGermline.py
-#' @param    refs         vector of reference allele locations
-#' @param    file         temporary file name to write
-#' @param    cf           column name for clone or subclone id
-#' @param    format       airr or changeo format
-#' @param    g            full or dmask germline option
-#' @param    germ         name of the column containg germline DNA sequences in
-#'                        output file. 
-#' @param    rm_file      remove temporary file?
-#'
-#' @return   a tibble containing reconstructed germlines
-#'  
-#' @export
-createGermlines <- function(data, exec, refs, file, cf="vj_clone",
-		format="airr",g="dmask",germ="germline_alignment_d_mask",rm_file=TRUE){
-	alakazam::writeChangeoDb(data,file=paste0(file,".tsv"))
-	exec <- path.expand(exec)
-	r <- paste(path.expand(refs),collapse=" ")
-	command <- paste("-d",paste0(file,".tsv"),"-r",r,"--format",format,"--cloned --cf",cf,
-		"--outname",file,"-g",g)
-    print(command)
-	params <- list(exec,command,stdout=TRUE,stderr=TRUE)
-	status <- tryCatch(do.call(base::system2, params), error=function(e){
-		return(e)
-		}, warning=function(w){
-		return(w)
-		})
-	if(class(status) != "character"){
-		print(paste(exec,command))
-		stop(status)
-	}else{
-        status <- status[!grepl("PROGRESS",status)]
-        print(data.frame(status))
-    }
-	gl <- alakazam::readChangeoDb(paste0(file,"_germ-pass.tsv"))
-	if(rm_file){
-		unlink(paste0(file,".tsv"))
-		unlink(paste0(file,"_germ-pass.tsv"))
-	}
-	if(g != "dmask"){
-        print("replacing germline alignment")
-		if("germline_alignment" %in% names(gl)){
-			gl[[germ]] <- gl$germline_alignment
-		}else if("GERMLINE_IMGT" %in% names(gl)){
-			gl[[germ]] <- gl$GERMLINE_IMGT
-		}else{
-			stop("New germline column not found in input file")
-		}
-	}
-	return(gl)
-}
 
 # Clean sequence IDs, order clones by number of sequences, and 
 # remove uninformative sites.

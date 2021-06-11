@@ -51,5 +51,6 @@ Collate:
     'Clones.R'
     'Classes.R'
     'Plotting.R'
+    'Germlines.R'
     'Statistics.R'
     'TreeFunctions.R'
