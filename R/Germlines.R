@@ -1,3 +1,5 @@
+## Functions for constructing clonal germline sequences
+## Based closely on CreateGermlines.py
 
 #' \link{readIMGT} read in IMGT database
 #' TODO: make auto-download or internal IMGT database
@@ -595,7 +597,7 @@ buildClonalGermline <- function(receptors, references,
             receptors[[j_germ_length]][[x]] = receptors[[j_germ_length]][[x]] + l
         }
         paste0(receptors[[seq_field]][x],
-          paste0(rep(pad_char,gap_length),collapse=""))
+          paste0(rep(pad_char,l),collapse=""))
      }))
 
     sub_db <- references[[organism]][[locus]]
