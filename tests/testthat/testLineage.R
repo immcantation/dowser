@@ -209,9 +209,9 @@ test_that("changeo", {
 
     # reconstruct germline
     dbg <- createGermlines(db,references,
-	seq_field="SEQUENCE_IMGT", clone_field="CLONE", id_field="SEQUENCE_ID",
+	seq="SEQUENCE_IMGT", clone="CLONE", id="SEQUENCE_ID",
 	np1_length="NP1_LENGTH", np2_length="NP2_LENGTH",
-	v_field="V_CALL", d_field="D_CALL", j_field="J_CALL",
+	v_call="V_CALL", d_call="D_CALL", j_call="J_CALL",
 	v_germ_start="V_GERM_START_IMGT",v_germ_end="V_GERM_END_IMGT",
 	d_germ_start="D_GERM_START",d_germ_end="D_GERM_END",
 	j_germ_start="J_GERM_START",j_germ_end="J_GERM_END")
@@ -235,7 +235,7 @@ test_that("changeo", {
     # build parsimony tree with phangorn
     clones <- formatClones(dbg,randomize=FALSE,
     	id="SEQUENCE_ID", clone="CLONE", seq="SEQUENCE_IMGT",
-	    vcall="V_CALL", dcall="D_CALL", jcall="J_CALL",
+	    v_call="V_CALL", d_call="D_CALL", j_call="J_CALL",
 	    junc_len="JUNCTION_LENGTH")
     trees <- getTrees(clones, resolve_random=FALSE)
     trees <- scaleBranches(trees)

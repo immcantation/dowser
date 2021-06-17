@@ -12,10 +12,10 @@ formatClones(
   nproc = 1,
   chain = "H",
   heavy = "IGH",
-  cell = "cell_id",
+  cell_id = "cell_id",
   locus = "locus",
   minseq = 2,
-  subclones = "lump",
+  split_light = TRUE,
   majoronly = FALSE,
   columns = NULL,
   ...
@@ -38,13 +38,13 @@ entries in this column should be identical.}
 
 \item{heavy}{name of heavy chain locus (default = "IGH")}
 
-\item{cell}{name of the column containing cell assignment information}
+\item{cell_id}{name of the column containing cell assignment information}
 
 \item{locus}{name of the column containing locus information}
 
 \item{minseq}{minimum numbner of sequences per clone}
 
-\item{subclones}{split or lump subclones? See \code{getSubclones}.}
+\item{split_light}{split or lump subclones? See \code{getSubclones}.}
 
 \item{majoronly}{only return largest subclone and sequences without light chains}
 

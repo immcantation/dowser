@@ -12,7 +12,9 @@ writeLineageFile(
   rep = NULL,
   trait = NULL,
   dummy = TRUE,
-  partition = 1
+  partition = "single",
+  heavy = "IGH",
+  ...
 )
 }
 \arguments{
@@ -30,7 +32,11 @@ writeLineageFile(
 
 \item{dummy}{output uninformative sequences?}
 
-\item{partition}{estimate 1 or 2 (cdr/fwr) omegas?}
+\item{partition}{how to partition omegas}
+
+\item{heavy}{name of heavy chain locus}
+
+\item{...}{Additional arguments}
 }
 \value{
 Name of created lineage file.

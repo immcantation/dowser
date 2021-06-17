@@ -12,9 +12,9 @@ getSubclones(
   id = "sequence_id",
   seq = "sequence_alignment",
   clone = "clone_id",
-  cellid = "cell_id",
-  vcall = "v_call",
-  jcall = "j_call",
+  cell_id = "cell_id",
+  v_call = "v_call",
+  j_call = "j_call",
   junc_len = "junction_length",
   nolight = "missing"
 )
@@ -36,12 +36,12 @@ sequences in this column must be multiple aligned.}
 \item{clone}{name of the column containing the identifier for the clone. All 
 entries in this column should be identical.}
 
-\item{cellid}{name of the column containing identifier for cells.}
+\item{cell_id}{name of the column containing identifier for cells.}
 
-\item{vcall}{name of the column containing V-segment allele assignments. All 
+\item{v_call}{name of the column containing V-segment allele assignments. All 
 entries in this column should be identical to the gene level.}
 
-\item{jcall}{name of the column containing J-segment allele assignments. All 
+\item{j_call}{name of the column containing J-segment allele assignments. All 
 entries in this column should be identical to the gene level.}
 
 \item{junc_len}{name of the column containing the length of the junction as a 

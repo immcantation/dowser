@@ -15,9 +15,9 @@
 #' @param    germ         name of the column containing germline DNA sequences. All entries 
 #'                        in this column should be identical for any given clone, and they
 #'                        must be multiple aligned with the data in the \code{seq} column.
-#' @param    vcall        name of the column containing V-segment allele assignments. All 
+#' @param    v_call        name of the column containing V-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
-#' @param    jcall        name of the column containing J-segment allele assignments. All 
+#' @param    j_call        name of the column containing J-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
 #' @param    junc_len     name of the column containing the length of the junction as a 
 #'                        numeric value. All entries in this column should be identical 
@@ -46,26 +46,27 @@
 #'                        sequences silently.                        
 #' @param     collapse    iollapse identical sequences?
 #' @param     traits      column ids to keep distinct during sequence collapse 
-#' @param     chain      if HL, include light chain information if available.
+#' @param     chain       if HL, include light chain information if available.
 #' @param     heavy       name of heavy chain locus (default = "IGH")
 #' @param     cell        name of the column containing cell assignment information
 #' @param     locus       name of the column containing locus information
-#' @param     mod3      pad sequences to length mutliple three?
+#' @param     mod3        pad sequences to length mutliple three?
 #' @param     randomize   randomize sequence order? Important if using PHYLIP
 #' @param     useRegions  assign CDR/FWR regions?
+#' @param     dupSingles  Duplicate sequences in singleton clones to include them as trees?
 #' @param     ...         additional arguments, used by \link{formatClones}
 #' @return   A \link{airrClone} object containing the modified clone.
 #'
 #' @details
 #' The input data.frame (\code{data}) must columns for each of the required column name 
-#' arguments: \code{id}, \code{seq}, \code{germ}, \code{vcall}, \code{jcall}, 
+#' arguments: \code{id}, \code{seq}, \code{germ}, \code{v_call}, \code{j_call}, 
 #' \code{junc_len}, and \code{clone}.  The default values are as follows:
 #' \itemize{
 #'   \item  \code{id       = "sequence_id"}:         unique sequence identifier.
 #'   \item  \code{seq      = "sequence_alignment"}:  IMGT-gapped sample sequence.
 #'   \item  \code{germ     = "germline_alignment"}:  IMGT-gapped germline sequence.
-#'   \item  \code{vcall    = "v_call"}:              V segment allele call.
-#'   \item  \code{jcall    = "j_call"}:              J segment allele call.
+#'   \item  \code{v_call    = "v_call"}:              V segment allele call.
+#'   \item  \code{j_call    = "j_call"}:              J segment allele call.
 #'   \item  \code{junc_len = "junction_length"}:     junction sequence length.
 #'   \item  \code{clone    = "clone_id"}:            clone identifier.
 #' }
@@ -81,7 +82,7 @@
 #'
 #' The value for the germline sequence, V-segment gene call, J-segment gene call, 
 #' junction length, and clone identifier are determined from the first entry in the 
-#' \code{germ}, \code{vcall}, \code{jcall}, \code{junc_len} and \code{clone} columns, 
+#' \code{germ}, \code{v_call}, \code{j_call}, \code{junc_len} and \code{clone} columns, 
 #' respectively. For any given clone, each value in these columns should be identical.
 #'  
 #' @seealso  Returns an \link{airrClone} 
@@ -93,18 +94,18 @@
 #point mutations from a common ancestor
 makeAirrClone <- 
 function(data, id="sequence_id", seq="sequence_alignment", 
-    germ="germline_alignment_d_mask", vcall="v_call", jcall="j_call",
+    germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
     junc_len="junction_length", clone="clone_id", mask_char="N",
     max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
     add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-    useRegions=TRUE, ...){
+    useRegions=TRUE, dupSingles=FALSE, ...){
 
     args <- list(...)
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
-        unique(c(id, seq, germ, vcall, jcall, junc_len, clone, 
+        unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
         text_fields, num_fields, seq_fields,traits)))
     if (check != TRUE) { stop(check) }
 
@@ -121,7 +122,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
         seq_fields <- seq_fields[seq_fields != rlang::sym(cell)]
         seq_fields <- seq_fields[seq_fields != rlang::sym(locus)]
         # Replace gaps with Ns and masked ragged ends
-        tmp_df <- data[, unique(c(id, seq, text_fields, num_fields, seq_fields, cell, locus, traits))]
+        tmp_df <- data[, unique(c(id, seq, junc_len, text_fields, num_fields, seq_fields, cell, locus, traits))]
         tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
             outer_only=FALSE)
         hc <- dplyr::filter(tmp_df,!!rlang::sym(locus)==rlang::sym(heavy))
@@ -134,7 +135,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
             chain <- "H"
         }else{
             if(length(unique(dplyr::pull(alt,!!locus))) > 1){
-                stop(paste("clone",unique(dplyr::pull(data,clone)),
+                stop(paste("clone",paste(unique(dplyr::pull(data,clone)),collapse=""),
                     "currently only one alternate loci per clone supported"))
             }
         }
@@ -195,6 +196,19 @@ function(data, id="sequence_id", seq="sequence_alignment",
         chains <- c(rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
                  rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
         numbers <- c(1:hc_length,1:alt_length)
+        if(useRegions){
+            hregions <- as.character(
+                shazam::makeRegion(unique(hc[[junc_len]]),
+                germline,
+                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+            lregions <- as.character(
+                shazam::makeRegion(unique(alt[[junc_len]]),
+                lgermline,
+                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+            regions <- c(hregions, lregions)
+        }else{
+            regions <- rep("N", times=nchar(hlgermline))
+        }
         if(length(chains) != unique(nchar(tmp_df$hlsequence))){
             stop(paste("clone",unique(dplyr::pull(data,clone)),
                 "chains vector not equal to total sequence length!"))
@@ -204,7 +218,6 @@ function(data, id="sequence_id", seq="sequence_alignment",
                 "chains vector not equal to germline sequence length!"))
         }
         new_seq <- "hlsequence"
-        regions <- rep("N", nchar(hlgermline))
     }else{
         tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
             mask_char=mask_char, max_mask=max_mask, trim=FALSE)
@@ -295,6 +308,12 @@ function(data, id="sequence_id", seq="sequence_alignment",
     }else{
         phylo_seq <- "sequence"
     }
+
+    if(nrow(tmp_df) == 1 && dupSingles){
+        tmp_df2 <- tmp_df
+        tmp_df2[[id]] <- paste0(tmp_df[[id]],"_DUPLICATE")
+        tmp_df <- bind_rows(tmp_df, tmp_df2)
+    }
     
     outclone <- new("airrClone", 
         data=as.data.frame(tmp_df),
@@ -305,8 +324,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
            outer_only=FALSE),
         hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
            outer_only=FALSE), 
-        v_gene=alakazam::getGene(data[[vcall]][1]), 
-        j_gene=alakazam::getGene(data[[jcall]][1]), 
+        v_gene=alakazam::getGene(data[[v_call]][1]), 
+        j_gene=alakazam::getGene(data[[j_call]][1]), 
         junc_len=data[[junc_len]][1],
         locus=unique(loci),
         chain=chains,
@@ -315,6 +334,50 @@ function(data, id="sequence_id", seq="sequence_alignment",
         phylo_seq=phylo_seq)
     
     outclone
+}
+
+
+# Remove uniformative columns from data and germline
+# 
+# \code{cleanAlignment} clean multiple sequence alignments
+# @param    clone   \code{airrClone} object
+# @param    seq     column in \code{clone} object
+#
+# @return   \code{airrClone} object with cleaned alignment
+#
+cleanAlignment <- function(clone,seq="sequence"){
+    if(seq=="hlsequence"){
+        g <- strsplit(clone@hlgermline[1],split="")[[1]]
+    }else{
+        g <- strsplit(clone@germline[1],split="")[[1]]
+    }
+    #g <- g[1:(length(g) - length(g)%%3)]
+    sk <- strsplit(clone@data[[seq]],split="")
+    sites=seq(1,length(g)-3,by=3)
+    ns <- c()
+    for(i in sites){
+        l=lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN")
+        ns <- c(ns,sum(unlist(l)),sum(unlist(l)),sum(unlist(l)))
+    }
+    informative <- ns != length(sk)
+    l=lapply(sk,function(x) x=paste(x[informative],collapse=""))
+    gm=paste(g[informative],collapse="")
+    if(.hasSlot(clone,"chain")){
+        clone@chain <- clone@chain[informative] 
+    }
+    if(.hasSlot(clone,"region")){
+        clone@region <- clone@region[informative]   
+    }
+    if(.hasSlot(clone,"numbers")){
+        clone@numbers <- clone@numbers[informative]
+    }
+    if(seq=="hlsequence"){
+        clone@hlgermline=gm
+    }else{
+        clone@germline=gm
+    }
+    clone@data[[seq]]=unlist(l)
+    return(clone)
 }
 
 #### Preprocessing functions ####
@@ -330,16 +393,16 @@ function(data, id="sequence_id", seq="sequence_alignment",
 #' 
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone. See Details
 #'                        for the list of required columns and their default values.
-#' @param    subclones    split or lump subclones? See \code{getSubclones}.
+#' @param    split_light  split or lump subclones? See \code{getSubclones}.
 #' @param    minseq       minimum numbner of sequences per clone
 #' @param    majoronly    only return largest subclone and sequences without light chains
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
 #' @param    seq          sequence alignment column name.
 #' @param    subclone     name of the column containing the identifier for the subclone.
-#' @param    chain       if HL, include light chain information if available.
+#' @param    chain        if HL, include light chain information if available.
 #' @param    heavy        name of heavy chain locus (default = "IGH")
-#' @param    cell         name of the column containing cell assignment information
+#' @param    cell_id      name of the column containing cell assignment information
 #' @param    locus        name of the column containing locus information
 #' @param    nproc		  number of cores to parallelize formating over.
 #' @param    columns      additional data columns to include in output
@@ -360,8 +423,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",
-                nproc=1, chain="H", heavy="IGH", cell="cell_id", 
-                locus="locus", minseq=2, subclones="lump", majoronly=FALSE,
+                nproc=1, chain="H", heavy="IGH", cell_id="cell_id", 
+                locus="locus", minseq=2, split_light=TRUE, majoronly=FALSE,
                 columns=NULL, ...) {
 
 	if(majoronly){
@@ -387,17 +450,17 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 		if(is.null(heavy)){
 			stop("Need heavy chain (heavy) designation for heavy+light chain clones")
 		}	
-		lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell]]
-		hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell]]
+		lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell_id]]
+		hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell_id]]
 		nohcells <- lcells[!lcells %in% hcells]
 		if(length(nohcells) > 0){
-			data <- filter(data,!(!!rlang::sym(cell) %in% nohcells))
+			data <- filter(data,!(!!rlang::sym(cell_id) %in% nohcells))
 			warning(paste("Removed",length(nohcells),
 				"cells with no heavy chain information"))
 		}
 	}
 	#edit based on subclone options
-	if(subclones == "split"){
+	if(split_light){
 		if(!subclone %in% names(data)){
 			stop("Need subclone designation for heavy+light chain clones")
 		}
@@ -406,11 +469,11 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 			data[data[[subclone]] == 0,][[subclone]] <- 1
 		}
 		data[[clone]] <- paste0(data[[clone]],"_",data[[subclone]])
-	}else if(subclones == "lump" && chain=="HL"){
+	}else if(!split_light && chain=="HL"){
 		data <- filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
 			!!rlang::sym(subclone) > 1))
 	}else if(chain == "HL"){
-		stop("subclones designation must be either lump or split")
+		stop("chain must be HL if split_light=FALSE")
 	}
     if(!is.null(columns)){
         if(sum(!columns %in% names(data)) != 0){
@@ -427,7 +490,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     clones <- data %>%
         dplyr::group_by(!!rlang::sym(clone)) %>%
         dplyr::do(data=makeAirrClone(.data, seq=seq,
-            clone=clone, chain=chain, heavy=heavy, cell=cell,...))
+            clone=clone, chain=chain, heavy=heavy, cell_id=cell_id,...))
 
     if(chain == "HL"){
     	seq_name <- "hlsequence"
@@ -447,11 +510,11 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     if(!is.null(columns)){
         d <- data %>%
-            dplyr::select(!!rlang::sym(clone),columns) %>%
+            dplyr::select(!!rlang::sym(clone),dplyr::all_of(columns)) %>%
             dplyr::group_by(!!rlang::sym(clone)) %>%
-            dplyr::summarize(dplyr::across(columns, dplyr::n_distinct)) %>%
+            dplyr::summarize(dplyr::across(dplyr::all_of(columns), dplyr::n_distinct)) %>%
             dplyr::ungroup() %>%
-            dplyr::summarize(dplyr::across(columns,max)) %>%
+            dplyr::summarize(dplyr::across(dplyr::all_of(columns),max)) %>%
             unlist()
         multi <- names(d[d > 1])
         if(length(multi) > 0){
@@ -801,10 +864,10 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #'                        sequences in this column must be multiple aligned.
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
-#' @param    cellid       name of the column containing identifier for cells.
-#' @param    vcall        name of the column containing V-segment allele assignments. All 
+#' @param    cell_id       name of the column containing identifier for cells.
+#' @param    v_call        name of the column containing V-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
-#' @param    jcall        name of the column containing J-segment allele assignments. All 
+#' @param    j_call        name of the column containing J-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
 #' @param    junc_len     name of the column containing the length of the junction as a 
 #'                        numeric value. All entries in this column should be identical 
@@ -832,7 +895,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' @export
 getSubclones <- function(heavy, light, nproc=1, minseq=2,
 	id="sequence_id", seq="sequence_alignment", 
-	clone="clone_id", cellid="cell_id", vcall="v_call", jcall="j_call",
+	clone="clone_id", cell_id="cell_id", v_call="v_call", j_call="j_call",
 	junc_len="junction_length", nolight="missing"){
 	
 	subclone <- "subclone_id"
@@ -850,9 +913,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=2,
 	paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
 		#print(cloneid)
 		hd <- filter(heavy,!!rlang::sym(clone) == cloneid)
-		ld <- filter(light,!!rlang::sym(cellid) %in% hd[[cellid]])
-		hd <- filter(hd,(!!rlang::sym(cellid) %in% ld[[cellid]]))
-		hr <- filter(hd,!(!!rlang::sym(cellid) %in% ld[[cellid]]))
+		ld <- filter(light,!!rlang::sym(cell_id) %in% hd[[!!cell_id]])
+		hd <- filter(hd,(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
+		hr <- filter(hd,!(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
 		if(nrow(ld) == 0){
 			return(hd)
 		}
@@ -861,15 +924,15 @@ getSubclones <- function(heavy, light, nproc=1, minseq=2,
 		ld <- dplyr::tibble()
 		lclone <- 1
 		while(nrow(ltemp) > 0){
-			lvs <- strsplit(ltemp[[vcall]],split=",")
-			ljs <- strsplit(ltemp[[jcall]],split=",")
+			lvs <- strsplit(ltemp[[v_call]],split=",")
+			ljs <- strsplit(ltemp[[j_call]],split=",")
 			combos <- 
 				lapply(1:length(lvs),function(w)
 				unlist(lapply(lvs[[w]],function(x)
 				lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
-			cells <- unique(ltemp[[cellid]])
+			cells <- unique(ltemp[[cell_id]])
 			cellcombos <- lapply(cells,function(x)
-				unique(unlist(combos[ltemp[[cellid]] == x])))
+				unique(unlist(combos[ltemp[[cell_id]] == x])))
 			lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
 			max <- names(lcounts)[which.max(lcounts)]
 			cvs <- unlist(lapply(combos,function(x)max %in% x))
@@ -878,10 +941,10 @@ getSubclones <- function(heavy, light, nproc=1, minseq=2,
 
 			# if a cell has the same combo for two rearrangements, only pick one
 			rmseqs <- c()
-			cell_counts <- table(ltemp[cvs,][[cellid]])
+			cell_counts <- table(ltemp[cvs,][[cell_id]])
 			mcells <- names(cell_counts)[cell_counts > 1]
 			for(cell in mcells){
-				ttemp <- filter(ltemp,cvs & !!rlang::sym(cellid) == cell)
+				ttemp <- filter(ltemp,cvs & !!rlang::sym(cell_id) == cell)
 				ttemp$str_counts <- 
 				    stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
 				rmtemp <- ttemp[-which.max(ttemp$str_counts),]
@@ -891,28 +954,28 @@ getSubclones <- function(heavy, light, nproc=1, minseq=2,
 			leave <- filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
 
 			# find other cells still in ltemp and add as vj_alt_cell
-			mcells <- unique(include[[cellid]])
+			mcells <- unique(include[[cell_id]])
 			for(cell in mcells){
-				if(cell %in% leave[[cellid]]){
-					include[include[[cellid]] == cell,]$vj_alt_cell <- 
-						paste(paste0(leave[leave[[cellid]] == cell,][[vcall]],":",
-							leave[leave[[cellid]] == cell,][[jcall]]),
+				if(cell %in% leave[[cell_id]]){
+					include[include[[cell_id]] == cell,]$vj_alt_cell <- 
+						paste(paste0(leave[leave[[cell_id]] == cell,][[v_call]],":",
+							leave[leave[[cell_id]] == cell,][[j_call]]),
 							collapse=",")
 				}
 			}
 			ld <- bind_rows(ld,include)
-			ltemp <- filter(ltemp,!(!!rlang::sym(cellid) %in% ltemp[cvs,][[cellid]]))
+			ltemp <- filter(ltemp,!(!!rlang::sym(cell_id) %in% ltemp[cvs,][[!!cell_id]]))
 			lclone <- lclone + 1
 		}
 		ld[[clone]] <- cloneid
-		for(cell in unique(hd[[cellid]])){
-			hclone <- hd[hd[[cellid]] == cell,][[clone]]
-			if(cell %in% ld[[cellid]]){
-				lclone <- ld[ld[[cellid]] == cell,][[subclone]]
-				ld[ld[[cellid]] == cell,][[subclone]] <- lclone
-				hd[hd[[cellid]] == cell,][[subclone]] <- lclone
-				hd[hd[[cellid]] == cell,]$vj_gene <- ld[ld[[cellid]] == cell,]$vj_gene
-				hd[hd[[cellid]] == cell,]$vj_alt_cell <- ld[ld[[cellid]] == cell,]$vj_alt_cell
+		for(cell in unique(hd[[cell_id]])){
+			hclone <- hd[hd[[cell_id]] == cell,][[clone]]
+			if(cell %in% ld[[cell_id]]){
+				lclone <- ld[ld[[cell_id]] == cell,][[subclone]]
+				ld[ld[[cell_id]] == cell,][[subclone]] <- lclone
+				hd[hd[[cell_id]] == cell,][[subclone]] <- lclone
+				hd[hd[[cell_id]] == cell,]$vj_gene <- ld[ld[[cell_id]] == cell,]$vj_gene
+				hd[hd[[cell_id]] == cell,]$vj_alt_cell <- ld[ld[[cell_id]] == cell,]$vj_alt_cell
 			}
 		}
 		comb <- bind_rows(hd,ld)

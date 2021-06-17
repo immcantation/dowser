@@ -10,7 +10,6 @@
 # @param    dummy        Not include real sequence information
 #
 # @return   Name of exported fasta file.
-# TODO: change to store as string and open file only once!
 writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	clone <- c@clone
 	append <- FALSE
@@ -25,7 +24,16 @@ writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 		text <- paste0(text,">",c@data[i,]$sequence_id,"\n")
 		if(!dummy){
 			#write(c@data[i,]$sequence,file=fastafile,append=TRUE)
-			text <- paste0(text,c@data[i,]$sequence,"\n")
+			#text <- paste0(text,c@data[i,]$sequence,"\n")
+			if(c@phylo_seq == "sequence"){
+				text <- paste0(text,c@data[i,]$sequence,"\n")
+			}else if(c@phylo_seq == "lsequence"){
+				text <- paste0(text,c@data[i,]$lsequence,"\n")
+			}else if(c@phylo_seq == "hlsequence"){
+				text <- paste0(text,c@data[i,]$hlsequence,"\n")
+			}else{
+				stop(paste("phylo_seq not recognized",c@clone))
+			}
 		}else{
 			#write("ATG",file=fastafile,append=TRUE)
 			text <- paste0(text,"ATG\n")
@@ -35,7 +43,16 @@ writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
 	text <- paste0(text,">",germid,"\n")
 	if(!dummy){
 		#write(c@germline,file=fastafile,append=TRUE)
-		text <- paste0(text,c@germline,"\n")
+		#text <- paste0(text,c@germline,"\n")
+		if(c@phylo_seq == "sequence"){
+			text <- paste0(text,c@germline,"\n")
+		}else if(c@phylo_seq == "lsequence"){
+			text <- paste0(text,c@lgermline,"\n")
+		}else if(c@phylo_seq == "hlsequence"){
+			text <- paste0(text,c@hlgermline,"\n")
+		}else{
+			stop(paste("phylo_seq not recognized",c@clone))
+		}
 	}else{
 		#write("ATG",file=fastafile,append=TRUE)
 		text <- paste0(text,"ATG\n")
@@ -57,7 +74,7 @@ readFasta <- function(file){
   id <- NA
   for(line in f){
     if(grepl("^>",line)){
-      id <- line
+      id <- gsub(">","",line)
       seqs[[id]] <- ""
     }else{
       if(is.na(id)){
@@ -69,7 +86,6 @@ readFasta <- function(file){
   }
   seqs
 }
-
 
 #' Read in a parsimony model file
 #' 
@@ -172,49 +188,6 @@ readSwitches <- function(file){
 	names(t) <- c("REP","FROM","TO","SWITCHES")
 	switches <- t
 	switches
-}
-
-# Remove uniformative columns from data and germline
-# 
-# \code{cleanAlignment} clean multiple sequence alignments
-# @param    clone   \code{airrClone} object
-# @param 	seq     column in \code{clone} object
-#
-# @return   \code{airrClone} object with cleaned alignment
-#
-cleanAlignment <- function(clone,seq="sequence"){
-	if(seq=="hlsequence"){
-    	g <- strsplit(clone@hlgermline[1],split="")[[1]]
-    }else{
-    	g <- strsplit(clone@germline[1],split="")[[1]]
-    }
-    #g <- g[1:(length(g) - length(g)%%3)]
-    sk <- strsplit(clone@data[[seq]],split="")
-    sites=seq(1,length(g)-3,by=3)
-    ns <- c()
-    for(i in sites){
-        l=lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN")
-        ns <- c(ns,sum(unlist(l)),sum(unlist(l)),sum(unlist(l)))
-    }
-    informative <- ns != length(sk)
-    l=lapply(sk,function(x) x=paste(x[informative],collapse=""))
-    gm=paste(g[informative],collapse="")
-    if(.hasSlot(clone,"chain")){
-    	clone@chain <- clone@chain[informative]	
-    }
-    if(.hasSlot(clone,"region")){
-    	clone@region <- clone@region[informative]	
-    }
-    if(.hasSlot(clone,"numbers")){
-    	clone@numbers <- clone@numbers[informative]
-    }
-    if(seq=="hlsequence"){
-    	clone@hlgermline=gm
-    }else{
-    	clone@germline=gm
-    }
-    clone@data[[seq]]=unlist(l)
-    return(clone)
 }
 
 # Make bootstrap replicate of clonal alignment
@@ -443,13 +416,18 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 #' @param    id        id used for IgPhyML run
 #' @param    rep       bootstrap replicate
 #' @param    trait     string appended to sequence id in fasta files
-#' @param    partition estimate 1 or 2 (cdr/fwr) omegas?
+#' @param    partition how to partition omegas
+#' @param    heavy     name of heavy chain locus
 #' @param    dummy     output uninformative sequences?
-#'
+#' @param    ...       Additional arguments
 #' @return   Name of created lineage file.
 #' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
-	trait=NULL,	dummy=TRUE, partition=1){
+	trait=NULL,	dummy=TRUE, partition="single", heavy="IGH", ...){
+
+	args <- list(...)
+
+	#print(partition)
 
 	file <- file.path(dir,paste0(id,"_lineages_pars.tsv"))
 	if(!is.null(rep)){
@@ -469,13 +447,20 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 		tree <- trees[[i]]
 		fastafile <- file.path(outdir,paste0(data[[i]]@clone,".fasta"))
 		treefile <- file.path(outdir,paste0(data[[i]]@clone,".tree"))
-		partfile <- "N"
 		germid <- paste0(data[[i]]@clone,"_GERM")
 		f <- writeFasta(data[[i]],fastafile,germid,trait,dummy=dummy)
-
-		if(partition > 1){ #make file specifying sequence regions
-			partfile <- file.path(outdir,paste0(data[[i]]@clone,".part.txt"))
+		if(data[[i]]@phylo_seq == "sequence"){
 			g <- data[[i]]@germline
+		}else if(data[[i]]@phylo_seq == "lsequence"){
+			g <- data[[i]]@lgermline
+		}else if(data[[i]]@phylo_seq == "hlsequence"){
+			g <- data[[i]]@hlgermline
+		}else{
+			stop(paste("phylo_seq not recognized",c@clone))
+		}
+
+		if(partition == "cf"){ #make file specifying sequence regions
+			nomega <- 2
 			regions <- data[[i]]@region
 			if(dplyr::n_distinct(regions) == 1){
 				warning(paste("Only one region found in clone",data[[i]]@clone))
@@ -488,10 +473,76 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 			cdrs[regions == "fwr3"] <- 80
 			cdrs[regions == "cdr3"] <- 108
 			cdrs[regions == "fwr4"] <- 120
-			write(paste(2,nchar(g)/3), file=partfile)
+		}else if(partition == "hl"){
+			nomega <- 2
+			chains <- data[[i]]@chain
+			if(dplyr::n_distinct(chains) == 1){
+				warning(paste("Only one chain found in clone",data[[i]]@clone))
+			}
+			cdrs <- rep(0,length(chains))
+			cdrs[chains == heavy] <- 13
+			cdrs[chains != heavy] <- 30
+		}else if(partition == "hlc"){
+			nomega <- 3
+			chains <- data[[i]]@chain
+			regions <- data[[i]]@region
+			if(dplyr::n_distinct(regions) == 1){
+				warning(paste("Only one region found in clone",data[[i]]@clone))
+			}
+			if(dplyr::n_distinct(chains) == 1){
+				warning(paste("Only one chain found in clone",data[[i]]@clone))
+			}
+			cdrs <- rep(0,length(chains))
+			cdrs[grepl("fwr", regions)] <- 13
+			cdrs[chains == heavy & grepl("cdr", regions)] <- 30  #heavy cdr
+			cdrs[chains != heavy & grepl("cdr", regions)] <- 200 #light cdr
+		}else if(partition == "hlf"){
+			nomega <- 3
+			chains <- data[[i]]@chain
+			regions <- data[[i]]@region
+			if(dplyr::n_distinct(regions) == 1){
+				warning(paste("Only one region found in clone",data[[i]]@clone))
+			}
+			if(dplyr::n_distinct(chains) == 1){
+				warning(paste("Only one chain found in clone",data[[i]]@clone))
+			}
+			cdrs <- rep(0,length(chains))
+			cdrs[chains == heavy & grepl("fwr", regions)] <- 13 #heavy fwr
+			cdrs[grepl("cdr", regions)] <- 30
+			cdrs[chains != heavy & grepl("fwr", regions)] <- 200 #light fwr
+		}else if(partition == "hlcf"){
+			nomega <- 4
+			chains <- data[[i]]@chain
+			regions <- data[[i]]@region
+			if(dplyr::n_distinct(regions) == 1){
+				warning(paste("Only one region found in clone",data[[i]]@clone))
+			}
+			if(dplyr::n_distinct(chains) == 1){
+				warning(paste("Only one chain found in clone",data[[i]]@clone))
+			}
+			cdrs <- rep(0,length(chains))
+			cdrs[chains == heavy & grepl("fwr", regions)] <- 13
+			cdrs[chains == heavy & grepl("cdr", regions)] <- 30
+			cdrs[chains != heavy & grepl("fwr", regions)] <- 200 #light fwr
+			cdrs[chains != heavy & grepl("cdr", regions)] <- 300 #light cdr
+		}else if(partition != "single"){
+			stop(paste("Partition",partition,"not recognized"))
+		}
+
+		if(partition != "single"){
+			partfile <- file.path(outdir,paste0(data[[i]]@clone,".part.txt"))
+			write(paste(nomega,nchar(g)/3), file=partfile)
 			write("FWR:IMGT\nCDR:IMGT", file=partfile, append=TRUE)
+			if(partition == "hlf" || partition == "hlcf"){
+				write("FWRL:IMGT", file=partfile, append=TRUE)
+			}
+			if(partition == "hlc" || partition == "hlcf"){
+				write("CDRL:IMGT", file=partfile, append=TRUE)
+			}
 			write(paste(data[[i]]@v_gene,data[[i]]@j_gene,sep="\n"), file=partfile, append=TRUE)
 			write(paste(cdrs[1:length(cdrs) %% 3 == 0],collapse=","), file=partfile, append=TRUE)
+		}else{
+			partfile <- "N"
 		}
 
 		if(!is.null(trees)){
@@ -758,38 +809,70 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    quiet      amount of rubbish to print
 #' @param    rm_files   remove temporary files?
 #' @param    rm_dir     remove temporary directory?
+#' @param    partition  How to partition omegas along sequences (see details)
 #' @param    omega      omega parameters to estimate (see IgPhyML docs)
 #' @param    optimize   optimize HLP rates (r), lengths (l), topology (t)
 #' @param    motifs     motifs to consider (see IgPhyML docs)
 #' @param    hotness    hotness parameters to estimate (see IgPhyML docs)
 #' @param    asrc       Intermediate sequence cutoff probability
+#' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    ...        Additional arguments (not currently used)
+#'
+#' @details Partition options:
+#' \itemize{
+#'   \item  \code{single}: 1 omega for whole sequence
+#'   \item  \code{cf}: 2 omegas, 1 for all CDRs and 1 for all FWRs
+#'   \item  \code{hl}: 2 omegas, 1 for heavy and 1 for light chain
+#'   \item  \code{hlf}: 3 omegas, 1 for all CDRs, 2 for heavy/light FWRs
+#'   \item  \code{hlc}: 3 omegas, 1 for all FWRs, 2 for heavy/light CDRs
+#'   \item  \code{hlcf}: 4 omegas, 1 for each heavy/light CDR/FWR combination
+#' }
 #'
 #' @return  \code{phylo} object created by igphyml with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
-	id=NULL, rseed=NULL, quiet=0 , rm_files=TRUE, rm_dir=NULL,
+	id=NULL, rseed=NULL, quiet=0 , rm_files=TRUE, rm_dir=NULL, 
+	partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
 	omega="e", optimize="lr",motifs="FCH",hotness="e,e,e,e,e,e",asrc=0.95,
-	...){
+	splitfreqs=FALSE, ...){
 
 	warning("Dowser igphyml doesn't mask split codons!")
 
 	args <- list(...)
 
+	partition <- match.arg(partition)
+
+	#print(omega)
+
 	valid_o <- c("r","lr","tlr")
 	if(!optimize %in% valid_o){
-		stop(paste("Invalid otpimize specification, must be one of:",valid_o))
+		stop(paste("Invalid optimize specification, must be one of:",valid_o))
 	}
 	os <- strsplit(omega,split=",")[[1]]
-	if(length(os) == 1){
-		file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE)
-	}else if(length(os) == 2){
-		file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE,
-			partition=2)
-	}else{
-		stop("At most two omegas may be specified")
+	#if(length(os) == 1){
+	#	file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE)
+	#}else if(length(os) == 2){
+	#	file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE,
+	#		partition=2)
+	#}else{
+	#	stop("At most two omegas may be specified")
+	#}
+	file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE,
+			partition=partition, ...)
+	if(length(os) != 2 && (partition == "cf" | partition == "hl")){
+		warning("Omega parameter incompatible with partition, setting to e,e")
+		omega = "e,e"
 	}
+	if(length(os) != 3 && (partition == "hlc" | partition == "hlf")){
+		warning("Omega parameter incompatible with partition, setting to e,e,e")
+		omega = "e,e,e"
+	}
+	if(length(os) != 4 && (partition == "hlcf")){
+		warning("Omega parameter incompatible with partition, setting to e,e,e,e")
+		omega = "e,e,e,e"
+	}
+
 	igphyml <- path.expand(igphyml)
 	if(file.access(igphyml, mode=1) == -1) {
         stop("The file ", igphyml, " cannot be executed.")
@@ -833,10 +916,15 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		stop()
 		})
 	}
+	if(splitfreqs){
+		splitf = "--splitfreqs"
+	}else{
+		splitf = ""
+	}
 	command <- paste("--repfile",gyrep,
 		"--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
 		"hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
-		rseed,log)
+		splitf,rseed,log)
 	params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
 	if(quiet > 2){
 		print(paste(params,collapse=" "))
@@ -866,10 +954,30 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 		"_pars.tsv_gyrep_igphyml_stats_hlp.tab"))
 	results <- alakazam::readIgphyml(ofile,format="phylo",
         branches="distance")
-	ASR <- ape::read.dna(file.path(temp_path,
+	if(partition == "hl"){
+		names(results$param) = gsub("fwr","heavy",names(results$param))
+		names(results$param) = gsub("cdr","light",names(results$param))
+	}else if(partition == "hlf"){
+		names(results$param) = gsub("omega_1","omega_heavyfwr",names(results$param))
+		names(results$param) = gsub("omega_2","omega_cdr",names(results$param))
+		names(results$param) = gsub("omega_3","omega_lightfwr",names(results$param))
+	}else if(partition == "hlc"){
+		names(results$param) = gsub("omega_1","omega_fwr",names(results$param))
+		names(results$param) = gsub("omega_2","omega_heavycdr",names(results$param))
+		names(results$param) = gsub("omega_3","omega_lightcdr",names(results$param))
+	}else if(partition == "hlcf"){
+		names(results$param) = gsub("omega_1","omega_heavyfwr",names(results$param))
+		names(results$param) = gsub("omega_2","omega_heavycdr",names(results$param))
+		names(results$param) = gsub("omega_3","omega_lightfwr",names(results$param))
+		names(results$param) = gsub("omega_4","omega_lightcdr",names(results$param))
+	}
+	#ASR <- ape::read.dna(file.path(temp_path,
+	#	paste0(id,"_lineages_",id,
+	#	"_pars_hlp_asr.fasta")),format="fasta",as.character=TRUE)
+	#ASR <- apply(ASR,1,function(x)toupper(paste0(x,collapse="")))
+	ASR <- readFasta(file.path(temp_path,
 		paste0(id,"_lineages_",id,
-		"_pars_hlp_asr.fasta")),format="fasta",as.character=TRUE)
-	ASR <- apply(ASR,1,function(x)toupper(paste0(x,collapse="")))
+		"_pars_hlp_asr.fasta")))
 	trees <- results$trees
 	params <- results$param[-1,]
 	for(i in 1:nrow(params)){
@@ -1264,9 +1372,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 				tree=trees[[x]],...),
 				mc.cores=nproc)
 	}else if(build=="igphyml"){
-		if(sum(seqs != "sequence") != 0){
-			stop("igphyml build only currently supports heavy chain sequences")
-		}
+		#if(sum(seqs != "sequence") != 0){
+		#	stop("igphyml build only currently supports heavy chain sequences")
+		#}
 		if(rm_temp){
 			rm_dir <- file.path(dir,id)
 		}else{
@@ -1278,7 +1386,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 				temp_path=file.path(dir,id),
 				rm_files=rm_temp,
 				rm_dir=rm_dir,
-				trees=trees,nproc=nproc,id=id)
+				trees=trees,nproc=nproc,id=id,
+				...)
 		clones$parameters <- lapply(trees,function(x)x$parameters)
 	}else{
 		stop("build specification",build,"not recognized")
@@ -1845,9 +1954,9 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 						tree=trees[[x]],...),
 						mc.cores=nproc)
 			}else if(build=="igphyml"){
-				if(sum(seqs != "sequence") != 0){
-					stop("igphyml build only currently supports heavy chain sequences")
-				}
+				#if(sum(seqs != "sequence") != 0){
+				#	stop("igphyml build only currently supports heavy chain sequences")
+				#}
 				if(rm_temp){
 					rm_dir <- file.path(dir,paste0(id,rep))
 				}else{

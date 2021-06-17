@@ -9,8 +9,8 @@ makeAirrClone(
   id = "sequence_id",
   seq = "sequence_alignment",
   germ = "germline_alignment_d_mask",
-  vcall = "v_call",
-  jcall = "j_call",
+  v_call = "v_call",
+  j_call = "j_call",
   junc_len = "junction_length",
   clone = "clone_id",
   mask_char = "N",
@@ -30,6 +30,7 @@ makeAirrClone(
   mod3 = TRUE,
   randomize = TRUE,
   useRegions = TRUE,
+  dupSingles = FALSE,
   ...
 )
 }
@@ -46,10 +47,10 @@ sequences in this column must be multiple aligned.}
 in this column should be identical for any given clone, and they
 must be multiple aligned with the data in the \code{seq} column.}
 
-\item{vcall}{name of the column containing V-segment allele assignments. All 
+\item{v_call}{name of the column containing V-segment allele assignments. All 
 entries in this column should be identical to the gene level.}
 
-\item{jcall}{name of the column containing J-segment allele assignments. All 
+\item{j_call}{name of the column containing J-segment allele assignments. All 
 entries in this column should be identical to the gene level.}
 
 \item{junc_len}{name of the column containing the length of the junction as a 
@@ -105,6 +106,8 @@ sequences silently.}
 
 \item{useRegions}{assign CDR/FWR regions?}
 
+\item{dupSingles}{Duplicate sequences in singleton clones to include them as trees?}
+
 \item{...}{additional arguments, used by \link{formatClones}}
 }
 \value{
@@ -118,14 +121,14 @@ object which serves as input for lineage reconstruction.
 }
 \details{
 The input data.frame (\code{data}) must columns for each of the required column name 
-arguments: \code{id}, \code{seq}, \code{germ}, \code{vcall}, \code{jcall}, 
+arguments: \code{id}, \code{seq}, \code{germ}, \code{v_call}, \code{j_call}, 
 \code{junc_len}, and \code{clone}.  The default values are as follows:
 \itemize{
   \item  \code{id       = "sequence_id"}:         unique sequence identifier.
   \item  \code{seq      = "sequence_alignment"}:  IMGT-gapped sample sequence.
   \item  \code{germ     = "germline_alignment"}:  IMGT-gapped germline sequence.
-  \item  \code{vcall    = "v_call"}:              V segment allele call.
-  \item  \code{jcall    = "j_call"}:              J segment allele call.
+  \item  \code{v_call    = "v_call"}:              V segment allele call.
+  \item  \code{j_call    = "j_call"}:              J segment allele call.
   \item  \code{junc_len = "junction_length"}:     junction sequence length.
   \item  \code{clone    = "clone_id"}:            clone identifier.
 }
@@ -141,7 +144,7 @@ some scheme for both proper duplicate removal and lineage reconstruction.
 
 The value for the germline sequence, V-segment gene call, J-segment gene call, 
 junction length, and clone identifier are determined from the first entry in the 
-\code{germ}, \code{vcall}, \code{jcall}, \code{junc_len} and \code{clone} columns, 
+\code{germ}, \code{v_call}, \code{j_call}, \code{junc_len} and \code{clone} columns, 
 respectively. For any given clone, each value in these columns should be identical.
 }
 \seealso{

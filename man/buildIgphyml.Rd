@@ -15,11 +15,13 @@ buildIgphyml(
   quiet = 0,
   rm_files = TRUE,
   rm_dir = NULL,
+  partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
   omega = "e",
   optimize = "lr",
   motifs = "FCH",
   hotness = "e,e,e,e,e,e",
   asrc = 0.95,
+  splitfreqs = FALSE,
   ...
 )
 }
@@ -44,6 +46,8 @@ buildIgphyml(
 
 \item{rm_dir}{remove temporary directory?}
 
+\item{partition}{How to partition omegas along sequences (see details)}
+
 \item{omega}{omega parameters to estimate (see IgPhyML docs)}
 
 \item{optimize}{optimize HLP rates (r), lengths (l), topology (t)}
@@ -54,6 +58,8 @@ buildIgphyml(
 
 \item{asrc}{Intermediate sequence cutoff probability}
 
+\item{splitfreqs}{Calculate codon frequencies on each partition separately?}
+
 \item{...}{Additional arguments (not currently used)}
 }
 \value{
@@ -62,4 +68,15 @@ buildIgphyml(
 }
 \description{
 Wrapper to build IgPhyML trees and infer intermediate nodes
+}
+\details{
+Partition options:
+\itemize{
+  \item  \code{single}: 1 omega for whole sequence
+  \item  \code{cf}: 2 omegas, 1 for all CDRs and 1 for all FWRs
+  \item  \code{hl}: 2 omegas, 1 for heavy and 1 for light chain
+  \item  \code{hlf}: 3 omegas, 1 for all CDRs, 2 for heavy/light FWRs
+  \item  \code{hlc}: 3 omegas, 1 for all FWRs, 2 for heavy/light CDRs
+  \item  \code{hlcf}: 4 omegas, 1 for each heavy/light CDR/FWR combination
+}
 }

@@ -10,13 +10,13 @@ createGermlines(
   organism = "human",
   locus = "IGH",
   nproc = 1,
-  seq_field = "sequence_alignment",
-  v_field = "v_call",
-  d_field = "d_call",
-  j_field = "j_call",
+  seq = "sequence_alignment",
+  v_call = "v_call",
+  d_call = "d_call",
+  j_call = "j_call",
   amino_acid = FALSE,
-  id_field = "sequence_id",
-  clone_field = "clone_id",
+  id = "sequence_id",
+  clone = "clone_id",
   v_germ_start = "v_germline_start",
   v_germ_end = "v_germline_end",
   v_germ_length = "v_germline_length",
@@ -42,19 +42,19 @@ createGermlines(
 
 \item{nproc}{Number of cores to use}
 
-\item{seq_field}{Column name for sequence alignment}
+\item{seq}{Column name for sequence alignment}
 
-\item{v_field}{Column name for V gene segment gene call}
+\item{v_call}{Column name for V gene segment gene call}
 
-\item{d_field}{Column name for D gene segment gene call}
+\item{d_call}{Column name for D gene segment gene call}
 
-\item{j_field}{Column name for J gene segment gene call}
+\item{j_call}{Column name for J gene segment gene call}
 
 \item{amino_acid}{Perform reconstruction on amino acid sequence (experimental)}
 
-\item{id_field}{Column name for sequence ID}
+\item{id}{Column name for sequence ID}
 
-\item{clone_field}{Column name for clone ID}
+\item{clone}{Column name for clone ID}
 
 \item{v_germ_start}{Column name of index of V segment start within germline}
 
@@ -89,7 +89,7 @@ Tibble with reconstructed germlines
 \details{
 Return object adds/edits following columns:
 \itemize{
-  \item  \code{seq_field}:  Sequences potentially padded  same length as germline
+  \item  \code{seq}:  Sequences potentially padded  same length as germline
   \item  \code{germline_alignment}: Full length germline
   \item  \code{germlien_alignment_d_mask}: Full length, D region masked
   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
