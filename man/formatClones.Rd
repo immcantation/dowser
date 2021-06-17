@@ -15,7 +15,7 @@ formatClones(
   cell_id = "cell_id",
   locus = "locus",
   minseq = 2,
-  split_light = TRUE,
+  split_light = FALSE,
   majoronly = FALSE,
   columns = NULL,
   ...

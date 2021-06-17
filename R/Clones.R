@@ -424,7 +424,7 @@ cleanAlignment <- function(clone,seq="sequence"){
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",
                 nproc=1, chain="H", heavy="IGH", cell_id="cell_id", 
-                locus="locus", minseq=2, split_light=TRUE, majoronly=FALSE,
+                locus="locus", minseq=2, split_light=FALSE, majoronly=FALSE,
                 columns=NULL, ...) {
 
 	if(majoronly){
@@ -472,9 +472,10 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 	}else if(!split_light && chain=="HL"){
 		data <- filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
 			!!rlang::sym(subclone) > 1))
-	}else if(chain == "HL"){
-		stop("chain must be HL if split_light=FALSE")
 	}
+    #else if(chain == "HL"){
+	#	stop("chain must be HL if split_light=FALSE")
+	#}
     if(!is.null(columns)){
         if(sum(!columns %in% names(data)) != 0){
             stop(paste("column",
