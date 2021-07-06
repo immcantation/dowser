@@ -3,7 +3,8 @@
 
 #' \link{readIMGT} read in IMGT database
 #' TODO: make auto-download or internal IMGT database
-#' @param dir  directory containing Immcantation-formatted IMGT database
+#' @param dir      directory containing Immcantation-formatted IMGT database
+#' @param quiet    print warnings?
 #' @return List of lists, leading to IMGT-gapped nucleotide sequences.
 #' Structure of object is list[[organism]][[locus]][[segment]]
 #' Organism refers to species (i.e. human, mouse)
@@ -13,27 +14,49 @@
 #' See https://changeo.readthedocs.io/en/stable/examples/igblast.html for example
 #' of how to download.
 #' @export
-readIMGT <- function(dir){
+readIMGT <- function(dir, quiet=FALSE){
   database <- list()
   files <- list.files(dir, full.names=TRUE)
   for(file in files){
-    fasta <- readFasta(file)
-    fasta <- unlist(lapply(fasta,
+    fasta_list <- readFasta(file)
+    fasta_list <- unlist(lapply(fasta_list,
       function(x)toupper(paste0(x,collapse=""))))
     
-    names <- unlist(lapply(strsplit(names(fasta), split="\\|"),
-      function(x)x[2]))
-    names(fasta) <- names
-
-    if(max(table(names(fasta))) != 1){
-      stop(paste("Names not unique", file))
-    }
-
     info <- strsplit(gsub("\\.fasta","",file), split="_")[[1]]
     organism <- info[2]
     locus <- info[3]
     segment <- substr(info[3],4,4)
     locus <- substr(info[3],1,3)
+
+    #less efficient, but deals with duplicate names like CreateGermlines
+    #which uses the last allele available for a given duplicate
+    #this happens in IMGT mouse database, which has the same genes from
+    #multiple mouse strains
+    fasta <- c()
+    duplicates <- c()
+    for(n in names(fasta_list)){
+      name <- getVDJAllele(n, segment)
+      if(name %in% names(fasta)){
+        duplicates <- c(duplicates,name)
+      }
+      fasta[name] <- fasta_list[[n]]
+    }
+    if(length(duplicates) > 0 && !quiet){
+      warning(paste("Segment IDs not unique in",
+      file,"\n",paste(duplicates,collapse=",")))
+    }
+#    names <- unlist(lapply(strsplit(names(fasta), split="\\|"),
+#      function(x)x[2]))
+#    names(fasta) <- names
+#
+#    counts <- table(names(fasta))
+#    if(max(counts) != 1){
+#      warning(paste("Segment IDs not unique", file,"using last allele"))
+#      duplicates <- names(counts[counts > 1])
+#      for(d in duplicates){
+#        fasta[d] <- fasta[d][1]
+#      }
+#    }
 
     if(!organism %in% names(database)){
       database[[organism]] <- list()
@@ -509,7 +532,7 @@ buildGermline <- function(receptor, references,
 #' \itemize{
 #'   \item  \code{seq}:  Sequences potentially padded  same length as germline
 #'   \item  \code{germline_alignment}: Full length germline
-#'   \item  \code{germlien_alignment_d_mask}: Full length, D region masked
+#'   \item  \code{germline_alignment_d_mask}: Full length, D region masked
 #'   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
 #'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 #' }
@@ -572,7 +595,8 @@ buildClonalGermline <- function(receptors, references,
     }
 
     # Select consensus Receptor, resolving ties by alphabetical ordering of sequence id.
-    cons_id <- sort(receptors[cons_index,][[id]])[1]
+    # CreateGermlines.py always sorts ids as characters
+    cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
     cons <- receptors[receptors[[id]] == cons_id,]
     
     # Pad end of consensus sequence with gaps to make it the max length
@@ -602,9 +626,17 @@ buildClonalGermline <- function(receptors, references,
 
     sub_db <- references[[organism]][[locus]]
     # Stitch consensus germline
-    germlines <- buildGermline(cons, references=sub_db, seq=seq, 
+    germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
       v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,j_germ_aa_length=j_germ_aa_length,
-      amino_acid=amino_acid, useRegions=useRegions, ...)
+      amino_acid=amino_acid, useRegions=useRegions, ...),error=function(e)print(e))
+
+    if("error" %in% class(germlines)){
+      germlines  <- list()
+      germlines$full <- NA
+      germlines$dmask <- NA
+      germlines$regions <- NA
+      germlines$vonly <- NA
+    }
 
     receptors$germline_alignment <- germlines$full
     receptors$germline_alignment_d_mask <- germlines$dmask
@@ -624,6 +656,7 @@ buildClonalGermline <- function(receptors, references,
 #' @param organism      Species in \code{references} being analyzed
 #' @param locus         locus in \code{references} being analyzed
 #' @param nproc         Number of cores to use
+#' @param na.rm         Remove clones with failed germline reconstruction?
 #' @param seq           Column name for sequence alignment
 #' @param id            Column name for sequence ID
 #' @param clone         Column name for clone ID
@@ -648,7 +681,7 @@ buildClonalGermline <- function(receptors, references,
 #' \itemize{
 #'   \item  \code{seq}:  Sequences potentially padded  same length as germline
 #'   \item  \code{germline_alignment}: Full length germline
-#'   \item  \code{germlien_alignment_d_mask}: Full length, D region masked
+#'   \item  \code{germline_alignment_d_mask}: Full length, D region masked
 #'   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
 #'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 #' }
@@ -661,7 +694,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   v_germ_start="v_germline_start",v_germ_end="v_germline_end",v_germ_length="v_germline_length",
   d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
   j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
-  np1_length="np1_length", np2_length="np2_length", ...){
+  np1_length="np1_length", np2_length="np2_length", na.rm=FALSE,...){
 
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 
@@ -712,5 +745,9 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
       ...)
     gline
   }, mc.cores=nproc)
-  dplyr::bind_rows(complete)
+  results <- dplyr::bind_rows(complete)
+  if(na.rm){
+    results <- results[!is.na(results$germline_alignment_d_mask),]
+  }
+  results
 }

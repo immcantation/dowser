@@ -21,7 +21,7 @@
 #' @import      graphics
 #' @import      methods
 #' @import      utils
-#' @importFrom  shazam      makeRegion
+#' @importFrom  shazam      setRegionBoundaries
 #' @importFrom  phangorn    phyDat acctran pratchet ancestral.pars dist.ml
 #'                          NJ pml optim.pml pml.control ancestral.pml
 #' @importFrom  tidyselect  all_of

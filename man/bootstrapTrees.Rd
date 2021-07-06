@@ -104,12 +104,12 @@ ExampleDb$sample_id <- sample(ExampleDb$sample_id)
 clones <- formatClones(ExampleDb, trait="sample_id")
 
 btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
-plotTrees(btrees$trees[[4]][[1]])
+plotTrees(btrees$trees[[4]])[[1]]
 
 igphyml <- "~/apps/igphyml/src/igphyml"
 btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
-plotTrees(btrees$trees[[4]][[1]])
+plotTrees(btrees$trees[[4]])[[1]]
 testPS(btrees$switches)
 }
 }

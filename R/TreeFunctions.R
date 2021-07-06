@@ -923,7 +923,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 	}
 	command <- paste("--repfile",gyrep,
 		"--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
-		"hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
+		"--hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
 		splitf,rseed,log)
 	params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
 	if(quiet > 2){
@@ -1241,7 +1241,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #' 
 #' trees <- getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
 #'       trait="sample_id")
-#' plotTrees(trees[[1]])
+#' plotTrees(trees)[[1]]
 #' }
 #' @export
 getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
@@ -1780,12 +1780,12 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' clones <- formatClones(ExampleDb, trait="sample_id")
 #' 
 #' btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
-#' plotTrees(btrees$trees[[4]][[1]])
+#' plotTrees(btrees$trees[[4]])[[1]]
 #' 
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
 #'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
-#' plotTrees(btrees$trees[[4]][[1]])
+#' plotTrees(btrees$trees[[4]])[[1]]
 #' testPS(btrees$switches)
 #' }
 #' @export

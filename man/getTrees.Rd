@@ -94,7 +94,7 @@ plotTrees(trees[[1]])
 
 trees <- getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
       trait="sample_id")
-plotTrees(trees[[1]])
+plotTrees(trees)[[1]]
 }
 }
 \seealso{

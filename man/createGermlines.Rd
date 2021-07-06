@@ -28,6 +28,7 @@ createGermlines(
   j_germ_length = "j_germline_length",
   np1_length = "np1_length",
   np2_length = "np2_length",
+  na.rm = FALSE,
   ...
 )
 }
@@ -78,6 +79,8 @@ createGermlines(
 
 \item{np2_length}{Column name in receptor specifying np2 segment length}
 
+\item{na.rm}{Remove clones with failed germline reconstruction?}
+
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }
 \value{
@@ -91,7 +94,7 @@ Return object adds/edits following columns:
 \itemize{
   \item  \code{seq}:  Sequences potentially padded  same length as germline
   \item  \code{germline_alignment}: Full length germline
-  \item  \code{germlien_alignment_d_mask}: Full length, D region masked
+  \item  \code{germline_alignment_d_mask}: Full length, D region masked
   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 }

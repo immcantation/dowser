@@ -198,11 +198,11 @@ function(data, id="sequence_id", seq="sequence_alignment",
         numbers <- c(1:hc_length,1:alt_length)
         if(useRegions){
             hregions <- as.character(
-                shazam::makeRegion(unique(hc[[junc_len]]),
+                shazam::setRegionBoundaries(unique(hc[[junc_len]]),
                 germline,
                 shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
             lregions <- as.character(
-                shazam::makeRegion(unique(alt[[junc_len]]),
+                shazam::setRegionBoundaries(unique(alt[[junc_len]]),
                 lgermline,
                 shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
             regions <- c(hregions, lregions)
@@ -249,7 +249,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
         new_seq <- seq
         if(useRegions){
             regions <- as.character(
-                shazam::makeRegion(unique(data[[junc_len]]),
+                shazam::setRegionBoundaries(unique(data[[junc_len]]),
                 germline,
                 shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
         }else{
@@ -487,6 +487,11 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
         warning(paste("Removing",sum(is.na(data[[seq]]))
             ,"with missing sequences"))
     }
+
+    counts <- table(data[[clone]])
+    rmclones <- names(counts[counts < minseq])
+    data <- data[!data[[clone]] %in% rmclones,]
+
     data <- data[!is.na(data[[seq]]),]
     clones <- data %>%
         dplyr::group_by(!!rlang::sym(clone)) %>%
@@ -813,7 +818,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
                 return(data$sequence_masked[x])
             }
             regions <- as.character(
-                shazam::makeRegion(data[[junction_length]][x],
+                shazam::setRegionBoundaries(data[[junction_length]][x],
                 data$sequence_masked[x],
                 shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
             if(!is.na(data$sequence_masked[x]) && sum(regions == "cdr3") > 0){
@@ -894,7 +899,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' TODO: Make v_alt_cell not be NA by default
 #' TODO: Unit testing
 #' @export
-getSubclones <- function(heavy, light, nproc=1, minseq=2,
+getSubclones <- function(heavy, light, nproc=1, minseq=1,
 	id="sequence_id", seq="sequence_alignment", 
 	clone="clone_id", cell_id="cell_id", v_call="v_call", j_call="j_call",
 	junc_len="junction_length", nolight="missing"){

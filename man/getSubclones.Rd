@@ -8,7 +8,7 @@ getSubclones(
   heavy,
   light,
   nproc = 1,
-  minseq = 2,
+  minseq = 1,
   id = "sequence_id",
   seq = "sequence_alignment",
   clone = "clone_id",
