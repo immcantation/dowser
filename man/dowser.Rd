@@ -13,6 +13,6 @@ vignettes:\cr
 \references{
 \enumerate{
   \item  Hoehn, KB, Pybus, OG, Kleinstein SH (submitted) Phylogenetic analysis of 
-		migration, differentiation, and class switching	in B cells.
+        migration, differentiation, and class switching    in B cells.
 }
 }

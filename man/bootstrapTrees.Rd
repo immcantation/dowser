@@ -92,9 +92,9 @@ If \code{keeptrees=TRUE} (default) the returned object will contain a list
 named "trees" which contains a list of estimated tree objects for each 
 bootstrap replicate. The object is structured like: 
 trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
-(as well as \code{trait}, \code{temp}, and \code{id}), the returned object 
+(as well as \code{trait}), the returned object 
 will contain a \code{tibble} named "switches" containing switch count 
-information. This object can be passed to \link{testPS} and other functions 
+information. This object can be passed to \link{testSP} and other functions 
 to perform parsimony based trait value tests.
 }
 \examples{
@@ -107,8 +107,8 @@ btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
 plotTrees(btrees$trees[[4]])[[1]]
 
 igphyml <- "~/apps/igphyml/src/igphyml"
-btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
-   igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+   igphyml=igphyml, trait="sample_id")
 plotTrees(btrees$trees[[4]])[[1]]
 testPS(btrees$switches)
 }

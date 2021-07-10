@@ -37,8 +37,8 @@
 #' data(ExampleDb)
 #' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
 #' clones <- formatClones(ExampleDb, trait="sample_id")
-#' btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
-#'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+#' btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+#'    igphyml=igphyml, trait="sample_id")
 #' testPS(btrees$switches)
 #' }
 #' @export
@@ -58,7 +58,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
     }else{
         reps <- switches  %>%
             dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
-            	!!rlang::sym("REP")) %>% 
+                !!rlang::sym("REP")) %>% 
             dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES"))) %>% 
             dplyr::ungroup() %>% 
             tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("SWITCHES")) %>%
@@ -188,8 +188,8 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' data(ExampleDb)
 #' ExampleDb$sample_id = sample(ExampleDb$sample_id)
 #' clones = formatClones(ExampleDb, trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
-#'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+#' btrees = bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+#'    igphyml=igphyml, trait="sample_id")
 #' testSP(btrees$switches)
 #' }
 #' @export
@@ -208,7 +208,7 @@ testSP <- function(switches, permuteAll=FALSE,
 
     switches <- switches %>% 
         dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
-        	!!rlang::sym("FROM") != "UCA")
+            !!rlang::sym("FROM") != "UCA")
 
     if(!is.null(from)){
         from <- dplyr::enquo(from)
@@ -238,22 +238,22 @@ testSP <- function(switches, permuteAll=FALSE,
     if(!bylineage){
         reps <- switches  %>%
             dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE"), 
-            	!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
             dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES")))
         reps <- reps %>% 
             dplyr::filter(!!rlang::sym("TO") != "N") %>%
             dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("REP")) %>% 
             dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/
-            	sum(!!rlang::sym("SWITCHES"))) %>%
+                sum(!!rlang::sym("SWITCHES"))) %>%
             dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
             tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("PROP"))
     }else{        
         reps <- switches  %>%
             dplyr::filter(!!rlang::sym("TO") != "N") %>%
             dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
-            	!!rlang::sym("REP")) %>% 
+                !!rlang::sym("REP")) %>% 
             dplyr::mutate(PROP = !!rlang::sym("SWITCHES")/
-            	sum(!!rlang::sym("SWITCHES"))) %>% 
+                sum(!!rlang::sym("SWITCHES"))) %>% 
             dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
             tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("PROP"))
     }
@@ -411,8 +411,8 @@ testSP <- function(switches, permuteAll=FALSE,
 #' }
 #' @export
 testSC <- function(switches,dropzeros=TRUE,
-	bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
-	permuteAll=FALSE, alternative=c("two.sided","greater","less")){
+    bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
+    permuteAll=FALSE, alternative=c("two.sided","greater","less")){
 
     permute <-dplyr::quo(!!rlang::sym("PERMUTE"))
     if(permuteAll){
@@ -421,7 +421,7 @@ testSC <- function(switches,dropzeros=TRUE,
 
     switches <- switches %>% 
         dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
-        	!!rlang::sym("FROM") != "UCA")
+            !!rlang::sym("FROM") != "UCA")
 
     if(!is.null(from)){
         from <-dplyr::enquo(from)
@@ -435,7 +435,7 @@ testSC <- function(switches,dropzeros=TRUE,
     if(!bylineage){
         reps <- switches  %>%
             dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE"), 
-            	!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
+                !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
             dplyr::summarize(SWITCHES = sum(!!rlang::sym("SWITCHES")))
 
         reps <- reps %>% 
@@ -448,7 +448,7 @@ testSC <- function(switches,dropzeros=TRUE,
         reps <- switches  %>%
             dplyr::filter(!!rlang::sym("TO") != "N") %>%
             dplyr::group_by(!!rlang::sym("TYPE"), !!rlang::sym("CLONE"), 
-            	!!rlang::sym("REP")) %>% 
+                !!rlang::sym("REP")) %>% 
             dplyr::mutate(COUNT = !!rlang::sym("SWITCHES")) %>% 
             dplyr::select(-!!rlang::sym("SWITCHES")) %>% 
             tidyr::spread(!!rlang::sym("TYPE"), !!rlang::sym("COUNT"))
@@ -875,7 +875,8 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
 #'         this is the number of tips.
 #'   \item  \code{p_gt/p_lt}: P value that permuted correlations are greater or less 
 #'         than observed correlation. Only returned if alternative = "two.sided"
-#'   \item  \code{test_trees}:  The \link{phylo} tree objects used, possibly with resolved polytomies.
+#'   \item  \code{test_trees}:  The \link{phylo} tree objects used, possibly with
+#'          resolved polytomies.
 #' }
 #' @seealso Uses output from \code{getTrees}.
 #' @export

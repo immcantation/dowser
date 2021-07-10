@@ -71,5 +71,4 @@ TODO: Junction length?
 TODO: Option to just store all VJ pairs for a cell in the heavy, remove light seqs
 TODO: Option to split VJ parititions into separate clones
 TODO: Make v_alt_cell not be NA by default
-TODO: Unit testing
 }

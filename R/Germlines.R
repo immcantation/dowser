@@ -38,25 +38,14 @@ readIMGT <- function(dir, quiet=FALSE){
       name <- getVDJAllele(n, segment)
       if(name %in% names(fasta)){
         duplicates <- c(duplicates,name)
+      }else{
+        fasta[name] <- fasta_list[[n]]
       }
-      fasta[name] <- fasta_list[[n]]
     }
     if(length(duplicates) > 0 && !quiet){
       warning(paste("Segment IDs not unique in",
       file,"\n",paste(duplicates,collapse=",")))
     }
-#    names <- unlist(lapply(strsplit(names(fasta), split="\\|"),
-#      function(x)x[2]))
-#    names(fasta) <- names
-#
-#    counts <- table(names(fasta))
-#    if(max(counts) != 1){
-#      warning(paste("Segment IDs not unique", file,"using last allele"))
-#      duplicates <- names(counts[counts > 1])
-#      for(d in duplicates){
-#        fasta[d] <- fasta[d][1]
-#      }
-#    }
 
     if(!organism %in% names(database)){
       database[[organism]] <- list()

@@ -5,8 +5,6 @@
 \title{Get a color palette for a predefined set of trait values}
 \usage{
 colorTrees(trees, palette, ambig = "blend")
-
-colorTrees(trees, palette, ambig = "blend")
 }
 \arguments{
 \item{trees}{list of phylo objects with assigned internal node states}
@@ -17,23 +15,14 @@ colorTrees(trees, palette, ambig = "blend")
 }
 \value{
 A list of colored trees
-
-A list of colored trees
 }
 \description{
-\code{colorTree} Gets a color palette for a predefined set of trait values
-
 \code{colorTree} Gets a color palette for a predefined set of trait values
 }
 \details{
 Trees must have node states represented in a "states" vector. By default,
 ambiguous states (separated by ",") have their colors blended. If
-
-Trees must have node states represented in a "states" vector. By default,
-ambiguous states (separated by ",") have their colors blended. If
 }
 \seealso{
-\link{getPalette}, \link{getTrees}, \link{plotTrees}
-
 \link{getPalette}, \link{getTrees}, \link{plotTrees}
 }

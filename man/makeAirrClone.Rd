@@ -88,7 +88,7 @@ number of sequences that were collapsed.}
 numbers of input, discarded and output sequences; otherwise, process
 sequences silently.}
 
-\item{collapse}{iollapse identical sequences?}
+\item{collapse}{collapse identical sequences?}
 
 \item{chain}{if HL, include light chain information if available.}
 

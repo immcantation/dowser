@@ -12,7 +12,7 @@
 #' @references
 #' \enumerate{
 #'   \item  Hoehn, KB, Pybus, OG, Kleinstein SH (submitted) Phylogenetic analysis of 
-#' 		migration, differentiation, and class switching	in B cells.
+#'         migration, differentiation, and class switching    in B cells.
 
 #' }
 #' 
@@ -29,7 +29,7 @@
 #' @importFrom  stringr     str_count    
 #' @importFrom  alakazam    makeChangeoClone DNA_IUPAC
 #' @importFrom  phylotate   read_annotated
-#' @importFrom	ape 		read.tree di2multi reorder.phylo root ladderize subtrees
+#' @importFrom  ape         read.tree di2multi reorder.phylo root ladderize subtrees
 #'                          as.AAbin as.DNAbin getMRCA dist.nodes multi2di extract.clade
 #'                          keep.tip bind.tree collapse.singles bind.tree unroot read.dna
 #'                          is.rooted
@@ -39,8 +39,8 @@
 #'                          group_by ungroup
 #'                          filter slice select 
 #'                          mutate mutate_at 
-#' 							one_of if_else
-#'							right_join rowwise
+#'                          one_of if_else
+#'                          right_join rowwise
 #'                          summarize summarize_at
 #'                          transmute rename
 

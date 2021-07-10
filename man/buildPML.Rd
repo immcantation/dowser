@@ -13,6 +13,8 @@ buildPML(
   asr_thresh = 0.05,
   tree = NULL,
   data_type = "DNA",
+  optNni = TRUE,
+  verbose = FALSE,
   ...
 )
 }
@@ -32,6 +34,10 @@ buildPML(
 \item{tree}{fixed tree topology if desired.}
 
 \item{data_type}{Are sequences DNA or AA?}
+
+\item{optNni}{Optimize tree topology}
+
+\item{verbose}{Print error messages as they happen?}
 
 \item{...}{Additional arguments (not currently used)}
 }

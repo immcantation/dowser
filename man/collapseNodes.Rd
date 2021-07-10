@@ -20,7 +20,7 @@ A tibble with \code{phylo} objects that have had internal nodes collapsed.
 \code{collapseNodes} Node collapsing function.
 }
 \details{
-Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
+Use plotTrees(trees)[[1]] + geom_label(aes(label=node)) + geom_tippoint() to show
 node labels, and getSeq to return internal node sequences
 }
 \seealso{

@@ -14,8 +14,10 @@ plotTrees(
   tip_palette = node_palette,
   base = FALSE,
   layout = "rectangular",
-  nodeids = FALSE,
-  title = TRUE
+  node_nums = FALSE,
+  tip_nums = FALSE,
+  title = TRUE,
+  label_size = NULL
 )
 }
 \arguments{
@@ -38,9 +40,13 @@ objects}
 
 \item{layout}{rectangular or circular tree layout?}
 
-\item{nodeids}{plot internal node numbers?}
+\item{node_nums}{plot internal node numbers?}
+
+\item{tip_nums}{plot tip numbers?}
 
 \item{title}{use clone id as title?}
+
+\item{label_size}{text size}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
@@ -62,7 +68,8 @@ ExampleDb$sample_id <- sample(ExampleDb$sample_id)
 clones <- formatClones(ExampleDb, trait="sample_id")
 
 trees <- getTrees(clones[1:2])
-plotTrees(trees[[1]])
+plots <- plotTrees(trees)
+plots[[1]]
 }
 }
 \seealso{

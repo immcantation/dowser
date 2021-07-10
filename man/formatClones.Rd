@@ -22,8 +22,8 @@ formatClones(
 )
 }
 \arguments{
-\item{data}{data.frame containing the AIRR or Change-O data for a clone. See Details
-for the list of required columns and their default values.}
+\item{data}{data.frame containing the AIRR or Change-O data for a clone.
+See \link{makeAirrClone} for required columns and their defaults}
 
 \item{seq}{sequence alignment column name.}
 
@@ -64,7 +64,8 @@ values specified in the \code{trait} option. It returns a list of \code{airrClon
 objects ordered by number of sequences which serve as input for lineage reconstruction.
 }
 \details{
-This function is a wrapper for \link{makeAirrClone}. Also removes whitespace, ;, :, and = from ids
+This function is a wrapper for \link{makeAirrClone}. Also removes whitespace,
+;, :, and = from ids
 }
 \examples{
 \dontrun{
@@ -73,6 +74,7 @@ clones <- formatClones(ExampleDb,trait="sample_id")
 }
 }
 \seealso{
-Executes in order \link{makeAirrClone}. Returns a tibble of \link{airrClone} objects 
-			which serve as input to \link{getTrees} and \link{bootstrapTrees}.
+Executes in order \link{makeAirrClone}. Returns a tibble of 
+\link{airrClone} objects 
+     which serve as input to \link{getTrees} and \link{bootstrapTrees}.
 }
