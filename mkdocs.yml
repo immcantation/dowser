@@ -25,7 +25,7 @@ pages:
     - 'Germline construction functions':
       - topics/readIMGT.md
       - topics/createGermlines.md
-    - 'Clone formating functions'
+    - 'Clone formating functions':
       - topics/formatClones.md
       - topics/getSubclones.md
       - topics/makeAirrClone.md
