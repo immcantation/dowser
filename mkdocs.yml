@@ -22,7 +22,7 @@ pages:
     - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
     - 'Construct intermediate sequences': vignettes/Sequences-Vignette.md
   - 'Help Topics':
-    - 'Germline construction functions'
+    - 'Germline construction functions':
       - topics/readIMGT.md
       - topics/createGermlines.md
     - 'Clone formating functions'
