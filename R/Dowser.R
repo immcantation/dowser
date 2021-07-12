@@ -19,6 +19,7 @@
 #' @import      ggplot2
 #' @import      ggtree
 #' @import      graphics
+#' @import      markdown
 #' @import      methods
 #' @import      utils
 #' @importFrom  shazam      setRegionBoundaries
