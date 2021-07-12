@@ -22,7 +22,7 @@ layout = "rectangular",
 node_nums = FALSE,
 tip_nums = FALSE,
 title = TRUE,
-label_size = NULL
+labelsize = NULL
 )
 ```
 
@@ -66,7 +66,7 @@ tip_nums
 title
 :   use clone id as title?
 
-label_size
+labelsize
 :   text size
 
 
