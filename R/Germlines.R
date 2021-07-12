@@ -23,10 +23,14 @@ readIMGT <- function(dir, quiet=FALSE){
       function(x)toupper(paste0(x,collapse=""))))
     
     info <- strsplit(gsub("\\.fasta","",file), split="_")[[1]]
-    organism <- info[2]
-    locus <- info[3]
-    segment <- substr(info[3],4,4)
-    locus <- substr(info[3],1,3)
+    length <- length(info)
+    if(length < 3){
+      stop(paste("Improperly formatted input file name:",file))
+    }
+    organism <- info[length-1]
+    locus <- info[length]
+    segment <- substr(info[length],4,4)
+    locus <- substr(info[length],1,3)
 
     #less efficient, but deals with duplicate names like CreateGermlines
     #which uses the last allele available for a given duplicate

@@ -116,3 +116,27 @@ grid.arrange(grobs=plots[1],ncol=1)
 dev.off()
 
 getSeq(clones, node=54, clone=3128)
+
+
+# cd <data directory>
+# 
+# # Download the Immcantation repository
+# git clone bitbucket.org/kleinstein/immcantation
+# 
+# # Run script to obtain IMGT gapped sequences
+# Immcantation/scripts/fetch_imgtdb.sh
+
+library(dowser)
+data(ExampleDb)
+
+references = readIMGT(dir = "germlines/human/vdj")
+
+# remove germline alignment columns for this example
+ExampleDb = select(ExampleDb, -"germline_alignment", 
+    -"germline_alignment_d_mask")
+
+# Reconstruct germline sequences
+ExampleDb = createGermlines(ExampleDb,references,nproc=1)
+
+# Check germline of first row
+ExampleDb$germline_alignment_d_mask[1]
