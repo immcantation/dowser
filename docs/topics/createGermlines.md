@@ -1,9 +1,9 @@
-**createGermlines** - *Wrapper for CreateGermlines.py*
+**createGermlines** - *[createGermlines](createGermlines.md) Determine consensus clone sequence and create germline for clone*
 
 Description
 --------------------
 
-`createGermlines` reconstructs clonal and subclonal germlines
+[createGermlines](createGermlines.md) Determine consensus clone sequence and create germline for clone
 
 
 Usage
@@ -11,14 +11,30 @@ Usage
 ```
 createGermlines(
 data,
-exec,
-refs,
-file,
-cf = "vj_clone",
-format = "airr",
-g = "dmask",
-germ = "germline_alignment_d_mask",
-rm_file = TRUE
+references,
+organism = "human",
+locus = "IGH",
+nproc = 1,
+seq = "sequence_alignment",
+v_call = "v_call",
+d_call = "d_call",
+j_call = "j_call",
+amino_acid = FALSE,
+id = "sequence_id",
+clone = "clone_id",
+v_germ_start = "v_germline_start",
+v_germ_end = "v_germline_end",
+v_germ_length = "v_germline_length",
+d_germ_start = "d_germline_start",
+d_germ_end = "d_germline_end",
+d_germ_length = "d_germline_length",
+j_germ_start = "j_germline_start",
+j_germ_end = "j_germline_end",
+j_germ_length = "j_germline_length",
+np1_length = "np1_length",
+np2_length = "np2_length",
+na.rm = FALSE,
+...
 )
 ```
 
@@ -26,32 +42,79 @@ Arguments
 -------------------
 
 data
-:   tibble containing sequence information
+:   AIRR-table containing sequences from one clone
 
-exec
-:   location of CreateGermline.py
+references
+:   Full list of reference segments, see [readIMGT](readIMGT.md)
 
-refs
-:   vector of reference allele locations
+organism
+:   Species in `references` being analyzed
 
-file
-:   temporary file name to write
+locus
+:   locus in `references` being analyzed
 
-cf
-:   column name for clone or subclone id
+nproc
+:   Number of cores to use
 
-format
-:   airr or changeo format
+seq
+:   Column name for sequence alignment
 
-g
-:   full or dmask germline option
+v_call
+:   Column name for V gene segment gene call
 
-germ
-:   name of the column containg germline DNA sequences in
-output file.
+d_call
+:   Column name for D gene segment gene call
 
-rm_file
-:   remove temporary file?
+j_call
+:   Column name for J gene segment gene call
+
+amino_acid
+:   Perform reconstruction on amino acid sequence (experimental)
+
+id
+:   Column name for sequence ID
+
+clone
+:   Column name for clone ID
+
+v_germ_start
+:   Column name of index of V segment start within germline
+
+v_germ_end
+:   Column name of index of V segment end within germline
+
+v_germ_length
+:   Column name of index of V segment length within germline
+
+d_germ_start
+:   Column name of index of D segment start within germline
+
+d_germ_end
+:   Column name of index of D segment end within germline
+
+d_germ_length
+:   Column name of index of D segment length within germline
+
+j_germ_start
+:   Column name of index of J segment start within germline
+
+j_germ_end
+:   Column name of index of J segment end within germline
+
+j_germ_length
+:   Column name of index of J segment length within germline
+
+np1_length
+:   Column name in receptor specifying np1 segment length
+
+np2_length
+:   Column name in receptor specifying np2 segment length
+
+na.rm
+:   Remove clones with failed germline reconstruction?
+
+...
+:   Additional arguments passed to [buildGermline](buildGermline.md)
 
 
 
@@ -59,10 +122,28 @@ rm_file
 Value
 -------------------
 
-a tibble containing reconstructed germlines
+Tibble with reconstructed germlines
+
+
+Details
+-------------------
+
+Return object adds/edits following columns:
+
++ `seq`:  Sequences potentially padded  same length as germline
++ `germline_alignment`: Full length germline
++ `germline_alignment_d_mask`: Full length, D region masked
++ `vonly`:   V gene segment of germline if vonly=TRUE
++ `regions`: String of VDJ segment in position if useRegions=TRUE
 
 
 
+
+
+See also
+-------------------
+
+[createGermlines](createGermlines.md) [buildGermline](buildGermline.md), [stitchVDJ](stitchVDJ.md)
 
 
 

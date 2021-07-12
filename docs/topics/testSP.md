@@ -18,7 +18,8 @@ dropzeros = TRUE,
 bylineage = FALSE,
 pseudocount = 0,
 alternative = c("two.sided", "greater", "less"),
-binom = FALSE
+tip_switch = 20,
+exclude = FALSE
 )
 ```
 
@@ -50,8 +51,11 @@ alternative
 :   Perform one-sided (`greater` or `less`)
 or `two.sided` test
 
-binom
-:   Calculate binomial p value
+tip_switch
+:   maximum tip/switch ratio
+
+exclude
+:   exclude clones with tip/switch ratio > `tip_switch`?
 
 
 
@@ -96,8 +100,8 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 # data(ExampleDb)
 # ExampleDb$sample_id = sample(ExampleDb$sample_id)
 # clones = formatClones(ExampleDb, trait="sample_id")
-# btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
-# igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
+# btrees = bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+# igphyml=igphyml, trait="sample_id")
 # testSP(btrees$switches)
 ```
 

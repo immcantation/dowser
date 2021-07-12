@@ -45,8 +45,11 @@ sequence-specific annotation columns
 `locus`
 :   the loci represented in this clone object
 
+`chain`
+:   index showing which chain represent which site
+
 `region`
-:   index showing which regions represent which site
+:   index showing FWR/CDR region for each site
 
 `phylo_seq`
 :   sequence column used for phylogenetic tree building

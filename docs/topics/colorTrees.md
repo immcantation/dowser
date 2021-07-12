@@ -5,14 +5,9 @@ Description
 
 `colorTree` Gets a color palette for a predefined set of trait values
 
-`colorTree` Gets a color palette for a predefined set of trait values
-
 
 Usage
 --------------------
-```
-colorTrees(trees, palette, ambig = "blend")
-```
 ```
 colorTrees(trees, palette, ambig = "blend")
 ```
@@ -37,14 +32,9 @@ Value
 
 A list of colored trees
 
-A list of colored trees
-
 
 Details
 -------------------
-
-Trees must have node states represented in a "states" vector. By default,
-ambiguous states (separated by ",") have their colors blended. If
 
 Trees must have node states represented in a "states" vector. By default,
 ambiguous states (separated by ",") have their colors blended. If
@@ -54,8 +44,6 @@ ambiguous states (separated by ",") have their colors blended. If
 
 See also
 -------------------
-
-[getPalette](getPalette.md), [getTrees](getTrees.md), [plotTrees](plotTrees.md)
 
 [getPalette](getPalette.md), [getTrees](getTrees.md), [plotTrees](plotTrees.md)
 

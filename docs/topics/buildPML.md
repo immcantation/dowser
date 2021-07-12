@@ -12,11 +12,14 @@ Usage
 buildPML(
 clone,
 seq = "sequence",
-model = "GTR",
+sub_model = "GTR",
 gamma = FALSE,
 asr = "seq",
 asr_thresh = 0.05,
 tree = NULL,
+data_type = "DNA",
+optNni = TRUE,
+verbose = FALSE,
 ...
 )
 ```
@@ -30,7 +33,7 @@ clone
 seq
 :   sequece column in `airrClone` object
 
-model
+sub_model
 :   substitution model to use
 
 gamma
@@ -44,6 +47,15 @@ asr_thresh
 
 tree
 :   fixed tree topology if desired.
+
+data_type
+:   Are sequences DNA or AA?
+
+optNni
+:   Optimize tree topology
+
+verbose
+:   Print error messages as they happen?
 
 ...
 :   Additional arguments (not currently used)

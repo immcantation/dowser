@@ -17,23 +17,23 @@ pages:
     - 'Release Notes': news.md
   - 'Vignettes':
     - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Build trees': vignettes/Building-Trees-Vignette.md
-    - 'Plot trees': vignettes/Plotting-Trees-Vignette.md
+    - 'Build lineage trees': vignettes/Building-Trees-Vignette.md
+    - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
   - 'Help Topics':
-    - 'Define Clones and Subclones':
+    - 'Define clones and ubclones':
       - topics/getSubclones.md
       - topics/formatClones.md
       - topics/createGermlines.md
       - topics/makeAirrClone.md
       - topics/airrClone-class.md
-    - 'Build Lineage Trees':
+    - 'Build trees':
       - topics/getTrees.md
       - topics/bootstrapTrees.md
       - topics/buildIgphyml.md
       - topics/buildPML.md
       - topics/buildPhylo.md
       - topics/buildPratchet.md
-    - 'Visualize Trees':
+    - 'Visualize trees':
       - topics/plotTrees.md
       - topics/treesToPDF.md
       - topics/colorTrees.md
@@ -41,9 +41,9 @@ pages:
       - topics/collapseNodes.md
       - topics/scaleBranches.md
       - topics/rerootTree.md
-    - 'Reconstruct Sequences':
+    - 'Reconstruct intermediate sequences':
       - topics/getSeq.md
-    - 'Discrete Trait Analysis':
+    - 'Discrete trait analysis':
       - topics/makeModelFile.md
       - topics/readModelFile.md
       - topics/testPS.md

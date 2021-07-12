@@ -1228,9 +1228,18 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,    palette=NULL,
     seq=NULL, collapse=FALSE, ...){
 
-    #if(build == "pratchet"){
-    #    warning("We are experiencing compatability issues with the most recent\nversion of phangorn. Please use dnapars if encountering problems.")
-    #}
+    if(build == "pratchet"){
+        s <- sessionInfo()
+        version <- s$loadedOnly$phangorn$Version
+        if(version == "2.7.0"){
+            warn <- paste0("\n\nWe are experiencing issues with phangorn v2.7.0\n",
+                "If you encounter problems, please either:\n",
+                "A) update phangorn if a newer version available on CRAN\n",
+                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
+                "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n")
+            stop(warn)
+        }    
+    }
 
     args <- list(...)
     data <- clones$data
@@ -1785,9 +1794,18 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
     ...){
 
-    #if(build == "pratchet"){
-    #    warning("We are experiencing compatability issues with the most recent\nversion of phangorn. Please use dnapars if encountering problems.")
-    #}
+    if(build == "pratchet"){
+        s <- sessionInfo()
+        version <- s$loadedOnly$phangorn$Version
+        if(version == "2.7.0"){
+            warn <- paste0("\nWe are experiencing issues with phangorn v2.7.0\n",
+                "If you encounter problems, please either:\n",
+                "A) update phangorn if a newer version available on CRAN\n",
+                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
+                "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n")
+            stop(warn)
+        }    
+    }
 
     args <- list(...)
     data <- clones$data

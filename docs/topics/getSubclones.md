@@ -13,13 +13,13 @@ getSubclones(
 heavy,
 light,
 nproc = 1,
-minseq = 2,
+minseq = 1,
 id = "sequence_id",
 seq = "sequence_alignment",
 clone = "clone_id",
-cellid = "cell_id",
-vcall = "v_call",
-jcall = "j_call",
+cell_id = "cell_id",
+v_call = "v_call",
+j_call = "j_call",
 junc_len = "junction_length",
 nolight = "missing"
 )
@@ -51,14 +51,14 @@ clone
 :   name of the column containing the identifier for the clone. All 
 entries in this column should be identical.
 
-cellid
+cell_id
 :   name of the column containing identifier for cells.
 
-vcall
+v_call
 :   name of the column containing V-segment allele assignments. All 
 entries in this column should be identical to the gene level.
 
-jcall
+j_call
 :   name of the column containing J-segment allele assignments. All 
 entries in this column should be identical to the gene level.
 
@@ -96,7 +96,6 @@ TODO: Junction length?
 TODO: Option to just store all VJ pairs for a cell in the heavy, remove light seqs
 TODO: Option to split VJ parititions into separate clones
 TODO: Make v_alt_cell not be NA by default
-TODO: Unit testing
 
 
 

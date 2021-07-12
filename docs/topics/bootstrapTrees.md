@@ -30,6 +30,8 @@ rep = NULL,
 keeptrees = TRUE,
 lfile = NULL,
 seq = "sequence",
+downsample = FALSE,
+tip_switch = 20,
 ...
 )
 ```
@@ -99,6 +101,12 @@ lfile
 seq
 :   column name containing sequence information
 
+downsample
+:   downsample clones to have a maximum specified tip/switch ratio?
+
+tip_switch
+:   maximum allowed tip/switch ratio if downsample=TRUE
+
 ...
 :   additional arguments to be passed to tree building program
 
@@ -119,9 +127,9 @@ If `keeptrees=TRUE` (default) the returned object will contain a list
 named "trees" which contains a list of estimated tree objects for each 
 bootstrap replicate. The object is structured like: 
 trees[[<replicate>]][[<tree index>]]. If `igphyml` is specified 
-(as well as `trait`, `temp`, and `id`), the returned object 
+(as well as `trait`), the returned object 
 will contain a `tibble` named "switches" containing switch count 
-information. This object can be passed to [testPS](testPS.md) and other functions 
+information. This object can be passed to [testSP](testSP.md) and other functions 
 to perform parsimony based trait value tests.
 
 
@@ -136,12 +144,12 @@ data(ExampleDb)
 # clones <- formatClones(ExampleDb, trait="sample_id")
 # 
 # btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
-# plotTrees(btrees$trees[[4]][[1]])
+# plotTrees(btrees$trees[[4]])[[1]]
 # 
 # igphyml <- "~/apps/igphyml/src/igphyml"
-# btrees <- bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
-# igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
-# plotTrees(btrees$trees[[4]][[1]])
+# btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+# igphyml=igphyml, trait="sample_id")
+# plotTrees(btrees$trees[[4]])[[1]]
 # testPS(btrees$switches)
 ```
 

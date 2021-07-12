@@ -19,8 +19,10 @@ node_palette = "Dark2",
 tip_palette = node_palette,
 base = FALSE,
 layout = "rectangular",
-nodeids = FALSE,
-title = TRUE
+node_nums = FALSE,
+tip_nums = FALSE,
+title = TRUE,
+label_size = NULL
 )
 ```
 
@@ -55,11 +57,17 @@ base
 layout
 :   rectangular or circular tree layout?
 
-nodeids
+node_nums
 :   plot internal node numbers?
+
+tip_nums
+:   plot tip numbers?
 
 title
 :   use clone id as title?
+
+label_size
+:   text size
 
 
 
@@ -91,7 +99,8 @@ data(ExampleDb)
 # clones <- formatClones(ExampleDb, trait="sample_id")
 # 
 # trees <- getTrees(clones[1:2])
-# plotTrees(trees[[1]])
+# plots <- plotTrees(trees)
+# plots[[1]]
 ```
 
 

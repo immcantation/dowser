@@ -36,7 +36,7 @@ A tibble with `phylo` objects that have had internal nodes collapsed.
 Details
 -------------------
 
-Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
+Use plotTrees(trees)[[1]] + geom_label(aes(label=node)) + geom_tippoint() to show
 node labels, and getSeq to return internal node sequences
 
 

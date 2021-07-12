@@ -1,9 +1,9 @@
-**runCorrelationTest** - *Resolve polytomies to have the minimum number of single timepoint clades*
+**runCorrelationTest** - *Run correlationTest, based on https://doi.org/10.1111/2041-210X.12466*
 
 Description
 --------------------
 
-`rootToTop` performs root-to-tip regression permutation test
+`runCorrelationTest` performs root-to-tip regression permutation test
 
 
 Usage

@@ -16,7 +16,10 @@ dir = ".",
 id = "N",
 rep = NULL,
 trait = NULL,
-dummy = TRUE
+dummy = TRUE,
+partition = "single",
+heavy = "IGH",
+...
 )
 ```
 
@@ -43,6 +46,15 @@ trait
 
 dummy
 :   output uninformative sequences?
+
+partition
+:   how to partition omegas
+
+heavy
+:   name of heavy chain locus
+
+...
+:   Additional arguments
 
 
 

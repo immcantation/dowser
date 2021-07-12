@@ -17,8 +17,8 @@ data,
 id = "sequence_id",
 seq = "sequence_alignment",
 germ = "germline_alignment_d_mask",
-vcall = "v_call",
-jcall = "j_call",
+v_call = "v_call",
+j_call = "j_call",
 junc_len = "junction_length",
 clone = "clone_id",
 mask_char = "N",
@@ -30,13 +30,15 @@ seq_fields = NULL,
 add_count = TRUE,
 verbose = FALSE,
 collapse = TRUE,
-region = "H",
+chain = "H",
 heavy = NULL,
 cell = "cell_id",
 locus = "locus",
 traits = NULL,
 mod3 = TRUE,
 randomize = TRUE,
+useRegions = TRUE,
+dupSingles = FALSE,
 ...
 )
 ```
@@ -60,11 +62,11 @@ germ
 in this column should be identical for any given clone, and they
 must be multiple aligned with the data in the `seq` column.
 
-vcall
+v_call
 :   name of the column containing V-segment allele assignments. All 
 entries in this column should be identical to the gene level.
 
-jcall
+j_call
 :   name of the column containing J-segment allele assignments. All 
 entries in this column should be identical to the gene level.
 
@@ -114,9 +116,9 @@ numbers of input, discarded and output sequences; otherwise, process
 sequences silently.
 
 collapse
-:   iollapse identical sequences?
+:   collapse identical sequences?
 
-region
+chain
 :   if HL, include light chain information if available.
 
 heavy
@@ -137,6 +139,12 @@ mod3
 randomize
 :   randomize sequence order? Important if using PHYLIP
 
+useRegions
+:   assign CDR/FWR regions?
+
+dupSingles
+:   Duplicate sequences in singleton clones to include them as trees?
+
 ...
 :   additional arguments, used by [formatClones](formatClones.md)
 
@@ -153,14 +161,14 @@ Details
 -------------------
 
 The input data.frame (`data`) must columns for each of the required column name 
-arguments: `id`, `seq`, `germ`, `vcall`, `jcall`, 
+arguments: `id`, `seq`, `germ`, `v_call`, `j_call`, 
 `junc_len`, and `clone`.  The default values are as follows:
 
 + `id       = "sequence_id"`:         unique sequence identifier.
 + `seq      = "sequence_alignment"`:  IMGT-gapped sample sequence.
 + `germ     = "germline_alignment"`:  IMGT-gapped germline sequence.
-+ `vcall    = "v_call"`:              V segment allele call.
-+ `jcall    = "j_call"`:              J segment allele call.
++ `v_call    = "v_call"`:              V segment allele call.
++ `j_call    = "j_call"`:              J segment allele call.
 + `junc_len = "junction_length"`:     junction sequence length.
 + `clone    = "clone_id"`:            clone identifier.
 
@@ -176,7 +184,7 @@ some scheme for both proper duplicate removal and lineage reconstruction.
 
 The value for the germline sequence, V-segment gene call, J-segment gene call, 
 junction length, and clone identifier are determined from the first entry in the 
-`germ`, `vcall`, `jcall`, `junc_len` and `clone` columns, 
+`germ`, `v_call`, `j_call`, `junc_len` and `clone` columns, 
 respectively. For any given clone, each value in these columns should be identical.
 
 

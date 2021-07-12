@@ -16,15 +16,16 @@ Usage
 ```
 formatClones(
 data,
+seq = "sequence_alignment",
 clone = "clone_id",
 subclone = "subclone_id",
 nproc = 1,
-region = "H",
-heavy = NULL,
-cell = "cell_id",
+chain = "H",
+heavy = "IGH",
+cell_id = "cell_id",
 locus = "locus",
 minseq = 2,
-subclones = "lump",
+split_light = FALSE,
 majoronly = FALSE,
 columns = NULL,
 ...
@@ -35,8 +36,11 @@ Arguments
 -------------------
 
 data
-:   data.frame containing the AIRR or Change-O data for a clone. See Details
-for the list of required columns and their default values.
+:   data.frame containing the AIRR or Change-O data for a clone.
+See [makeAirrClone](makeAirrClone.md) for required columns and their defaults
+
+seq
+:   sequence alignment column name.
 
 clone
 :   name of the column containing the identifier for the clone. All 
@@ -48,13 +52,13 @@ subclone
 nproc
 :   number of cores to parallelize formating over.
 
-region
+chain
 :   if HL, include light chain information if available.
 
 heavy
 :   name of heavy chain locus (default = "IGH")
 
-cell
+cell_id
 :   name of the column containing cell assignment information
 
 locus
@@ -63,7 +67,7 @@ locus
 minseq
 :   minimum numbner of sequences per clone
 
-subclones
+split_light
 :   split or lump subclones? See `getSubclones`.
 
 majoronly
@@ -87,7 +91,8 @@ A tibble of [airrClone](airrClone-class.md) objects containing modified clones.
 Details
 -------------------
 
-This function is a wrapper for [makeAirrClone](makeAirrClone.md). Also removes whitespace, ;, :, and = from ids
+This function is a wrapper for [makeAirrClone](makeAirrClone.md). Also removes whitespace,
+;, :, and = from ids
 
 
 
@@ -105,8 +110,9 @@ data(ExampleDb)
 See also
 -------------------
 
-Executes in order [makeAirrClone](makeAirrClone.md). Returns a tibble of [airrClone](airrClone-class.md) objects 
-			which serve as input to [getTrees](getTrees.md) and [bootstrapTrees](bootstrapTrees.md).
+Executes in order [makeAirrClone](makeAirrClone.md). Returns a tibble of 
+[airrClone](airrClone-class.md) objects 
+which serve as input to [getTrees](getTrees.md) and [bootstrapTrees](bootstrapTrees.md).
 
 
 

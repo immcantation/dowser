@@ -22,9 +22,8 @@ Dowser isn’t officially released yet, so please let us know if you’re planni
 # Dependencies
 
 **Depends:** ggplot2  
-**Imports:** alakazam, ape, dplyr, ggtree, graphics, gridExtra, methods, phangorn, phylotate, RColorBrewer, rlang, stats, stringr, tidyselect, tidyr, utils  
-**Suggests:** knitr, rmarkdown, testthat  
-**Extends:** FALSE
+**Imports:** alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
+**Suggests:** knitr, rmarkdown, testthat
 
 
 # Authors
@@ -56,3 +55,8 @@ A BibTeX entry for LaTeX users is
     doi = {10.1101/2020.05.30.124446},
   }
 
+
+
+# License
+
+AGPL-3

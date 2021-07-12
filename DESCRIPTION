@@ -1,6 +1,6 @@
 Package: dowser
 Type: Package
-Version: 0.0.999
+Version: 0.1.0
 Date: 2021-07-08
 Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"), 
                     email="kenneth.hoehn@yale.edu"),
@@ -21,8 +21,8 @@ Depends:
     R (>= 3.1.2),
     ggplot2 (>= 3.2.0)
 Imports:
-    alakazam (>= 1.1.0.999),
-    ape,
+    alakazam (>= 1.1.0),
+    ape (>= 5.5),
     Biostrings,
     dplyr (>= 0.8.1),
     ggtree,
@@ -34,7 +34,7 @@ Imports:
     phylotate,
     RColorBrewer,
     rlang,
-    shazam (>= 1.0.2.999),
+    shazam (>= 1.1.0),
     stats,
     stringr,
     tidyselect,

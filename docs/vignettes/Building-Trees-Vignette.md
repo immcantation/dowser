@@ -1,6 +1,6 @@
 # Build trees
 
-Dowser offer multiple ways to build B cell phylogenetic trees. These differ by the method used to estimate tree topology and branch lengths (e.g. maximum parsimony and maximum likelihood) and implementation (PHYLIP or R packages ape and phangorn).
+Dowser offer multiple ways to build B cell phylogenetic trees. These differ by the method used to estimate tree topology and branch lengths (e.g. maximum parsimony and maximum likelihood) and implementation (IgPhyML, PHYLIP, or R packages ape and phangorn).
 
 Before trees can be built, B cell sequences must be separated into clonal clusters, and had their clonal germline sequences reconstructed. Default settings assume input data is in AIRR TSV format, though column names may be specified using function arguments.
 
@@ -49,7 +49,7 @@ clones
 # 4     3170 <airrClon> N        16 Homsap IGHD6-19*01 F
 ```
 
-## Build trees using maximum parsimony
+## Build maximum parsimony trees
 
 A common way to build B cell lineage trees is the find the tree topology that minimizes the number of mutations needed along the tree (i.e. is the most parsimonious). Branch lengths can then be estimated as the number of mutations per site between each node in the tree.
 
@@ -64,7 +64,7 @@ In all cases, the output is the same tibble as the input, but with a `trees` col
 # Build trees using the pratchet maximum parsimony function in phangnorn
 # NOTE we are currently having issues with the most recent phangorn version
 # please use dnapars (below) if you encounter issues.
-clones = getTrees(clones)
+clones = getTrees(clones, nproc=1)
 
 clones
 ## A tibble: 100 x 6
@@ -77,7 +77,7 @@ clones
 
 # Build trees using dnapars.
 # exec here is set to dnapars position in the Docker image.
-clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars")
+clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars", nproc=1)
 
 clones
 ## A tibble: 100 x 6
@@ -90,7 +90,61 @@ clones
 
 ```
 
-## Build trees using maximum likelihood
+## Build maximum likelihood trees
 
-Coming soon!
+A common way to build B cell lineage trees is the find the tree topology and branch lengths that maximize the likelihood of the sequence data given a substitution model.
 
+Standard maximum likelihood trees can also be built with the `getTrees` function, which if specified the `optim.pml` function in the `phangorn` phylogenetics package.
+
+Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To do this, the `build` option needs to be set as `dnaml` and the path to the `dnaml` executable needs to be specified in the `exec` option.
+
+```r
+
+# Build trees using the optim.pml maximum likelihood function in phangnorn
+clones = getTrees(clones, build="pml")
+
+clones
+## A tibble: 100 x 6
+#   clone_id data       locus  seqs d_call               trees  
+#      <dbl> <list>     <chr> <int> <chr>                <list> 
+# 1     3128 <airrClon> N        43 Homsap IGHD6-19*01 F <phylo>
+# 2     3100 <airrClon> N        32 Homsap IGHD6-13*01 F <phylo>
+# 3     3141 <airrClon> N        17 Homsap IGHD6-19*01 F <phylo>
+# 4     3170 <airrClon> N        16 Homsap IGHD6-19*01 F <phylo>
+
+# Build trees using dnapars.
+# exec here is set to dnapars position in the Docker image.
+clones = getTrees(clones, build="dnaml", exec="/usr/local/bin/dnaml")
+
+clones
+## A tibble: 100 x 6
+#   clone_id data       locus  seqs d_call               trees  
+#      <dbl> <list>     <chr> <int> <chr>                <list> 
+# 1     3128 <airrClon> N        43 Homsap IGHD6-19*01 F <phylo>
+# 2     3100 <airrClon> N        32 Homsap IGHD6-13*01 F <phylo>
+# 3     3141 <airrClon> N        17 Homsap IGHD6-19*01 F <phylo>
+# 4     3170 <airrClon> N        16 Homsap IGHD6-19*01 F <phylo>
+
+```
+
+## Build IgPhyML B cell specific maximum likelihood trees
+
+B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, use the following options:
+
+```r
+
+# Build trees using dnapars.
+# exec here is set to dnapars position in the Docker image.
+clones = getTrees(clones, build="igphyml", 
+    exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
+
+clones
+## A tibble: 100 x 6
+#   clone_id data       locus  seqs d_call               trees  
+#      <dbl> <list>     <chr> <int> <chr>                <list> 
+# 1     3128 <airrClon> N        43 Homsap IGHD6-19*01 F <phylo>
+# 2     3100 <airrClon> N        32 Homsap IGHD6-13*01 F <phylo>
+# 3     3141 <airrClon> N        17 Homsap IGHD6-19*01 F <phylo>
+# 4     3170 <airrClon> N        16 Homsap IGHD6-19*01 F <phylo>
+
+```

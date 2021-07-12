@@ -320,22 +320,22 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     }
     if(node_nums){
         if(is.null(label_size)){
-            p <- p + ggtree::geom_label(data=filter(p$data, !isTip),
+            p <- p + ggtree::geom_label(data=p$data[!p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
                 label.size=0.1)
         }else{
-            p <- p + ggtree::geom_label(data=filter(p$data, !isTip),
+            p <- p + ggtree::geom_label(data=p$data[!p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
                 label.size=0.1,size=label_size)
         }
     }
     if(tip_nums){
         if(is.null(label_size)){
-            p <- p + ggtree::geom_label(data=filter(p$data, isTip),
+            p <- p + ggtree::geom_label(data=p$data[p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
                 label.size=0.1)
         }else{
-            p <- p + ggtree::geom_label(data=filter(p$data, !isTip),
+            p <- p + ggtree::geom_label(data=p$data[p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
                 label.size=0.1,size=label_size)
         }

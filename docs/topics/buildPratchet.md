@@ -18,6 +18,7 @@ tree = NULL,
 asr_type = "MPR",
 verbose = 0,
 resolve_random = TRUE,
+data_type = "DNA",
 ...
 )
 ```
@@ -49,6 +50,9 @@ verbose
 resolve_random
 :   randomly resolve polytomies?
 
+data_type
+:   Are sequences DNA or AA?
+
 ...
 :   Additional arguments (not currently used)
 
@@ -58,7 +62,7 @@ resolve_random
 Value
 -------------------
 
-`phylo` object created by phangorn::pratchetet with nodes
+`phylo` object created by phangorn::pratchet with nodes
 attribute containing reconstructed sequences.
 
 

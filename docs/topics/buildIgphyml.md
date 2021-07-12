@@ -20,6 +20,13 @@ rseed = NULL,
 quiet = 0,
 rm_files = TRUE,
 rm_dir = NULL,
+partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
+omega = "e",
+optimize = "lr",
+motifs = "FCH",
+hotness = "e,e,e,e,e,e",
+asrc = 0.95,
+splitfreqs = FALSE,
 ...
 )
 ```
@@ -57,6 +64,27 @@ rm_files
 rm_dir
 :   remove temporary directory?
 
+partition
+:   How to partition omegas along sequences (see details)
+
+omega
+:   omega parameters to estimate (see IgPhyML docs)
+
+optimize
+:   optimize HLP rates (r), lengths (l), topology (t)
+
+motifs
+:   motifs to consider (see IgPhyML docs)
+
+hotness
+:   hotness parameters to estimate (see IgPhyML docs)
+
+asrc
+:   Intermediate sequence cutoff probability
+
+splitfreqs
+:   Calculate codon frequencies on each partition separately?
+
 ...
 :   Additional arguments (not currently used)
 
@@ -68,6 +96,20 @@ Value
 
 `phylo` object created by igphyml with nodes attribute
 containing reconstructed sequences.
+
+
+Details
+-------------------
+
+Partition options:
+
++ `single`: 1 omega for whole sequence
++ `cf`: 2 omegas, 1 for all CDRs and 1 for all FWRs
++ `hl`: 2 omegas, 1 for heavy and 1 for light chain
++ `hlf`: 3 omegas, 1 for all CDRs, 2 for heavy/light FWRs
++ `hlc`: 3 omegas, 1 for all FWRs, 2 for heavy/light CDRs
++ `hlcf`: 4 omegas, 1 for each heavy/light CDR/FWR combination
+
 
 
 

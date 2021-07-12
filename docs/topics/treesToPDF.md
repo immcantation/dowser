@@ -49,8 +49,8 @@ data(ExampleDb)
 # ExampleDb$sample_id <- sample(ExampleDb$sample_id)
 # clones <- formatClones(ExampleDb, trait="sample_id")
 # trees <- getTrees(clones)
-# plotTrees(trees)
-# treesToPDF(trees$trees,"test.pdf",width=5,height=6)
+# plots <- plotTrees(trees)
+# treesToPDF(plots,"test.pdf",width=5,height=6)
 ```
 
 
