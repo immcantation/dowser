@@ -150,7 +150,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    node_nums    plot internal node numbers?
 #' @param    tip_nums     plot tip numbers?
 #' @param    title        use clone id as title?
-#' @param    label_size   text size
+#' @param    labelsize    text size
 #' @param    base         recursion base case (don't edit)
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
@@ -177,7 +177,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
     scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
-    label_size=NULL){
+    labelsize=NULL){
 
     tiptype = "character"
     nodetype = "character"
@@ -248,7 +248,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         ps <- lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
-            tip_nums=tip_nums,title=title,label_size=label_size))
+            tip_nums=tip_nums,title=title,labelsize=labelsize))
         if(!is.null(tips) || nodes){
             ps  <- lapply(ps,function(x){
                     x <- x + theme(legend.position="right",
@@ -319,25 +319,25 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         p <- p + ggtitle(data@clone)
     }
     if(node_nums){
-        if(is.null(label_size)){
+        if(is.null(labelsize)){
             p <- p + ggtree::geom_label(data=p$data[!p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
                 label.size=0.1)
         }else{
             p <- p + ggtree::geom_label(data=p$data[!p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
-                label.size=0.1,size=label_size)
+                label.size=0.1,size=labelsize)
         }
     }
     if(tip_nums){
-        if(is.null(label_size)){
+        if(is.null(labelsize)){
             p <- p + ggtree::geom_label(data=p$data[p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
                 label.size=0.1)
         }else{
             p <- p + ggtree::geom_label(data=p$data[p$data$isTip,],
                 aes(label=!!rlang::sym("node")),label.padding = unit(0.1, "lines"),
-                label.size=0.1,size=label_size)
+                label.size=0.1,size=labelsize)
         }
     }
     p

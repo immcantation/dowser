@@ -10,7 +10,7 @@ Before trees can be built, data must be formatted into a data table of AIRR clon
 
 1. Change non-nucleotide characters to `N` characters.
 2. By default, collapse sequences that are either identical or differ only by ambiguous characters. 
-3. Sequences will not be collapsed if they differ by columns specified in the "traits" option, or if the `collapse` option is set to `FALSE`.
+3. Sequences will not be collapsed if they differ by columns specified in the `traits` option, or if the `collapse` option is set to `FALSE`.
 4. Include data columns specified by `num_fields` or `text_fields`.
 5. Remove uninformative sequence sites in which all sequences have `N` characters.
 
@@ -127,7 +127,7 @@ clones
 
 ```
 
-## Build IgPhyML B cell specific maximum likelihood trees
+## Build IgPhyML B cell trees
 
 B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, use the following options:
 

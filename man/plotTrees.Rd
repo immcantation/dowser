@@ -17,7 +17,7 @@ plotTrees(
   node_nums = FALSE,
   tip_nums = FALSE,
   title = TRUE,
-  label_size = NULL
+  labelsize = NULL
 )
 }
 \arguments{
@@ -46,7 +46,7 @@ objects}
 
 \item{title}{use clone id as title?}
 
-\item{label_size}{text size}
+\item{labelsize}{text size}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.

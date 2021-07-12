@@ -2,11 +2,12 @@ library(dowser)
 library(ggtree)
 library(ggplot2)
 library(dplyr)
+library(gridExtra)
 
 data(ExampleDb)
 
 clones = formatClones(ExampleDb, traits=c("c_call"),
-    num_fields=c("duplicate_count"), columns=c("d_call"),
+    num_fields=c("duplicate_count"), columns=c("sample_id"),
     minseq=10)
 
 # build maximum parsimony trees
@@ -96,3 +97,22 @@ plots = plotTrees(clones, tips="c_call", tipsize=2)
 
 # pass any arguments you would pass to grDevices::pdf
 treesToPDF(plots, file="trees.pdf", nrow=2, ncol=2)
+
+# pass any arguments you would pass to grDevices::pdf
+png("figures/Plotting-Vignette-all.png")
+grid.arrange(grobs=plots[1:4],ncol=2)
+dev.off()
+
+
+clones = collapseNodes(clones)
+plots = plotTrees(clones, tips="c_call", tipsize=2,
+    node_nums=TRUE, labelsize=7)
+
+#treesToPDF(plots, file="trees.pdf", nrow=2, ncol=2)
+
+# pass any arguments you would pass to grDevices::pdf
+png("figures/Sequences-Vignette-all.png")
+grid.arrange(grobs=plots[1],ncol=1)
+dev.off()
+
+getSeq(clones, node=54, clone=3128)

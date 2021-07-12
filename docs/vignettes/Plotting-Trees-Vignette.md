@@ -2,24 +2,7 @@
 
 Once trees have been built, they can be visualized in multiple ways. The easiest is through the `ggtree` R package. Dowser implements the `plotTrees` function, which makes plotting multiple trees using `ggtree` easier.
 
-First, build trees:
-
-```r
-
-library(dowser)
-library(ggtree)
-library(ggplot2)
-library(dplyr)
-
-data(ExampleDb)
-
-clones = formatClones(ExampleDb, traits=c("c_call"),
-    num_fields=c("duplicate_count"), columns=c("d_call"),
-    minseq=10)
-
-# build maximum parsimony trees
-clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars")
-```
+First, you have to build the trees. See the previous vignette for examples.
 
 ## Basic plotting
 
@@ -132,6 +115,11 @@ The `treesToPDF` function can be used to plot all trees at once to a pdf file:
 ```r
 plots = plotTrees(clones, tips="c_call", tipsize=2)
 
-# pass any arguments you would pass to grDevices::pdf
+# you can also pass arguments you would pass to grDevices::pdf, like width and height
+# here, we plot 4 trees per page (2 rows, 2 columns)
 treesToPDF(plots, file="trees.pdf", nrow=2, ncol=2)
 ```
+
+The first page of this output is shown below:
+
+![Pretty plot](figures/Plotting-Vignette-all.png)
