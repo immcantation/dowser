@@ -15,7 +15,7 @@
 #' of how to download.
 #' @examples
 #' # vdj_dir contains a minimal example of reference germlines 
-#' # (IGHV3-11*05, IGHD3-10*01 and IGHJ4*03)
+#' # (IGHV3-11*05, IGHD3-10*01 and IGHJ5*02)
 #' # which are the gene assignments for ExamapleDb[1,]
 #' vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
 #' imgt <- readIMGT(vdj_dir)
