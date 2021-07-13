@@ -142,7 +142,6 @@ getVDJAllele <- function(gene, segment, action='first'){
 #' @param amino_acid     Perform reconstruction on amino acid sequence (experimental)
 #' @return String of germline sequence from specified segment aligned with the 
 #' sequence in the seq column of \code{receptor}.
-#' @export
 getGermline <- function(receptor, references, segment, field, 
   germ_start, germ_end, germ_length, germ_aa_start,germ_aa_length, 
   amino_acid=FALSE){
@@ -228,7 +227,6 @@ getGermline <- function(receptor, references, segment, field,
 #' @param amino_acid  Perform reconstruction on amino acid sequence (experimental)
 #' @return Full length germline VDJ sequence aligned with aligned with the 
 #' sequence in the \code{seq} column of \code{receptor}.
-#' @export
 stitchVDJ <- function(receptor, v_seq, d_seq, j_seq, 
   np1_length="np1_length", np2_length="np2_length",
   np1_aa_length="np1_aa_length", np2_aa_length="np2_aa_length",
@@ -300,7 +298,6 @@ stitchVDJ <- function(receptor, v_seq, d_seq, j_seq,
 #' @return Full length germline VDJ sequence with segment IDs instead of 
 #' nucleotides.
 #' @seealso \link{stitchVDJ}
-#' @export
 stitchRegions <- function(receptor, v_seq, d_seq, j_seq, 
   np1_length="np1_length", np2_length="np1_length",
   n1_length="n1_length", p3v_length="p3v_length",
@@ -437,7 +434,6 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 #'   \item  \code{regions}: String showing VDJ segment of each position
 #' }
 #' @seealso \link{buildClonalGermline}, \link{stitchVDJ}
-#' @export
 buildGermline <- function(receptor, references, 
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
   v_call="v_call", d_call="d_call", j_call="j_call",
@@ -536,7 +532,6 @@ buildGermline <- function(receptor, references,
 #'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
-#' @export
 buildClonalGermline <- function(receptors, references, 
   organism="human", locus="IGH", useRegions=FALSE, vonly=FALSE,
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
