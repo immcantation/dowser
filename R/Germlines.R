@@ -377,7 +377,6 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 #' @param np1_length    Column name in receptor specifying np1 segment length 
 #' @param np2_length    Column name in receptor specifying np2 segment length
 #' @param amino_acid    Perform reconstruction on amino acid sequence (experimental)
-#' @param ...           Additional arguments
 #' @return List of reconstructed germlines
 #' @details Return object contains multiple IMGT-gapped germlines:
 #' \itemize{
@@ -394,9 +393,9 @@ buildGermline <- function(receptor, references,
   d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
   j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length",
-  amino_acid=FALSE,...){
+  amino_acid=FALSE){
 
-  args <- list(...)
+  #args <- list(...)
   
     # Build V segment germline sequence
     germ_vseq <- getGermline(receptor, references$V, segment="V",
@@ -493,14 +492,10 @@ buildClonalGermline <- function(receptors, references,
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
   v_call="v_call", j_call="j_call", j_germ_length="j_germline_length",
   j_germ_aa_length= "j_germline_aa_length",amino_acid=FALSE,...){
-  
-  args <- list(...)
     
     if(amino_acid){
       stop("Amino acid mode not yet supported")
     }
-    # Log
-    log <- c()
 
     # Create dictionaries to count observed V/J calls
     v_dict <- c()
@@ -577,8 +572,8 @@ buildClonalGermline <- function(receptors, references,
     sub_db <- references[[organism]][[locus]]
     # Stitch consensus germline
     germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
-      v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,j_germ_aa_length=j_germ_aa_length,
-      amino_acid=amino_acid, useRegions=useRegions, ...),error=function(e)print(e))
+      v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
+      amino_acid=amino_acid, ...),error=function(e)print(e))
 
     if("error" %in% class(germlines)){
       germlines  <- list()
@@ -642,13 +637,12 @@ buildClonalGermline <- function(receptors, references,
 #' db <- createGermlines(ExampleDb[1,], imgt)
 #' @export
 createGermlines <- function(data, references, organism="human",locus="IGH",
-  nproc=1, seq="sequence_alignment", 
-  v_call="v_call", d_call="d_call", j_call="j_call", amino_acid=FALSE,
-  id="sequence_id", clone="clone_id",
-  v_germ_start="v_germline_start",v_germ_end="v_germline_end",v_germ_length="v_germline_length",
-  d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
-  j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
-  np1_length="np1_length", np2_length="np2_length", na.rm=FALSE,...){
+  nproc=1, seq="sequence_alignment", v_call="v_call", d_call="d_call", 
+  j_call="j_call", amino_acid=FALSE,  id="sequence_id", clone="clone_id",
+  v_germ_start="v_germline_start", v_germ_end="v_germline_end", v_germ_length="v_germline_length",
+  d_germ_start="d_germline_start", d_germ_end="d_germline_end", d_germ_length="d_germline_length",
+  j_germ_start="j_germline_start", j_germ_end="j_germline_end", j_germ_length="j_germline_length",
+  np1_length="np1_length", np2_length="np2_length", na.rm=FALSE, ...){
 
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 

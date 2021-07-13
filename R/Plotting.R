@@ -116,8 +116,6 @@ colorTrees <- function(trees, palette, ambig="blend"){
     }
     for(n in 1:length(trees)){
         nt <- trees[[n]]
-        tipn <- length(nt$tip.label)
-        noden <- 2*tipn-1
         combs <- strsplit(nt$state, split=",")
         if(ambig == "blend"){
             cv <- unlist(lapply(combs, function(x)combineColors(x, palette)))
@@ -180,7 +178,6 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     labelsize=NULL){
 
     tiptype = "character"
-    nodetype = "character"
     if(!base){
         cols <- c()
         if(!is.null(tips) && nodes && sum(tip_palette != node_palette) == 0){
@@ -346,11 +343,11 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 #' Simple function for plotting a lot of trees into a pdf
 #' 
 #' \code{treesToPDF} exports trees to a pdf in an orderly fashion
-#' @param    plots        list of tree plots (from plotTrees)
-#' @param    file         output file name
-#' @param    nrow           number of rows per page
-#' @param      ncol           size of tip shape objects
-#' @param       ...           optional arguments passed to grDevices::pdf
+#' @param  plots list of tree plots (from plotTrees)
+#' @param  file  output file name
+#' @param  nrow    number of rows per page
+#' @param  ncol    size of tip shape objects
+#' @param  ...    optional arguments passed to grDevices::pdf
 #' 
 #' @return   a PDF of tree plots
 #'  

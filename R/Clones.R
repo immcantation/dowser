@@ -53,7 +53,6 @@
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
 #' @param    useRegions   assign CDR/FWR regions?
 #' @param    dupSingles   Duplicate sequences in singleton clones to include them as trees?
-#' @param    ...          additional arguments, used by \link{formatClones}
 #' @return   A \link{airrClone} object containing the modified clone.
 #'
 #' @details
@@ -98,9 +97,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
     add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-    useRegions=TRUE, dupSingles=FALSE, ...){
-
-    args <- list(...)
+    useRegions=TRUE, dupSingles=FALSE){
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
@@ -404,7 +401,7 @@ cleanAlignment <- function(clone,seq="sequence"){
 #' @param    subclone     name of the column containing the identifier for the subclone.
 #' @param    chain        if HL, include light chain information if available.
 #' @param    heavy        name of heavy chain locus (default = "IGH")
-#' @param    cell_id      name of the column containing cell assignment information
+#' @param    cell         name of the column containing cell assignment information
 #' @param    locus        name of the column containing locus information
 #' @param    nproc        number of cores to parallelize formating over.
 #' @param    columns      additional data columns to include in output
@@ -427,7 +424,7 @@ cleanAlignment <- function(clone,seq="sequence"){
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",
-                nproc=1, chain="H", heavy="IGH", cell_id="cell_id", 
+                nproc=1, chain="H", heavy="IGH", cell="cell_id", 
                 locus="locus", minseq=2, split_light=FALSE, majoronly=FALSE,
                 columns=NULL, ...) {
 
@@ -454,11 +451,11 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
         if(is.null(heavy)){
             stop("Need heavy chain (heavy) designation for heavy+light chain clones")
         }    
-        lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell_id]]
-        hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell_id]]
+        lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell]]
+        hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell]]
         nohcells <- lcells[!lcells %in% hcells]
         if(length(nohcells) > 0){
-            data <- filter(data,!(!!rlang::sym(cell_id) %in% nohcells))
+            data <- filter(data,!(!!rlang::sym(cell) %in% nohcells))
             warning(paste("Removed",length(nohcells),
                 "cells with no heavy chain information"))
         }
@@ -497,7 +494,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     clones <- data %>%
         dplyr::group_by(!!rlang::sym(clone)) %>%
         dplyr::do(data=makeAirrClone(.data, seq=seq,
-            clone=clone, chain=chain, heavy=heavy, cell_id=cell_id,...))
+            clone=clone, chain=chain, heavy=heavy, cell=cell,...))
 
     if(chain == "HL"){
         seq_name <- "hlsequence"
@@ -921,7 +918,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
         hd <- filter(heavy,!!rlang::sym(clone) == cloneid)
         ld <- filter(light,!!rlang::sym(cell_id) %in% hd[[!!cell_id]])
         hd <- filter(hd,(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
-        hr <- filter(hd,!(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
+        # hr <- filter(hd,!(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
         if(nrow(ld) == 0){
             return(hd)
         }
@@ -975,7 +972,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
         }
         ld[[clone]] <- cloneid
         for(cell in unique(hd[[cell_id]])){
-            hclone <- hd[hd[[cell_id]] == cell,][[clone]]
+            #hclone <- hd[hd[[cell_id]] == cell,][[clone]]
             if(cell %in% ld[[cell_id]]){
                 lclone <- ld[ld[[cell_id]] == cell,][[subclone]]
                 ld[ld[[cell_id]] == cell,][[subclone]] <- lclone

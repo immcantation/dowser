@@ -30,8 +30,7 @@ makeAirrClone(
   mod3 = TRUE,
   randomize = TRUE,
   useRegions = TRUE,
-  dupSingles = FALSE,
-  ...
+  dupSingles = FALSE
 )
 }
 \arguments{
@@ -107,8 +106,6 @@ sequences silently.}
 \item{useRegions}{assign CDR/FWR regions?}
 
 \item{dupSingles}{Duplicate sequences in singleton clones to include them as trees?}
-
-\item{...}{additional arguments, used by \link{formatClones}}
 }
 \value{
 A \link{airrClone} object containing the modified clone.

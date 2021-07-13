@@ -227,7 +227,8 @@ reconIgPhyML <- function(file, modelfile, cloneid,
     igphyml="igphyml",    mode="switches", type="recon",
     nproc=1, quiet=0, rm_files=FALSE, rm_dir=NULL, 
     states=NULL, palette=NULL, resolve=2, rseed=NULL,...){
-    args <- list(...)
+    
+    #args <- list(...)
     igphyml <- path.expand(igphyml)
     if(file.access(igphyml, mode=1) == -1) {
         stop("The file ", igphyml, " cannot be executed.")
@@ -349,7 +350,6 @@ readLineages <- function(file, states=NULL, palette="Dark2",
     run_id="", quiet=TRUE, append=NULL, format="nexus", 
     type="jointpars"){
     trees <- list()
-    switch <- data.frame()
     t <- readLines(file)
     if(length(t) == 0){
         return(list())
@@ -404,13 +404,10 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 #' @param    partition how to partition omegas
 #' @param    heavy     name of heavy chain locus
 #' @param    empty     output uninformative sequences?
-#' @param    ...       Additional arguments
 #' @return   Name of created lineage file.
 #' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
-    trait=NULL,    empty=TRUE, partition="single", heavy="IGH", ...){
-
-    args <- list(...)
+    trait=NULL, empty=TRUE, partition="single", heavy="IGH"){
 
     file <- file.path(dir,paste0(id,"_lineages_pars.tsv"))
     if(!is.null(rep)){
@@ -431,7 +428,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
         fastafile <- file.path(outdir,paste0(data[[i]]@clone,".fasta"))
         treefile <- file.path(outdir,paste0(data[[i]]@clone,".tree"))
         germid <- paste0(data[[i]]@clone,"_GERM")
-        f <- writeFasta(data[[i]],fastafile,germid,trait,empty=empty)
+        writeFasta(data[[i]],fastafile,germid,trait,empty=empty)
         if(data[[i]]@phylo_seq == "sequence"){
             g <- data[[i]]@germline
         }else if(data[[i]]@phylo_seq == "lsequence"){
@@ -602,14 +599,12 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 #' @param    verbose         amount of rubbish to print
 #' @param    resolve_random  randomly resolve polytomies?
 #' @param    data_type       Are sequences DNA or AA?
-#' @param    ...        Additional arguments (not currently used)
 #' @return  \code{phylo} object created by phangorn::pratchet with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
     tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,
-    data_type="DNA", ...){
-    args <- list(...)
+    data_type="DNA"){
     seqs <- clone@data[[seq]]
     names <- clone@data$sequence_id
     if(verbose > 0){
@@ -699,14 +694,13 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @param    data_type  Are sequences DNA or AA?
 #' @param    verbose    Print error messages as they happen?
 #' @param    optNni     Optimize tree topology
-#' @param    ...        Additional arguments (not currently used)
 #'
 #' @return  \code{phylo} object created by phangorn::optim.pml with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
-    asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, verbose=FALSE, ...){
-    args <- list(...)
+    asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, verbose=FALSE){
+    print(paste("sub_model", sub_model))
     seqs <- clone@data[[seq]]
     names <- clone@data$sequence_id
     if(seq == "hlsequence"){
@@ -829,8 +823,6 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     splitfreqs=FALSE, ...){
 
     warning("Dowser igphyml doesn't mask split codons!")
-
-    args <- list(...)
 
     partition <- match.arg(partition)
 
@@ -1244,7 +1236,6 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         }    
     }
 
-    args <- list(...)
     data <- clones$data
     if(fixtrees){
         if(!"trees" %in% names(clones)){
@@ -1566,7 +1557,6 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
             trees$nodes[[m]]$id <- ttips[n]
             m <- m + 1
         }
-        tnode_ids <- ttips[tnodes]
         ttips <- ttips[-tnodes]
     }
     nodes <- sort(unique(c(edges[,1],edges[,2])))
@@ -1730,33 +1720,33 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' trees for each bootstrap replicate.
 #' 
 #' \code{bootstrapTrees} Phylogenetic bootstrap function.
-#' @param    clones      tibble \code{airrClone} objects, the output of 
-#'                      \link{formatClones}
-#' @param    bootstraps number of bootstrap replicates to perform
-#' @param    trait         trait to use for parsimony models (required if 
-#'                      \code{igphyml} specified)
-#' @param      build        program to use for tree building (phangorn, dnapars)
-#' @param      exec        location of desired phylogenetic executable
-#' @param    igphyml     location of igphyml executible if trait models desired
-#' @param    id         unique identifer for this analysis (required if 
-#'                      \code{igphyml} or \code{dnapars} specified)
-#' @param    dir        directory where temporary files will be placed (required
-#'                      if \code{igphyml} or \code{dnapars} specified)
-#' @param    modelfile     file specifying parsimony model to use
-#' @param    fixtrees     keep tree topologies fixed?
-#'                      (bootstrapping will not be perfomed)
-#' @param    nproc         number of cores to parallelize computations
-#' @param    quiet        amount of rubbish to print to console
-#' @param    rm_temp    remove temporary files (default=TRUE)
-#' @param    palette     a named vector specifying colors for each state
-#' @param    resolve     how should polytomies be resolved?
-#' @param    keeptrees  keep trees estimated from bootstrap replicates? (TRUE)
-#' @param    lfile      lineage file input to igphyml if desired (experimental)
-#' @param    rep          current bootstrap replicate (experimental)
-#' @param    seq        column name containing sequence information
-#' @param    downsample downsample clones to have a maximum specified tip/switch ratio?
-#' @param    tip_switch maximum allowed tip/switch ratio if downsample=TRUE
-#' @param    ...        additional arguments to be passed to tree building program
+#' @param clones      tibble \code{airrClone} objects, the output of 
+#'                   \link{formatClones}
+#' @param bootstraps number of bootstrap replicates to perform
+#' @param trait         trait to use for parsimony models (required if 
+#'                   \code{igphyml} specified)
+#' @param build        program to use for tree building (phangorn, dnapars)
+#' @param exec        location of desired phylogenetic executable
+#' @param igphyml     location of igphyml executible if trait models desired
+#' @param id         unique identifer for this analysis (required if 
+#'                   \code{igphyml} or \code{dnapars} specified)
+#' @param dir        directory where temporary files will be placed (required
+#'                   if \code{igphyml} or \code{dnapars} specified)
+#' @param modelfile     file specifying parsimony model to use
+#' @param fixtrees     keep tree topologies fixed?
+#'                   (bootstrapping will not be perfomed)
+#' @param nproc         number of cores to parallelize computations
+#' @param quiet        amount of rubbish to print to console
+#' @param rm_temp    remove temporary files (default=TRUE)
+#' @param palette     a named vector specifying colors for each state
+#' @param resolve     how should polytomies be resolved?
+#' @param keeptrees  keep trees estimated from bootstrap replicates? (TRUE)
+#' @param lfile      lineage file input to igphyml if desired (experimental)
+#' @param rep          current bootstrap replicate (experimental)
+#' @param seq        column name containing sequence information
+#' @param downsample downsample clones to have a maximum specified tip/switch ratio?
+#' @param tip_switch maximum allowed tip/switch ratio if downsample=TRUE
+#' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
 #'
@@ -1816,7 +1806,6 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
         }    
     }
 
-    args <- list(...)
     data <- clones$data
     if(fixtrees){
         if(!"trees" %in% names(clones)){

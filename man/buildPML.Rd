@@ -14,8 +14,7 @@ buildPML(
   tree = NULL,
   data_type = "DNA",
   optNni = TRUE,
-  verbose = FALSE,
-  ...
+  verbose = FALSE
 )
 }
 \arguments{
@@ -38,8 +37,6 @@ buildPML(
 \item{optNni}{Optimize tree topology}
 
 \item{verbose}{Print error messages as they happen?}
-
-\item{...}{Additional arguments (not currently used)}
 }
 \value{
 \code{phylo} object created by phangorn::optim.pml with nodes

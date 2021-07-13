@@ -12,7 +12,7 @@ formatClones(
   nproc = 1,
   chain = "H",
   heavy = "IGH",
-  cell_id = "cell_id",
+  cell = "cell_id",
   locus = "locus",
   minseq = 2,
   split_light = FALSE,
@@ -38,7 +38,7 @@ entries in this column should be identical.}
 
 \item{heavy}{name of heavy chain locus (default = "IGH")}
 
-\item{cell_id}{name of the column containing cell assignment information}
+\item{cell}{name of the column containing cell assignment information}
 
 \item{locus}{name of the column containing locus information}
 
