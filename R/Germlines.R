@@ -680,6 +680,10 @@ buildClonalGermline <- function(receptors, references,
 #'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
+#' @examples 
+#' vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
+#' imgt <- readIMGT(vdj_dir)
+#' db <- createGermlines(ExampleDb[1,], imgt)
 #' @export
 createGermlines <- function(data, references, organism="human",locus="IGH",
   nproc=1, seq="sequence_alignment", 
