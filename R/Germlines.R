@@ -405,7 +405,10 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 }
 
 
-#' \link{buildGermline} build gapped germline segment
+#' \code{buildGermline} reconstruct germline segments from alignment data
+#' 
+#' Reconstruct germlines from alignment data.
+#' 
 #' @param receptor      row from AIRR-table containing sequence of interest
 #' @param references    list of reference segments. Must be specific to organism 
 #'                      and locus
