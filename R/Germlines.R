@@ -1,8 +1,11 @@
 ## Functions for constructing clonal germline sequences
 ## Based closely on CreateGermlines.py
 
-#' \link{readIMGT} read in IMGT database
-#' TODO: make auto-download or internal IMGT database
+#' \code{readIMGT} read in IMGT database
+#' 
+#' Loads all reference germlines from an Immcantation-formatted IMGT database.
+#' 
+# TODO: make auto-download or internal IMGT database
 #' @param dir      directory containing Immcantation-formatted IMGT database
 #' @param quiet    print warnings?
 #' @return List of lists, leading to IMGT-gapped nucleotide sequences.
