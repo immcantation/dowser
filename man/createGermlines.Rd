@@ -99,6 +99,11 @@ Return object adds/edits following columns:
   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 }
 }
+\examples{
+vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
+imgt <- readIMGT(vdj_dir)
+db <- createGermlines(ExampleDb[1,], imgt)
+}
 \seealso{
 \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
 }

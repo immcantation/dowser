@@ -430,6 +430,7 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 #' @param np1_length    Column name in receptor specifying np1 segment length 
 #' @param np2_length    Column name in receptor specifying np2 segment length
 #' @param amino_acid    Perform reconstruction on amino acid sequence (experimental)
+#' @param ...           Additional arguments
 #' @return List of reconstructed germlines
 #' @details Return object contains multiple IMGT-gapped germlines:
 #' \itemize{
@@ -446,8 +447,10 @@ buildGermline <- function(receptor, references,
   d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
   j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length",
-  amino_acid=FALSE){
+  amino_acid=FALSE,...){
 
+  args <- list(...)
+  
     # Build V segment germline sequence
     germ_vseq <- getGermline(receptor, references$V, segment="V",
       field=v_call, germ_start=v_germ_start,germ_end=v_germ_end,
