@@ -509,7 +509,10 @@ buildGermline <- function(receptor, references,
     return(germlines)
 }
 
-#' \link{buildGermline} Determine consensus clone sequence and create germline for clone
+#' \code{buildClonalGermline} Determine consensus clone sequence and create germline for clone
+#' 
+#' Determine consensus clone sequence and create germline for clone
+#' 
 #' @param receptors        AIRR-table containing sequences from one clone
 #' @param references       Full list of reference segments, see \link{readIMGT}
 #' @param organism         Species in \code{references} being analyzed
