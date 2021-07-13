@@ -62,59 +62,6 @@ readIMGT <- function(dir, quiet=FALSE){
   database
 }
 
-#' Extract alleles from strings
-#' 
-#' \code{parseGeneCall}
-#' @param    gene          str containing V/D/J gene name
-#' @param    regex         regular expression string to extract allele
-#' @param    action        action to perform for multiple alleles;
-#'                         one of ('first', 'set', 'list').
-#'
-#' @return   Allele name
-#'
-#' @seealso \link{getVDJAllele}
-#' @export
-parseGeneCall <- function(gene, regex, action='first'){
-    match <- stringr::str_match_all(gene,regex)
-    if(nrow(match[[1]]) > 0){
-      if(action == 'first'){
-          return(match[[1]][1,1])
-      }else if(action == 'set'){
-          return(sort(unique(match[[1]][,1])))
-      }else if(action == 'list'){
-          return(sort(match[[1]][,1]))
-      }else{
-          return(NA)
-      }
-   }else{
-    return(NA)
-   }
-}
-
-#  Note: This is separated into three functions in CreateGermlines.py
-#'  \code{getVDJAllele} Extract allele from gene call string
-#'  
-#' @param gene    string with V gene calls
-#' @param segment Gene segment to search. Must be V, D, or J.
-#' @param action  action to perform for multiple alleles;
-#'                  one of ('first', 'set', 'list').
-#' @return Allele call for given gene segment
-#' @seealso \link{parseGeneCall}, \link{buildClonalGermline}
-#' @export
-getVDJAllele <- function(gene, segment, action='first'){
-  if(segment == "V"){
-    allele_regex <- '(IG[HLK]|TR[ABGD])V[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
-  }else if(segment == "D"){
-    allele_regex <- '(IG[HLK]|TR[ABGD])D[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
-  }else if(segment == "J"){
-    allele_regex <- '(IG[HLK]|TR[ABGD])J[A-Z0-9]+[-/\\w]*[-\\*][.\\w]+'
-  }else{
-    stop(paste(segment,"not found"))
-  }
-
-    return(parseGeneCall(gene, allele_regex, action=action))
-}
-
 #   TODO: this is not generalized for non-IMGT gapped sequences!
 #   Note: This is separated into three functions in CreateGermlines.py
 #' \link{getGermline} get germline segment from specified receptor and segment
@@ -141,7 +88,8 @@ getGermline <- function(receptor, references, segment, field,
   germ_start, germ_end, germ_length, germ_aa_start,germ_aa_length, 
   amino_acid=FALSE){
     # Extract allele call
-    gene <- getVDJAllele(receptor[[field]], segment=segment, action='first')
+    #gene <- getVDJAllele(receptor[[field]], segment=segment, action='first')
+    gene <- alakazam::getAllele(receptor[[field]], strip_d=FALSE)
 
     # Get germline start and length
     if(!amino_acid){
@@ -559,9 +507,11 @@ buildClonalGermline <- function(receptors, references,
     # Find longest sequence in clone, as well as V/J calls
     # note - always uses "first" for v/j calls
     v_dict <- unlist(lapply(receptors[[v_call]],function(x)
-      getVDJAllele(x, segment="V", action='first')))
+      alakazam::getAllele(x, strip_d=FALSE)))
+      #getVDJAllele(x, segment="V", action='first')))
     j_dict <- unlist(lapply(receptors[[j_call]],function(x)
-      getVDJAllele(x, segment="J", action='first')))
+      alakazam::getAllele(x, strip_d=FALSE)))
+      #getVDJAllele(x, segment="J", action='first')))
     seq_len <- unlist(lapply(receptors[[seq]],function(x)
       nchar(x)))
 
@@ -644,7 +594,7 @@ buildClonalGermline <- function(receptors, references,
 
 
 #' \link{createGermlines} Determine consensus clone sequence and create germline for clone
-#' @param data     AIRR-table containing sequences from one clone
+#' @param data          AIRR-table containing sequences from one clone
 #' @param references    Full list of reference segments, see \link{readIMGT}
 #' @param organism      Species in \code{references} being analyzed
 #' @param locus         locus in \code{references} being analyzed

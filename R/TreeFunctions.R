@@ -1230,7 +1230,13 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 
     if(build == "pratchet"){
         s <- sessionInfo()
-        version <- s$loadedOnly$phangorn$Version
+        if("phangorn" %in% names(s$loadedOnly)){
+            version <- s$loadedOnly$phangorn$Version
+        }else if("phangorn" %in% names(s$otherPkgs)){
+            version <- s$otherPkgs$phangorn$Version
+        }else{
+            stop("Couldn't find phangorn in package list")
+        }
         if(version == "2.7.0"){
             warn <- paste0("\n\nWe are experiencing issues with phangorn v2.7.0\n",
                 "If you encounter problems, please either:\n",
@@ -1796,7 +1802,13 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 
     if(build == "pratchet"){
         s <- sessionInfo()
-        version <- s$loadedOnly$phangorn$Version
+        if("phangorn" %in% names(s$loadedOnly)){
+            version <- s$loadedOnly$phangorn$Version
+        }else if("phangorn" %in% names(s$otherPkgs)){
+            version <- s$otherPkgs$phangorn$Version
+        }else{
+            stop("Couldn't find phangorn in package list")
+        }
         if(version == "2.7.0"){
             warn <- paste0("\nWe are experiencing issues with phangorn v2.7.0\n",
                 "If you encounter problems, please either:\n",
