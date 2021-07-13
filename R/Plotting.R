@@ -388,7 +388,7 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
 # grid
 arrangeGrid <- function(trees, transform="sqrt",
     pack=FALSE, widths=NULL, wratio=1){
-    plots <- list()
+    
     if(is.null(widths)){
         widths <- unlist(lapply(trees,
             function(x)length(x$tip.label)))
