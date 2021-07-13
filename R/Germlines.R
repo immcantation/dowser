@@ -13,6 +13,12 @@
 #' @details Input directory must be formatted to Immcantation standard.
 #' See https://changeo.readthedocs.io/en/stable/examples/igblast.html for example
 #' of how to download.
+#' @examples
+#' # vdj_dir contains a minimal example of reference germlines 
+#' # (IGHV3-11*05, IGHD3-10*01 and IGHJ4*03)
+#' # which are the gene assignments for ExamapleDb[1,]
+#' vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
+#' imgt <- readIMGT(vdj_dir)
 #' @export
 readIMGT <- function(dir, quiet=FALSE){
   database <- list()
