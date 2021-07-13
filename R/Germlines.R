@@ -1,8 +1,11 @@
 ## Functions for constructing clonal germline sequences
 ## Based closely on CreateGermlines.py
 
-#' \link{readIMGT} read in IMGT database
-#' TODO: make auto-download or internal IMGT database
+#' \code{readIMGT} read in IMGT database
+#' 
+#' Loads all reference germlines from an Immcantation-formatted IMGT database.
+#' 
+# TODO: make auto-download or internal IMGT database
 #' @param dir      directory containing Immcantation-formatted IMGT database
 #' @param quiet    print warnings?
 #' @return List of lists, leading to IMGT-gapped nucleotide sequences.
@@ -13,6 +16,12 @@
 #' @details Input directory must be formatted to Immcantation standard.
 #' See https://changeo.readthedocs.io/en/stable/examples/igblast.html for example
 #' of how to download.
+#' @examples
+#' # vdj_dir contains a minimal example of reference germlines 
+#' # (IGHV3-11*05, IGHD3-10*01 and IGHJ5*02)
+#' # which are the gene assignments for ExamapleDb[1,]
+#' vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
+#' imgt <- readIMGT(vdj_dir)
 #' @export
 readIMGT <- function(dir, quiet=FALSE){
   database <- list()
@@ -83,7 +92,6 @@ readIMGT <- function(dir, quiet=FALSE){
 #' @param amino_acid     Perform reconstruction on amino acid sequence (experimental)
 #' @return String of germline sequence from specified segment aligned with the 
 #' sequence in the seq column of \code{receptor}.
-#' @export
 getGermline <- function(receptor, references, segment, field, 
   germ_start, germ_end, germ_length, germ_aa_start,germ_aa_length, 
   amino_acid=FALSE){
@@ -170,7 +178,6 @@ getGermline <- function(receptor, references, segment, field,
 #' @param amino_acid  Perform reconstruction on amino acid sequence (experimental)
 #' @return Full length germline VDJ sequence aligned with aligned with the 
 #' sequence in the \code{seq} column of \code{receptor}.
-#' @export
 stitchVDJ <- function(receptor, v_seq, d_seq, j_seq, 
   np1_length="np1_length", np2_length="np2_length",
   np1_aa_length="np1_aa_length", np2_aa_length="np2_aa_length",
@@ -242,7 +249,6 @@ stitchVDJ <- function(receptor, v_seq, d_seq, j_seq,
 #' @return Full length germline VDJ sequence with segment IDs instead of 
 #' nucleotides.
 #' @seealso \link{stitchVDJ}
-#' @export
 stitchRegions <- function(receptor, v_seq, d_seq, j_seq, 
   np1_length="np1_length", np2_length="np1_length",
   n1_length="n1_length", p3v_length="p3v_length",
@@ -347,7 +353,10 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 }
 
 
-#' \link{buildGermline} build gapped germline segment
+#' \code{buildGermline} reconstruct germline segments from alignment data
+#' 
+#' Reconstruct germlines from alignment data.
+#' 
 #' @param receptor      row from AIRR-table containing sequence of interest
 #' @param references    list of reference segments. Must be specific to organism 
 #'                      and locus
@@ -379,7 +388,6 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 #'   \item  \code{regions}: String showing VDJ segment of each position
 #' }
 #' @seealso \link{buildClonalGermline}, \link{stitchVDJ}
-#' @export
 buildGermline <- function(receptor, references, 
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
   v_call="v_call", d_call="d_call", j_call="j_call",
@@ -387,10 +395,10 @@ buildGermline <- function(receptor, references,
   d_germ_start="d_germline_start",d_germ_end="d_germline_end",d_germ_length="d_germline_length",
   j_germ_start="j_germline_start",j_germ_end="j_germline_end",j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length",
-  amino_acid=FALSE, ...){
+  amino_acid=FALSE,...){
 
-    args <- list(...)
-
+  args <- list(...)
+  
     # Build V segment germline sequence
     germ_vseq <- getGermline(receptor, references$V, segment="V",
       field=v_call, germ_start=v_germ_start,germ_end=v_germ_end,
@@ -452,7 +460,10 @@ buildGermline <- function(receptor, references,
     return(germlines)
 }
 
-#' \link{buildGermline} Determine consensus clone sequence and create germline for clone
+#' \code{buildClonalGermline} Determine consensus clone sequence and create germline for clone
+#' 
+#' Determine consensus clone sequence and create germline for clone
+#' 
 #' @param receptors        AIRR-table containing sequences from one clone
 #' @param references       Full list of reference segments, see \link{readIMGT}
 #' @param organism         Species in \code{references} being analyzed
@@ -478,7 +489,6 @@ buildGermline <- function(receptor, references,
 #'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
-#' @export
 buildClonalGermline <- function(receptors, references, 
   organism="human", locus="IGH", useRegions=FALSE, vonly=FALSE,
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
@@ -629,6 +639,10 @@ buildClonalGermline <- function(receptors, references,
 #'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
+#' @examples 
+#' vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
+#' imgt <- readIMGT(vdj_dir)
+#' db <- createGermlines(ExampleDb[1,], imgt)
 #' @export
 createGermlines <- function(data, references, organism="human",locus="IGH",
   nproc=1, seq="sequence_alignment", 

@@ -895,10 +895,10 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' If there is more than rearrangement with the same V/J
 #' in the same cell, pick the one with the highest non-ambiguous
 #' characters. 
-#' TODO: Junction length?
-#' TODO: Option to just store all VJ pairs for a cell in the heavy, remove light seqs
-#' TODO: Option to split VJ parititions into separate clones
-#' TODO: Make v_alt_cell not be NA by default
+# TODO: Junction length?
+# TODO: Option to just store all VJ pairs for a cell in the heavy, remove light seqs
+# TODO: Option to split VJ parititions into separate clones
+# TODO: Make v_alt_cell not be NA by default
 #' @export
 getSubclones <- function(heavy, light, nproc=1, minseq=1,
     id="sequence_id", seq="sequence_alignment", 
