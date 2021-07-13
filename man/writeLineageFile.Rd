@@ -11,7 +11,7 @@ writeLineageFile(
   id = "N",
   rep = NULL,
   trait = NULL,
-  dummy = TRUE,
+  empty = TRUE,
   partition = "single",
   heavy = "IGH",
   ...
@@ -30,7 +30,7 @@ writeLineageFile(
 
 \item{trait}{string appended to sequence id in fasta files}
 
-\item{dummy}{output uninformative sequences?}
+\item{empty}{output uninformative sequences?}
 
 \item{partition}{how to partition omegas}
 

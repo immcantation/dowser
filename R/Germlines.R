@@ -48,7 +48,7 @@ readIMGT <- function(dir, quiet=FALSE){
     fasta <- c()
     duplicates <- c()
     for(n in names(fasta_list)){
-      name <- getVDJAllele(n, segment)
+      name <- alakazam::getAllele(n, strip_d=FALSE)
       if(name %in% names(fasta)){
         duplicates <- c(duplicates,name)
       }else{
@@ -96,7 +96,6 @@ getGermline <- function(receptor, references, segment, field,
   germ_start, germ_end, germ_length, germ_aa_start,germ_aa_length, 
   amino_acid=FALSE){
     # Extract allele call
-    #gene <- getVDJAllele(receptor[[field]], segment=segment, action='first')
     gene <- alakazam::getAllele(receptor[[field]], strip_d=FALSE)
 
     # Get germline start and length
@@ -518,10 +517,8 @@ buildClonalGermline <- function(receptors, references,
     # note - always uses "first" for v/j calls
     v_dict <- unlist(lapply(receptors[[v_call]],function(x)
       alakazam::getAllele(x, strip_d=FALSE)))
-      #getVDJAllele(x, segment="V", action='first')))
     j_dict <- unlist(lapply(receptors[[j_call]],function(x)
       alakazam::getAllele(x, strip_d=FALSE)))
-      #getVDJAllele(x, segment="J", action='first')))
     seq_len <- unlist(lapply(receptors[[seq]],function(x)
       nchar(x)))
 

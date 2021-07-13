@@ -7,20 +7,17 @@
 # @param    fastafile    file to be exported
 # @param    germid       sequence id of germline
 # @param    trait        trait to include in sequence ids
-# @param    dummy        Not include real sequence information
+# @param    empty        Not include real sequence information
 #
 # @return   Name of exported fasta file.
-writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
-    clone <- c@clone
-    append <- FALSE
+writeFasta <- function(c, fastafile, germid, trait=NULL, empty=FALSE){
     text <- ""
     if(!is.null(trait)){
         c@data$sequence_id <- paste(c@data$sequence_id,c@data[,trait],sep="_")
     }
     for(i in 1:nrow(c@data)){
-        if(i > 1){append=TRUE}
         text <- paste0(text,">",c@data[i,]$sequence_id,"\n")
-        if(!dummy){
+        if(!empty){
             if(c@phylo_seq == "sequence"){
                 text <- paste0(text,c@data[i,]$sequence,"\n")
             }else if(c@phylo_seq == "lsequence"){
@@ -35,7 +32,7 @@ writeFasta <- function(c, fastafile, germid, trait=NULL, dummy=FALSE){
         }
     }
     text <- paste0(text,">",germid,"\n")
-    if(!dummy){
+    if(!empty){
         if(c@phylo_seq == "sequence"){
             text <- paste0(text,c@germline,"\n")
         }else if(c@phylo_seq == "lsequence"){
@@ -406,12 +403,12 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 #' @param    trait     string appended to sequence id in fasta files
 #' @param    partition how to partition omegas
 #' @param    heavy     name of heavy chain locus
-#' @param    dummy     output uninformative sequences?
+#' @param    empty     output uninformative sequences?
 #' @param    ...       Additional arguments
 #' @return   Name of created lineage file.
 #' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
-    trait=NULL,    dummy=TRUE, partition="single", heavy="IGH", ...){
+    trait=NULL,    empty=TRUE, partition="single", heavy="IGH", ...){
 
     args <- list(...)
 
@@ -434,7 +431,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
         fastafile <- file.path(outdir,paste0(data[[i]]@clone,".fasta"))
         treefile <- file.path(outdir,paste0(data[[i]]@clone,".tree"))
         germid <- paste0(data[[i]]@clone,"_GERM")
-        f <- writeFasta(data[[i]],fastafile,germid,trait,dummy=dummy)
+        f <- writeFasta(data[[i]],fastafile,germid,trait,empty=empty)
         if(data[[i]]@phylo_seq == "sequence"){
             g <- data[[i]]@germline
         }else if(data[[i]]@phylo_seq == "lsequence"){
@@ -842,7 +839,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
         stop(paste("Invalid optimize specification, must be one of:",valid_o))
     }
     os <- strsplit(omega,split=",")[[1]]
-    file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,dummy=FALSE,
+    file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
             partition=partition, ...)
     if(length(os) != 2 && (partition == "cf" | partition == "hl")){
         warning("Omega parameter incompatible with partition, setting to e,e")
