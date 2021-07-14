@@ -68,20 +68,20 @@ Input data *must* be from one locus, such as only IGH.
 library(dowser)
 library(dplyr)
 
-data(ExampleDb)
+data(ExampleAirr)
 
 # Read in IMGT-gapped sequences
 references = readIMGT(dir = "germlines/human/vdj")
 
 # remove germline alignment columns for this example
-db = select(ExampleDb, -"germline_alignment", 
+db = select(ExampleAirr, -"germline_alignment", 
     -"germline_alignment_d_mask")
 
 # Reconstruct germline sequences
-ExampleDb = createGermlines(ExampleDb,references,nproc=1)
+ExampleAirr = createGermlines(db,references,nproc=1)
 
 # Check germline of first row
-ExampleDb$germline_alignment_d_mask[1]
+ExampleAirr$germline_alignment_d_mask[1]
 
 # "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTCAAGCCTGGAGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTC............AGTGACTACTACATGAGCTGGATCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTTTCATACATTAGTAGTAGT......AGTAGTTACACAAACTACGCAGACTCTGTGAAG...GGCCGATTCACCATCTCCAGAGACAACGCCAAGAACTCACTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCGTGTATTACTGTGCGAGAGNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAG"
 ```

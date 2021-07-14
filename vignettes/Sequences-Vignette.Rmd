@@ -37,28 +37,19 @@ To obtain the IMGT-gapped sequence for each reconstructed node, specify the clon
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
 
-# Set up format clones and build trees
-data(ExampleDb)
-
-ExampleDb = ExampleDb[ExampleDb$clone_id %in% c("3170", "3184"),]
-
-clones = formatClones(ExampleDb, traits=c("sample_id","c_call"),
-    num_fields=c("duplicate_count"))
-
-clones = getTrees(clones, nproc=1)
+data(ExampleClones)
 
 # Collapse nodes with identical sequences. This will 
-clones = collapseNodes(clones)
+trees = collapseNodes(ExampleClones[1:2,])
 
 # Plot trees with node ID numbers
-plots = plotTrees(clones, tips="c_call", tipsize=2,
-    node_nums=TRUE, labelsize=7)
+plots = plotTrees(trees, tips="c_call", tipsize=2, node_nums=TRUE, labelsize=7)
 
-plots[[1]]
-
-getSeq(clones, node=17, clone=3170)
-
+#plots[[1]]
+#
+#getSeq(trees, node=50, clone=3128)
+#
 # Output:
 #                                                                      N 
-# "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............AGTGAYTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGKCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN" 
+# "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............AGTGACTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGTCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN"
 ```

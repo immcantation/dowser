@@ -36,13 +36,13 @@ library(alakazam)
 library(dowser)
 
 # load example AIRR tsv data
-data(ExampleDb)
+data(ExampleAirr)
 
 # subset data for this example
-#ExampleDb = ExampleDb[ExampleDb$clone_id %in% c("3170", "3184"),]
+ExampleAirr = ExampleAirr[ExampleAirr$clone_id %in% c("3170", "3184"),]
 
 # Process example data into proper format, store isotype (optional)
-clones = formatClones(ExampleDb, trait="c_call")
+clones = formatClones(ExampleAirr, trait="c_call")
 
 # Build maxmimum parsimony trees for first two clones using 
 # phangorn package in R

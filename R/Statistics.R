@@ -34,9 +34,9 @@
 #' @examples
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
-#' data(ExampleDb)
-#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+#' clones <- formatClones(ExampleAirr, trait="sample_id")
 #' btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
 #' testPS(btrees$switches)
@@ -185,9 +185,9 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @examples
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
-#' data(ExampleDb)
-#' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id = sample(ExampleAirr$sample_id)
+#' clones = formatClones(ExampleAirr, trait="sample_id")
 #' btrees = bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
 #' testSP(btrees$switches)
@@ -402,9 +402,9 @@ testSP <- function(switches, permuteAll=FALSE,
 #' @examples
 #' \dontrun{
 #' igphyml <- "~/apps/igphyml/src/igphyml"
-#' data(ExampleDb)
-#' ExampleDb$sample_id = sample(ExampleDb$sample_id)
-#' clones = formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id = sample(ExampleAirr$sample_id)
+#' clones = formatClones(ExampleAirr, trait="sample_id")
 #' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
 #'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 #' testSC(btrees$switches)

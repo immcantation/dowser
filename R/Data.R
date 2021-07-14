@@ -42,7 +42,7 @@
 #'     \item  \code{clone_id}:              Change-O assignment clonal group identifier.
 #' }
 #' 
-#' @seealso \link{ExampleDbChangeo} \link{ExampleTrees}
+#' @seealso \link{ExampleDbChangeo} \link{ExampleClones}
 #' 
 #' @references
 #' \enumerate{
@@ -50,7 +50,7 @@
 #'            vaccine-induced immune responses. 
 #'            Proc Natl Acad Sci USA. 2014 111:4928-33.
 #' }
-"ExampleDb"
+"ExampleAirr"
 
 #' Example Change-O database
 #'
@@ -78,7 +78,7 @@
 #'     \item  \code{CLONE}:                 Change-O assignment clonal group identifier.
 #' }
 #' 
-#' @seealso \link{ExampleDb} \link{ExampleTrees}
+#' @seealso \link{ExampleAirr} \link{ExampleClones}
 #' 
 #' @references
 #' \enumerate{
@@ -91,19 +91,18 @@
 
 #' Example Ig lineage trees
 #'
-#' A set of Ig lineage trees generated from the \code{ExampleDb} file, subset to
-#' only those trees with at least four nodes.
+#' A tibble of Ig lineage trees generated from the \code{ExampleAirr} file
 #'
-#' @format   A list of igraph objects output by alakazam::buildPhylipLineage.
-#'           Each node of each tree has the following annotations (vertex attributes):
+#' @format   A tibble of airrClone and phylo objects output by getTrees.
 #'   \itemize{
-#'     \item  \code{sample}:    Sample identifier(s). Time in relation to vaccination.
-#'     \item  \code{isotype}:   Isotype assignment(s). 
-#'     \item  \code{duplication_count}:  Copy count (number of duplicates) of the sequence.
+#'     \item  \code{clone_id}:   Clonal cluster
+#'     \item  \code{data}:       List of airrClone objects
+#'     \item  \code{seqs}:       Number of sequences
+#'     \item  \code{trees}:      List of phylo objects
 #'   }
 #'   
-#' @seealso \link{ExampleTrees}
-"ExampleTrees"
+#' @seealso \link{ExampleClones}
+"ExampleClones"
 
 
 NULL

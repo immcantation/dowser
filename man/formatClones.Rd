@@ -68,10 +68,10 @@ This function is a wrapper for \link{makeAirrClone}. Also removes whitespace,
 ;, :, and = from ids
 }
 \examples{
-data(ExampleDb)
+data(ExampleAirr)
 # Select two clones, for demonstration purpose
 sel <- c("3170", "3184")
-clones <- formatClones(ExampleDb[ExampleDb$clone_id \%in\% sel,],trait="sample_id")
+clones <- formatClones(ExampleAirr[ExampleAirr$clone_id \%in\% sel,],trait="sample_id")
 }
 \seealso{
 Executes in order \link{makeAirrClone}. Returns a tibble of 

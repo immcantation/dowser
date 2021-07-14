@@ -77,15 +77,28 @@
 #' junction length, and clone identifier are determined from the first entry in the 
 #' \code{germ}, \code{v_call}, \code{j_call}, \code{junc_len} and \code{clone} columns, 
 #' respectively. For any given clone, each value in these columns should be identical.
-#' 
-#' 
+#'
+#' To allow for cases where heavy and light chains are used, this function returns three
+#' sequence columns for heavy chains (sequence), light chain (lsequence, empty if none 
+#' available), and concatenated heavy+light chain (hlsequence). These contain sequences
+#' in alignment with germline, lgermline, and hlgermline slots, respectively. The sequence
+#' column used for build trees is specified in the \code{phylo_seq} slot. Importantly, 
+#' this column is also the sequence column that also has uninformative columns removed
+#' by \code{cleanAlignment}. It is highly likely we will change this system to a single 
+#' \code{sequence} and \code{germline} slot in the near future.
+#'
+#' The airrClone object also contains vectors \code{locus}, \code{region}, and 
+#' \code{numbers}, which contain the locus, IMGT region, and IMGT number for each position
+#' in the sequence column specified in \code{phylo_seq}. If IMGT-gapped sequences are not 
+#' supplied, this will likely result in an error. Specify \code{use_regions=FALSE} if not
+#' using IMGT-gapped sequences
 #'  
-#' @seealso  Returns an \link{airrClone}. See \link{formatClones} to enerate an 
+#' @seealso  Returns an \link{airrClone}. See \link{formatClones} to generate an 
 #' ordered list of airrClone objects.
-#' @example
-#' airr_clone <- makeAirrClone(ExampleDb[ExampleDb$clone_id=="3184",])
+#' @examples
+#' data(ExampleAirr)
+#' airr_clone <- makeAirrClone(ExampleAirr[ExampleAirr$clone_id=="3184",])
 #' @export
-
 makeAirrClone <- 
 function(data, id="sequence_id", seq="sequence_alignment", 
     germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
@@ -413,10 +426,10 @@ cleanAlignment <- function(clone, seq="sequence"){
 #'      which serve as input to \link{getTrees} and \link{bootstrapTrees}.
 #' 
 #' @examples
-#' data(ExampleDb)
+#' data(ExampleAirr)
 #' # Select two clones, for demonstration purpose
 #' sel <- c("3170", "3184")
-#' clones <- formatClones(ExampleDb[ExampleDb$clone_id %in% sel,],trait="sample_id")
+#' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",

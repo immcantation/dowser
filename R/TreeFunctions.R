@@ -1200,9 +1200,9 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 #' @examples
 #' \dontrun{
-#' data(ExampleDb)
-#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+#' clones <- formatClones(ExampleAirr, trait="sample_id")
 #'
 #' trees <- getTrees(clones[1:2])
 #' plotTrees(trees[[1]])
@@ -1767,9 +1767,9 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' 
 #' @examples
 #' \dontrun{
-#' data(ExampleDb)
-#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+#' clones <- formatClones(ExampleAirr, trait="sample_id")
 #' 
 #' btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
 #' plotTrees(btrees$trees[[4]])[[1]]

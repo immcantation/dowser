@@ -163,9 +163,9 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @seealso \link{getTrees}, \link{bootstrapTrees}
 #' @examples
 #' \dontrun{
-#' data(ExampleDb)
-#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+#' clones <- formatClones(ExampleAirr, trait="sample_id")
 #'
 #' trees <- getTrees(clones[1:2,])
 #' plots <- plotTrees(trees)
@@ -354,9 +354,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 #' @seealso \link{plotTrees}
 #' @examples
 #' \dontrun{
-#' data(ExampleDb)
-#' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-#' clones <- formatClones(ExampleDb, trait="sample_id")
+#' data(ExampleAirr)
+#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+#' clones <- formatClones(ExampleAirr, trait="sample_id")
 #' trees <- getTrees(clones)
 #' plots <- plotTrees(trees)
 #' treesToPDF(plots,"test.pdf",width=5,height=6)

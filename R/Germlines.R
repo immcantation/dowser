@@ -634,7 +634,7 @@ buildClonalGermline <- function(receptors, references,
 #' @examples 
 #' vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
 #' imgt <- readIMGT(vdj_dir)
-#' db <- createGermlines(ExampleDb[1,], imgt)
+#' db <- createGermlines(ExampleAirr[1,], imgt)
 #' @export
 createGermlines <- function(data, references, organism="human",locus="IGH",
   nproc=1, seq="sequence_alignment", v_call="v_call", d_call="d_call", 

@@ -85,9 +85,9 @@ be toggled using (\code{rm_files}).
 }
 \examples{
 \dontrun{
-data(ExampleDb)
-ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-clones <- formatClones(ExampleDb, trait="sample_id")
+data(ExampleAirr)
+ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+clones <- formatClones(ExampleAirr, trait="sample_id")
 
 trees <- getTrees(clones[1:2])
 plotTrees(trees[[1]])

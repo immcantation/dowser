@@ -41,6 +41,6 @@ A small example database subset from Laserson and Vigneault et al, 2014.
 }
 }
 \seealso{
-\link{ExampleDb} \link{ExampleTrees}
+\link{ExampleAirr} \link{ExampleClones}
 }
 \keyword{datasets}
