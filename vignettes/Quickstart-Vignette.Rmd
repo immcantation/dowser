@@ -39,7 +39,7 @@ library(dowser)
 data(ExampleDb)
 
 # Process example data into proper format
-clones = formatClones(ExampleDb)
+clones <- formatClones(ExampleDb)
 
 # Build maxmimum parsimony trees for first two clones using 
 # phangorn package in R
@@ -51,3 +51,4 @@ plots <- plotTrees(trees)
 # plot tree of first clone
 plots[[1]]
 ```
+
