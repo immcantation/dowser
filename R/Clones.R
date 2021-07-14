@@ -58,21 +58,16 @@
 #' @details
 #' The input data.frame (\code{data}) must columns for each of the required column name 
 #' arguments: \code{id}, \code{seq}, \code{germ}, \code{v_call}, \code{j_call}, 
-#' \code{junc_len}, and \code{clone}.  The default values are as follows:
-#' \itemize{
-#'   \item  \code{id       = "sequence_id"}:         unique sequence identifier.
-#'   \item  \code{seq      = "sequence_alignment"}:  IMGT-gapped sample sequence.
-#'   \item  \code{germ     = "germline_alignment"}:  IMGT-gapped germline sequence.
-#'   \item  \code{v_call    = "v_call"}:              V segment allele call.
-#'   \item  \code{j_call    = "j_call"}:              J segment allele call.
-#'   \item  \code{junc_len = "junction_length"}:     junction sequence length.
-#'   \item  \code{clone    = "clone_id"}:            clone identifier.
-#' }
-#' Additional annotation columns specified in the \code{text_fields}, \code{num_fields} 
-#' or \code{seq_fields} arguments will be retained in the \code{data} slot of the return 
-#' object, but are not required. If the input data.frame \code{data} already contains a 
-#' column named \code{sequence}, which is not used as the \code{seq} argument, then that 
-#' column will not be retained.
+#' \code{junc_len}, and \code{clone}.  
+
+#' Additional annotation columns specified in the \code{traits}, \code{text_fields}, 
+#' \code{num_fields} or \code{seq_fields} arguments will be retained in the \code{data} 
+#' slot of the return object, but are not required. These options differ by their behavior
+#' among collapsed sequences. Identical sequences that differ by any values specified in the
+#' \code{traits} option will be kept distinct. Identical sequences that differ only by
+#' values in the \code{num_fields} option will be collapsed and the values of their 
+#' \code{num_fields} columns will be added together. Similar behavior occurs with 
+#' \code{text_fields} but the unique values will concatenated with a comma.
 #' 
 #' The default columns are IMGT-gapped sequence columns, but this is not a requirement. 
 #' However, all sequences (both observed and germline) must be multiple aligned using
@@ -82,16 +77,15 @@
 #' junction length, and clone identifier are determined from the first entry in the 
 #' \code{germ}, \code{v_call}, \code{j_call}, \code{junc_len} and \code{clone} columns, 
 #' respectively. For any given clone, each value in these columns should be identical.
+#' 
+#' 
 #'  
 #' @seealso  Returns an \link{airrClone}. See \link{formatClones} to enerate an 
 #' ordered list of airrClone objects.
 #' @example
 #' airr_clone <- makeAirrClone(ExampleDb[ExampleDb$clone_id=="3184",])
 #' @export
-#requires one loci to be the "primary" which is present in all cells and 
-#is assumed to descend from a single common ancestor via point mutations
-#and allow for one other alternate loci, which is assumed to descend by
-#point mutations from a common ancestor
+
 makeAirrClone <- 
 function(data, id="sequence_id", seq="sequence_alignment", 
     germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
@@ -104,7 +98,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
         unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
-        text_fields, num_fields, seq_fields,traits)))
+        text_fields, num_fields, seq_fields, traits)))
     if (check != TRUE) { stop(check) }
 
     if(chain=="HL"){
