@@ -83,8 +83,10 @@
 #' \code{germ}, \code{v_call}, \code{j_call}, \code{junc_len} and \code{clone} columns, 
 #' respectively. For any given clone, each value in these columns should be identical.
 #'  
-#' @seealso  Returns an \link{airrClone} 
-#' 
+#' @seealso  Returns an \link{airrClone}. See \link{formatClones} to enerate an 
+#' ordered list of airrClone objects.
+#' @example
+#' airr_clone <- makeAirrClone(ExampleDb[ExampleDb$clone_id=="3184",])
 #' @export
 #requires one loci to be the "primary" which is present in all cells and 
 #is assumed to descend from a single common ancestor via point mutations
@@ -417,10 +419,10 @@ cleanAlignment <- function(clone, seq="sequence"){
 #'      which serve as input to \link{getTrees} and \link{bootstrapTrees}.
 #' 
 #' @examples
-#' \dontrun{
 #' data(ExampleDb)
-#' clones <- formatClones(ExampleDb,trait="sample_id")
-#' }
+#' # Select two clones, for demonstration purpose
+#' sel <- c("3170", "3184")
+#' clones <- formatClones(ExampleDb[ExampleDb$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",
