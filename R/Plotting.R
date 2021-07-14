@@ -167,7 +167,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' ExampleDb$sample_id <- sample(ExampleDb$sample_id)
 #' clones <- formatClones(ExampleDb, trait="sample_id")
 #'
-#' trees <- getTrees(clones[1:2])
+#' trees <- getTrees(clones[1:2,])
 #' plots <- plotTrees(trees)
 #' plots[[1]]
 #' }
