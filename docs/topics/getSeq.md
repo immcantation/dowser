@@ -9,18 +9,18 @@ Description
 Usage
 --------------------
 ```
-getSeq(node, data, tree = NULL, clone = NULL, gaps = TRUE)
+getSeq(data, node, tree = NULL, clone = NULL, gaps = TRUE)
 ```
 
 Arguments
 -------------------
 
-node
-:   numeric node in tree (see details)
-
 data
 :   a tibble of `airrClone` objects, the output of 
 [getTrees](getTrees.md)
+
+node
+:   numeric node in tree (see details)
 
 tree
 :   a `phylo` tree object containing `node`

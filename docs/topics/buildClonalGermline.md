@@ -1,9 +1,9 @@
-**buildClonalGermline** - *[buildGermline](buildGermline.md) Determine consensus clone sequence and create germline for clone*
+**buildClonalGermline** - *`buildClonalGermline` Determine consensus clone sequence and create germline for clone*
 
 Description
 --------------------
 
-[buildGermline](buildGermline.md) Determine consensus clone sequence and create germline for clone
+Determine consensus clone sequence and create germline for clone
 
 
 Usage
@@ -14,7 +14,7 @@ receptors,
 references,
 organism = "human",
 locus = "IGH",
-useRegions = FALSE,
+use_regions = FALSE,
 vonly = FALSE,
 seq = "sequence_alignment",
 id = "sequence_id",
@@ -43,7 +43,7 @@ organism
 locus
 :   locus in `references` being analyzed
 
-useRegions
+use_regions
 :   Return string of VDJ regions? (optional)
 
 vonly
@@ -94,7 +94,7 @@ Return object adds/edits following columns:
 + `germline_alignment`: Full length germline
 + `germline_alignment_d_mask`: Full length, D region masked
 + `vonly`:   V gene segment of germline if vonly=TRUE
-+ `regions`: String of VDJ segment in position if useRegions=TRUE
++ `regions`: String of VDJ segment in position if use_regions=TRUE
 
 
 

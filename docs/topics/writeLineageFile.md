@@ -16,10 +16,9 @@ dir = ".",
 id = "N",
 rep = NULL,
 trait = NULL,
-dummy = TRUE,
+empty = TRUE,
 partition = "single",
-heavy = "IGH",
-...
+heavy = "IGH"
 )
 ```
 
@@ -44,7 +43,7 @@ rep
 trait
 :   string appended to sequence id in fasta files
 
-dummy
+empty
 :   output uninformative sequences?
 
 partition
@@ -52,9 +51,6 @@ partition
 
 heavy
 :   name of heavy chain locus
-
-...
-:   Additional arguments
 
 
 

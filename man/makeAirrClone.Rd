@@ -29,8 +29,8 @@ makeAirrClone(
   traits = NULL,
   mod3 = TRUE,
   randomize = TRUE,
-  useRegions = TRUE,
-  dupSingles = FALSE
+  use_regions = TRUE,
+  dup_singles = FALSE
 )
 }
 \arguments{
@@ -103,9 +103,9 @@ sequences silently.}
 
 \item{randomize}{randomize sequence order? Important if using PHYLIP}
 
-\item{useRegions}{assign CDR/FWR regions?}
+\item{use_regions}{assign CDR/FWR regions?}
 
-\item{dupSingles}{Duplicate sequences in singleton clones to include them as trees?}
+\item{dup_singles}{Duplicate sequences in singleton clones to include them as trees?}
 }
 \value{
 A \link{airrClone} object containing the modified clone.

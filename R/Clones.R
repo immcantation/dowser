@@ -51,8 +51,8 @@
 #' @param    locus        name of the column containing locus information
 #' @param    mod3         pad sequences to length mutliple three?
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
-#' @param    useRegions   assign CDR/FWR regions?
-#' @param    dupSingles   Duplicate sequences in singleton clones to include them as trees?
+#' @param    use_regions   assign CDR/FWR regions?
+#' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?
 #' @return   A \link{airrClone} object containing the modified clone.
 #'
 #' @details
@@ -97,7 +97,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
     add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-    useRegions=TRUE, dupSingles=FALSE){
+    use_regions=TRUE, dup_singles=FALSE){
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
@@ -194,7 +194,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
         chains <- c(rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
                  rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
         numbers <- c(1:hc_length,1:alt_length)
-        if(useRegions){
+        if(use_regions){
             hregions <- as.character(
                 shazam::setRegionBoundaries(unique(hc[[junc_len]]),
                 germline,
@@ -247,7 +247,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
         tmp_df$lsequence <- ""
         tmp_df$hlsequence <- tmp_df[[seq]]
         new_seq <- seq
-        if(useRegions){
+        if(use_regions){
             regions <- as.character(
                 shazam::setRegionBoundaries(unique(data[[junc_len]]),
                 germline,
@@ -309,7 +309,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
         phylo_seq <- "sequence"
     }
 
-    if(nrow(tmp_df) == 1 && dupSingles){
+    if(nrow(tmp_df) == 1 && dup_singles){
         tmp_df2 <- tmp_df
         tmp_df2[[id]] <- paste0(tmp_df[[id]],"_DUPLICATE")
         tmp_df <- bind_rows(tmp_df, tmp_df2)
@@ -327,8 +327,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
         v_gene=alakazam::getGene(data[[v_call]][1]), 
         j_gene=alakazam::getGene(data[[j_call]][1]), 
         junc_len=data[[junc_len]][1],
-        locus=unique(loci),
-        chain=chains,
+        locus=chains,
+        #chain=chains,
         region=regions,
         numbers=numbers,
         phylo_seq=phylo_seq)
@@ -345,7 +345,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
 #
 # @return   \code{airrClone} object with cleaned alignment
 #
-cleanAlignment <- function(clone,seq="sequence"){
+cleanAlignment <- function(clone, seq="sequence"){
     if(seq=="hlsequence"){
         g <- strsplit(clone@hlgermline[1],split="")[[1]]
     }else{
@@ -361,8 +361,8 @@ cleanAlignment <- function(clone,seq="sequence"){
     informative <- ns != length(sk)
     l=lapply(sk,function(x) x=paste(x[informative],collapse=""))
     gm=paste(g[informative],collapse="")
-    if(.hasSlot(clone,"chain")){
-        clone@chain <- clone@chain[informative] 
+    if(.hasSlot(clone,"locus")){
+        clone@locus <- clone@locus[informative] 
     }
     if(.hasSlot(clone,"region")){
         clone@region <- clone@region[informative]   
@@ -504,6 +504,12 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     
     fclones <- processClones(clones, nproc=nproc, seq=seq_name, minseq=minseq)
 
+    # clone_id must be used for clone ids
+    if(clone != "clone_id"){
+        fclones$clone_id <- fclones[[clone]]
+        fclones <- dplyr::select(fclones, -!!clone)
+    }
+
     colpaste <- function(x){
         s <- sort(unique(x))
         if(length(s) > 1){
@@ -544,8 +550,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 #' @param    s               (subject) aligned input sequence (sequence_alignment)
 #' @param    keep_alignment  store q and s alignments
 #' @param    keep_insertions return removed insertion sequences?
-#' @param    gapOpening      gap opening penalty (Biostrings::pairwiseALignment)
-#' @param    gapExtension    gap extension penalty (Biostrings::pairwiseALignment)
+#' @param    gap_opening      gap opening penalty (Biostrings::pairwiseALignment)
+#' @param    gap_extension    gap extension penalty (Biostrings::pairwiseALignment)
 #' @param    mask            if FALSE, don't mask codons
 #' @return   A list with split codons masked, if found (sequence_masked).
 #'
@@ -568,8 +574,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 #' q <- "ATTTTCATCATC"
 #' print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
 #' @export
-maskCodons <- function(id, q, s, keep_alignment=FALSE, gapOpening=5, 
-    gapExtension=1, keep_insertions=FALSE, mask=TRUE){
+maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5, 
+    gap_extension=1, keep_insertions=FALSE, mask=TRUE){
     results <- list(
         sequence_id =id,
         sequence_masked="",
@@ -604,7 +610,7 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gapOpening=5,
 
     # perform global alignment
     n <- Biostrings::pairwiseAlignment(q, sg, type="global",
-            gapOpening=gapOpening, gapExtension=gapExtension)
+            gapOpening=gap_opening, gapExtension=gap_extension)
     qa <- as.character(n@pattern)
     sa <- as.character(n@subject)
     if(keep_alignment){
@@ -1056,7 +1062,8 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
         function(x)cleanAlignment(x,seq),mc.cores=nproc)
 
     if(.hasSlot(clones$data[[1]],"locus")){
-        clones$locus <- unlist(lapply(clones$data,function(x)paste(x@locus,collapse=",")))
+        clones$locus <- unlist(lapply(clones$data,function(x)
+            paste(sort(unique(x@locus)),collapse=",")))
     }
     clones$seqs <- unlist(lapply(clones$data,function(x)nrow(x@data)))
     clones <- dplyr::rowwise(clones)

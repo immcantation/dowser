@@ -96,7 +96,7 @@ Return object adds/edits following columns:
   \item  \code{germline_alignment}: Full length germline
   \item  \code{germline_alignment_d_mask}: Full length, D region masked
   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
-  \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
+  \item  \code{regions}: String of VDJ segment in position if use_regions=TRUE
 }
 }
 \examples{

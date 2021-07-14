@@ -455,7 +455,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
             cdrs[regions == "fwr4"] <- 120
         }else if(partition == "hl"){
             nomega <- 2
-            chains <- data[[i]]@chain
+            chains <- data[[i]]@locus
             if(dplyr::n_distinct(chains) == 1){
                 warning(paste("Only one chain found in clone",data[[i]]@clone))
             }
@@ -464,7 +464,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
             cdrs[chains != heavy] <- 30
         }else if(partition == "hlc"){
             nomega <- 3
-            chains <- data[[i]]@chain
+            chains <- data[[i]]@locus
             regions <- data[[i]]@region
             if(dplyr::n_distinct(regions) == 1){
                 warning(paste("Only one region found in clone",data[[i]]@clone))
@@ -478,7 +478,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
             cdrs[chains != heavy & grepl("cdr", regions)] <- 200 #light cdr
         }else if(partition == "hlf"){
             nomega <- 3
-            chains <- data[[i]]@chain
+            chains <- data[[i]]@locus
             regions <- data[[i]]@region
             if(dplyr::n_distinct(regions) == 1){
                 warning(paste("Only one region found in clone",data[[i]]@clone))
@@ -492,7 +492,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
             cdrs[chains != heavy & grepl("fwr", regions)] <- 200 #light fwr
         }else if(partition == "hlcf"){
             nomega <- 4
-            chains <- data[[i]]@chain
+            chains <- data[[i]]@locus
             regions <- data[[i]]@region
             if(dplyr::n_distinct(regions) == 1){
                 warning(paste("Only one region found in clone",data[[i]]@clone))
@@ -1217,24 +1217,24 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,    palette=NULL,
     seq=NULL, collapse=FALSE, ...){
 
-    if(build == "pratchet"){
-        s <- sessionInfo()
-        if("phangorn" %in% names(s$loadedOnly)){
-            version <- s$loadedOnly$phangorn$Version
-        }else if("phangorn" %in% names(s$otherPkgs)){
-            version <- s$otherPkgs$phangorn$Version
-        }else{
-            stop("Couldn't find phangorn in package list")
-        }
-        if(version == "2.7.0"){
-            warn <- paste0("\n\nWe are experiencing issues with phangorn v2.7.0\n",
-                "If you encounter problems, please either:\n",
-                "A) update phangorn if a newer version available on CRAN\n",
-                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-                "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n")
-            stop(warn)
-        }    
-    }
+    #if(build == "pratchet"){
+    #    s <- sessionInfo()
+    #    if("phangorn" %in% names(s$loadedOnly)){
+    #        version <- s$loadedOnly$phangorn$Version
+    #    }else if("phangorn" %in% names(s$otherPkgs)){
+    #        version <- s$otherPkgs$phangorn$Version
+    #    }else{
+    #        stop("Couldn't find phangorn in package list")
+    #    }
+    #    if(version == "2.7.0"){
+    #        warn <- paste0("\n\nWe are experiencing issues with phangorn v2.7.0\n",
+    #            "If you encounter problems, please either:\n",
+    #            "A) update phangorn if a newer version available on CRAN\n",
+    #            "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
+    #            "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n")
+    #        stop(warn)
+    #    }    
+    #}
 
     data <- clones$data
     if(fixtrees){
@@ -1607,9 +1607,9 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 #' Return IMGT gapped sequence of specified tree node
 #' 
 #' \code{getSeq} Sequence retrieval function.
-#' @param    node    numeric node in tree (see details)
 #' @param    data    a tibble of \code{airrClone} objects, the output of 
 #'                   \link{getTrees}
+#' @param    node    numeric node in tree (see details)
 #' @param    tree    a \code{phylo} tree object containing \code{node}
 #' @param    clone   if \code{tree} not specified, supply clone ID in \code{data}
 #' @param    gaps    add IMGT gaps to output sequences?
@@ -1622,7 +1622,7 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 #'  
 #' @seealso \link{getTrees}
 #' @export
-getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
+getSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     if(is.null(tree)){
         if(is.null(clone)){
             stop("must provide either tree object or clone ID")
@@ -1632,18 +1632,18 @@ getSeq <- function(node, data, tree=NULL, clone=NULL, gaps=TRUE){
     clone <- filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
     seqs <- c()
     seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
-    loci <- unique(clone@chain)
+    loci <- unique(clone@locus)
     for(locus in loci){
-        if(length(seq) < length(clone@chain)){
+        if(length(seq) < length(clone@locus)){
             warning("Sequences are shorter than chain vector. Exiting")
         }
-        if(length(seq) > length(clone@chain)){
+        if(length(seq) > length(clone@locus)){
             stop("Sequences are longer than chain vector. Exiting")
         }
-        lseq <- seq[clone@chain == locus]
+        lseq <- seq[clone@locus == locus]
         lseq[is.na(lseq)] <- "N"
         if(gaps){
-            nums <- clone@numbers[clone@chain == locus]
+            nums <- clone@numbers[clone@locus == locus]
             nseq <- rep(".",max(nums))
             nseq[nums] <- lseq
             lseq <- nseq
@@ -1787,24 +1787,24 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
     ...){
 
-    if(build == "pratchet"){
-        s <- sessionInfo()
-        if("phangorn" %in% names(s$loadedOnly)){
-            version <- s$loadedOnly$phangorn$Version
-        }else if("phangorn" %in% names(s$otherPkgs)){
-            version <- s$otherPkgs$phangorn$Version
-        }else{
-            stop("Couldn't find phangorn in package list")
-        }
-        if(version == "2.7.0"){
-            warn <- paste0("\nWe are experiencing issues with phangorn v2.7.0\n",
-                "If you encounter problems, please either:\n",
-                "A) update phangorn if a newer version available on CRAN\n",
-                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-                "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n")
-            stop(warn)
-        }    
-    }
+    #if(build == "pratchet"){
+    #    s <- sessionInfo()
+    #    if("phangorn" %in% names(s$loadedOnly)){
+    #        version <- s$loadedOnly$phangorn$Version
+    #    }else if("phangorn" %in% names(s$otherPkgs)){
+    #        version <- s$otherPkgs$phangorn$Version
+    #    }else{
+    #        stop("Couldn't find phangorn in package list")
+    #    }
+    #    if(version == "2.7.0"){
+    #        warn <- paste0("\nWe are experiencing issues with phangorn v2.7.0\n",
+    #            "If you encounter problems, please either:\n",
+    #            "A) update phangorn if a newer version available on CRAN\n",
+    #            "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
+    #            "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n")
+    #        stop(warn)
+    #    }    
+    #}
 
     data <- clones$data
     if(fixtrees){

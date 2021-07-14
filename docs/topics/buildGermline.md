@@ -1,9 +1,9 @@
-**buildGermline** - *[buildGermline](buildGermline.md) build gapped germline segment*
+**buildGermline** - *`buildGermline` reconstruct germline segments from alignment data*
 
 Description
 --------------------
 
-[buildGermline](buildGermline.md) build gapped germline segment
+Reconstruct germlines from alignment data.
 
 
 Usage
@@ -29,8 +29,7 @@ j_germ_end = "j_germline_end",
 j_germ_length = "j_germline_length",
 np1_length = "np1_length",
 np2_length = "np2_length",
-amino_acid = FALSE,
-...
+amino_acid = FALSE
 )
 ```
 
@@ -97,9 +96,6 @@ np2_length
 
 amino_acid
 :   Perform reconstruction on amino acid sequence (experimental)
-
-...
-:   Additional arguments
 
 
 

@@ -37,9 +37,8 @@ locus = "locus",
 traits = NULL,
 mod3 = TRUE,
 randomize = TRUE,
-useRegions = TRUE,
-dupSingles = FALSE,
-...
+use_regions = TRUE,
+dup_singles = FALSE
 )
 ```
 
@@ -139,14 +138,11 @@ mod3
 randomize
 :   randomize sequence order? Important if using PHYLIP
 
-useRegions
+use_regions
 :   assign CDR/FWR regions?
 
-dupSingles
+dup_singles
 :   Duplicate sequences in singleton clones to include them as trees?
-
-...
-:   additional arguments, used by [formatClones](formatClones.md)
 
 
 

@@ -1,4 +1,32 @@
-# Trees
+---
+title: 'Build B cell lineage trees'
+author: "Kenneth B. Hoehn"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Trees}
+  %\usepackage[utf8]{inputenc}
+---
 
 Dowser offer multiple ways to build B cell phylogenetic trees. These differ by the method used to estimate tree topology and branch lengths (e.g. maximum parsimony and maximum likelihood) and implementation (IgPhyML, PHYLIP, or R packages ape and phangorn).
 
@@ -16,8 +44,7 @@ Before trees can be built, data must be formatted into a data table of AIRR clon
 
 The output of this function is a tibble in which each row is a clone, ordered by the number of sequences. The column `data` contains airrClone objects with the clonal sequence alignments. Other columns contain information about the clone, and can be specified using the `columns` argument.
 
-
-```r
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
 
 # load example AIRR tsv data
@@ -31,17 +58,7 @@ ExampleDb$subject_id = "Subject_1"
 clones = formatClones(ExampleDb)
 
 print(clones)
-```
 
-```
-## # A tibble: 2 x 4
-##   clone_id data       locus  seqs
-##      <dbl> <list>     <chr> <int>
-## 1     3170 <airrClon> N        13
-## 2     3184 <airrClon> N        12
-```
-
-```r
 ## A tibble: 2 x 4
 #  clone_id data       locus  seqs
 #     <dbl> <list>     <chr> <int>
@@ -55,17 +72,6 @@ clones = formatClones(ExampleDb, traits=c("sample_id","c_call"),
     num_fields=c("duplicate_count"), columns=c("subject_id"))
 
 print(clones)
-```
-
-```
-## # A tibble: 2 x 5
-##   clone_id data       locus  seqs subject_id
-##      <dbl> <list>     <chr> <int> <chr>     
-## 1     3170 <airrClon> N        13 Subject_1 
-## 2     3184 <airrClon> N        12 Subject_1
-```
-
-```r
 ## A tibble: 2 x 5
 #  clone_id data       locus  seqs subject_id
 #     <dbl> <list>     <chr> <int> <chr>     
@@ -83,8 +89,8 @@ Maximum parsimony trees can also be built using the PHYLIP function `dnapars`. T
 
 In all cases, the output is the same tibble as the input, but with a `trees` column containing an R `ape::phylo` object for each clone.
 
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
-```r
 # Build trees using the pratchet maximum parsimony function in phangnorn
 clones = getTrees(clones, nproc=1)
 
@@ -97,8 +103,7 @@ print(clones)
 ```
 Build trees using dnapars instead:
 
-
-```r
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Build trees using dnapars.
 # exec here is set to dnapars position in the Docker image.
 clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars", nproc=1)
@@ -119,8 +124,7 @@ Standard maximum likelihood trees can also be built with the `getTrees` function
 
 Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To do this, the `build` option needs to be set as `dnaml` and the path to the `dnaml` executable needs to be specified in the `exec` option.
 
-
-```r
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Build trees using the optim.pml maximum likelihood function in phangnorn
 clones = getTrees(clones, build="pml")
 
@@ -133,8 +137,7 @@ print(clones)
 ```
 Build trees using dnaml instead:
 
-
-```r
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Build trees using dnaml.
 # exec here is set to dnaml position in the Docker image.
 clones = getTrees(clones, build="dnaml", exec="/usr/local/bin/dnaml")
@@ -155,8 +158,8 @@ The returns object will also include a `parameters` column, which will contain t
 
 Note: This function is slower than other maximum likelihood and parsimony approaches.
 
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
-```r
 # Build trees using dnapars.
 # exec here is set to dnapars position in the Docker image.
 clones = getTrees(clones, build="igphyml", 

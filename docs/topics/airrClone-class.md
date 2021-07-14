@@ -43,10 +43,7 @@ sequence-specific annotation columns
 :   numeric junction length (nucleotide count)
 
 `locus`
-:   the loci represented in this clone object
-
-`chain`
-:   index showing which chain represent which site
+:   index showing which locus represented at each site
 
 `region`
 :   index showing FWR/CDR region for each site

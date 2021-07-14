@@ -1,4 +1,32 @@
-# Sequneces
+---
+title: 'Reconstruct intermediate sequences'
+author: "Kenneth B. Hoehn"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Sequneces}
+  %\usepackage[utf8]{inputenc}
+---
 
 Dowser automatically reconstructs intermediate sequences as part of the `getTrees` function. These are stored in the `nodes` list contained in each `phylo` object.
 
@@ -6,8 +34,7 @@ First, collapse internal nodes with identical sequences using the `collapesNodes
 
 To obtain the IMGT-gapped sequence for each reconstructed node, specify the clone ID and node number in the `getSeq` function.
 
-
-```r
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
 
 # Set up format clones and build trees
@@ -28,20 +55,9 @@ plots = plotTrees(clones, tips="c_call", tipsize=2,
     node_nums=TRUE, labelsize=7)
 
 plots[[1]]
-```
 
-![plot of chunk Sequences-Vignette-1](figure/Sequences-Vignette-1-1.png)
-
-```r
 getSeq(clones, node=17, clone=3170)
-```
 
-```
-##                                                                                                                                                                                                                                                                                                                                                                                                                    N 
-## "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN"
-```
-
-```r
 # Output:
 #                                                                      N 
 # "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............AGTGAYTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGKCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN" 

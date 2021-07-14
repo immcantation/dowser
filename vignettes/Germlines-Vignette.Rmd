@@ -1,4 +1,32 @@
-# Germlines
+---
+title: 'Reconstruct clonal germline sequences'
+author: "Kenneth B. Hoehn"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Germlines}
+  %\usepackage[utf8]{inputenc}
+---
 
 Before B cell lineage trees can be built, it is necessary to construct the unmutated germline sequence for each B cell clone. Typically the IGH D segment is masked, because the junction region of heavy chains often cannot be reliably reconstructed.
 
@@ -12,8 +40,7 @@ The IMGT reference database can be most easily obtained by downloading the Immca
 
 These commands will create a series of directories containing the IMGT reference directories of their respective species.
 
-
-```bash
+```{bash, eval=FALSE, warning=FALSE, message=FALSE}
 # Enter these commands in a terminal, not an R session!
 
 # Move to the directory of interest
@@ -37,8 +64,7 @@ To reconstruct clonal germlines, read in the IMGT-gapped sequence directory and 
 
 Input data *must* be from one locus, such as only IGH.
 
-
-```r
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 library(dowser)
 library(dplyr)
 

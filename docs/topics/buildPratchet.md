@@ -18,8 +18,7 @@ tree = NULL,
 asr_type = "MPR",
 verbose = 0,
 resolve_random = TRUE,
-data_type = "DNA",
-...
+data_type = "DNA"
 )
 ```
 
@@ -52,9 +51,6 @@ resolve_random
 
 data_type
 :   Are sequences DNA or AA?
-
-...
-:   Additional arguments (not currently used)
 
 
 

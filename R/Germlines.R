@@ -466,7 +466,7 @@ buildGermline <- function(receptor, references,
 #' @param references       Full list of reference segments, see \link{readIMGT}
 #' @param organism         Species in \code{references} being analyzed
 #' @param locus            locus in \code{references} being analyzed
-#' @param useRegions       Return string of VDJ regions? (optional)
+#' @param use_regions       Return string of VDJ regions? (optional)
 #' @param vonly            Return germline of only v segment?
 #' @param seq              Column name for sequence alignment
 #' @param id               Column name for sequence ID
@@ -484,11 +484,11 @@ buildGermline <- function(receptor, references,
 #'   \item  \code{germline_alignment}: Full length germline
 #'   \item  \code{germline_alignment_d_mask}: Full length, D region masked
 #'   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
-#'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
+#'   \item  \code{regions}: String of VDJ segment in position if use_regions=TRUE
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
 buildClonalGermline <- function(receptors, references, 
-  organism="human", locus="IGH", useRegions=FALSE, vonly=FALSE,
+  organism="human", locus="IGH", use_regions=FALSE, vonly=FALSE,
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
   v_call="v_call", j_call="j_call", j_germ_length="j_germline_length",
   j_germ_aa_length= "j_germline_aa_length",amino_acid=FALSE,...){
@@ -585,7 +585,7 @@ buildClonalGermline <- function(receptors, references,
 
     receptors$germline_alignment <- germlines$full
     receptors$germline_alignment_d_mask <- germlines$dmask
-    if(useRegions){
+    if(use_regions){
       receptors$regions <- germlines$regions
     }
     if(vonly){
@@ -628,7 +628,7 @@ buildClonalGermline <- function(receptors, references,
 #'   \item  \code{germline_alignment}: Full length germline
 #'   \item  \code{germline_alignment_d_mask}: Full length, D region masked
 #'   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
-#'   \item  \code{regions}: String of VDJ segment in position if useRegions=TRUE
+#'   \item  \code{regions}: String of VDJ segment in position if use_regions=TRUE
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
 #' @examples 

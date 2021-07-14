@@ -4,13 +4,13 @@
 \alias{getSeq}
 \title{Return IMGT gapped sequence of specified tree node}
 \usage{
-getSeq(node, data, tree = NULL, clone = NULL, gaps = TRUE)
+getSeq(data, node, tree = NULL, clone = NULL, gaps = TRUE)
 }
 \arguments{
-\item{node}{numeric node in tree (see details)}
-
 \item{data}{a tibble of \code{airrClone} objects, the output of 
 \link{getTrees}}
+
+\item{node}{numeric node in tree (see details)}
 
 \item{tree}{a \code{phylo} tree object containing \code{node}}
 

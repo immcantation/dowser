@@ -134,9 +134,19 @@ Return object adds/edits following columns:
 + `germline_alignment`: Full length germline
 + `germline_alignment_d_mask`: Full length, D region masked
 + `vonly`:   V gene segment of germline if vonly=TRUE
-+ `regions`: String of VDJ segment in position if useRegions=TRUE
++ `regions`: String of VDJ segment in position if use_regions=TRUE
 
 
+
+
+Examples
+-------------------
+
+```R
+vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
+imgt <- readIMGT(vdj_dir)
+db <- createGermlines(ExampleDb[1,], imgt)
+```
 
 
 

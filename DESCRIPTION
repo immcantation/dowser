@@ -30,7 +30,7 @@ Imports:
     gridExtra,
     markdown,
     methods,
-    phangorn,
+    phangorn (>= 2.7.1),
     phylotate,
     RColorBrewer,
     rlang,

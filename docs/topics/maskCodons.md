@@ -14,8 +14,8 @@ id,
 q,
 s,
 keep_alignment = FALSE,
-gapOpening = 5,
-gapExtension = 1,
+gap_opening = 5,
+gap_extension = 1,
 keep_insertions = FALSE,
 mask = TRUE
 )
@@ -36,10 +36,10 @@ s
 keep_alignment
 :   store q and s alignments
 
-gapOpening
+gap_opening
 :   gap opening penalty (Biostrings::pairwiseALignment)
 
-gapExtension
+gap_extension
 :   gap extension penalty (Biostrings::pairwiseALignment)
 
 keep_insertions

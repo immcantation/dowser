@@ -19,8 +19,7 @@ asr_thresh = 0.05,
 tree = NULL,
 data_type = "DNA",
 optNni = TRUE,
-verbose = FALSE,
-...
+verbose = FALSE
 )
 ```
 
@@ -56,9 +55,6 @@ optNni
 
 verbose
 :   Print error messages as they happen?
-
-...
-:   Additional arguments (not currently used)
 
 
 

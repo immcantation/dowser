@@ -2,6 +2,7 @@
 
 Quick start of lineage tree reconstruction.
 
+
 ```r
 # Load required packages
 library(alakazam)
@@ -10,16 +11,20 @@ library(dowser)
 # load example AIRR tsv data
 data(ExampleDb)
 
-# Process example data into proper format
-clones = formatClones(ExampleDb)
+ExampleDb = ExampleDb[ExampleDb$clone_id %in% c("3170", "3184"),]
+
+# Process example data into proper format, store isotype (optional)
+clones = formatClones(ExampleDb, trait="c_call")
 
 # Build maxmimum parsimony trees for first two clones using 
 # phangorn package in R
-trees <- getTrees(clones[1:2,])
+trees <- getTrees(clones)
 
-# simple tree plotting with ggtree R package
-plots <- plotTrees(trees)
+# simple tree plotting with ggtree R package with isotypes at tips
+plots <- plotTrees(trees, tips="c_call")
 
-# plot tree of first clone
+# plot tree of largest clone
 plots[[1]]
 ```
+
+![plot of chunk Quickstart-Vignette-1](figure/Quickstart-Vignette-1-1.png)

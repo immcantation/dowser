@@ -30,9 +30,7 @@ sequence-specific annotation columns}
 
 \item{\code{junc_len}}{numeric junction length (nucleotide count)}
 
-\item{\code{locus}}{the loci represented in this clone object}
-
-\item{\code{chain}}{index showing which chain represent which site}
+\item{\code{locus}}{index showing which locus represented at each site}
 
 \item{\code{region}}{index showing FWR/CDR region for each site}
 

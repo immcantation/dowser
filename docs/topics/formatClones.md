@@ -22,7 +22,7 @@ subclone = "subclone_id",
 nproc = 1,
 chain = "H",
 heavy = "IGH",
-cell_id = "cell_id",
+cell = "cell_id",
 locus = "locus",
 minseq = 2,
 split_light = FALSE,
@@ -58,7 +58,7 @@ chain
 heavy
 :   name of heavy chain locus (default = "IGH")
 
-cell_id
+cell
 :   name of the column containing cell assignment information
 
 locus

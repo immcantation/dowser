@@ -15,8 +15,7 @@
 #' @slot     v_gene      string defining the V segment gene call
 #' @slot     j_gene      string defining the J segment gene call
 #' @slot     junc_len    numeric junction length (nucleotide count)
-#' @slot     locus       the loci represented in this clone object
-#' @slot     chain       index showing which chain represent which site
+#' @slot     locus       index showing which locus represented at each site
 #' @slot     region      index showing FWR/CDR region for each site
 #' @slot     phylo_seq   sequence column used for phylogenetic tree building
 #' @slot     numbers     index (usually IMGT) number of each site in \code{phylo_seq}
@@ -37,7 +36,7 @@ setClass("airrClone",
      j_gene="character", 
      junc_len="numeric",
      locus="character",
-     chain="character",
+     #chain="character",
      region="character",
      phylo_seq="character",
      numbers="numeric"))
