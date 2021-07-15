@@ -30,7 +30,7 @@ vignette: >
 
 Dowser automatically reconstructs intermediate sequences as part of the `getTrees` function. These are stored in the `nodes` list contained in each `phylo` object.
 
-First, collapse internal nodes with identical sequences using the `collapesNodes`. This will significantly clean up the visualization. You could alternatively run getTrees with `collapse=TRUE`. Then, visualize the trees using `plotTrees` but with the node_nums parameter set. This will display the ID number of each internal node.
+First, collapse internal nodes with identical sequences using the `collapesNodes`. This will significantly clean up the visualization. You could alternatively run `getTrees` with `collapse=TRUE`. Then, visualize the trees using `plotTrees` but with the `node_nums` parameter set. This will display the ID number of each internal node.
 
 To obtain the IMGT-gapped sequence for each reconstructed node, specify the clone ID and node number in the `getSeq` function.
 
