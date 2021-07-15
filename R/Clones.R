@@ -895,7 +895,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' @param    nolight      string to use to indicate a missing light chain
 #'
 #' @return   a tibble containing 
-#'
+# TODO: describe returned object
 #' @details
 #' 1. Make temporary array containing light chain clones
 #' 2. Enumerate all possible V and J combinations
