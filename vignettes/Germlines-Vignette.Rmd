@@ -45,7 +45,6 @@ These commands will create a series of directories containing the IMGT reference
 
 # Move to the directory of interest
 mkdir germlines
-cd germlines
 
 # Download the Immcantation repository
 git clone https://bitbucket.org/kleinstein/immcantation
@@ -78,7 +77,7 @@ db = select(ExampleAirr, -"germline_alignment",
     -"germline_alignment_d_mask")
 
 # Reconstruct germline sequences
-ExampleAirr = createGermlines(db,references,nproc=1)
+ExampleAirr = createGermlines(db, references, nproc=1)
 
 # Check germline of first row
 ExampleAirr$germline_alignment_d_mask[1]

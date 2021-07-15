@@ -24,8 +24,12 @@
 #' imgt <- readIMGT(vdj_dir)
 #' @export
 readIMGT <- function(dir, quiet=FALSE){
+  sequences <- 0
   database <- list()
   files <- list.files(dir, full.names=TRUE)
+  if(length(files) == 0){
+    stop("No fasta files found in directory")
+  }
   for(file in files){
     fasta_list <- readFasta(file)
     fasta_list <- unlist(lapply(fasta_list,
@@ -67,7 +71,10 @@ readIMGT <- function(dir, quiet=FALSE){
       database[[organism]][[locus]] <- list()
     }
     database[[organism]][[locus]][[segment]] <- fasta
+    sequences <- sequences + length(fasta)
   }
+  print(paste("Read in",sequences,"from",length(files),"fasta files"))
+
   database
 }
 
@@ -395,8 +402,6 @@ buildGermline <- function(receptor, references,
   np1_length="np1_length", np2_length="np2_length",
   amino_acid=FALSE){
 
-  #args <- list(...)
-  
     # Build V segment germline sequence
     germ_vseq <- getGermline(receptor, references$V, segment="V",
       field=v_call, germ_start=v_germ_start,germ_end=v_germ_end,
@@ -570,6 +575,11 @@ buildClonalGermline <- function(receptors, references,
      }))
 
     sub_db <- references[[organism]][[locus]]
+
+    if(length(sub_db) == 0){
+      stop(paste("Reference database for",organism,locus,"is empty"))
+    }
+
     # Stitch consensus germline
     germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
       v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
@@ -642,7 +652,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   v_germ_start="v_germline_start", v_germ_end="v_germline_end", v_germ_length="v_germline_length",
   d_germ_start="d_germline_start", d_germ_end="d_germline_end", d_germ_length="d_germline_length",
   j_germ_start="j_germline_start", j_germ_end="j_germline_end", j_germ_length="j_germline_length",
-  np1_length="np1_length", np2_length="np2_length", na.rm=FALSE, ...){
+  np1_length="np1_length", np2_length="np2_length", na.rm=TRUE, ...){
 
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 

@@ -28,7 +28,7 @@ createGermlines(
   j_germ_length = "j_germline_length",
   np1_length = "np1_length",
   np2_length = "np2_length",
-  na.rm = FALSE,
+  na.rm = TRUE,
   ...
 )
 }
