@@ -71,7 +71,7 @@ library(dplyr)
 data(ExampleAirr)
 
 # Read in IMGT-gapped sequences
-references = readIMGT(dir = "germlines/human/vdj")
+references = readIMGT(dir = file.path("germlines", "human", "vdj"))
 
 # remove germline alignment columns for this example
 db = select(ExampleAirr, -"germline_alignment", 
