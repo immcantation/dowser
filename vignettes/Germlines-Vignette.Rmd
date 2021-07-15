@@ -36,7 +36,7 @@ Before doing anything in Dowser, it is necessary to identify clonal clusters amo
 
 ## Obtain IMGT-gapped sequences
 
-The IMGT reference database can be most easily obtained by downloading the Immcantation repository and running a script `fetch_imgtdb.sh` to download and format the IMGT reference database. The following commands are designed for Linux/Mac, but similar commands can be run for Windows. The `<data directory>` can be any directory you would like to place the Immcantation repository and IMGT germlines.
+The international ImMunoGeneTics information system ([IMGT](http://www.imgt.org)) [reference database](http://www.imgt.org/genedb) can be most easily obtained by downloading the Immcantation repository and running a script `fetch_imgtdb.sh` to download and format the IMGT reference database. The following commands are designed for Linux/Mac, but similar commands can be run for Windows. The `<data directory>` can be any directory you would like to place the Immcantation repository and IMGT germlines.
 
 These commands will create a series of directories containing the IMGT reference directories of their respective species.
 
