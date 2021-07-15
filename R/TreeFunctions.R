@@ -1655,7 +1655,7 @@ getSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
 }
 
 #' \code{downsampleClone} Down-sample clone to maximum tip/switch ratio
-#' TODO: Add support for weighting by collapseCount?
+# TODO: Add support for weighting by collapseCount?
 #' @param    clone       an \link{airrClone} object
 #' @param    trait       trait considered for rarefaction
 #'                       \link{getTrees}
