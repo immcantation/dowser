@@ -875,8 +875,8 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' Define subclones based on light chain rearrangements
 #' 
 #' \code{getSubclones} plots a tree or group of trees
-#' @param    heavy        A tibble containing heavy chain sequences with clone_id
-#' @param    light        A tibble containing light chain sequences
+#' @param    heavy        a tibble containing heavy chain sequences with clone_id
+#' @param    light        a tibble containing light chain sequences
 #' @param    nproc        number of cores for parallelization
 #' @param    minseq       minimum number of sequences per clone
 #' @param    id           name of the column containing sequence identifiers.
@@ -884,10 +884,10 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #'                        sequences in this column must be multiple aligned.
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
-#' @param    cell_id       name of the column containing identifier for cells.
-#' @param    v_call        name of the column containing V-segment allele assignments. All 
+#' @param    cell_id      name of the column containing identifier for cells.
+#' @param    v_call       name of the column containing V-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
-#' @param    j_call        name of the column containing J-segment allele assignments. All 
+#' @param    j_call       name of the column containing J-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
 #' @param    junc_len     name of the column containing the length of the junction as a 
 #'                        numeric value. All entries in this column should be identical 
