@@ -145,7 +145,7 @@ Examples
 ```R
 vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
 imgt <- readIMGT(vdj_dir)
-db <- createGermlines(ExampleDb[1,], imgt)
+db <- createGermlines(ExampleAirr[1,], imgt)
 ```
 
 

@@ -17,14 +17,10 @@ pages:
     - 'Release Notes': news.md
   - 'Vignettes':
     - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Construct clonal germlines': 
-      - vignettes/Germlines-Vignette.md
-    - 'Build lineage trees': 
-      - vignettes/Building-Trees-Vignette.md
-    - 'Plot lineage trees': 
-      - vignettes/Plotting-Trees-Vignette.md
-    - 'Construct intermediate sequences': 
-      - vignettes/Sequences-Vignette.md
+    - 'Construct clonal germlines': vignettes/Germlines-Vignette.md
+    - 'Build lineage trees': vignettes/Building-Trees-Vignette.md
+    - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
+    - 'Construct intermediate sequences': vignettes/Sequences-Vignette.md
   - 'Help Topics':
     - 'Germline construction functions':
       - topics/readIMGT.md

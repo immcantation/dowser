@@ -158,21 +158,15 @@ Details
 
 The input data.frame (`data`) must columns for each of the required column name 
 arguments: `id`, `seq`, `germ`, `v_call`, `j_call`, 
-`junc_len`, and `clone`.  The default values are as follows:
-
-+ `id       = "sequence_id"`:         unique sequence identifier.
-+ `seq      = "sequence_alignment"`:  IMGT-gapped sample sequence.
-+ `germ     = "germline_alignment"`:  IMGT-gapped germline sequence.
-+ `v_call    = "v_call"`:              V segment allele call.
-+ `j_call    = "j_call"`:              J segment allele call.
-+ `junc_len = "junction_length"`:     junction sequence length.
-+ `clone    = "clone_id"`:            clone identifier.
-
-Additional annotation columns specified in the `text_fields`, `num_fields` 
-or `seq_fields` arguments will be retained in the `data` slot of the return 
-object, but are not required. If the input data.frame `data` already contains a 
-column named `sequence`, which is not used as the `seq` argument, then that 
-column will not be retained.
+`junc_len`, and `clone`.  
+Additional annotation columns specified in the `traits`, `text_fields`, 
+`num_fields` or `seq_fields` arguments will be retained in the `data` 
+slot of the return object, but are not required. These options differ by their behavior
+among collapsed sequences. Identical sequences that differ by any values specified in the
+`traits` option will be kept distinct. Identical sequences that differ only by
+values in the `num_fields` option will be collapsed and the values of their 
+`num_fields` columns will be added together. Similar behavior occurs with 
+`text_fields` but the unique values will concatenated with a comma.
 
 The default columns are IMGT-gapped sequence columns, but this is not a requirement. 
 However, all sequences (both observed and germline) must be multiple aligned using
@@ -183,13 +177,38 @@ junction length, and clone identifier are determined from the first entry in the
 `germ`, `v_call`, `j_call`, `junc_len` and `clone` columns, 
 respectively. For any given clone, each value in these columns should be identical.
 
+To allow for cases where heavy and light chains are used, this function returns three
+sequence columns for heavy chains (sequence), light chain (lsequence, empty if none 
+available), and concatenated heavy+light chain (hlsequence). These contain sequences
+in alignment with germline, lgermline, and hlgermline slots, respectively. The sequence
+column used for build trees is specified in the `phylo_seq` slot. Importantly, 
+this column is also the sequence column that also has uninformative columns removed
+by `cleanAlignment`. It is highly likely we will change this system to a single 
+`sequence` and `germline` slot in the near future.
+
+The airrClone object also contains vectors `locus`, `region`, and 
+`numbers`, which contain the locus, IMGT region, and IMGT number for each position
+in the sequence column specified in `phylo_seq`. If IMGT-gapped sequences are not 
+supplied, this will likely result in an error. Specify `use_regions=FALSE` if not
+using IMGT-gapped sequences
+
+
+
+Examples
+-------------------
+
+```R
+data(ExampleAirr)
+airr_clone <- makeAirrClone(ExampleAirr[ExampleAirr$clone_id=="3184",])
+```
 
 
 
 See also
 -------------------
 
-Returns an [airrClone](airrClone-class.md)
+Returns an [airrClone](airrClone-class.md). See [formatClones](formatClones.md) to generate an 
+ordered list of airrClone objects.
 
 
 

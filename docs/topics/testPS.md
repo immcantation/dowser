@@ -71,9 +71,9 @@ Examples
 ```R
 ### Not run:
 igphyml <- "~/apps/igphyml/src/igphyml"
-# data(ExampleDb)
-# ExampleDb$sample_id <- sample(ExampleDb$sample_id)
-# clones <- formatClones(ExampleDb, trait="sample_id")
+# data(ExampleAirr)
+# ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
+# clones <- formatClones(ExampleAirr, trait="sample_id")
 # btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
 # igphyml=igphyml, trait="sample_id")
 # testPS(btrees$switches)

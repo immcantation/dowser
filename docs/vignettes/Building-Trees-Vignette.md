@@ -21,14 +21,14 @@ The output of this function is a tibble in which each row is a clone, ordered by
 library(dowser)
 
 # load example AIRR tsv data
-data(ExampleDb)
+data(ExampleAirr)
 
 # Subset data for this example
-ExampleDb = ExampleDb[ExampleDb$clone_id %in% c("3170", "3184"),]
-ExampleDb$subject_id = "Subject_1"
+ExampleAirr = ExampleAirr[ExampleAirr$clone_id %in% c("3170", "3184"),]
+ExampleAirr$subject_id = "Subject_1"
 
 # Process example data using default settings
-clones = formatClones(ExampleDb)
+clones = formatClones(ExampleAirr)
 
 print(clones)
 ```
@@ -51,7 +51,7 @@ print(clones)
 # Process example data keeping samples from different times
 # distinct, adding duplicate_count among collapsed sequences,
 # and show the sample_id within each clone in the tibble.
-clones = formatClones(ExampleDb, traits=c("sample_id","c_call"),
+clones = formatClones(ExampleAirr, traits=c("sample_id","c_call"),
     num_fields=c("duplicate_count"), columns=c("subject_id"))
 
 print(clones)

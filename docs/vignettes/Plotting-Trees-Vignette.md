@@ -6,33 +6,24 @@ First, you have to build the trees. See the previous vignette for examples.
 
 ## Basic plotting
 
-First, build format clones and build trees, as detailed previously:
-
-```r
-library(dowser)
-
-data(ExampleDb)
-
-ExampleDb = ExampleDb[ExampleDb$clone_id %in% c("3170", "3184"),]
-
-clones = formatClones(ExampleDb, traits=c("sample_id","c_call"),
-    num_fields=c("duplicate_count"))
-
-clones = getTrees(clones, nproc=1)    
-```
-
 Once trees are built, the `plotTrees` function will return a list of tree plots in the same order as in the input tibble.
 
 
 ```r
-plots = plotTrees(clones)
+library(dowser)
+
+data(ExampleClones)
+
+ExampleClones = ExampleClones[1:2,]
+
+plots = plotTrees(ExampleClones)
 
 #Plot the largest tree
 #To plot second largest tree, use plots[[2]], and so on
 plots[[1]]
 ```
 
-![plot of chunk Plotting-Trees-Vignette-2](figure/Plotting-Trees-Vignette-2-1.png)
+![plot of chunk Plotting-Trees-Vignette-1](figure/Plotting-Trees-Vignette-1-1.png)
 
 Default options for `plotTrees` will only plot tree topology and branch lengths. The `clone_id` is by default plotted on the upper lefthand corner. Branch lengths by default represent the number of mutations per site between each node in the tree. These are shown by the scalebar below the tree.
 
@@ -41,16 +32,16 @@ To plot the expected number of mutations between nodes (calculated by multiplyin
 
 ```r
 # Re-scale branches to represent mutations between nodes
-clones_mutations = scaleBranches(clones, edge_type="mutations")
+ExampleClones_m = scaleBranches(ExampleClones, edge_type="mutations")
 
 # Plot, set scale bar to represent 10 mutations
-plots = plotTrees(clones_mutations, scale=10)
+plots = plotTrees(ExampleClones_m, scale=10)
 
 #Plot the largest tree
 plots[[1]]
 ```
 
-![plot of chunk Plotting-Trees-Vignette-3](figure/Plotting-Trees-Vignette-3-1.png)
+![plot of chunk Plotting-Trees-Vignette-2](figure/Plotting-Trees-Vignette-2-1.png)
 
 ## Plotting metadata
 
@@ -59,26 +50,26 @@ Metadata associated with each tip in the tree can be plotted by specifying the `
 
 ```r
 # Plot tree with sequence isotype at the tips.
-plots = plotTrees(clones, tips="c_call")
+plots = plotTrees(ExampleClones, tips="c_call")
 
 #Plot the largest tree
 plots[[1]]
 ```
 
-![plot of chunk Plotting-Trees-Vignette-4](figure/Plotting-Trees-Vignette-4-1.png)
+![plot of chunk Plotting-Trees-Vignette-3](figure/Plotting-Trees-Vignette-3-1.png)
 
 Tip sizes can be manually set to a constant value e.g. `tipsize=2` or set to a data column. For instance, we can scale the tip sizes by the duplicate count of each sequence:
 
 
 ```r
 # Plot tree with sequence isotype at the tips, with sizes set to number of duplicates
-plots = plotTrees(clones, tips="c_call", tipsize="duplicate_count")
+plots = plotTrees(ExampleClones, tips="c_call", tipsize="duplicate_count")
 
 #Plot the largest tree
 plots[[1]]
 ```
 
-![plot of chunk Plotting-Trees-Vignette-5](figure/Plotting-Trees-Vignette-5-1.png)
+![plot of chunk Plotting-Trees-Vignette-4](figure/Plotting-Trees-Vignette-4-1.png)
 
 The `tip_palette` is constant among all trees plotted at once, and can be specified as either a named vector of hex colors, or as an RColorBrewer palette name:
 
@@ -87,27 +78,27 @@ The `tip_palette` is constant among all trees plotted at once, and can be specif
 # These calls create the same plot:
 
 # Plot tree with sequence isotype at the tips, with palette "Set1"
-plots = plotTrees(clones, tips="c_call", tipsize=2,
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     tip_palette="Set1")
 
 # or, specify a named palette vector
 custom_palette=c("IGHA"="#E41A1C", "IGHG"="#377EB8",
     "IGHD"="#4DAF4A", "Germline"="#984EA3")
 
-plots = plotTrees(clones, tips="c_call", tipsize=2,
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     tip_palette=custom_palette)
 
 # or, use the getPalette function to create a named palette vector
 custom_palette=getPalette(c("IGHA", "IGHG", "IGHD", "Germline"), "Set1")
 
-plots = plotTrees(clones, tips="c_call", tipsize=2,
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     tip_palette=custom_palette)
 
 #Plot the largest tree
 plots[[1]]
 ```
 
-![plot of chunk Plotting-Trees-Vignette-6](figure/Plotting-Trees-Vignette-6-1.png)
+![plot of chunk Plotting-Trees-Vignette-5](figure/Plotting-Trees-Vignette-5-1.png)
 
 ## Using ggtree and ggplot functions
 
@@ -116,7 +107,8 @@ The objects returned by `plotTrees` are`ggtree` and `ggplot` objects, and can be
 
 ```r
 library(ggtree)
-plots = plotTrees(clones, tips="c_call", tipsize=2)
+
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
 
 #Plot the largest tree
 treeplot = plots[[1]] + geom_tiplab() + 
@@ -127,7 +119,7 @@ treeplot = plots[[1]] + geom_tiplab() +
 treeplot
 ```
 
-![plot of chunk Plotting-Trees-Vignette-7](figure/Plotting-Trees-Vignette-7-1.png)
+![plot of chunk Plotting-Trees-Vignette-6](figure/Plotting-Trees-Vignette-6-1.png)
 
 ## Saving trees to a file
 
@@ -135,7 +127,7 @@ The `treesToPDF` function can be used to plot all trees at once to a pdf file:
 
 
 ```r
-plots = plotTrees(clones, tips="c_call", tipsize=2)
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
 
 # you can also pass arguments you would pass to grDevices::pdf, like width and height
 # here, we plot 4 trees per page (2 rows, 2 columns)

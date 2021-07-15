@@ -56,7 +56,7 @@ Proc Natl Acad Sci USA. 2014 111:4928-33.
 See also
 -------------------
 
-[ExampleDb](ExampleDb.md) [ExampleTrees](ExampleTrees.md)
+[ExampleAirr](ExampleAirr.md) [ExampleClones](ExampleClones.md)
 
 
 
