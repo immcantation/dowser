@@ -18,16 +18,15 @@ These commands will create a series of directories containing the IMGT reference
 
 # Move to the directory of interest
 mkdir germlines
-cd germlines
 
 # Download the Immcantation repository
 git clone https://bitbucket.org/kleinstein/immcantation
 
 # Run script to obtain IMGT gapped sequences
-immcantation/scripts/fetch_imgtdb.sh
+immcantation/scripts/fetch_imgtdb.sh -o germlines
 
 # View added directories
-ls
+ls germlines
 # human  IMGT.yaml  immcantation  mouse  rabbit  rat  rhesus_monkey
 ```
 
@@ -45,14 +44,14 @@ library(dplyr)
 data(ExampleAirr)
 
 # Read in IMGT-gapped sequences
-references = readIMGT(dir = "germlines/human/vdj")
+references = readIMGT(dir = file.path("germlines", "human", "vdj"))
 
 # remove germline alignment columns for this example
 db = select(ExampleAirr, -"germline_alignment", 
     -"germline_alignment_d_mask")
 
 # Reconstruct germline sequences
-ExampleAirr = createGermlines(db,references,nproc=1)
+ExampleAirr = createGermlines(db, references, nproc=1)
 
 # Check germline of first row
 ExampleAirr$germline_alignment_d_mask[1]

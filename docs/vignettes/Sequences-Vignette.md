@@ -1,4 +1,4 @@
-# Sequneces
+# Sequences
 
 Dowser automatically reconstructs intermediate sequences as part of the `getTrees` function. These are stored in the `nodes` list contained in each `phylo` object.
 
@@ -18,11 +18,18 @@ trees = collapseNodes(ExampleClones[1:2,])
 # Plot trees with node ID numbers
 plots = plotTrees(trees, tips="c_call", tipsize=2, node_nums=TRUE, labelsize=7)
 
-#plots[[1]]
-#
-#getSeq(trees, node=50, clone=3128)
-#
-# Output:
-#                                                                      N 
-# "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............AGTGACTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGTCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN"
+plots[[1]]
+```
+
+![plot of chunk Sequences-Vignette-1](figure/Sequences-Vignette-1-1.png)
+
+```r
+sequence = getSeq(trees, node=50, clone=3128)
+
+print(sequence)
+```
+
+```
+##                                                                                                                                                                                                                                                                                                                                                                                                                    N 
+## "GAGGTGCAGCTGGTGGAGTCCGGGGGA...GGCTTGGTACAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GTTGACTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGTCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN"
 ```

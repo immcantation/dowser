@@ -33,7 +33,7 @@ j_germ_end = "j_germline_end",
 j_germ_length = "j_germline_length",
 np1_length = "np1_length",
 np2_length = "np2_length",
-na.rm = FALSE,
+na.rm = TRUE,
 ...
 )
 ```
@@ -145,6 +145,17 @@ Examples
 ```R
 vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
 imgt <- readIMGT(vdj_dir)
+
+```
+
+
+```
+[1] "Read in 3 from 3 fasta files"
+
+```
+
+
+```R
 db <- createGermlines(ExampleAirr[1,], imgt)
 ```
 

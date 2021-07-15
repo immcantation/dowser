@@ -42,12 +42,6 @@ print(clones)
 ```
 
 ```r
-## A tibble: 2 x 4
-#  clone_id data       locus  seqs
-#     <dbl> <list>     <chr> <int>
-#1     3170 <airrClon> N        13
-#2     3184 <airrClon> N        12
-
 # Process example data keeping samples from different times
 # distinct, adding duplicate_count among collapsed sequences,
 # and show the sample_id within each clone in the tibble.
@@ -63,14 +57,6 @@ print(clones)
 ##      <dbl> <list>     <chr> <int> <chr>     
 ## 1     3170 <airrClon> N        13 Subject_1 
 ## 2     3184 <airrClon> N        12 Subject_1
-```
-
-```r
-## A tibble: 2 x 5
-#  clone_id data       locus  seqs subject_id
-#     <dbl> <list>     <chr> <int> <chr>     
-#1     3170 <airrClon> N        13 Subject_1 
-#2     3184 <airrClon> N        12 Subject_1
 ```
 
 ## Build maximum parsimony trees
@@ -125,7 +111,7 @@ Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To
 clones = getTrees(clones, build="pml")
 
 print(clones)
-# A tibble: 2 x 6
+## A tibble: 2 x 6
 #  clone_id data       locus  seqs subject_id trees  
 #     <dbl> <list>     <chr> <int> <chr>      <list> 
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
@@ -163,11 +149,11 @@ clones = getTrees(clones, build="igphyml",
     exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
 
 print(clones)
-# A tibble: 2 x 7
-  clone_id data       locus  seqs subject_id trees        parameters       
-     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>     
-1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
-2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
+## A tibble: 2 x 7
+#  clone_id data       locus  seqs subject_id trees        parameters       
+#     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>     
+#1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
+#2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
 
 
 clones$parameters[[1]]$omega_mle

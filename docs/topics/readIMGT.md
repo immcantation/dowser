@@ -55,6 +55,12 @@ imgt <- readIMGT(vdj_dir)
 ```
 
 
+```
+[1] "Read in 3 from 3 fasta files"
+
+```
+
+
 
 
 
