@@ -51,10 +51,10 @@ cd germlines
 git clone https://bitbucket.org/kleinstein/immcantation
 
 # Run script to obtain IMGT gapped sequences
-immcantation/scripts/fetch_imgtdb.sh
+immcantation/scripts/fetch_imgtdb.sh -o germlines
 
 # View added directories
-ls
+ls germlines
 # human  IMGT.yaml  immcantation  mouse  rabbit  rat  rhesus_monkey
 ```
 
