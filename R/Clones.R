@@ -878,7 +878,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' @param    heavy        A tibble containing heavy chain sequences with clone_id
 #' @param    light        A tibble containing light chain sequences
 #' @param    nproc        number of cores for parallelization
-#' @param    minseq       minimum number of sequneces per clone
+#' @param    minseq       minimum number of sequences per clone
 #' @param    id           name of the column containing sequence identifiers.
 #' @param    seq          name of the column containing observed DNA sequences. All 
 #'                        sequences in this column must be multiple aligned.
