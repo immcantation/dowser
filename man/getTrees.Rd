@@ -82,6 +82,8 @@ should be chosen to ensure that multiple \code{getTrees} calls using the same
 \code{modelfile} is written automatically if not specified, but doesn't 
 include any constraints. Intermediate files are deleted by default. This can
 be toggled using (\code{rm_files}).
+
+For examples and vignettes, see https://dowser.readthedocs.io
 }
 \examples{
 \dontrun{
@@ -92,7 +94,7 @@ clones <- formatClones(ExampleAirr, trait="sample_id")
 trees <- getTrees(clones[1:2])
 plotTrees(trees[[1]])
 
-trees <- getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
+trees <- getTrees(clones[1:2],igphyml="/path/to/igphyml",id="temp",dir="temp",
       trait="sample_id")
 plotTrees(trees)[[1]]
 }

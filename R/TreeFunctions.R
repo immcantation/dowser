@@ -1159,21 +1159,21 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #' \code{getTrees} Tree building function.
 #' @param    clones     a tibble of \code{airrClone} objects, the output of 
 #'                      \link{formatClones}
-#' @param    trait         trait to use for parsimony models (required if 
+#' @param    trait      trait to use for parsimony models (required if 
 #'                      \code{igphyml} specified)
-#' @param      build        program to use for tree building (pratchet, pml, 
+#' @param    build      program to use for tree building (pratchet, pml, 
 #'                      dnapars, dnaml, igphyml)
-#' @param      exec        location of desired phylogenetic executable
-#' @param    igphyml     optional location of igphyml executible for parsimony 
+#' @param    exec       location of desired phylogenetic executable
+#' @param    igphyml    optional location of igphyml executible for parsimony 
 #' @param    id         unique identifer for this analysis (required if 
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param    dir        directory where temporary files will be placed.
-#' @param    modelfile     file specifying parsimony model to use
-#' @param    fixtrees     if TRUE, use supplied tree topologies
-#' @param    nproc         number of cores to parallelize computations
-#' @param    quiet        amount of rubbish to print to console
+#' @param    modelfile  file specifying parsimony model to use
+#' @param    fixtrees   if TRUE, use supplied tree topologies
+#' @param    nproc      number of cores to parallelize computations
+#' @param    quiet      amount of rubbish to print to console
 #' @param    rm_temp    remove temporary files (default=TRUE)
-#' @param    palette     a named vector specifying colors for each state
+#' @param    palette    a named vector specifying colors for each state
 #' @param    seq        column name containing sequence information
 #' @param    collapse   Collapse internal nodes with identical sequences?
 #' @param    ...        Additional arguments passed to tree building programs
@@ -1195,6 +1195,8 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #' \code{modelfile} is written automatically if not specified, but doesn't 
 #' include any constraints. Intermediate files are deleted by default. This can
 #' be toggled using (\code{rm_files}).
+#'
+#' For examples and vignettes, see https://dowser.readthedocs.io
 #'  
 #' @seealso \link{formatClones}, \link{bootstrapTrees}, \link{buildPhylo},
 #' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
@@ -1207,7 +1209,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #' trees <- getTrees(clones[1:2])
 #' plotTrees(trees[[1]])
 #' 
-#' trees <- getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
+#' trees <- getTrees(clones[1:2],igphyml="/path/to/igphyml",id="temp",dir="temp",
 #'       trait="sample_id")
 #' plotTrees(trees)[[1]]
 #' }
@@ -1231,7 +1233,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                 "Please either:\n",
                 "A) update phangorn if a newer version available on CRAN\n",
                 "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-                "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n")
+                "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n",
+                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html")
             stop(warn)
         }    
     }
@@ -1801,7 +1804,8 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
                 "Please either:\n",
                 "A) update phangorn if a newer version available on CRAN\n",
                 "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-                "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n")
+                "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n",
+                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html")
             stop(warn)
         }    
     }
