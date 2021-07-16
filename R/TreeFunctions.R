@@ -1234,9 +1234,12 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                 "A) update phangorn if a newer version available on CRAN\n",
                 "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
                 "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n",
-                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html")
+                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html\n")
             stop(warn)
         }    
+    }
+    if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+        stop("exec must be specified for this build option")
     }
 
     data <- clones$data
@@ -1805,9 +1808,13 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
                 "A) update phangorn if a newer version available on CRAN\n",
                 "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
                 "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n",
-                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html")
+                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html\n")
             stop(warn)
         }    
+    }
+
+    if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+        stop("exec must be specified for this build option")
     }
 
     data <- clones$data
