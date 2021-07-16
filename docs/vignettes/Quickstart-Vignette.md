@@ -29,5 +29,3 @@ plots <- plotTrees(trees, tips="c_call")
 plots[[1]]
 ```
 
-![plot of chunk Quickstart-Vignette-1](figure/Quickstart-Vignette-1-1.png)
-

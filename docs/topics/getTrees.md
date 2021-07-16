@@ -112,6 +112,8 @@ should be chosen to ensure that multiple `getTrees` calls using the same
 include any constraints. Intermediate files are deleted by default. This can
 be toggled using (`rm_files`).
 
+For examples and vignettes, see https://dowser.readthedocs.io
+
 
 
 Examples
@@ -126,7 +128,7 @@ data(ExampleAirr)
 # trees <- getTrees(clones[1:2])
 # plotTrees(trees[[1]])
 # 
-# trees <- getTrees(clones[1:2],igphyml=igphyml,id="temp",dir="temp",
+# trees <- getTrees(clones[1:2],igphyml="/path/to/igphyml",id="temp",dir="temp",
 # trait="sample_id")
 # plotTrees(trees)[[1]]
 ```

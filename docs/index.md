@@ -29,6 +29,8 @@ Dowser isn’t officially released yet, so please let us know if you’re planni
 # Authors
 
 [Kenneth Hoehn](mailto:kenneth.hoehn@yale.edu) (aut, cre)  
+[Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
+[Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
 
 

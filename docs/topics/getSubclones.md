@@ -29,16 +29,16 @@ Arguments
 -------------------
 
 heavy
-:   A tibble containing heavy chain sequences with clone_id
+:   a tibble containing heavy chain sequences with clone_id
 
 light
-:   A tibble containing light chain sequences
+:   a tibble containing light chain sequences
 
 nproc
 :   number of cores for parallelization
 
 minseq
-:   minimum number of sequneces per clone
+:   minimum number of sequences per clone
 
 id
 :   name of the column containing sequence identifiers.

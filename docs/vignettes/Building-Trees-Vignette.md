@@ -1,6 +1,6 @@
 # Trees
 
-Dowser offer multiple ways to build B cell phylogenetic trees. These differ by the method used to estimate tree topology and branch lengths (e.g. maximum parsimony and maximum likelihood) and implementation (IgPhyML, PHYLIP, or R packages ape and phangorn).
+Dowser offers multiple ways to build B cell phylogenetic trees. These differ by the method used to estimate tree topology and branch lengths (e.g. maximum parsimony and maximum likelihood) and implementation (IgPhyML, PHYLIP, or R packages ape and phangorn).
 
 Before trees can be built, B cell sequences must be separated into clonal clusters, and had their clonal germline sequences reconstructed. Default settings assume input data is in AIRR TSV format, though column names may be specified using function arguments.
 
@@ -65,9 +65,7 @@ A common way to build B cell lineage trees is the find the tree topology that mi
 
 Maximum parsimony trees can be built with the `getTrees` function, which by default uses the `pratchet` maximum parsimony function in the `phangorn` phylogenetics package.
 
-Maximum parsimony trees can also be built using the PHYLIP function `dnapars`. To do this, the `build` option needs to be set as `dnapars` and the path to the `dnapars` executable needs to be specified in the `exec` option.
-
-In all cases, the output is the same tibble as the input, but with a `trees` column containing an R `ape::phylo` object for each clone.
+The output is the same tibble as the input, but with a `trees` column containing an R `ape::phylo` object for each clone.
 
 
 ```r
@@ -81,7 +79,10 @@ print(clones)
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
-Build trees using dnapars instead:
+
+Maximum parsimony trees can also be built using the PHYLIP function `dnapars`. To do this, the `build` option needs to be set as `dnapars` and the path to the `dnapars` executable needs to be specified in the `exec` option.
+
+[PHYLIP download site](https://evolution.genetics.washington.edu/phylip/getme-new1.html)
 
 
 ```r
@@ -117,7 +118,7 @@ print(clones)
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
-Build trees using dnaml instead:
+Build trees using dnaml instead, which like `dnapars` is also distributed as part of `PHYLIP`.
 
 
 ```r
@@ -135,11 +136,11 @@ clones
 
 ## Build IgPhyML B cell trees
 
-B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, use the following options:
-
-The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML. See 
+B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, specify the build option appropriately and pass the location of the IgPhyML executable. The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML.
 
 Note: This function is slower than other maximum likelihood and parsimony approaches.
+
+[IgPhyML documentation/download site](https://igphyml.readthedocs.io)
 
 
 ```r

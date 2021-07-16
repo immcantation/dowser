@@ -1,11 +1,9 @@
-**downsampleClone** - *`downsampleClone` Down-sample clone to maximum tip/switch ratio
-TODO: Add support for weighting by collapseCount?*
+**downsampleClone** - *`downsampleClone` Down-sample clone to maximum tip/switch ratio*
 
 Description
 --------------------
 
 `downsampleClone` Down-sample clone to maximum tip/switch ratio
-TODO: Add support for weighting by collapseCount?
 
 
 Usage
