@@ -20,13 +20,13 @@ getSubclones(
 )
 }
 \arguments{
-\item{heavy}{A tibble containing heavy chain sequences with clone_id}
+\item{heavy}{a tibble containing heavy chain sequences with clone_id}
 
-\item{light}{A tibble containing light chain sequences}
+\item{light}{a tibble containing light chain sequences}
 
 \item{nproc}{number of cores for parallelization}
 
-\item{minseq}{minimum number of sequneces per clone}
+\item{minseq}{minimum number of sequences per clone}
 
 \item{id}{name of the column containing sequence identifiers.}
 

@@ -2,8 +2,7 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{downsampleClone}
 \alias{downsampleClone}
-\title{\code{downsampleClone} Down-sample clone to maximum tip/switch ratio
-TODO: Add support for weighting by collapseCount?}
+\title{\code{downsampleClone} Down-sample clone to maximum tip/switch ratio}
 \usage{
 downsampleClone(clone, trait, tip_switch = 20, tree = NULL)
 }
@@ -23,5 +22,4 @@ A vector with sequence for each locus at a specified \code{node}
 }
 \description{
 \code{downsampleClone} Down-sample clone to maximum tip/switch ratio
-TODO: Add support for weighting by collapseCount?
 }

@@ -1217,24 +1217,24 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,    palette=NULL,
     seq=NULL, collapse=FALSE, ...){
 
-    #if(build == "pratchet"){
-    #    s <- sessionInfo()
-    #    if("phangorn" %in% names(s$loadedOnly)){
-    #        version <- s$loadedOnly$phangorn$Version
-    #    }else if("phangorn" %in% names(s$otherPkgs)){
-    #        version <- s$otherPkgs$phangorn$Version
-    #    }else{
-    #        stop("Couldn't find phangorn in package list")
-    #    }
-    #    if(version == "2.7.0"){
-    #        warn <- paste0("\n\nWe are experiencing issues with phangorn v2.7.0\n",
-    #            "If you encounter problems, please either:\n",
-    #            "A) update phangorn if a newer version available on CRAN\n",
-    #            "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-    #            "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n")
-    #        stop(warn)
-    #    }    
-    #}
+    if(build == "pratchet"){
+        s <- sessionInfo()
+        if("phangorn" %in% names(s$loadedOnly)){
+            version <- s$loadedOnly$phangorn$Version
+        }else if("phangorn" %in% names(s$otherPkgs)){
+            version <- s$otherPkgs$phangorn$Version
+        }else{
+            stop("Couldn't find phangorn in package list")
+        }
+        if(version == "2.7.0"){
+            warn <- paste0("\n\nIncompatible version of phangorn installed (v2.7.0)\n",
+                "Please either:\n",
+                "A) update phangorn if a newer version available on CRAN\n",
+                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
+                "C) use igphyml, dnapars, or dnaml options to build trees (see ?getTrees).\n")
+            stop(warn)
+        }    
+    }
 
     data <- clones$data
     if(fixtrees){
@@ -1787,24 +1787,24 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
     ...){
 
-    #if(build == "pratchet"){
-    #    s <- sessionInfo()
-    #    if("phangorn" %in% names(s$loadedOnly)){
-    #        version <- s$loadedOnly$phangorn$Version
-    #    }else if("phangorn" %in% names(s$otherPkgs)){
-    #        version <- s$otherPkgs$phangorn$Version
-    #    }else{
-    #        stop("Couldn't find phangorn in package list")
-    #    }
-    #    if(version == "2.7.0"){
-    #        warn <- paste0("\nWe are experiencing issues with phangorn v2.7.0\n",
-    #            "If you encounter problems, please either:\n",
-    #            "A) update phangorn if a newer version available on CRAN\n",
-    #            "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-    #            "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n")
-    #        stop(warn)
-    #    }    
-    #}
+    if(build == "pratchet"){
+        s <- sessionInfo()
+        if("phangorn" %in% names(s$loadedOnly)){
+            version <- s$loadedOnly$phangorn$Version
+        }else if("phangorn" %in% names(s$otherPkgs)){
+            version <- s$otherPkgs$phangorn$Version
+        }else{
+            stop("Couldn't find phangorn in package list")
+        }
+        if(version == "2.7.0"){
+            warn <- paste0("\nIncompatible version of phangorn installed (v2.7.0)\n",
+                "Please either:\n",
+                "A) update phangorn if a newer version available on CRAN\n",
+                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
+                "C) use igphyml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n")
+            stop(warn)
+        }    
+    }
 
     data <- clones$data
     if(fixtrees){
