@@ -120,16 +120,22 @@ Examples
 -------------------
 
 ```R
+data(ExampleClones)
+
+trees <- getTrees(ExampleClones[10,])
+plotTrees(trees)[[1]]
+
+```
+
+![2](getTrees-2.png)
+
+```R
+
 ### Not run:
-data(ExampleAirr)
-# ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-# clones <- formatClones(ExampleAirr, trait="sample_id")
+data(ExampleClones)
 # 
-# trees <- getTrees(clones[1:2])
-# plotTrees(trees[[1]])
-# 
-# trees <- getTrees(clones[1:2],igphyml="/path/to/igphyml",id="temp",dir="temp",
-# trait="sample_id")
+# trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
+# id="temp",dir="temp", trait="sample_id")
 # plotTrees(trees)[[1]]
 ```
 

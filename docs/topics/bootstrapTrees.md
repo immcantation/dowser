@@ -143,9 +143,6 @@ data(ExampleAirr)
 # ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 # clones <- formatClones(ExampleAirr, trait="sample_id")
 # 
-# btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
-# plotTrees(btrees$trees[[4]])[[1]]
-# 
 # igphyml <- "~/apps/igphyml/src/igphyml"
 # btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
 # igphyml=igphyml, trait="sample_id")
