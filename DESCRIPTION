@@ -11,7 +11,16 @@ Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"),
              person("Steven", "Kleinstein", role=c("aut", "cph"), 
                     email="steven.kleinstein@yale.edu"))
 Title: B Cell Receptor Phylogenetics Toolkit
-Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenies.
+Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenetic trees. 
+    Provides methods to 1) reconstruct unmutated ancestral sequences,
+    2) build B cell phylogenetic trees using multiple methods,
+    3) visualize trees with metadata at the tips,
+    4) reconstruct intermediate sequences,
+    5) detect biased ancestor-descendant relationships among metadata types
+    Workflow examples available at documentation site (see URL).
+    Citations: 
+    Hoehn et al (2020) <doi:10.1101/2020.05.30.124446>,
+    Hoehn et al (2021) <doi:10.1101/2021.01.06.425648>.
 License: AGPL-3
 URL: https://dowser.readthedocs.io
 BugReports: https://bitbucket.org/kleinstein/dowser/issues
@@ -19,7 +28,6 @@ LazyData: true
 BuildVignettes: true
 VignetteBuilder: knitr
 Encoding: UTF-8
-SystemRequirements: C++11
 biocViews:
 Depends:
     R (>= 3.1.2),
@@ -34,7 +42,7 @@ Imports:
     gridExtra,
     markdown,
     methods,
-    phangorn (>= 2.7.0),
+    phangorn (>= 2.7.1),
     phylotate,
     RColorBrewer,
     rlang,

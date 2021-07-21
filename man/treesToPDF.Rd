@@ -25,10 +25,8 @@ a PDF of tree plots
 }
 \examples{
 \dontrun{
-data(ExampleAirr)
-ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-clones <- formatClones(ExampleAirr, trait="sample_id")
-trees <- getTrees(clones)
+data(ExampleClones)
+trees <- getTrees(ExampleClones[10,])
 plots <- plotTrees(trees)
 treesToPDF(plots,"test.pdf",width=5,height=6)
 }

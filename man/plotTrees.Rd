@@ -62,15 +62,9 @@ https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.ht
 cite \code{ggtree} in addition to \code{dowser} if you use this function.
 }
 \examples{
-\dontrun{
-data(ExampleAirr)
-ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-clones <- formatClones(ExampleAirr, trait="sample_id")
-
-trees <- getTrees(clones[1:2,])
-plots <- plotTrees(trees)
-plots[[1]]
-}
+data(ExampleClones)
+trees <- getTrees(ExampleClones[10,])
+plotTrees(trees)[[1]]
 }
 \seealso{
 \link{getTrees}, \link{bootstrapTrees}

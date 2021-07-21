@@ -106,7 +106,6 @@ condenseTrees <- function(trees, states, palette){
 #' @details Trees must have node states represented in a "states" vector. By default,
 #' ambiguous states (separated by ",") have their colors blended. If 
 #' 
-#'
 #' @seealso \link{getPalette}, \link{getTrees}, \link{plotTrees}
 #' @export
 colorTrees <- function(trees, palette, ambig="blend"){
@@ -162,15 +161,9 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #'  
 #' @seealso \link{getTrees}, \link{bootstrapTrees}
 #' @examples
-#' \dontrun{
-#' data(ExampleAirr)
-#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-#' clones <- formatClones(ExampleAirr, trait="sample_id")
-#'
-#' trees <- getTrees(clones[1:2,])
-#' plots <- plotTrees(trees)
-#' plots[[1]]
-#' }
+#' data(ExampleClones)
+#' trees <- getTrees(ExampleClones[10,])
+#' plotTrees(trees)[[1]]
 #' @export
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
     scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
@@ -354,10 +347,8 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 #' @seealso \link{plotTrees}
 #' @examples
 #' \dontrun{
-#' data(ExampleAirr)
-#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-#' clones <- formatClones(ExampleAirr, trait="sample_id")
-#' trees <- getTrees(clones)
+#' data(ExampleClones)
+#' trees <- getTrees(ExampleClones[10,])
 #' plots <- plotTrees(trees)
 #' treesToPDF(plots,"test.pdf",width=5,height=6)
 #' }
@@ -379,69 +370,3 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
     grDevices::dev.off()
 }
 
-
-# Experimental
-# get position grid to arrange ggtree plots in a 
-# grid
-arrangeGrid <- function(trees, transform="sqrt",
-    pack=FALSE, widths=NULL, wratio=1){
-    
-    if(is.null(widths)){
-        widths <- unlist(lapply(trees,
-            function(x)length(x$tip.label)))
-    }
-    if(transform=="sqrt"){
-        widths <- sqrt(widths)
-    }else if(transform=="cubic"){
-        widths <- widths^(1/3)
-    }else{
-        widths <- widths
-    }
-    
-    l <- length(widths)
-    mint <- min(widths)
-    block <- ceiling(widths/mint)
-    index <- 1:l
-    area <- sum(block^2)
-    minwidth <- ceiling(sqrt(area/wratio))
-    grid <- matrix(NA, nrow=l, ncol=minwidth)
-    
-    for(i in 1:l){
-        for(j in 1:minwidth){
-            if(length(block) == 0){
-                break
-            }
-            if(is.na(grid[i, j])){
-                nal <- sum(is.na(grid[i, j:minwidth]))
-                if(sum(!is.na(grid[i, j:minwidth])) > 0){
-                    stopper <- which(!is.na(grid[i, j:minwidth]))[1]
-                    stopper <- stopper + j -1
-                    nal <- sum(is.na(grid[i, j:stopper]))
-                }
-                if(nal < block[1] && !pack){
-                    next
-                }
-                opt <- block - nal
-                opt[opt>0] <- -Inf
-                block_index <- which.max(opt)
-                icoord <- i + block[block_index]-1
-                jcoord <- j + block[block_index]-1
-                for(it in i:icoord){
-                    for(jt in j:jcoord){
-                        grid[it, jt] <- index[block_index]
-                    }
-                }
-                block <- block[-block_index]
-                index <- index[-block_index]
-            }
-        }
-    }
-    grid <- grid[rowSums(is.na(grid)) != minwidth, ]
-
-    if(sum(sqrt(table(grid))-floor(sqrt(table(grid)))) != 0){
-        print("grid construction failed :-(")
-        print(sqrt(table(grid)))
-        stop()
-    }
-    return(grid)
-}

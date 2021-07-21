@@ -1201,43 +1201,24 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #' @seealso \link{formatClones}, \link{bootstrapTrees}, \link{buildPhylo},
 #' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 #' @examples
-#' \dontrun{
-#' data(ExampleAirr)
-#' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-#' clones <- formatClones(ExampleAirr, trait="sample_id")
+#' data(ExampleClones)
 #'
-#' trees <- getTrees(clones[1:2])
-#' plotTrees(trees[[1]])
+#' trees <- getTrees(ExampleClones[10,])
+#' plotTrees(trees)[[1]]
+#'
+#' \dontrun{
+#' data(ExampleClones)
 #' 
-#' trees <- getTrees(clones[1:2],igphyml="/path/to/igphyml",id="temp",dir="temp",
-#'       trait="sample_id")
+#' trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
+#'          id="temp",dir="temp", trait="sample_id")
 #' plotTrees(trees)[[1]]
 #' }
 #' @export
 getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
-    modelfile=NULL,    build="pratchet", exec=NULL, igphyml=NULL,
+    modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
     fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,    palette=NULL,
     seq=NULL, collapse=FALSE, ...){
 
-    if(build == "pratchet"){
-        s <- sessionInfo()
-        if("phangorn" %in% names(s$loadedOnly)){
-            version <- s$loadedOnly$phangorn$Version
-        }else if("phangorn" %in% names(s$otherPkgs)){
-            version <- s$otherPkgs$phangorn$Version
-        }else{
-            stop("Couldn't find phangorn in package list")
-        }
-        if(version == "2.7.0"){
-            warn <- paste0("\n\nIncompatible version of phangorn installed (v2.7.0)\n",
-                "Please either:\n",
-                "A) update phangorn if a newer version available on CRAN\n",
-                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-                "C) use igphyml, pml, dnapars, or dnaml options to build trees (see ?getTrees).\n",
-                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html\n")
-            stop(warn)
-        }    
-    }
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
         stop("exec must be specified for this build option")
     }
@@ -1777,9 +1758,6 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 #' clones <- formatClones(ExampleAirr, trait="sample_id")
 #' 
-#' btrees <- bootstrapTrees(clones[1:2], bootstraps=100)
-#' plotTrees(btrees$trees[[4]])[[1]]
-#' 
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
@@ -1792,26 +1770,6 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
     keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
     ...){
-
-    if(build == "pratchet"){
-        s <- sessionInfo()
-        if("phangorn" %in% names(s$loadedOnly)){
-            version <- s$loadedOnly$phangorn$Version
-        }else if("phangorn" %in% names(s$otherPkgs)){
-            version <- s$otherPkgs$phangorn$Version
-        }else{
-            stop("Couldn't find phangorn in package list")
-        }
-        if(version == "2.7.0"){
-            warn <- paste0("\nIncompatible version of phangorn installed (v2.7.0)\n",
-                "Please either:\n",
-                "A) update phangorn if a newer version available on CRAN\n",
-                "B) install development version: devtools::install_github('KlausVigo/phangorn')\n",
-                "C) use igphyml, pml, dnapars, or dnaml options to build trees (see ?bootstrapTrees).\n",
-                "Examples: https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette.html\n")
-            stop(warn)
-        }    
-    }
 
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
         stop("exec must be specified for this build option")
