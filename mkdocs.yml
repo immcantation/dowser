@@ -1,15 +1,24 @@
 site_name: dowser
-site_favicon: img/immcantation.ico
+site_url: https://dowser.readthedocs.io
+site_favicon: img/favicon.ico
 repo_url: https://bitbucket.org/kleinstein/dowser
-theme: readthedocs
+edit_uri: src/master/docs/
+theme:
+  name: readthedocs
+  navigation_depth: 2
+  collapse_navigation: False
+  titles_only: False
 markdown_extensions:
   - def_list
   - sane_lists
   - smarty
   - toc:
+      baselevel: 1
+      toc_depth: 1-4
       permalink: True
 docs_dir: 'docs'
-pages:
+nav:
+  - 'Immcantation Portal': https://immcantation.readthedocs.io/
   - 'About':
     - 'Introduction': index.md
     - 'Download & Installation': install.md

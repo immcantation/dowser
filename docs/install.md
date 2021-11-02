@@ -1,11 +1,16 @@
 Download
+-------------------------------------------------------------------------------
 
-Dowser can be built from the [source code](http://bitbucket.org/kleinstein/dowser), or used in the Immcantation Docker container development build. The Docker container currently the only way to use the igphyml dependent features of Dowser on Windows.
+Dowser can be built from the [source code](http://bitbucket.org/kleinstein/dowser), or used in the 
+Immcantation Docker container development build. The Docker container currently the only way to use 
+the igphyml dependent features of Dowser on Windows.
 
 Using Docker image
 -------------------------------------------------------------------------------
 
-To use Dowser in the Docker image, simply pull and run the immcantation/suite:devel [Docker image](https://immcantation.readthedocs.io/en/stable/docker/intro.html). Instructions in hyperlink. Note this might not always be the latest version of Dowser.
+To use Dowser in the Docker image, simply pull and run the immcantation/suite:devel 
+[Docker image](https://immcantation.readthedocs.io/en/stable/docker/intro.html). Instructions in 
+hyperlink. Note this might not always be the latest version of Dowser.
 
 
 Building Development Versions
