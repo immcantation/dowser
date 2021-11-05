@@ -34,7 +34,7 @@ print(clones)
 ```
 
 ```
-## # A tibble: 2 x 4
+## # A tibble: 2 × 4
 ##   clone_id data       locus  seqs
 ##      <dbl> <list>     <chr> <int>
 ## 1     3170 <airrClon> N        13
@@ -52,7 +52,7 @@ print(clones)
 ```
 
 ```
-## # A tibble: 2 x 5
+## # A tibble: 2 × 5
 ##   clone_id data       locus  seqs subject_id
 ##      <dbl> <list>     <chr> <int> <chr>     
 ## 1     3170 <airrClon> N        13 Subject_1 

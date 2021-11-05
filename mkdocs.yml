@@ -1,6 +1,5 @@
 site_name: dowser
 site_url: https://dowser.readthedocs.io
-site_favicon: img/favicon.ico
 repo_url: https://bitbucket.org/kleinstein/dowser
 edit_uri: src/master/docs/
 theme:
@@ -8,6 +7,7 @@ theme:
   navigation_depth: 2
   collapse_navigation: False
   titles_only: False
+  logo: rod_white_leaf.png
 markdown_extensions:
   - def_list
   - sane_lists

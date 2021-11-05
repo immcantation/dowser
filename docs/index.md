@@ -8,15 +8,22 @@ on B cell receptor repertoires. It supports building and visualizing trees using
 multiple methods, and implements statistical tests for discrete trait analysis
 of B cell migration, differentiation, and isotype switching.
 
-Dowser is released under the AGPL-3 license.
 
-For detailed instructions on usage, check out the [Dowser documentation site](https://dowser.readthedocs.io)
+Dowser has 6 primary functions:
 
-Notice
+1. Reconstruct clonal germline sequences.
+2. Build B cell lineage trees using multiple methods, such as maximum parsimony, maximum likelihood, and IgPhyML.  
+3. Reconstruct intermediate sequences within lineage trees using different methods. 
+4. Create publication-quality lineage tree plots.
+5. Analyze trees to detect ongoing B cell evolution over time.
+6. Understand B cell migration and differentiation (under development).
+
+
+Contact
 -------------------------------------------------------------------------------
 
-Dowser isn’t officially released yet, so please let us know if you’re planning to publish anything using it. All features are still in active development and will likely change in the near future. Feedback is be greatly appreciated.
-
+For help and questions please contact the [Immcantation Group](mailto:immcantation@googlegroups.com)
+or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status=new&status=open).
 
 
 # Dependencies
@@ -56,8 +63,6 @@ A BibTeX entry for LaTeX users is
     url = {https://doi.org/10.1101/2020.05.30.124446},
     doi = {10.1101/2020.05.30.124446},
   }
-
-
 
 # License
 
