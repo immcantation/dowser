@@ -30,7 +30,7 @@ vignette: >
 
 Quick start of lineage tree reconstruction.
 
-```{r, eval=FALSE, warning=FALSE, message=FALSE}
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 # Load required packages
 library(alakazam)
 library(dowser)
