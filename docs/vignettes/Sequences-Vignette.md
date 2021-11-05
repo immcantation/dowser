@@ -1,4 +1,4 @@
-# Sequences
+# Reconstruct Intermediate Sequences
 
 Dowser automatically reconstructs intermediate sequences as part of the `getTrees` function. These are stored in the `nodes` list contained in each `phylo` object.
 

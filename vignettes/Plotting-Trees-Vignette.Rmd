@@ -24,7 +24,7 @@ geometry: margin=1in
 fontsize: 11pt
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Plots}
+  %\VignetteIndexEntry{Plotting Lineage Trees}
   %\usepackage[utf8]{inputenc}
 ---
 
