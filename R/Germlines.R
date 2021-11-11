@@ -418,40 +418,47 @@ buildGermline <- function(receptor, references,
     germ_length=j_germ_length, amino_acid=amino_acid)
    
     # Stitch complete germlines
-    germ_seq <- stitchVDJ(receptor, germ_vseq, germ_dseq, germ_jseq, 
-      np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
-    regions <- stitchRegions(receptor, germ_vseq, germ_dseq, germ_jseq,
-       np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
+    if(!is.na(germ_vseq) & !is.na(germ_dseq) & !is.na(germ_jseq)){
+      germ_seq <- stitchVDJ(receptor, germ_vseq, germ_dseq, germ_jseq, 
+        np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
+      regions <- stitchRegions(receptor, germ_vseq, germ_dseq, germ_jseq,
+         np1_length=np1_length, np2_length=np2_length, amino_acid=amino_acid)
 
-    if(nchar(receptor[[seq]]) == 0){
-      stop(paste("Sequence is missing from the sequence field",
-        receptor[[clone]]))
-    }
+      if(nchar(receptor[[seq]]) == 0){
+        stop(paste("Sequence is missing from the sequence field",
+          receptor[[clone]]))
+      }
 
-    len_check <- nchar(germ_seq) - nchar(receptor[[seq]])
-    if(len_check != 0){
-      stop(paste("Germline sequence differs from input sequence by",
-        len_check,"in clone", receptor[[clone]]))
-    }
+      len_check <- nchar(germ_seq) - nchar(receptor[[seq]])
+      if(len_check != 0){
+        stop(paste("Germline sequence differs from input sequence by",
+          len_check,"in clone", receptor[[clone]]))
+      }
 
-    # Define return germlines object
-    if(amino_acid){
-      pad_char <- "X"
+      # Define return germlines object
+      if(amino_acid){
+        pad_char <- "X"
+      }else{
+        pad_char <- "N"
+      }
+
+      germ_dmask <- paste0(substr(germ_seq, 1, nchar(germ_vseq)),
+             paste(rep(pad_char,
+              nchar(germ_seq) - nchar(germ_vseq) - nchar(germ_jseq)),
+             collapse=""))
+      germ_dmask <- paste0(germ_dmask, substr(germ_seq, nchar(germ_dmask) + 1,
+        nchar(germ_seq)))
+
+      len_check <- nchar(germ_dmask) - nchar(receptor[[seq]])
+      if(len_check != 0){
+        stop(paste("Germline dmask sequence differs from input sequence by",
+          len_check,"in clone", receptor[[clone]]))
+      }
     }else{
-      pad_char <- "N"
-    }
-
-    germ_dmask <- paste0(substr(germ_seq, 1, nchar(germ_vseq)),
-           paste(rep(pad_char,
-            nchar(germ_seq) - nchar(germ_vseq) - nchar(germ_jseq)),
-           collapse=""))
-    germ_dmask <- paste0(germ_dmask, substr(germ_seq, nchar(germ_dmask) + 1,
-      nchar(germ_seq)))
-
-    len_check <- nchar(germ_dmask) - nchar(receptor[[seq]])
-    if(len_check != 0){
-      stop(paste("Germline dmask sequence differs from input sequence by",
-        len_check,"in clone", receptor[[clone]]))
+      germ_seq = NA
+      germ_vseq = NA
+      germ_dmask = NA
+      regions= NA
     }
 
     germlines <- list()
@@ -541,56 +548,59 @@ buildClonalGermline <- function(receptors, references,
     if(sum(cons_index) == 0){
          warning(paste("Clone",unique(receptors[[clone]]),
           "no sequence found with both consensus V and J calls."))
-        return(NA)
-    }
+        germlines  <- list()
+        germlines$full <- NA
+        germlines$dmask <- NA
+        germlines$regions <- NA
+        germlines$vonly <- NA
+    }else{
+      # Select consensus Receptor, resolving ties by alphabetical ordering of sequence id.
+      # CreateGermlines.py always sorts ids as characters
+      cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
+      cons <- receptors[receptors[[id]] == cons_id,]
+      
+      # Pad end of consensus sequence with gaps to make it the max length
+      gap_length <- max_len - nchar(cons[[seq]])
+      if(gap_length > 0){
+          if(amino_acid){
+            cons[[j_germ_aa_length]] <- cons[[j_germ_aa_length]] + gap_length  
+          }else{
+            cons[[j_germ_length]] <- cons[[j_germ_length]] + gap_length
+          }  
+          cons[[seq]] <- paste0(cons[[seq]],
+            paste0(rep(pad_char,gap_length),collapse=""))
+      }
 
-    # Select consensus Receptor, resolving ties by alphabetical ordering of sequence id.
-    # CreateGermlines.py always sorts ids as characters
-    cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
-    cons <- receptors[receptors[[id]] == cons_id,]
-    
-    # Pad end of consensus sequence with gaps to make it the max length
-    gap_length <- max_len - nchar(cons[[seq]])
-    if(gap_length > 0){
-        if(amino_acid){
-          cons[[j_germ_aa_length]] <- cons[[j_germ_aa_length]] + gap_length  
-        }else{
-          cons[[j_germ_length]] <- cons[[j_germ_length]] + gap_length
-        }  
-        cons[[seq]] <- paste0(cons[[seq]],
-          paste0(rep(pad_char,gap_length),collapse=""))
-    }
+      # Update lengths padded to longest sequence in clone
+      receptors[[seq]] <- unlist(lapply(1:nrow(receptors),
+       function(x){
+        l = max_len - nchar(receptors[[seq]][x])
+          if(amino_acid){
+            receptors[[j_germ_aa_length]][x] = receptors[[j_germ_aa_length]][x] + l
+          }else{
+              receptors[[j_germ_length]][[x]] = receptors[[j_germ_length]][[x]] + l
+          }
+          paste0(receptors[[seq]][x],
+            paste0(rep(pad_char,l),collapse=""))
+       }))
 
-    # Update lengths padded to longest sequence in clone
-    receptors[[seq]] <- unlist(lapply(1:nrow(receptors),
-     function(x){
-      l = max_len - nchar(receptors[[seq]][x])
-        if(amino_acid){
-          receptors[[j_germ_aa_length]][x] = receptors[[j_germ_aa_length]][x] + l
-        }else{
-            receptors[[j_germ_length]][[x]] = receptors[[j_germ_length]][[x]] + l
-        }
-        paste0(receptors[[seq]][x],
-          paste0(rep(pad_char,l),collapse=""))
-     }))
+      sub_db <- references[[organism]][[locus]]
 
-    sub_db <- references[[organism]][[locus]]
+      if(length(sub_db) == 0){
+        stop(paste("Reference database for",organism,locus,"is empty"))
+      }
 
-    if(length(sub_db) == 0){
-      stop(paste("Reference database for",organism,locus,"is empty"))
-    }
-
-    # Stitch consensus germline
-    germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
-      v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
-      amino_acid=amino_acid, ...),error=function(e)print(e))
-
-    if("error" %in% class(germlines)){
-      germlines  <- list()
-      germlines$full <- NA
-      germlines$dmask <- NA
-      germlines$regions <- NA
-      germlines$vonly <- NA
+      # Stitch consensus germline
+      germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
+        v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
+        amino_acid=amino_acid, ...),error=function(e)print(e))
+      if("error" %in% class(germlines)){
+        germlines  <- list()
+        germlines$full <- NA
+        germlines$dmask <- NA
+        germlines$regions <- NA
+        germlines$vonly <- NA
+      }
     }
 
     receptors$germline_alignment <- germlines$full
@@ -653,6 +663,11 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   d_germ_start="d_germline_start", d_germ_end="d_germline_end", d_germ_length="d_germline_length",
   j_germ_start="j_germline_start", j_germ_end="j_germline_end", j_germ_length="j_germline_length",
   np1_length="np1_length", np2_length="np2_length", na.rm=TRUE, ...){
+
+  if(nrow(data) == 0){
+    warning("No data provided!")
+    return(data)
+  }
 
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 
