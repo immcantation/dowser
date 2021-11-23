@@ -911,6 +911,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 # TODO: Option to just store all VJ pairs for a cell in the heavy, remove light seqs
 # TODO: Option to split VJ parititions into separate clones
 # TODO: Make v_alt_cell not be NA by default
+# TODO: light chains also require clone_id? Currently cell_id might not be unique
 #' @export
 getSubclones <- function(heavy, light, nproc=1, minseq=1,
     id="sequence_id", seq="sequence_alignment", 
@@ -920,8 +921,14 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
     subclone <- "subclone_id"
     scount <- table(heavy[[clone]])
     big <- names(scount)[scount >= minseq]
-    heavy <- filter(heavy,(!!rlang::sym(clone) %in% big))
+    heavy <- dplyr::filter(heavy,(!!rlang::sym(clone) %in% big))
 
+    if(max(table(heavy[[id]])) > 1){
+        stop("Sequence IDs in heavy dataframe must be unique!")
+    }
+    if(max(table(light[[id]])) > 1){
+        stop("Sequence IDs in light dataframe must be unique!")
+    }
     heavy$vj_gene <- nolight
     heavy$vj_alt_cell <- nolight
     heavy$subclone_id <- 0
@@ -965,7 +972,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
                 ttemp <- filter(ltemp,cvs & !!rlang::sym(cell_id) == cell)
                 ttemp$str_counts <- 
                     stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
-                rmtemp <- ttemp[-which.max(ttemp$str_counts),]
+                # keep version with most non-N characters
+                keepseq <- ttemp[[id]][which.max(ttemp$str_counts)]
+                rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
                 rmseqs <- c(rmseqs,rmtemp[[id]])
             }
             include <- filter(ltemp,cvs & !(!!rlang::sym(id) %in% rmseqs))
