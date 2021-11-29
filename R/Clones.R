@@ -121,6 +121,13 @@ function(data, id="sequence_id", seq="sequence_alignment",
             stop(paste("clone",unique(dplyr::pull(data,clone)),
                 "heavy chain loci ID must be specified if combining loci!"))
         }
+
+        heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
+        if(max(heavycount) > 1){
+            stop(paste0(sum(heavycount > 1),
+                " cells with multiple heavy chains found. Remove before proceeeding"))
+        }
+
         # Ensure cell and loci columns are not duplicated
         text_fields <- text_fields[text_fields != rlang::sym(cell)]
         text_fields <- text_fields[text_fields != rlang::sym(locus)]
@@ -884,7 +891,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #'                        sequences in this column must be multiple aligned.
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
-#' @param    cell_id      name of the column containing identifier for cells.
+#' @param    cell         name of the column containing identifier for cells.
 #' @param    v_call       name of the column containing V-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
 #' @param    j_call       name of the column containing J-segment allele assignments. All 
@@ -915,7 +922,7 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' @export
 getSubclones <- function(heavy, light, nproc=1, minseq=1,
     id="sequence_id", seq="sequence_alignment", 
-    clone="clone_id", cell_id="cell_id", v_call="v_call", j_call="j_call",
+    clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
     junc_len="junction_length", nolight="missing"){
     
     subclone <- "subclone_id"
@@ -929,6 +936,13 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
     if(max(table(light[[id]])) > 1){
         stop("Sequence IDs in light dataframe must be unique!")
     }
+
+    heavycount = table(heavy[[cell]])
+    if(max(heavycount) > 1){
+        stop(paste0(sum(heavycount > 1),
+        " cells with multiple heavy chains found. Remove before proceeeding"))
+    }
+
     heavy$vj_gene <- nolight
     heavy$vj_alt_cell <- nolight
     heavy$subclone_id <- 0
@@ -938,9 +952,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
     light[[clone]] <- -1
     paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
         hd <- filter(heavy,!!rlang::sym(clone) == cloneid)
-        ld <- filter(light,!!rlang::sym(cell_id) %in% hd[[!!cell_id]])
-        hd <- filter(hd,(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
-        # hr <- filter(hd,!(!!rlang::sym(cell_id) %in% ld[[!!cell_id]]))
+        ld <- filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
+        hd <- filter(hd,(!!rlang::sym(cell) %in% ld[[!!cell]]))
+        # hr <- filter(hd,!(!!rlang::sym(cell) %in% ld[[!!cell]]))
         if(nrow(ld) == 0){
             return(hd)
         }
@@ -955,9 +969,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
                 lapply(1:length(lvs),function(w)
                 unlist(lapply(lvs[[w]],function(x)
                 lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
-            cells <- unique(ltemp[[cell_id]])
+            cells <- unique(ltemp[[cell]])
             cellcombos <- lapply(cells,function(x)
-                unique(unlist(combos[ltemp[[cell_id]] == x])))
+                unique(unlist(combos[ltemp[[cell]] == x])))
             lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
             max <- names(lcounts)[which.max(lcounts)]
             cvs <- unlist(lapply(combos,function(x)max %in% x))
@@ -966,10 +980,10 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 
             # if a cell has the same combo for two rearrangements, only pick one
             rmseqs <- c()
-            cell_counts <- table(ltemp[cvs,][[cell_id]])
+            cell_counts <- table(ltemp[cvs,][[cell]])
             mcells <- names(cell_counts)[cell_counts > 1]
-            for(cell in mcells){
-                ttemp <- filter(ltemp,cvs & !!rlang::sym(cell_id) == cell)
+            for(cellname in mcells){
+                ttemp <- filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
                 ttemp$str_counts <- 
                     stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
                 # keep version with most non-N characters
@@ -981,28 +995,29 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
             leave <- filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
 
             # find other cells still in ltemp and add as vj_alt_cell
-            mcells <- unique(include[[cell_id]])
-            for(cell in mcells){
-                if(cell %in% leave[[cell_id]]){
-                    include[include[[cell_id]] == cell,]$vj_alt_cell <- 
-                        paste(paste0(leave[leave[[cell_id]] == cell,][[v_call]],":",
-                            leave[leave[[cell_id]] == cell,][[j_call]]),
+            mcells <- unique(include[[cell]])
+            for(cellname in mcells){
+                if(cellname %in% leave[[cell]]){
+                    include[include[[cell]] == cellname,]$vj_alt_cell <- 
+                        paste(paste0(leave[leave[[cell]] == cellname,][[v_call]],":",
+                            leave[leave[[cell]] == cellname,][[j_call]]),
                             collapse=",")
                 }
             }
             ld <- bind_rows(ld,include)
-            ltemp <- filter(ltemp,!(!!rlang::sym(cell_id) %in% ltemp[cvs,][[!!cell_id]]))
+            ltemp <- filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
             lclone <- lclone + 1
         }
         ld[[clone]] <- cloneid
-        for(cell in unique(hd[[cell_id]])){
-            #hclone <- hd[hd[[cell_id]] == cell,][[clone]]
-            if(cell %in% ld[[cell_id]]){
-                lclone <- ld[ld[[cell_id]] == cell,][[subclone]]
-                ld[ld[[cell_id]] == cell,][[subclone]] <- lclone
-                hd[hd[[cell_id]] == cell,][[subclone]] <- lclone
-                hd[hd[[cell_id]] == cell,]$vj_gene <- ld[ld[[cell_id]] == cell,]$vj_gene
-                hd[hd[[cell_id]] == cell,]$vj_alt_cell <- ld[ld[[cell_id]] == cell,]$vj_alt_cell
+        for(cellname in unique(hd[[cell]])){
+            #hclone <- hd[hd[[cell]] == cell,][[clone]]
+            if(cellname %in% ld[[cell]]){
+                lclone <- ld[ld[[cell]] == cellname,][[subclone]]
+                ld[ld[[cell]] == cellname,][[subclone]] <- lclone
+                hd[hd[[cell]] == cellname,][[subclone]] <- lclone
+                hd[hd[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
+                hd[hd[[cell]] == cellname,]$vj_alt_cell <- 
+                    ld[ld[[cell]] == cellname,]$vj_alt_cell
             }
         }
         comb <- bind_rows(hd,ld)
