@@ -219,6 +219,7 @@ testSP <- function(switches, permuteAll=FALSE,
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
     }
 
+    # replace with testPS?
     counts <- testSC(switches,bylineage=TRUE)$means %>%
         dplyr::group_by(!!rlang::sym("CLONE")) %>%
         dplyr::summarize(switches=sum(!!rlang::sym("RECON"))) %>%
@@ -284,7 +285,7 @@ testSP <- function(switches, permuteAll=FALSE,
                 dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -297,7 +298,7 @@ testSP <- function(switches, permuteAll=FALSE,
                 dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PGT = (sum(!!rlang::sym("DELTA") < 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),    
@@ -307,7 +308,7 @@ testSP <- function(switches, permuteAll=FALSE,
                 dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -320,7 +321,7 @@ testSP <- function(switches, permuteAll=FALSE,
                     !!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -334,7 +335,7 @@ testSP <- function(switches, permuteAll=FALSE,
                     !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PGT = (sum(!!rlang::sym("DELTA") < 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),    
@@ -345,7 +346,7 @@ testSP <- function(switches, permuteAll=FALSE,
                     !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -480,7 +481,7 @@ testSC <- function(switches,dropzeros=TRUE,
                 dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -493,7 +494,7 @@ testSC <- function(switches,dropzeros=TRUE,
                 dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PGT = (sum(!!rlang::sym("DELTA") < 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),    
@@ -503,7 +504,7 @@ testSC <- function(switches,dropzeros=TRUE,
                 dplyr::group_by(!!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -516,7 +517,7 @@ testSC <- function(switches,dropzeros=TRUE,
                     !!rlang::sym("FROM"), !!rlang::sym("TO")) %>%
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0)*0.5 + pseudocount)/
                         (dplyr::n() + pseudocount),
@@ -530,7 +531,7 @@ testSC <- function(switches,dropzeros=TRUE,
                     !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PGT = (sum(!!rlang::sym("DELTA") < 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),    
@@ -541,7 +542,7 @@ testSC <- function(switches,dropzeros=TRUE,
                     !!rlang::sym("FROM"), !!rlang::sym("TO")) %>% 
                 dplyr::summarize(
                     RECON = mean(!!rlang::sym("RECON")),
-                    PERMUTE = mean(!!rlang::sym("PERMUTE")),
+                    PERMUTE = mean(!!permute),
                     PLT = (sum(!!rlang::sym("DELTA") > 0) + 
                         sum(!!rlang::sym("DELTA") == 0) + pseudocount)/
                         (dplyr::n() + pseudocount),
