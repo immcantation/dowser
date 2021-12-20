@@ -1872,7 +1872,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
             nproc=1, rm_temp=rm_temp, quiet=quiet,
             fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
             lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
-            ...),
+            boot_part=boot_part, ...),
             mc.cores=nproc)
         results <- list()
         results$switches <- NULL
