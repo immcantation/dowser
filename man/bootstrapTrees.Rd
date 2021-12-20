@@ -27,6 +27,7 @@ bootstrapTrees(
   seq = "sequence",
   downsample = FALSE,
   tip_switch = 20,
+  boot_part = "locus",
   ...
 )
 }
@@ -77,6 +78,8 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{downsample}{downsample clones to have a maximum specified tip/switch ratio?}
 
 \item{tip_switch}{maximum allowed tip/switch ratio if downsample=TRUE}
+
+\item{boot_part}{is  "locus" bootstrap columns for each locus separately}
 
 \item{...}{additional arguments to be passed to tree building program}
 }

@@ -179,19 +179,25 @@ readSwitches <- function(file){
 # Make bootstrap replicate of clonal alignment
 # 
 # \code{bootstrapClones} Filler
-# @param    clone    \code{airrClone} object
-# @param    reps     Number of bootstrap replicates
+# @param    clone     \code{airrClone} object
+# @param    reps      Number of bootstrap replicates
+# @param    partition If "locus" Bootstrap heavy/lights separately
 #
 # @return   A list of \code{airrClone} objects with 
 # bootstrapped sequneces
-bootstrapClones  <- function(clone, reps=100){
+bootstrapClones  <- function(clone, reps=100, partition="locus"){
     sarray <- strsplit(clone@data$sequence,split="")
     garray <- strsplit(clone@germline,split="")[[1]]
     index <- 1:stats::median(nchar(clone@data$sequence))
     bootstraps <- list()
     for(i in 1:reps){
         clone_copy <- clone
-        sindex <- sample(index,length(index),replace=TRUE)
+        if(partition == "locus"){
+            sindex <- unlist(lapply(unique(clone@locus), function(x)
+                sample(which(clone@locus == x), replace=TRUE)))
+        }else{
+            sindex <- sample(index,length(index),replace=TRUE)
+        }
         #print(paste(length(unique(sindex)),length(unique(index))))
         clone_copy@data$sequence <- unlist(lapply(sarray,
             function(x)paste(x[sindex],collapse="")))
@@ -1733,6 +1739,7 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' @param seq        column name containing sequence information
 #' @param downsample downsample clones to have a maximum specified tip/switch ratio?
 #' @param tip_switch maximum allowed tip/switch ratio if downsample=TRUE
+#' @param boot_part  is  "locus" bootstrap columns for each locus separately
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
@@ -1769,7 +1776,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
     fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
     keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
-    ...){
+    boot_part="locus", ...){
 
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
         stop("exec must be specified for this build option")
@@ -1903,7 +1910,8 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
                 if(quiet > 3){
                     print(table(data[[i]]@data[,trait]))
                 }    
-                data[[i]] <- bootstrapClones(data[[i]], reps=1)[[1]]
+                data[[i]] <- bootstrapClones(data[[i]], reps=1, 
+                    partition=boot_part)[[1]]
             }
             if(quiet > 1){print("building trees")}
             reps <- as.list(1:length(data))
