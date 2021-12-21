@@ -1,4 +1,4 @@
-# Germlines
+# Reconstruct Clonal Germlines
 
 Before B cell lineage trees can be built, it is necessary to construct the unmutated germline sequence for each B cell clone. Typically the IGH D segment is masked, because the junction region of heavy chains often cannot be reliably reconstructed.
 

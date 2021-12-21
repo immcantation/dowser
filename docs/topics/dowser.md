@@ -17,8 +17,9 @@ References
 -------------------
 
 
-1. Hoehn, KB, Pybus, OG, Kleinstein SH (submitted) Phylogenetic analysis of 
-migration, differentiation, and class switching    in B cells.
+1. Hoehn, KB, Pybus, OG, Kleinstein SH (2020) Phylogenetic analysis of 
+migration, differentiation, and class switching in B cells.
+https://www.biorxiv.org/content/10.1101/2020.05.30.124446v1
 
 
 

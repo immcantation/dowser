@@ -640,6 +640,9 @@ buildClonalGermline <- function(receptors, references,
 #' @param np1_length    Column name in receptor specifying np1 segment length 
 #' @param np2_length    Column name in receptor specifying np2 segment length
 #' @param amino_acid    Perform reconstruction on amino acid sequence (experimental)
+#' @param fields        Character vector of additional columns to use for grouping. 
+#'                      Sequences with disjoint values in the specified fields 
+#'                      will be considered as separate clones.
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return Tibble with reconstructed germlines
 #' @details Return object adds/edits following columns:
@@ -662,7 +665,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   v_germ_start="v_germline_start", v_germ_end="v_germline_end", v_germ_length="v_germline_length",
   d_germ_start="d_germline_start", d_germ_end="d_germline_end", d_germ_length="d_germline_length",
   j_germ_start="j_germline_start", j_germ_end="j_germline_end", j_germ_length="j_germline_length",
-  np1_length="np1_length", np2_length="np2_length", na.rm=TRUE, ...){
+  np1_length="np1_length", np2_length="np2_length", na.rm=TRUE, fields=NULL, ...){
 
   if(nrow(data) == 0){
     warning("No data provided!")
@@ -675,7 +678,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     v_call, d_call, j_call,
     v_germ_start, v_germ_end,
     d_germ_start, d_germ_end,
-    j_germ_start, j_germ_end)
+    j_germ_start, j_germ_end, fields)
   if(sum(!required %in% names(data)) != 0){
     stop(paste("Required columns not found in data:",
       paste(required[!required %in% names(data)],collapse=", ")))
@@ -691,8 +694,10 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     data[[j_germ_length]] <- data[[j_germ_end]] - data[[j_germ_start]] + 1
   }
 
-  complete <- parallel::mclapply(unique(data[[clone]]), function(x){
-    sub <- data[data[[clone]] == x,]
+  unique_clones <- unique(data[,c(clone,fields),drop=F])
+  data[['tmp_row_id']] <- 1:nrow(data)
+  complete <- parallel::mclapply(1:nrow(unique_clones), function(x){
+    sub <- right_join(data, unique_clones[x,,drop=F], by=c(clone,fields))
     gline <- buildClonalGermline(sub, 
       references=references,
       organism=organism,
@@ -718,7 +723,9 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
       ...)
     gline
   }, mc.cores=nproc)
-  results <- dplyr::bind_rows(complete)
+  results <- dplyr::bind_rows(complete) %>%
+      arrange(tmp_row_id) %>%
+      select(-tmp_row_id)
   if(na.rm){
     results <- results[!is.na(results$germline_alignment_d_mask),]
   }

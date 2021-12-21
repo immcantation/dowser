@@ -34,6 +34,7 @@ j_germ_length = "j_germline_length",
 np1_length = "np1_length",
 np2_length = "np2_length",
 na.rm = TRUE,
+fields = NULL,
 ...
 )
 ```
@@ -112,6 +113,11 @@ np2_length
 
 na.rm
 :   Remove clones with failed germline reconstruction?
+
+fields
+:   Character vector of additional columns to use for grouping. 
+Sequences with disjoint values in the specified fields 
+will be considered as separate clones.
 
 ...
 :   Additional arguments passed to [buildGermline](buildGermline.md)

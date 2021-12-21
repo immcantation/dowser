@@ -1,4 +1,4 @@
-# Plots
+# Plotting Lineage Trees
 
 Once trees have been built, they can be visualized in multiple ways. The easiest is through the `ggtree` R package. Dowser implements the `plotTrees` function, which makes plotting multiple trees using `ggtree` easier.
 

@@ -29,6 +29,7 @@ createGermlines(
   np1_length = "np1_length",
   np2_length = "np2_length",
   na.rm = TRUE,
+  fields = NULL,
   ...
 )
 }
@@ -80,6 +81,10 @@ createGermlines(
 \item{np2_length}{Column name in receptor specifying np2 segment length}
 
 \item{na.rm}{Remove clones with failed germline reconstruction?}
+
+\item{fields}{Character vector of additional columns to use for grouping. 
+Sequences with disjoint values in the specified fields 
+will be considered as separate clones.}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }

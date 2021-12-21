@@ -17,7 +17,7 @@ minseq = 1,
 id = "sequence_id",
 seq = "sequence_alignment",
 clone = "clone_id",
-cell_id = "cell_id",
+cell = "cell_id",
 v_call = "v_call",
 j_call = "j_call",
 junc_len = "junction_length",
@@ -51,7 +51,7 @@ clone
 :   name of the column containing the identifier for the clone. All 
 entries in this column should be identical.
 
-cell_id
+cell
 :   name of the column containing identifier for cells.
 
 v_call

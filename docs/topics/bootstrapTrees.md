@@ -32,6 +32,7 @@ lfile = NULL,
 seq = "sequence",
 downsample = FALSE,
 tip_switch = 20,
+boot_part = "locus",
 ...
 )
 ```
@@ -106,6 +107,9 @@ downsample
 
 tip_switch
 :   maximum allowed tip/switch ratio if downsample=TRUE
+
+boot_part
+:   is  "locus" bootstrap columns for each locus separately
 
 ...
 :   additional arguments to be passed to tree building program
