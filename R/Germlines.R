@@ -694,7 +694,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     data[[j_germ_length]] <- data[[j_germ_end]] - data[[j_germ_start]] + 1
   }
 
-  unique_clones <- unique(data[,c(clone,fields),drop=F])
+  unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
   data[['tmp_row_id']] <- 1:nrow(data)
   complete <- parallel::mclapply(1:nrow(unique_clones), function(x){
     sub <- right_join(data, unique_clones[x,,drop=F], by=c(clone,fields))
