@@ -207,32 +207,35 @@ bootstrapClones  <- function(clone, reps=100, partition="locus"){
     bootstraps
 }
 
-# Do IgPhyML maximum parsimony reconstruction
-# 
-# \code{reconIgPhyML} IgPhyML parsimony reconstruction function
-# @param    file       IgPhyML lineage file (see writeLineageFile)
-# @param    modefile   File specifying parsimony model
-# @param    cloneid    id for IgPhyML run
-# @param    igphyml    location of igphyml executable
-# @param    mode       return trees or count switches? (switches or trees)
-# @param    type       get observed switches or permuted switches?
-# @param    nproc      cores to use for parallelization
-# @param    quiet      amount of rubbish to print
-# @param    rm_files   remove temporary files?
-# @param    rm_dir     remove temporary directory?
-# @param    states     states in parsimony model
-# @param    palette    palette for coloring tree (see getPallete)
-# @param    resolve    level of polytomy resolution. 0=none, 
-#                      1=maximum parsimony, 2=maximum ambiguity
-# @param    rseed      random number seed if desired
-#
-# @return   Either a tibble of switch counts or a list
-#           of trees with internal nodes predicted by parsimony.
-#
+#' Do IgPhyML maximum parsimony reconstruction
+#' 
+#' \code{reconIgPhyML} IgPhyML parsimony reconstruction function
+#' @param    file          IgPhyML lineage file (see writeLineageFile)
+#' @param    modelfile      File specifying parsimony model
+#' @param    cloneid       id for IgPhyML run
+#' @param    igphyml       location of igphyml executable
+#' @param    mode          return trees or count switches? (switches or trees)
+#' @param    type          get observed switches or permuted switches?
+#' @param    nproc         cores to use for parallelization
+#' @param    quiet         amount of rubbish to print
+#' @param    rm_files      remove temporary files?
+#' @param    rm_dir        remove temporary directory?
+#' @param    states        states in parsimony model
+#' @param    palette       palette for coloring tree (see getPallete)
+#' @param    resolve       level of polytomy resolution. 0=none, 
+#'                         1=maximum parsimony, 2=maximum ambiguity
+#' @param    rseed         random number seed if desired
+#' @param    force_resolve continue even if polytomy resolution fails?
+#' @param    ...           additional arguments
+#'
+#' @return   Either a tibble of switch counts or a list
+#'           of trees with internal nodes predicted by parsimony.
+#' @export
 reconIgPhyML <- function(file, modelfile, cloneid, 
-    igphyml="igphyml",    mode="switches", type="recon",
+    igphyml="igphyml", mode="switches", type="recon",
     nproc=1, quiet=0, rm_files=FALSE, rm_dir=NULL, 
-    states=NULL, palette=NULL, resolve=2, rseed=NULL,...){
+    states=NULL, palette=NULL, resolve=2, rseed=NULL,
+    force_resolve=FALSE, ...){
     
     #args <- list(...)
     igphyml <- path.expand(igphyml)
@@ -256,11 +259,15 @@ reconIgPhyML <- function(file, modelfile, cloneid,
     logfile <- paste0(file,".log")
     log <- paste(">>",logfile)
     permute <- ""
+    force_resolve <- ""
     if(type == "permute"){
         permute <- "--permute"
     }
     if(type == "permuteAll"){
         permute <- "--permuteAll"
+    }
+    if(force_resolve){
+        force_resolve <- "--permuteAll"
     }
     if(is.null(rseed)){
         rseed <- ""
@@ -270,7 +277,7 @@ reconIgPhyML <- function(file, modelfile, cloneid,
     command <- paste("--repfile",file,
         "--recon",modelfile,"--threads",nproc,"--polyresolve",resolve,
         "-m HLP -o n --motifs WRC_2:0 --hotness 0 --run_id",type,permute,
-        rseed,log)
+        force_resolve,rseed,log)
     params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
     if(quiet > 2){
         print(paste(params,collapse=" "))
