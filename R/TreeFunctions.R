@@ -255,11 +255,14 @@ reconIgPhyML <- function(file, modelfile, cloneid,
         stop(paste("type must be either recon, permute, or permuteAll"))
     }
 
+    if(quiet > 0){
+        print(paste("Resolve:",resolve,"Force resolve?",force_resolve))
+    }
     recon <- paste0(file,"_igphyml_parstats_",type,".txt")
     logfile <- paste0(file,".log")
     log <- paste(">>",logfile)
     permute <- ""
-    force_resolve <- ""
+    force_resolve_option <- ""
     if(type == "permute"){
         permute <- "--permute"
     }
@@ -267,7 +270,7 @@ reconIgPhyML <- function(file, modelfile, cloneid,
         permute <- "--permuteAll"
     }
     if(force_resolve){
-        force_resolve <- "--permuteAll"
+        force_resolve_option <- "--permuteAll"
     }
     if(is.null(rseed)){
         rseed <- ""
@@ -277,7 +280,7 @@ reconIgPhyML <- function(file, modelfile, cloneid,
     command <- paste("--repfile",file,
         "--recon",modelfile,"--threads",nproc,"--polyresolve",resolve,
         "-m HLP -o n --motifs WRC_2:0 --hotness 0 --run_id",type,permute,
-        force_resolve,rseed,log)
+        force_resolve_option,rseed,log)
     params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
     if(quiet > 2){
         print(paste(params,collapse=" "))
@@ -1389,7 +1392,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         mtrees <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
             mode="trees", cloneid=NULL, quiet=quiet, nproc=nproc,
             rm_files=rm_temp, rm_dir=rm_dir, states=states, 
-            palette=palette,...)
+            palette=palette, ...)
 
         # remove trait value from tips
         mtrees <- lapply(mtrees,function(x){
@@ -1720,33 +1723,36 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' trees for each bootstrap replicate.
 #' 
 #' \code{bootstrapTrees} Phylogenetic bootstrap function.
-#' @param clones      tibble \code{airrClone} objects, the output of 
-#'                   \link{formatClones}
-#' @param bootstraps number of bootstrap replicates to perform
-#' @param trait         trait to use for parsimony models (required if 
-#'                   \code{igphyml} specified)
-#' @param build        program to use for tree building (phangorn, dnapars)
-#' @param exec        location of desired phylogenetic executable
-#' @param igphyml     location of igphyml executible if trait models desired
-#' @param id         unique identifer for this analysis (required if 
-#'                   \code{igphyml} or \code{dnapars} specified)
-#' @param dir        directory where temporary files will be placed (required
-#'                   if \code{igphyml} or \code{dnapars} specified)
-#' @param modelfile     file specifying parsimony model to use
-#' @param fixtrees     keep tree topologies fixed?
-#'                   (bootstrapping will not be perfomed)
-#' @param nproc         number of cores to parallelize computations
-#' @param quiet        amount of rubbish to print to console
-#' @param rm_temp    remove temporary files (default=TRUE)
-#' @param palette     a named vector specifying colors for each state
-#' @param resolve     how should polytomies be resolved?
-#' @param keeptrees  keep trees estimated from bootstrap replicates? (TRUE)
-#' @param lfile      lineage file input to igphyml if desired (experimental)
-#' @param rep          current bootstrap replicate (experimental)
-#' @param seq        column name containing sequence information
-#' @param downsample downsample clones to have a maximum specified tip/switch ratio?
-#' @param tip_switch maximum allowed tip/switch ratio if downsample=TRUE
-#' @param boot_part  is  "locus" bootstrap columns for each locus separately
+#' @param clones         tibble \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
+#' @param bootstraps    number of bootstrap replicates to perform
+#' @param trait            trait to use for parsimony models (required if 
+#'                      \code{igphyml} specified)
+#' @param build           program to use for tree building (phangorn, dnapars)
+#' @param exec           location of desired phylogenetic executable
+#' @param igphyml        location of igphyml executible if trait models desired
+#' @param id            unique identifer for this analysis (required if 
+#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param dir           directory where temporary files will be placed (required
+#'                      if \code{igphyml} or \code{dnapars} specified)
+#' @param modelfile        file specifying parsimony model to use
+#' @param fixtrees        keep tree topologies fixed?
+#'                      (bootstrapping will not be perfomed)
+#' @param nproc            number of cores to parallelize computations
+#' @param quiet           amount of rubbish to print to console
+#' @param rm_temp       remove temporary files (default=TRUE)
+#' @param palette        a named vector specifying colors for each state
+#' @param resolve        how should polytomies be resolved? 
+#'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+#'                       3=max ambiguity
+#' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
+#' @param lfile         lineage file input to igphyml if desired (experimental)
+#' @param rep             current bootstrap replicate (experimental)
+#' @param seq           column name containing sequence information
+#' @param downsample    downsample clones to have a maximum specified tip/switch ratio?
+#' @param tip_switch    maximum allowed tip/switch ratio if downsample=TRUE
+#' @param boot_part     is  "locus" bootstrap columns for each locus separately
+#' @param force_resolve continue even if polytomy resolution fails?
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
@@ -1783,7 +1789,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
     fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
     keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
-    boot_part="locus", ...){
+    boot_part="locus", force_resolve=FALSE,...){
 
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
         stop("exec must be specified for this build option")
@@ -1879,7 +1885,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
             nproc=1, rm_temp=rm_temp, quiet=quiet,
             fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
             lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
-            boot_part=boot_part, ...),
+            boot_part=boot_part, force_resolve=force_resolve, ...),
             mc.cores=nproc)
         results <- list()
         results$switches <- NULL
@@ -1973,16 +1979,16 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
             switches <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
                 mode="switches", type="recon", cloneid=rep, 
                 quiet=quiet, rm_files=FALSE, rm_dir=NULL, nproc=nproc,
-                resolve=resolve, rseed=rseed)
+                resolve=resolve, rseed=rseed, force_resolve=force_resolve)
             permuted <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
                 mode="switches", type="permute", cloneid=rep, 
                 quiet=quiet, rm_files=FALSE, rm_dir=NULL, nproc=nproc,
-                resolve=resolve, rseed=rseed)
+                resolve=resolve, rseed=rseed, force_resolve=force_resolve)
             if(!rm_temp){rm_dir=NULL}
             permuteAll <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
                 mode="switches", type="permuteAll", cloneid=rep, 
                 quiet=quiet, rm_files=rm_temp, rm_dir=rm_dir, nproc=nproc,
-                resolve=resolve, rseed=rseed)
+                resolve=resolve, rseed=rseed, force_resolve=force_resolve)
             switches <- rbind(switches,permuted)
             switches <- rbind(switches,permuteAll)
             switches$ID <- id

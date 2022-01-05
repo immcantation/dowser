@@ -28,6 +28,7 @@ bootstrapTrees(
   downsample = FALSE,
   tip_switch = 20,
   boot_part = "locus",
+  force_resolve = FALSE,
   ...
 )
 }
@@ -65,7 +66,9 @@ if \code{igphyml} or \code{dnapars} specified)}
 
 \item{palette}{a named vector specifying colors for each state}
 
-\item{resolve}{how should polytomies be resolved?}
+\item{resolve}{how should polytomies be resolved? 
+0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+3=max ambiguity}
 
 \item{rep}{current bootstrap replicate (experimental)}
 
@@ -80,6 +83,8 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{tip_switch}{maximum allowed tip/switch ratio if downsample=TRUE}
 
 \item{boot_part}{is  "locus" bootstrap columns for each locus separately}
+
+\item{force_resolve}{continue even if polytomy resolution fails?}
 
 \item{...}{additional arguments to be passed to tree building program}
 }
