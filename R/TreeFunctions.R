@@ -189,6 +189,11 @@ bootstrapClones  <- function(clone, reps=100, partition="locus"){
     sarray <- strsplit(clone@data$sequence,split="")
     garray <- strsplit(clone@germline,split="")[[1]]
     index <- 1:stats::median(nchar(clone@data$sequence))
+    if(clone@phylo_seq == "hlsequence"){
+        sarray <- strsplit(clone@data$hlsequence,split="")
+        garray <- strsplit(clone@hlgermline,split="")[[1]]
+        index <- 1:stats::median(nchar(clone@data$hlsequence))
+    }
     bootstraps <- list()
     for(i in 1:reps){
         clone_copy <- clone
@@ -199,9 +204,17 @@ bootstrapClones  <- function(clone, reps=100, partition="locus"){
             sindex <- sample(index,length(index),replace=TRUE)
         }
         #print(paste(length(unique(sindex)),length(unique(index))))
-        clone_copy@data$sequence <- unlist(lapply(sarray,
-            function(x)paste(x[sindex],collapse="")))
-        clone_copy@germline <- paste(garray[sindex],collapse="")
+        if(clone@phylo_seq == "sequence"){
+            clone_copy@data$sequence <- unlist(lapply(sarray,
+                function(x)paste(x[sindex],collapse="")))
+            clone_copy@germline <- paste(garray[sindex],collapse="")
+        }else if(clone@phylo_seq == "hlsequence"){
+            clone_copy@data$hlsequence <- unlist(lapply(sarray,
+                function(x)paste(x[sindex],collapse="")))
+            clone_copy@hlgermline <- paste(garray[sindex],collapse="")
+        }else{
+            stop(paste("phylo_seq",clone@phylo_seq,"not recognized"))
+        }
         bootstraps[[i]] <- clone_copy
     }
     bootstraps
@@ -1788,7 +1801,7 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
     id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
     fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
-    keeptrees=TRUE, lfile=NULL, seq="sequence", downsample=FALSE, tip_switch=20,
+    keeptrees=TRUE, lfile=NULL, seq=NULL, downsample=FALSE, tip_switch=20,
     boot_part="locus", force_resolve=FALSE,...){
 
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
