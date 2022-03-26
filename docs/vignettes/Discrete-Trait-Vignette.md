@@ -25,7 +25,7 @@ A significant SP test from tissue A to B could be due to:
 
 1. Biased migration from A to B ([Fig. 2B-D](https://doi.org/10.1101/2020.05.30.124446)).
 2. Biased sampling, especially under-sampling tissue A (Fig. 2E).
-3. Significantly higher mutation rate in B than in A, placing it further down the tree (Fig. 5).
+3. Significantly higher mutation rate over time in the cells in B than in A, placing it further down the tree (Fig. 5).
 4. Extremely low rate of switching events (if no downsampling used, see below, Fig. 4).
 
 Usually option #1 is most biologically interesting, but it is important to consider the other options as well.
