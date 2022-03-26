@@ -77,7 +77,7 @@ Once we've set up the tree objects, we can calculate the switches along these tr
 ```r
 # the location of the igphyml executable
 # this is location in Docker image, will likely be different if you've set it up yourself
-igphyml_location = "~/Dropbox/Projects/IgPhyML_development/igphyml/src/igphyml"
+igphyml_location = "/usr/local/share/igphyml/src/igphyml"
 
 # calculate switches along trees compared to 100 random permutations 
 # this may take a while, and can be parallelized using nproc

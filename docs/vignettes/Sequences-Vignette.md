@@ -38,6 +38,6 @@ print(sequence)
 ```
 ## function (nvec, ...) 
 ## UseMethod("sequence")
-## <bytecode: 0x5566172ea770>
+## <bytecode: 0x5609f0acdbc0>
 ## <environment: namespace:base>
 ```
