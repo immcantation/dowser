@@ -671,6 +671,9 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     warning("No data provided!")
     return(data)
   }
+  if(sum(is.na(data[[clone]])) > 0){
+    stop("NA values in clone id column found, please remove.")
+  }
 
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 

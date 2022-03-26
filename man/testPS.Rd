@@ -12,7 +12,7 @@ testPS(
 )
 }
 \arguments{
-\item{switches}{Data frame from bootstrapTrees}
+\item{switches}{Data frame from findSwitches}
 
 \item{bylineage}{Perform test for each lineage individually? (FALSE)}
 
@@ -52,12 +52,12 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 data(ExampleAirr)
 ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 clones <- formatClones(ExampleAirr, trait="sample_id")
-btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+btrees <- findSwitches(clones[1:2], bootstraps=10, nproc=1,
    igphyml=igphyml, trait="sample_id")
 testPS(btrees$switches)
 }
 }
 \seealso{
-Uses output from \link{bootstrapTrees}. Related to \link{testSP}
+Uses output from \link{findSwitches}. Related to \link{testSP}
 and \link{testSC}.
 }

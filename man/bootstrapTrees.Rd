@@ -2,8 +2,7 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{bootstrapTrees}
 \alias{bootstrapTrees}
-\title{Create a bootstrap distribution for clone sequence alignments, and estimate 
-trees for each bootstrap replicate.}
+\title{Deprecated! Please use findSwitches instead.}
 \usage{
 bootstrapTrees(
   clones,
@@ -24,7 +23,7 @@ bootstrapTrees(
   rep = NULL,
   keeptrees = TRUE,
   lfile = NULL,
-  seq = "sequence",
+  seq = NULL,
   downsample = FALSE,
   tip_switch = 20,
   boot_part = "locus",
@@ -93,33 +92,4 @@ A list of trees and/or switch counts for each bootstrap replicate.
 }
 \description{
 \code{bootstrapTrees} Phylogenetic bootstrap function.
-}
-\details{
-Tree building details are the same as \link{getTrees}. 
-If \code{keeptrees=TRUE} (default) the returned object will contain a list 
-named "trees" which contains a list of estimated tree objects for each 
-bootstrap replicate. The object is structured like: 
-trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
-(as well as \code{trait}), the returned object 
-will contain a \code{tibble} named "switches" containing switch count 
-information. This object can be passed to \link{testSP} and other functions 
-to perform parsimony based trait value tests.
-}
-\examples{
-\dontrun{
-data(ExampleAirr)
-ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-clones <- formatClones(ExampleAirr, trait="sample_id")
-
-igphyml <- "~/apps/igphyml/src/igphyml"
-btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
-   igphyml=igphyml, trait="sample_id")
-plotTrees(btrees$trees[[4]])[[1]]
-testPS(btrees$switches)
-}
-}
-\seealso{
-Uses output from \link{formatClones} with similar arguments to 
-\link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
-with \link{testPS}, \link{testSC}, and \link{testSP}.
 }

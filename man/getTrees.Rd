@@ -100,6 +100,6 @@ plotTrees(trees)[[1]]
 }
 }
 \seealso{
-\link{formatClones}, \link{bootstrapTrees}, \link{buildPhylo},
+\link{formatClones}, \link{findSwitches}, \link{buildPhylo},
 \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 }

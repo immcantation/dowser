@@ -18,5 +18,5 @@ A named vector containing the states of the model
 \code{readModelFile} Filler
 }
 \seealso{
-\link{makeModelFile}, \link{bootstrapTrees}, \link{getTrees}
+\link{makeModelFile}, \link{findSwitches}, \link{getTrees}
 }

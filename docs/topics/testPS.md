@@ -21,7 +21,7 @@ Arguments
 -------------------
 
 switches
-:   Data frame from bootstrapTrees
+:   Data frame from findSwitches
 
 bylineage
 :   Perform test for each lineage individually? (FALSE)
@@ -74,7 +74,7 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 # data(ExampleAirr)
 # ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 # clones <- formatClones(ExampleAirr, trait="sample_id")
-# btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+# btrees <- findSwitches(clones[1:2], bootstraps=10, nproc=1,
 # igphyml=igphyml, trait="sample_id")
 # testPS(btrees$switches)
 ```
@@ -84,7 +84,7 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 See also
 -------------------
 
-Uses output from [bootstrapTrees](bootstrapTrees.md). Related to [testSP](testSP.md)
+Uses output from [findSwitches](findSwitches.md). Related to [testSP](testSP.md)
 and [testSC](testSC.md).
 
 

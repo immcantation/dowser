@@ -430,7 +430,7 @@ cleanAlignment <- function(clone, seq="sequence"){
 #' ;, :, and = from ids
 #' @seealso  Executes in order \link{makeAirrClone}. Returns a tibble of 
 #' \link{airrClone} objects 
-#'      which serve as input to \link{getTrees} and \link{bootstrapTrees}.
+#'      which serve as input to \link{getTrees} and \link{findSwitches}.
 #' 
 #' @examples
 #' data(ExampleAirr)

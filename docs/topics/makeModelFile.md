@@ -45,7 +45,7 @@ forbids switches moving from left to right in the `states` vector.
 See also
 -------------------
 
-[readModelFile](readModelFile.md), [getTrees](getTrees.md), [bootstrapTrees](bootstrapTrees.md)
+[readModelFile](readModelFile.md), [getTrees](getTrees.md), [findSwitches](findSwitches.md)
 
 
 

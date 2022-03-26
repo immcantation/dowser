@@ -30,18 +30,17 @@ nav:
     - 'Build lineage trees': vignettes/Building-Trees-Vignette.md
     - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
     - 'Reconstruct intermediate sequences': vignettes/Sequences-Vignette.md
+    - 'Migration, differentiation, and isotype switching': vignettes/Discrete-Trait-Vignette.md
   - 'Help Topics':
     - 'Germline construction functions':
       - topics/readIMGT.md
       - topics/createGermlines.md
     - 'Clone formating functions':
       - topics/formatClones.md
-      - topics/getSubclones.md
       - topics/makeAirrClone.md
       - topics/airrClone-class.md
     - 'Tree building functions':
       - topics/getTrees.md
-      - topics/bootstrapTrees.md
       - topics/buildIgphyml.md
       - topics/buildPML.md
       - topics/buildPhylo.md
@@ -55,10 +54,9 @@ nav:
       - topics/scaleBranches.md
       - topics/rerootTree.md
     - 'Intermediate sequence functions':
-      - topics/getSeq.md
+      - topics/getNodeSeq.md
     - 'Discrete trait analysis functions':
-      - topics/makeModelFile.md
-      - topics/readModelFile.md
+      - topics/findSwitches.md
       - topics/testPS.md
       - topics/testSC.md
       - topics/testSP.md

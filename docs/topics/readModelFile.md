@@ -35,7 +35,7 @@ A named vector containing the states of the model
 See also
 -------------------
 
-[makeModelFile](makeModelFile.md), [bootstrapTrees](bootstrapTrees.md), [getTrees](getTrees.md)
+[makeModelFile](makeModelFile.md), [findSwitches](findSwitches.md), [getTrees](getTrees.md)
 
 
 

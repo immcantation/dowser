@@ -113,7 +113,7 @@ See also
 
 Executes in order [makeAirrClone](makeAirrClone.md). Returns a tibble of 
 [airrClone](airrClone-class.md) objects 
-which serve as input to [getTrees](getTrees.md) and [bootstrapTrees](bootstrapTrees.md).
+which serve as input to [getTrees](getTrees.md) and [findSwitches](findSwitches.md).
 
 
 

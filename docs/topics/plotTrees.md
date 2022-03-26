@@ -82,7 +82,7 @@ Details
 -------------------
 
 Function uses `ggtree` functions to plot tree topologlies estimated by 
-[getTrees](getTrees.md), and [bootstrapTrees](bootstrapTrees.md). Object can be further modified with 
+[getTrees](getTrees.md), and [findSwitches](findSwitches.md). Object can be further modified with 
 `ggtree` functions. Please check out 
 https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.html and
 cite `ggtree` in addition to `dowser` if you use this function.
@@ -104,7 +104,7 @@ plotTrees(trees)[[1]]
 See also
 -------------------
 
-[getTrees](getTrees.md), [bootstrapTrees](bootstrapTrees.md)
+[getTrees](getTrees.md), [findSwitches](findSwitches.md)
 
 
 

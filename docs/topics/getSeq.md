@@ -1,4 +1,4 @@
-**getSeq** - *Return IMGT gapped sequence of specified tree node*
+**getSeq** - *Deprecated! Use getNodeSeq*
 
 Description
 --------------------
@@ -39,13 +39,6 @@ Value
 
 A vector with sequence for each locus at a specified `node`
 in `tree`.
-
-
-Details
--------------------
-
-Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
-node labels, and getSeq to return internal node sequences
 
 
 

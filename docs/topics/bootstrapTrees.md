@@ -1,5 +1,4 @@
-**bootstrapTrees** - *Create a bootstrap distribution for clone sequence alignments, and estimate 
-trees for each bootstrap replicate.*
+**bootstrapTrees** - *Deprecated! Please use findSwitches instead.*
 
 Description
 --------------------
@@ -29,10 +28,11 @@ resolve = 2,
 rep = NULL,
 keeptrees = TRUE,
 lfile = NULL,
-seq = "sequence",
+seq = NULL,
 downsample = FALSE,
 tip_switch = 20,
 boot_part = "locus",
+force_resolve = FALSE,
 ...
 )
 ```
@@ -88,7 +88,9 @@ palette
 :   a named vector specifying colors for each state
 
 resolve
-:   how should polytomies be resolved?
+:   how should polytomies be resolved? 
+0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+3=max ambiguity
 
 rep
 :   current bootstrap replicate (experimental)
@@ -111,6 +113,9 @@ tip_switch
 boot_part
 :   is  "locus" bootstrap columns for each locus separately
 
+force_resolve
+:   continue even if polytomy resolution fails?
+
 ...
 :   additional arguments to be passed to tree building program
 
@@ -123,45 +128,7 @@ Value
 A list of trees and/or switch counts for each bootstrap replicate.
 
 
-Details
--------------------
 
-Tree building details are the same as [getTrees](getTrees.md). 
-If `keeptrees=TRUE` (default) the returned object will contain a list 
-named "trees" which contains a list of estimated tree objects for each 
-bootstrap replicate. The object is structured like: 
-trees[[<replicate>]][[<tree index>]]. If `igphyml` is specified 
-(as well as `trait`), the returned object 
-will contain a `tibble` named "switches" containing switch count 
-information. This object can be passed to [testSP](testSP.md) and other functions 
-to perform parsimony based trait value tests.
-
-
-
-Examples
--------------------
-
-```R
-### Not run:
-data(ExampleAirr)
-# ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
-# clones <- formatClones(ExampleAirr, trait="sample_id")
-# 
-# igphyml <- "~/apps/igphyml/src/igphyml"
-# btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
-# igphyml=igphyml, trait="sample_id")
-# plotTrees(btrees$trees[[4]])[[1]]
-# testPS(btrees$switches)
-```
-
-
-
-See also
--------------------
-
-Uses output from [formatClones](formatClones.md) with similar arguments to 
-[getTrees](getTrees.md). Output can be visualized with [plotTrees](plotTrees.md), and tested
-with [testPS](testPS.md), [testSC](testSC.md), and [testSP](testSP.md).
 
 
 

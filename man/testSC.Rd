@@ -16,7 +16,7 @@ testSC(
 )
 }
 \arguments{
-\item{switches}{Data frame from bootstrapTrees}
+\item{switches}{Data frame from findSwitches}
 
 \item{dropzeros}{Drop switches with zero counts?}
 
@@ -66,12 +66,12 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 data(ExampleAirr)
 ExampleAirr$sample_id = sample(ExampleAirr$sample_id)
 clones = formatClones(ExampleAirr, trait="sample_id")
-btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+btrees = findSwitches(clones[1:2], bootstraps=100, nproc=1,
    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 testSC(btrees$switches)
 }
 }
 \seealso{
-Uses output from \link{bootstrapTrees}. Related to \link{testPS}
+Uses output from \link{findSwitches}. Related to \link{testPS}
 and \link{testSP}.
 }

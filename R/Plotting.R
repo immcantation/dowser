@@ -154,12 +154,12 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #'
 #' @details
 #' Function uses \code{ggtree} functions to plot tree topologlies estimated by 
-#' \link{getTrees}, and \link{bootstrapTrees}. Object can be further modified with 
+#' \link{getTrees}, and \link{findSwitches}. Object can be further modified with 
 #' \code{ggtree} functions. Please check out 
 #' https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.html and
 #' cite \code{ggtree} in addition to \code{dowser} if you use this function.
 #'  
-#' @seealso \link{getTrees}, \link{bootstrapTrees}
+#' @seealso \link{getTrees}, \link{findSwitches}
 #' @examples
 #' data(ExampleClones)
 #' trees <- getTrees(ExampleClones[10,])

@@ -144,7 +144,7 @@ data(ExampleClones)
 See also
 -------------------
 
-[formatClones](formatClones.md), [bootstrapTrees](bootstrapTrees.md), [buildPhylo](buildPhylo.md),
+[formatClones](formatClones.md), [findSwitches](findSwitches.md), [buildPhylo](buildPhylo.md),
 [buildPratchet](buildPratchet.md), [buildPML](buildPML.md), [buildIgphyml](buildIgphyml.md)
 
 

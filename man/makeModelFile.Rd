@@ -24,5 +24,5 @@ Currently the only option for \code{constraints} is "irrev", which
 forbids switches moving from left to right in the \code{states} vector.
 }
 \seealso{
-\link{readModelFile}, \link{getTrees}, \link{bootstrapTrees}
+\link{readModelFile}, \link{getTrees}, \link{findSwitches}
 }

@@ -4,7 +4,7 @@ Dowser automatically reconstructs intermediate sequences as part of the `getTree
 
 First, collapse internal nodes with identical sequences using the `collapesNodes`. This will significantly clean up the visualization. You could alternatively run `getTrees` with `collapse=TRUE`. Then, visualize the trees using `plotTrees` but with the `node_nums` parameter set. This will display the ID number of each internal node.
 
-To obtain the IMGT-gapped sequence for each reconstructed node, specify the clone ID and node number in the `getSeq` function.
+To obtain the IMGT-gapped sequence for each reconstructed node, specify the clone ID and node number in the `getNodeSeq` function.
 
 
 ```r
@@ -24,12 +24,20 @@ plots[[1]]
 ![plot of chunk Sequences-Vignette-1](figure/Sequences-Vignette-1-1.png)
 
 ```r
-sequence = getSeq(trees, node=50, clone=3128)
+sequence = getNodeSeq(trees, node=50, clone=3128)
+```
 
+```
+## Error in getNodeSeq(trees, node = 50, clone = 3128): could not find function "getNodeSeq"
+```
+
+```r
 print(sequence)
 ```
 
 ```
-##                                                                                                                                                                                                                                                                                                                                                                                                                    N 
-## "GAGGTGCAGCTGGTGGAGTCCGGGGGA...GGCTTGGTACAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GTTGACTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGTCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN"
+## function (nvec, ...) 
+## UseMethod("sequence")
+## <bytecode: 0x5598f3376278>
+## <environment: namespace:base>
 ```

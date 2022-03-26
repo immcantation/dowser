@@ -83,7 +83,7 @@ readFasta <- function(file){
 #'
 #' @return   A named vector containing the states of the model
 #'
-#' @seealso \link{makeModelFile}, \link{bootstrapTrees}, \link{getTrees}
+#' @seealso \link{makeModelFile}, \link{findSwitches}, \link{getTrees}
 #'
 #' @export
 readModelFile <- function(file, useambig=FALSE){
@@ -124,7 +124,7 @@ readModelFile <- function(file, useambig=FALSE){
 #' Currently the only option for \code{constraints} is "irrev", which
 #' forbids switches moving from left to right in the \code{states} vector.
 #'  
-#' @seealso \link{readModelFile}, \link{getTrees}, \link{bootstrapTrees}
+#' @seealso \link{readModelFile}, \link{getTrees}, \link{findSwitches}
 #'
 #' @export
 makeModelFile <- function(file, states, constraints=NULL){
@@ -1227,7 +1227,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=0){
 #'
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'  
-#' @seealso \link{formatClones}, \link{bootstrapTrees}, \link{buildPhylo},
+#' @seealso \link{formatClones}, \link{findSwitches}, \link{buildPhylo},
 #' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 #' @examples
 #' data(ExampleClones)
@@ -1622,7 +1622,7 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 
 #' Return IMGT gapped sequence of specified tree node
 #' 
-#' \code{getSeq} Sequence retrieval function.
+#' \code{getNodeSeq} Sequence retrieval function.
 #' @param    data    a tibble of \code{airrClone} objects, the output of 
 #'                   \link{getTrees}
 #' @param    node    numeric node in tree (see details)
@@ -1634,11 +1634,11 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 #'
 #' @details
 #' Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
-#' node labels, and getSeq to return internal node sequences
+#' node labels, and getNodeSeq to return internal node sequences
 #'  
 #' @seealso \link{getTrees}
 #' @export
-getSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
+getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     if(is.null(tree)){
         if(is.null(clone)){
             stop("must provide either tree object or clone ID")
@@ -1668,6 +1668,27 @@ getSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     }
     names(seqs) <- loci
     return(seqs)
+}
+
+#' Deprecated! Use getNodeSeq
+#' 
+#' \code{getSeq} Sequence retrieval function.
+#' @param    data    a tibble of \code{airrClone} objects, the output of 
+#'                   \link{getTrees}
+#' @param    node    numeric node in tree (see details)
+#' @param    tree    a \code{phylo} tree object containing \code{node}
+#' @param    clone   if \code{tree} not specified, supply clone ID in \code{data}
+#' @param    gaps    add IMGT gaps to output sequences?
+#' @return   A vector with sequence for each locus at a specified \code{node}
+#'           in \code{tree}.
+#'
+#' @seealso \link{getTrees}
+#' @export
+getSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
+
+    warning("getSeq is depracated and will be removed. Use getNodeSeq instead.")
+
+    return(getNodeSeq(data=data, node=node, tree=tree, clone=clone, gaps=gaps))
 }
 
 #' \code{downsampleClone} Down-sample clone to maximum tip/switch ratio
@@ -1735,32 +1756,31 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' Create a bootstrap distribution for clone sequence alignments, and estimate 
 #' trees for each bootstrap replicate.
 #' 
-#' \code{bootstrapTrees} Phylogenetic bootstrap function.
+#' \code{findSwitches} Phylogenetic bootstrap function.
 #' @param clones         tibble \code{airrClone} objects, the output of 
 #'                      \link{formatClones}
-#' @param bootstraps    number of bootstrap replicates to perform
-#' @param trait            trait to use for parsimony models (required if 
-#'                      \code{igphyml} specified)
-#' @param build           program to use for tree building (phangorn, dnapars)
-#' @param exec           location of desired phylogenetic executable
-#' @param igphyml        location of igphyml executible if trait models desired
+#' @param permutations    number of bootstrap replicates to perform
+#' @param trait         trait to use for parsimony models
+#' @param igphyml       location of igphyml executible 
+#' @param build         program to use for tree building (phangorn, dnapars)
+#' @param exec          location of desired phylogenetic executable
 #' @param id            unique identifer for this analysis (required if 
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
-#' @param modelfile        file specifying parsimony model to use
-#' @param fixtrees        keep tree topologies fixed?
+#' @param modelfile     file specifying parsimony model to use
+#' @param fixtrees      keep tree topologies fixed?
 #'                      (bootstrapping will not be perfomed)
 #' @param nproc            number of cores to parallelize computations
 #' @param quiet           amount of rubbish to print to console
 #' @param rm_temp       remove temporary files (default=TRUE)
-#' @param palette        a named vector specifying colors for each state
-#' @param resolve        how should polytomies be resolved? 
+#' @param palette       a named vector specifying colors for each state
+#' @param resolve       how should polytomies be resolved? 
 #'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
 #'                       3=max ambiguity
 #' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
 #' @param lfile         lineage file input to igphyml if desired (experimental)
-#' @param rep             current bootstrap replicate (experimental)
+#' @param rep           current bootstrap replicate (experimental)
 #' @param seq           column name containing sequence information
 #' @param downsample    downsample clones to have a maximum specified tip/switch ratio?
 #' @param tip_switch    maximum allowed tip/switch ratio if downsample=TRUE
@@ -1792,26 +1812,38 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' clones <- formatClones(ExampleAirr, trait="sample_id")
 #' 
 #' igphyml <- "~/apps/igphyml/src/igphyml"
-#' btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+#' btrees <- findSwitches(clones[1:2], permutations=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
 #' plotTrees(btrees$trees[[4]])[[1]]
 #' testPS(btrees$switches)
 #' }
 #' @export
-bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
-    id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
-    fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
-    keeptrees=TRUE, lfile=NULL, seq=NULL, downsample=FALSE, tip_switch=20,
-    boot_part="locus", force_resolve=FALSE,...){
+findSwitches <- function(clones, permutations, trait, igphyml, 
+    fixtrees=FALSE, downsample=TRUE, tip_switch=20, nproc=1, 
+    dir=NULL, id=NULL, modelfile=NULL, build="pratchet", exec=NULL, 
+    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
+    keeptrees=FALSE, lfile=NULL, seq=NULL,
+    boot_part="locus", force_resolve=FALSE, ...){
 
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
         stop("exec must be specified for this build option")
+    }
+    if(file.access(igphyml, mode=1) == -1) {
+        stop("Igphyml executable at ", igphyml, " cannot be executed.")
+    }
+    if(downsample & !quiet & is.null(rep)){
+        print(paste("Downsampling lineages to a maximum tip-to-switch ratio of",tip_switch))
+    }
+    if(!fixtrees & !quiet & is.null(rep)){
+        print("Re-building bootstrapped trees. Use fixtrees=TRUE to use fixed topologies.")
+    }else if(is.null(rep)){
+        print("Keeping tree topology constant. Use fixtrees=FALSE to bootstrap topologies.")
     }
 
     data <- clones$data
     if(fixtrees){
         if(!"trees" %in% names(clones)){
-            stop("trees column must be specified if fixtrees=TRUE")
+            stop("trees column must be included in input if fixtrees=TRUE (use getTrees first)")
         }
         if(class(clones$trees[[1]]) != "phylo"){
             stop("Trees must be a list of class phylo")
@@ -1889,12 +1921,12 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
         }
     }
     if(is.null(rep)){
-        reps <- as.list(1:bootstraps)
+        reps <- as.list(1:permutations)
         l <- parallel::mclapply(reps,function(x)
-            bootstrapTrees(clones ,rep=x, 
+            findSwitches(clones ,rep=x, 
             trait=trait, modelfile=modelfile, build=build, 
             exec=exec, igphyml=igphyml, 
-            id=id, dir=dir, bootstraps=bootstraps,
+            id=id, dir=dir, permutations=permutations,
             nproc=1, rm_temp=rm_temp, quiet=quiet,
             fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
             lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
@@ -2028,3 +2060,59 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     }
 }
 
+#' Deprecated! Please use findSwitches instead.
+#' 
+#' \code{bootstrapTrees} Phylogenetic bootstrap function.
+#' @param clones         tibble \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
+#' @param bootstraps    number of bootstrap replicates to perform
+#' @param trait            trait to use for parsimony models (required if 
+#'                      \code{igphyml} specified)
+#' @param build           program to use for tree building (phangorn, dnapars)
+#' @param exec           location of desired phylogenetic executable
+#' @param igphyml        location of igphyml executible if trait models desired
+#' @param id            unique identifer for this analysis (required if 
+#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param dir           directory where temporary files will be placed (required
+#'                      if \code{igphyml} or \code{dnapars} specified)
+#' @param modelfile        file specifying parsimony model to use
+#' @param fixtrees        keep tree topologies fixed?
+#'                      (bootstrapping will not be perfomed)
+#' @param nproc            number of cores to parallelize computations
+#' @param quiet           amount of rubbish to print to console
+#' @param rm_temp       remove temporary files (default=TRUE)
+#' @param palette        a named vector specifying colors for each state
+#' @param resolve        how should polytomies be resolved? 
+#'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+#'                       3=max ambiguity
+#' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
+#' @param lfile         lineage file input to igphyml if desired (experimental)
+#' @param rep             current bootstrap replicate (experimental)
+#' @param seq           column name containing sequence information
+#' @param downsample    downsample clones to have a maximum specified tip/switch ratio?
+#' @param tip_switch    maximum allowed tip/switch ratio if downsample=TRUE
+#' @param boot_part     is  "locus" bootstrap columns for each locus separately
+#' @param force_resolve continue even if polytomy resolution fails?
+#' @param ...        additional arguments to be passed to tree building program
+#'
+#' @return   A list of trees and/or switch counts for each bootstrap replicate.
+#'  
+#' @export
+bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
+    id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
+    fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
+    keeptrees=TRUE, lfile=NULL, seq=NULL, downsample=FALSE, tip_switch=20,
+    boot_part="locus", force_resolve=FALSE,...){
+
+    warning("boostrapTrees is depracated. Use findSwitches instead.")
+
+    s = findSwitches(clones ,rep=rep, 
+            trait=trait, modelfile=modelfile, build=build, 
+            exec=exec, igphyml=igphyml, 
+            id=id, dir=dir, permutations=bootstraps,
+            nproc=1, rm_temp=rm_temp, quiet=quiet,
+            fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
+            lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
+            boot_part=boot_part, force_resolve=force_resolve, ...)
+    return(s)
+}

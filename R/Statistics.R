@@ -3,7 +3,7 @@
 #' Performs PS (parsimony score) test on switch data
 #' 
 #' \code{testPS} performs a PS test
-#' @param    switches     Data frame from bootstrapTrees
+#' @param    switches     Data frame from findSwitches
 #' @param    bylineage    Perform test for each lineage individually? (FALSE)
 #' @param    pseudocount  Pseudocount for P value calculations
 #' @param    alternative  Perform one-sided (\code{greater} or \code{less})
@@ -29,7 +29,7 @@
 #'   \item  \code{REPS}: Total number of ootstrap repetition.
 #'}
 #'  
-#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{testSP}
+#' @seealso Uses output from \link{findSwitches}. Related to \link{testSP}
 #' and \link{testSC}.
 #' @examples
 #' \dontrun{
@@ -37,7 +37,7 @@
 #' data(ExampleAirr)
 #' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 #' clones <- formatClones(ExampleAirr, trait="sample_id")
-#' btrees <- bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+#' btrees <- findSwitches(clones[1:2], bootstraps=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
 #' testPS(btrees$switches)
 #' }
@@ -146,7 +146,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' Performs SP (switch proportion) test on switch data
 #' 
 #' \code{testSP} performs an SP test
-#' @param    switches     Data frame from bootstrapTrees
+#' @param    switches     Data frame from findSwitches
 #' @param    permuteAll   Permute among trees?
 #' @param    from         Include only switches from this state?
 #' @param    to           Include only switches to this state?
@@ -180,7 +180,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #'   \item  \code{REPS}: Total number of ootstrap repetition.
 #'}
 #'  
-#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{testPS}
+#' @seealso Uses output from \link{findSwitches}. Related to \link{testPS}
 #' and \link{testSC}.
 #' @examples
 #' \dontrun{
@@ -188,7 +188,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' data(ExampleAirr)
 #' ExampleAirr$sample_id = sample(ExampleAirr$sample_id)
 #' clones = formatClones(ExampleAirr, trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2], bootstraps=10, nproc=1,
+#' btrees = findSwitches(clones[1:2], bootstraps=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
 #' testSP(btrees$switches)
 #' }
@@ -366,7 +366,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #' Performs SC (switch count) test on switch data
 #' 
 #' \code{testSC} performs an SC test
-#' @param    switches     Data frame from bootstrapTrees
+#' @param    switches     Data frame from findSwitches
 #' @param    permuteAll   Permute among trees?
 #' @param    from         Include only switches from this state?
 #' @param    to           Include only switches to this state?
@@ -398,7 +398,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #'   \item  \code{REPS}: Total number of ootstrap repetition.
 #'}
 #'  
-#' @seealso Uses output from \link{bootstrapTrees}. Related to \link{testPS}
+#' @seealso Uses output from \link{findSwitches}. Related to \link{testPS}
 #' and \link{testSP}.
 #' @examples
 #' \dontrun{
@@ -406,7 +406,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #' data(ExampleAirr)
 #' ExampleAirr$sample_id = sample(ExampleAirr$sample_id)
 #' clones = formatClones(ExampleAirr, trait="sample_id")
-#' btrees = bootstrapTrees(clones[1:2], bootstraps=100, nproc=1,
+#' btrees = findSwitches(clones[1:2], bootstraps=100, nproc=1,
 #'    igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 #' testSC(btrees$switches)
 #' }
