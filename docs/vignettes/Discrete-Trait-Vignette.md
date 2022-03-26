@@ -37,6 +37,8 @@ All of the switch count statistics on this page require IgPhyML to be installed 
 
 ## Set up data structures and trees
 
+This step proceeds as in tree building, but it is important to sprecify the column of the discrete trait you want to analyze in the `formatClones` step. In this example we are using simulated data from nose and lung biospies. However, this could be any discrete trait value such as cell types. Filtering out clones that contain only a single trait value type is not strictly necessary but can dramatically improve computing time.
+
 
 ```r
 library(dowser)
@@ -62,7 +64,7 @@ tissue_types = unlist(lapply(clones$data, function(x)
 # filter to multi-type trees
 clones = clones[tissue_types > 1,]
 
-# build trees using maximum likelihood ()
+# build trees using maximum likelihood (can use alternative builds if desired)
 trees = getTrees(clones, build="pml")
 ```
 
@@ -129,7 +131,7 @@ print(sp$means)
 #2 Nose  Lung  0.832   0.642   0.1  0.190 SP       10
 ```
 
-## Within vs between lineage permutations
+## Within and between lineage permutations
 
 In some cases it may be preferable to permute trait values among trees rather than within them. This will detect association between traits within a tree as well as directional relationships. In general it is harder to interpret. To perform this test, set `permuteAll=TRUE`.
 
