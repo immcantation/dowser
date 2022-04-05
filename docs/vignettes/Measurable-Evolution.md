@@ -37,18 +37,7 @@ ExampleClones = ExampleClones[ExampleClones$seqs >= 10,]
 # correlation test with 100 repetitions - in practice use at least 1000
 test = correlationTest(ExampleClones, permutations=100, time=trait)
 print(test)
-```
 
-```
-## # A tibble: 2 × 12
-##   clone_id data    locus  seqs trees    slope     p correlation random_correlat…
-##      <dbl> <list>  <chr> <int> <lis>    <dbl> <dbl>       <dbl>            <dbl>
-## 1     3128 <airrC… N        43 <phy… -0.00146 0.663      -0.122          -0.0252
-## 2     3184 <airrC… N        12 <phy…  0.00115 0.436       0.748          -0.105 
-## # … with 3 more variables: min_p <dbl>, nposs <dbl>, nclust <int>
-```
-
-```r
 # A tibble: 2 × 12
 #   clone_id data    locus  seqs trees    slope     p correlation random_correlat…
 #      <dbl> <list>  <chr> <int> <lis>    <dbl> <dbl>       <dbl>            <dbl>
@@ -59,18 +48,7 @@ print(test)
 # use uniform correlaion test (more sensitive, but higher false positive rate)
 utest = correlationTest(ExampleClones, permutations=100, time=trait, permutation="uniform")
 print(utest)
-```
 
-```
-## # A tibble: 2 × 12
-##   clone_id data    locus  seqs trees    slope     p correlation random_correlat…
-##      <dbl> <list>  <chr> <int> <lis>    <dbl> <dbl>       <dbl>            <dbl>
-## 1     3128 <airrC… N        43 <phy… -0.00146 0.851      -0.122          0.00877
-## 2     3184 <airrC… N        12 <phy…  0.00115 0.109       0.748          0.00880
-## # … with 3 more variables: min_p <dbl>, nposs <dbl>, nclust <int>
-```
-
-```r
 # A tibble: 2 × 12
 #   clone_id data    locus  seqs trees    slope     p correlation random_correlat…
 #      <dbl> <list>  <chr> <int> <lis>    <dbl> <dbl>       <dbl>            <dbl>
