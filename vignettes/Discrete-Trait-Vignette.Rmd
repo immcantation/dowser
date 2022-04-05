@@ -32,11 +32,10 @@ Dowser implements recently developed phylogenetic tests to characterize B cell m
 
 ## Discrete trait statistics
 
-There are three main statistics implemented by Dowser to characterize the distribution of trait values at the tips of trees. These all derive from using a maximum parsimony algorithm to reconstruct trait values at the internal nodes of each tree. Then "switches" between discrete characters are quantified along the tree topologies.
+There are two main statistics implemented by Dowser to characterize the distribution of trait values at the tips of trees. These all derive from using a maximum parsimony algorithm to reconstruct trait values at the internal nodes of each tree. Then "switches" between discrete characters are quantified along the tree topologies.
 
 1. PS: Parsimony score, the total number of switches among all trait values.
-2. SC: Switch count (rarely used), the number of switches from one trait value to another.
-3. SP: Switch proportion, the proportion of switches from one trait to another.
+2. SP: Switch proportion, the proportion of switches from one trait to another.
 
 The significance of each of these statistics is estimated using a permutation test, which randomizes trait values at the tree's tips.
 
@@ -49,12 +48,12 @@ Before using these tests, it's important to understand how the test works and wh
 
 **What does a significant SP test mean?** A significant SP test from tissue A to tissue B indicates that there is a greater proportion of switches from A to B along the trees than expected by random tip/trait relationships. This can be due to B cells preferentially migrating from tissue A to B, but there are other possibilities.
 
-A significant SP test from tissue A to B could be due to:
+As explored in the original paper, a significant SP test from tissue A to B could be due to:
 
-1. Biased migration from A to B ([Fig. 2B-D](https://doi.org/10.1101/2020.05.30.124446)).
-2. Biased sampling, especially under-sampling tissue A (Fig. 2E).
-3. Significantly higher mutation rate over time in the cells in B than in A, placing it further down the tree (Fig. 5).
-4. Extremely low rate of switching events (if no downsampling used, see below, Fig. 4).
+1. Biased migration from A to B.
+2. Biased sampling, especially under-sampling tissue A.
+3. Significantly higher mutation rate over time in the cells in B than in A, placing it further down the tree.
+4. Extremely low rate of switching events (if no downsampling used, see below).
 
 Usually option #1 is most biologically interesting, but it is important to consider the other options as well.
 
@@ -84,14 +83,14 @@ print(table(ExampleAirr[[trait]]))
 #Lung Nose 
 # 145  244 
 
-# get calculate number of tissues sampled in tree
+# Calculate number of tissues sampled in tree
 tissue_types = unlist(lapply(clones$data, function(x)
   length(unique(x@data[[trait]]))))
 
-# filter to multi-type trees
+# Filter to multi-type trees
 clones = clones[tissue_types > 1,]
 
-# build trees using maximum likelihood (can use alternative builds if desired)
+# Build trees using maximum likelihood (can use alternative builds if desired)
 trees = getTrees(clones, build="pml")
 
 ```
@@ -132,9 +131,9 @@ print(sp$means)
 ```
 
 
-**PS test** The object `ps` contains the results of the PS test. The `means` dataframe is most useful. `RECON` shows the number of switches across all trees, `PERMUTE` shows the mean number of switches across all permutations. `PLT` is the P value that there are at least as many switches in the observed trees as in the permuted data. If `PLT < 0.05`, this indicates that there are signifcantly fewer switches among biopsies than expected by random tree/trait association. This indicates that sequences within the sample biopsies are more clustered together within the trees than expected. In this case, `PLT` is 0.4, so we can't draw that conclusion.
+**PS test** The object `ps` contains the results of the PS test. The `means` dataframe contains the test summary statistics, while the `reps` dataframe contains information from each repetition. `RECON` shows the number of switches across all trees, `PERMUTE` shows the mean number of switches across all permutations. `PLT` is the P value that there are at least as many switches in the observed trees as in the permuted data. If `PLT < 0.05`, this indicates that there are signifcantly fewer switches among biopsies than expected by random tree/trait association. This indicates that sequences within the sample biopsies are more clustered together within the trees than expected. In this case, `PLT` is 0.4, so we can't draw that conclusion.
 
-**SP test** The object `sp` contains the results of the SP test. As with the PS test, the `means` dataframe is the most useful. The columns are largely the same as in the PS test, but the SP test is performed in a particular direction. In this case, we have an SP test from Lung to Nose and then from Nose to Lung. We can see that the SP value from Nose to Lung in our trees (`RECON`) is much higher than the mean SP statistic in our permuted trees (`PERMUTE`). The p value in the `PGT` column (0)shows that the SP statistic from Nose to Lung is significant. This indicates that there are a greater proportion of switches from the Nose to the Lungs within these trees than expected from random tree/trait association. This is consistent with biased movement from Nose to Lungs in this dataset (but see [Caveats and interpretting results](#caveats-and-interpretting-results) section).
+**SP test** The object `sp` contains the results of the SP test. As with the PS test, the `means` dataframe contains summary statistics. The columns are largely the same as in the PS test, but the SP test is performed in a particular direction. In this case, we have an SP test from Lung to Nose and then from Nose to Lung. We can see that the SP value from Nose to Lung in our trees (`RECON`) is much higher than the mean SP statistic in our permuted trees (`PERMUTE`). The p value in the `PGT` column (0) shows that the SP statistic from Nose to Lung is significant. This indicates that there are a greater proportion of switches from the Nose to the Lungs within these trees than expected from random tree/trait association. This is consistent with biased movement from Nose to Lungs in this dataset (but see [Caveats and interpretting results](#caveats-and-interpretting-results) section).
 
 
 ## Accounting for uncertainty in tree topology
@@ -176,7 +175,7 @@ print(sp$means)
 
 ## Controlling false positive rate through downsampling
 
-The SP test has been shown to have a high false positive rate if switching events are rare along very large trees (see paper). To reduce this effect, by default a downsampling algorithm in `findSwitches` will downsample all trees to have a maximum tip-to-switch ratio of 20. This ratio can be togged by altering the `tip_switch` parameter. This feature can also be turned off by setting `downsample=FALSE`, but this is not recommended.
+The SP test has been shown to have a high false positive rate if switching events are rare along very large trees (see paper). To reduce this effect, by default a downsampling algorithm in `findSwitches` will downsample all trees to have a maximum tip-to-switch ratio of 20. This ratio can be toggled by altering the `tip_switch` parameter. This feature can also be turned off by setting `downsample=FALSE`, but this is not recommended.
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Downsample each tree to a tip-to-switch ratio of 10 instead of 20 

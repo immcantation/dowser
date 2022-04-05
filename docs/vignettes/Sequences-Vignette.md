@@ -25,19 +25,11 @@ plots[[1]]
 
 ```r
 sequence = getNodeSeq(trees, node=50, clone=3128)
-```
 
-```
-## Error in getNodeSeq(trees, node = 50, clone = 3128): could not find function "getNodeSeq"
-```
-
-```r
 print(sequence)
 ```
 
 ```
-## function (nvec, ...) 
-## UseMethod("sequence")
-## <bytecode: 0x56261105a640>
-## <environment: namespace:base>
+##                                                                                                                                                                                                                                                                                                                                                                                                                    N 
+## "GAGGTGCAGCTGGTGGAGTCCGGGGGG...GGCTTGGTACAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............AGTGACTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGTCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN"
 ```

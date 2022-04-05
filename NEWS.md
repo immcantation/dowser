@@ -1,3 +1,11 @@
+Version 1.0.0:  April 5, 2022
+-------------------------------------------------------------------------------
+
++ Deprecated bootstrapTrees in favor of findSwitches
++ Deprecated getSeq in favor of getNodeSeq
++ Added vignettes for discrete trait analysis and measurable evolution
+
+
 Version 0.1.0:  July 13, 2021
 -------------------------------------------------------------------------------
 

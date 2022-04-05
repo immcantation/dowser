@@ -30,6 +30,7 @@ nav:
     - 'Build lineage trees': vignettes/Building-Trees-Vignette.md
     - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
     - 'Reconstruct intermediate sequences': vignettes/Sequences-Vignette.md
+    - 'Detecting evolution over time': vignettes/Measurable-Evolution.Rmd
     - 'Migration, differentiation, and isotype switching': vignettes/Discrete-Trait-Vignette.md
   - 'Help Topics':
     - 'Germline construction functions':

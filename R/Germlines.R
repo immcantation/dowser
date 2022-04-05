@@ -727,8 +727,8 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     gline
   }, mc.cores=nproc)
   results <- dplyr::bind_rows(complete) %>%
-      arrange(tmp_row_id) %>%
-      select(-tmp_row_id)
+      arrange(!!rlang::sym("tmp_row_id")) %>%
+      select(-!!rlang::sym("tmp_row_id"))
   if(na.rm){
     results <- results[!is.na(results$germline_alignment_d_mask),]
   }
