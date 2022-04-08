@@ -2,7 +2,7 @@
 % Please edit documentation in R/Statistics.R
 \name{getDivergence}
 \alias{getDivergence}
-\title{Get divergence from MRCA for each tip}
+\title{Get divergence from root of tree for each tip}
 \usage{
 getDivergence(phy, minlength = 0.001)
 }
@@ -12,8 +12,11 @@ getDivergence(phy, minlength = 0.001)
 \item{minlength}{Branch lengths to collapse in trees}
 }
 \value{
-A named vector of each tip's divergence from the tree's MRCA.
+A named vector of each tip's divergence from the tree's root.
 }
 \description{
-\code{rootToTop} performs root-to-tip regression permutation test
+\code{getDivergence} get sum of branch lengths leading from the 
+root of the tree. If the germline sequence is included in the tree,
+this will equal the germline divergence. If germline removed,
+this will equal the MRCA divergence
 }

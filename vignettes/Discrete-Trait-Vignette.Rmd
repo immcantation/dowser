@@ -64,7 +64,7 @@ All of the switch count statistics on this page require IgPhyML to be installed 
 
 ## Set up data structures and trees
 
-This step proceeds as in tree building, but it is important to sprecify the column of the discrete trait you want to analyze in the `formatClones` step. In this example we are using simulated data from nose and lung biospies. However, this could be any discrete trait value such as cell types. Filtering out clones that contain only a single trait value type is not strictly necessary but can dramatically improve computing time.
+This step proceeds as in tree building, but it is important to specify the column of the discrete trait you want to analyze in the `formatClones` step. In this example we are using simulated data from nose and lung biospies. However, this could be any discrete trait value such as cell types. Filtering out clones that contain only a single trait value type is not strictly necessary but can dramatically improve computing time.
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 library(dowser)

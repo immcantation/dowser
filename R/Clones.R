@@ -257,7 +257,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
             loci <- "N"
         }
         chains <- rep(loci,times=nchar(germline))
-        numbers <- 1:nchar(germline)
+        numbers <- 1:nchar(germline) #assumes IMGT numbers
         lgermline <- ""
         hlgermline <- germline
         tmp_df$lsequence <- ""
@@ -277,10 +277,10 @@ function(data, id="sequence_id", seq="sequence_alignment",
     if(any(seq_len != seq_len[1])){
         len_message <- paste0("All sequences are not the same length for data with first ", 
                 id, " = ", tmp_df[[id]][1], ".")
-        if (!pad_end) {
+        if (!pad_end){
             len_message <- paste(len_message, 
                 "Consider specifying pad_end=TRUE and verify the multiple alignment.")
-        } else {
+        }else{
             len_message <- paste(len_message,
                 "Verify that all sequences are properly multiple-aligned.")
         }
@@ -333,7 +333,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
     
     outclone <- new("airrClone", 
         data=as.data.frame(tmp_df),
-        clone=as.character(data[[clone]][1]),
+        clone=as.character(unique(data[[clone]])),
         germline=alakazam::maskSeqGaps(germline, mask_char=mask_char, 
            outer_only=FALSE),
         lgermline=alakazam::maskSeqGaps(lgermline, mask_char=mask_char, 
@@ -344,7 +344,6 @@ function(data, id="sequence_id", seq="sequence_alignment",
         j_gene=alakazam::getGene(data[[j_call]][1]), 
         junc_len=data[[junc_len]][1],
         locus=chains,
-        #chain=chains,
         region=regions,
         numbers=numbers,
         phylo_seq=phylo_seq)
@@ -357,39 +356,47 @@ function(data, id="sequence_id", seq="sequence_alignment",
 # 
 # \code{cleanAlignment} clean multiple sequence alignments
 # @param    clone   \code{airrClone} object
-# @param    seq     column in \code{clone} object
 #
 # @return   \code{airrClone} object with cleaned alignment
 #
-cleanAlignment <- function(clone, seq="sequence"){
-    if(seq=="hlsequence"){
+cleanAlignment <- function(clone){
+    seq <- clone@phylo_seq
+    if(seq == "hlsequence"){
         g <- strsplit(clone@hlgermline[1],split="")[[1]]
-    }else{
+    }else if(seq == "sequence"){
         g <- strsplit(clone@germline[1],split="")[[1]]
+    }else if(seq == "lsequence"){
+        g <- strsplit(clone@lgermline[1],split="")[[1]]
+    }else{
+        stop(paste(seq, "not a recognized sequence type"))
     }
     sk <- strsplit(clone@data[[seq]],split="")
-    sites=seq(1,length(g)-3,by=3)
+    sites <- seq(1,length(g)-3,by=3)
     ns <- c()
-    for(i in sites){
-        l=lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN")
-        ns <- c(ns,sum(unlist(l)),sum(unlist(l)),sum(unlist(l)))
+    for(i in sites){ #for each codon site, tally number of NNN codons
+        l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
+        ns <- c(ns,rep(sum(l),length=3))
     }
+    # remove uninformative sites from germline and data
     informative <- ns != length(sk)
-    l=lapply(sk,function(x) x=paste(x[informative],collapse=""))
-    gm=paste(g[informative],collapse="")
+    l <- lapply(sk,function(x) x=paste(x[informative],collapse=""))
+    gm <- paste(g[informative],collapse="")
+
     if(.hasSlot(clone,"locus")){
-        clone@locus <- clone@locus[informative] 
+        clone@locus <- clone@locus[informative]
     }
     if(.hasSlot(clone,"region")){
-        clone@region <- clone@region[informative]   
+        clone@region <- clone@region[informative]  
     }
     if(.hasSlot(clone,"numbers")){
         clone@numbers <- clone@numbers[informative]
     }
-    if(seq=="hlsequence"){
+    if(seq == "hlsequence"){
         clone@hlgermline=gm
-    }else{
+    }else if(seq == "sequence"){
         clone@germline=gm
+    }else if(seq == "lsequence"){
+        clone@lgermline=gm
     }
     clone@data[[seq]]=unlist(l)
     return(clone)
@@ -500,22 +507,27 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(sum(is.na(data[[seq]])) > 0){
         warning(paste("Removing",sum(is.na(data[[seq]]))
             ,"with missing sequences"))
+        data <- data[!is.na(data[[seq]]),]
     }
 
+    # TODO: Adjust for heavy/light sequences
     counts <- table(data[[clone]])
     rmclones <- names(counts[counts < minseq])
     data <- data[!data[[clone]] %in% rmclones,]
 
-    data <- data[!is.na(data[[seq]]),]
     clones <- data %>%
         dplyr::group_by(!!rlang::sym(clone)) %>%
         dplyr::do(data=makeAirrClone(.data, seq=seq,
-            clone=clone, chain=chain, heavy=heavy, cell=cell,...))
+            clone=clone, chain=chain, heavy=heavy, cell=cell, ...))
 
     if(chain == "HL"){
         seq_name <- "hlsequence"
-    }else{
+    }else if(chain == "H"){
         seq_name <- "sequence"
+    }else if(chain == "L"){
+        seq_name <- "lsequence"
+    }else{
+        stop(paste("Chain option",chain,"not recognized"))
     }
     
     fclones <- processClones(clones, nproc=nproc, seq=seq_name, minseq=minseq)
@@ -1092,7 +1104,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
     clones <- clones[or,]
 
     clones$data <- parallel::mclapply(clones$data,
-        function(x)cleanAlignment(x,seq),mc.cores=nproc)
+        function(x)cleanAlignment(x),mc.cores=nproc)
 
     if(.hasSlot(clones$data[[1]],"locus")){
         clones$locus <- unlist(lapply(clones$data,function(x)

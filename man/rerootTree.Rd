@@ -7,7 +7,7 @@ to a node which is the direct ancestor of the tree's UCA. Assigns \code{uca}
 to be the ancestral node to the tree's germline sequence, as \code{germid} as
 the tree's germline sequence ID.}
 \usage{
-rerootTree(tree, germline, min = 0.001, verbose = 0)
+rerootTree(tree, germline, min = 0.001, verbose = 1)
 }
 \arguments{
 \item{tree}{An ape \code{phylo} object}

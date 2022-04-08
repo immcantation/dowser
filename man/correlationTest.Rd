@@ -8,7 +8,7 @@ correlationTest(
   clones,
   permutations = 1000,
   minlength = 0.001,
-  permutation = c("clustered", "uniform"),
+  perm_type = c("clustered", "uniform"),
   time = "time",
   sequence = "sequence_id",
   germline = "Germline",
@@ -26,7 +26,7 @@ correlationTest(
 
 \item{minlength}{Branch lengths to collapse in trees}
 
-\item{permutation}{Permute among single timepoint clades or uniformly
+\item{perm_type}{Permute among single timepoint clades or uniformly
 among tips}
 
 \item{time}{Column name holding numeric time information}
@@ -66,7 +66,7 @@ Object returned contains these columns which are added or modified from input:
   \item  \code{min_p}: Minimum p value of data, determined by either the number of
         distinct clade/timepoint combinations or number of permutations.
   \item  \code{nposs}: Number of possible distinct timepoint/clade combinations.
-  \item  \code{nclust}: Number of clusters used in permutation. If permutation="uniform"
+  \item  \code{nclust}: Number of clusters used in permutation. If perm_type="uniform"
         this is the number of tips.
   \item  \code{p_gt/p_lt}: P value that permuted correlations are greater or less 
         than observed correlation. Only returned if alternative = "two.sided"

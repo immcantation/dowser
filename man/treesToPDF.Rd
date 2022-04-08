@@ -13,7 +13,7 @@ treesToPDF(plots, file, nrow = 2, ncol = 2, ...)
 
 \item{nrow}{number of rows per page}
 
-\item{ncol}{size of tip shape objects}
+\item{ncol}{number of columns per page}
 
 \item{...}{optional arguments passed to grDevices::pdf}
 }

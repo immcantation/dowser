@@ -196,7 +196,7 @@ stitchVDJ <- function(receptor, v_seq, d_seq, j_seq,
     }else{
         np_char <- 'X'
         np1_len <- receptor[[np1_aa_length]]
-    np2_len <- receptor[[np2_aa_length]]
+        np2_len <- receptor[[np2_aa_length]]
     }
     if(is.na(np1_len)){
       np1_len <- 0
@@ -336,7 +336,7 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
         p3d_len <- receptor[[p3d_length]]
         n2_len <- receptor[[n2_length]]
         p5j_len <- receptor[[p5j_length]]
-    if(is.na(p3d_len)){
+        if(is.na(p3d_len)){
           p3d_len <- 0
         }
         if(is.na(n2_len)){

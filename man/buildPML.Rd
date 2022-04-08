@@ -14,6 +14,7 @@ buildPML(
   tree = NULL,
   data_type = "DNA",
   optNni = TRUE,
+  optQ = TRUE,
   verbose = FALSE
 )
 }
@@ -35,6 +36,8 @@ buildPML(
 \item{data_type}{Are sequences DNA or AA?}
 
 \item{optNni}{Optimize tree topology}
+
+\item{optQ}{Optimize Q matrix}
 
 \item{verbose}{Print error messages as they happen?}
 }

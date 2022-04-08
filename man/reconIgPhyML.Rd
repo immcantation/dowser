@@ -7,7 +7,7 @@
 reconIgPhyML(
   file,
   modelfile,
-  cloneid,
+  id,
   igphyml = "igphyml",
   mode = "switches",
   type = "recon",
@@ -28,7 +28,7 @@ reconIgPhyML(
 
 \item{modelfile}{File specifying parsimony model}
 
-\item{cloneid}{id for IgPhyML run}
+\item{id}{id for IgPhyML run}
 
 \item{igphyml}{location of igphyml executable}
 
