@@ -24,8 +24,7 @@ library(dowser)
 data(ExampleAirr)
 
 # Process example data using default settings
-clones = formatClones(ExampleAirr,
-    traits="timepoint", minseq=3)
+clones = formatClones(ExampleAirr, traits="timepoint", minseq=3)
 
 # Column shows timepoints in dataset
 print(table(ExampleAirr$timepoint))
@@ -51,7 +50,7 @@ Once trees have been built, perform the date randomization test using the functi
 
 ```r
 # correlation test with 100 repetitions - in practice use at least 1000
-test = correlationTest(trees, permutations=100, time=trait)
+test = correlationTest(trees, permutations=100, time="timepoint")
 print(test)
 
 # A tibble: 6 × 12
@@ -66,7 +65,7 @@ print(test)
 
 
 # use uniform correlaion test (more sensitive, but higher false positive rate)
-utest = correlationTest(trees, permutations=100, time=trait, perm_type="uniform")
+utest = correlationTest(trees, permutations=100, time="timepoint", perm_type="uniform")
 print(utest)
 
 # A tibble: 6 × 12
