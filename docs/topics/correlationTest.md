@@ -13,7 +13,7 @@ correlationTest(
 clones,
 permutations = 1000,
 minlength = 0.001,
-permutation = c("clustered", "uniform"),
+perm_type = c("clustered", "uniform"),
 time = "time",
 sequence = "sequence_id",
 germline = "Germline",
@@ -37,7 +37,7 @@ permutations
 minlength
 :   Branch lengths to collapse in trees
 
-permutation
+perm_type
 :   Permute among single timepoint clades or uniformly
 among tips
 
@@ -91,7 +91,7 @@ Object returned contains these columns which are added or modified from input:
 + `min_p`: Minimum p value of data, determined by either the number of
 distinct clade/timepoint combinations or number of permutations.
 + `nposs`: Number of possible distinct timepoint/clade combinations.
-+ `nclust`: Number of clusters used in permutation. If permutation="uniform"
++ `nclust`: Number of clusters used in permutation. If perm_type="uniform"
 this is the number of tips.
 + `p_gt/p_lt`: P value that permuted correlations are greater or less 
 than observed correlation. Only returned if alternative = "two.sided"

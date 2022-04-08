@@ -15,7 +15,7 @@ the tree's germline sequence ID.
 Usage
 --------------------
 ```
-rerootTree(tree, germline, min = 0.001, verbose = 0)
+rerootTree(tree, germline, min = 0.001, verbose = 1)
 ```
 
 Arguments

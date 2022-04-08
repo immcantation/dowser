@@ -22,7 +22,8 @@ layout = "rectangular",
 node_nums = FALSE,
 tip_nums = FALSE,
 title = TRUE,
-labelsize = NULL
+labelsize = NULL,
+common_scale = FALSE
 )
 ```
 
@@ -68,6 +69,10 @@ title
 
 labelsize
 :   text size
+
+common_scale
+:   strecth plots so branches are on same scale?
+determined by sequence with highest divergence
 
 
 

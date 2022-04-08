@@ -25,7 +25,7 @@ nrow
 :   number of rows per page
 
 ncol
-:   size of tip shape objects
+:   number of columns per page
 
 ...
 :   optional arguments passed to grDevices::pdf

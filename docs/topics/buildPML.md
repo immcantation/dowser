@@ -19,6 +19,7 @@ asr_thresh = 0.05,
 tree = NULL,
 data_type = "DNA",
 optNni = TRUE,
+optQ = TRUE,
 verbose = FALSE
 )
 ```
@@ -52,6 +53,9 @@ data_type
 
 optNni
 :   Optimize tree topology
+
+optQ
+:   Optimize Q matrix
 
 verbose
 :   Print error messages as they happen?

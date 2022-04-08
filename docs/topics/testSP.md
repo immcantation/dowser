@@ -17,7 +17,7 @@ to = NULL,
 dropzeros = TRUE,
 bylineage = FALSE,
 pseudocount = 0,
-alternative = c("two.sided", "greater", "less"),
+alternative = c("greater", "two.sided", "less"),
 tip_switch = 20,
 exclude = FALSE
 )
