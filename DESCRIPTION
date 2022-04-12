@@ -34,7 +34,7 @@ Depends:
     ggplot2 (>= 3.2.0)
 Imports:
     alakazam (>= 1.1.0),
-    ape (>= 5.5),
+    ape (>= 5.6),
     Biostrings,
     dplyr (>= 0.8.1),
     ggtree,
