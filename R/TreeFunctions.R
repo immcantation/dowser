@@ -1791,10 +1791,17 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
             # if tree provided, drop selected tips
             if(!is.null(tree)){
                 od <- getDivergence(tree)
+                otree <- tree
                 tree <- ape::drop.tip(tree, tip=rm)
                 nd <- getDivergence(tree)
-                if(max(nd - od[names(nd)]) > 0.001){
-                    stop(paste("clone",clone@clone,"tree downsampling: inconsistent divergences"))
+                maxdiff <- max(nd - od[names(nd)])
+                meandiff <- mean(nd - od[names(nd)])
+                if(maxdiff > 0.001){
+                    badtip <- names(which.max(nd - od[names(nd)]))
+                    warning(paste("clone",clone@clone,
+                        "downsampling divergences differ by max",
+                        signif(maxdiff,digits=2),"mean",
+                        signif(meandiff,digits=2), "worst tip", badtip))
                 }
                 if(sum(!cdata$sequence_id %in% tree$tip.label) == 0 &
                     sum(!tree$tip.label %in% c(cdata$sequence_id, "Germline"))){
