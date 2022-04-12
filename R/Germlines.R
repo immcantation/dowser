@@ -643,6 +643,7 @@ buildClonalGermline <- function(receptors, references,
 #' @param fields        Character vector of additional columns to use for grouping. 
 #'                      Sequences with disjoint values in the specified fields 
 #'                      will be considered as separate clones.
+#' @param verbose       amount of rubbish to print
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return Tibble with reconstructed germlines
 #' @details Return object adds/edits following columns:
@@ -665,7 +666,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   v_germ_start="v_germline_start", v_germ_end="v_germline_end", v_germ_length="v_germline_length",
   d_germ_start="d_germline_start", d_germ_end="d_germline_end", d_germ_length="d_germline_length",
   j_germ_start="j_germline_start", j_germ_end="j_germline_end", j_germ_length="j_germline_length",
-  np1_length="np1_length", np2_length="np2_length", na.rm=TRUE, fields=NULL, ...){
+  np1_length="np1_length", np2_length="np2_length", na.rm=TRUE, fields=NULL, verbose=0, ...){
 
   if(nrow(data) == 0){
     warning("No data provided!")
@@ -673,6 +674,10 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   }
   if(sum(is.na(data[[clone]])) > 0){
     stop("NA values in clone id column found, please remove.")
+  }
+
+  if(max(table(data[[id]])) != 1){
+      stop("Sequence IDs are not unique!")
   }
 
   complete <- dplyr::tibble()
@@ -701,6 +706,9 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   data[['tmp_row_id']] <- 1:nrow(data)
   complete <- parallel::mclapply(1:nrow(unique_clones), function(x){
     sub <- right_join(data, unique_clones[x,,drop=F], by=c(clone,fields))
+    if(verbose > 0){
+      print(unique(sub[[clone]]))
+    }
     gline <- buildClonalGermline(sub, 
       references=references,
       organism=organism,

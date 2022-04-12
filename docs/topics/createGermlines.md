@@ -35,6 +35,7 @@ np1_length = "np1_length",
 np2_length = "np2_length",
 na.rm = TRUE,
 fields = NULL,
+verbose = 0,
 ...
 )
 ```
@@ -118,6 +119,9 @@ fields
 :   Character vector of additional columns to use for grouping. 
 Sequences with disjoint values in the specified fields 
 will be considered as separate clones.
+
+verbose
+:   amount of rubbish to print
 
 ...
 :   Additional arguments passed to [buildGermline](buildGermline.md)
