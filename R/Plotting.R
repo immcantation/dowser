@@ -64,7 +64,7 @@ getPalette <- function(states, palette){
 #'
 #' @export
 condenseTrees <- function(trees, states, palette){
-    if(class(trees) == "phylo"){
+    if(is(trees,"phylo")){
         trees <- list(trees)
         class(trees) <- "multiPhylo"
     }
@@ -270,7 +270,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     data <- trees$data[[1]]
     p <- ggtree::ggtree(tree,layout=layout)
     if(!is.null(data)){
-        if(class(data) != "list"){
+        if(!is(data,"list")){
             data <- list(data)
         }
         index <- which(unlist(lapply(data,function(x)x@clone == tree$name)))
@@ -283,9 +283,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         data <- data[[index]]
         gl <- dplyr::tibble(sequence_id="Germline")
         for(n in names(data@data)){
-            if(class(data@data[[n]]) == "numeric" || class(data@data[[n]]) == "integer"){
+            if(is(data@data[[n]],"numeric") || is(data@data[[n]], "integer")){
                 gl[[n]] <- NA
-            }else if(class(data@data[[n]]) == "character"){
+            }else if(is(data@data[[n]], "character")){
                 gl[[n]] <- "Germline"
             }else{
                 gl[[n]] <- "Germline"
@@ -304,9 +304,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             stop("dataframe must be provided when tip trait specified")
         }
         if(!is.null(tipsize)){
-            if(class(tipsize) == "numeric"){
+            if(is(tipsize, "numeric")){
                 p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)),size=tipsize)
-            }else if(class(tipsize) == "character"){
+            }else if(is(tipsize, "character")){
                 p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips),
                     size=!!rlang::sym(tipsize)))
             }
