@@ -61,7 +61,7 @@ Usually option #1 is most biologically interesting, but it is important to consi
 
 ## Setting up IgPhyML
 
-All of the switch count statistics on this page require IgPhyML to be installed and passed to the `findSwitches` function. To set up IgPhyML, please [visit the docs page](https://igphyml.readthedocs.io). This is true even if IgPhyML is not used to build the trees. Note, if you're not using a Linux computer, your best option may be to use the [Immcantation Docker container](https://igphyml.readthedocs.io/en/latest/install.html#docker-image-recommended).
+All of the switch count statistics on this page require IgPhyML. IgPhyML needs to be compiled and the location of the executable needs to be passed to the `findSwitches` function. To set up IgPhyML, please [visit the docs page](https://igphyml.readthedocs.io). This is true even if IgPhyML is not used to build the trees. If you're not using a Linux computer, your best option is likely to use the [Immcantation Docker container](https://igphyml.readthedocs.io/en/latest/install.html#docker-image-recommended).
 
 
 ## Set up data structures and trees
@@ -105,6 +105,7 @@ Once we've set up the tree objects, we can calculate the switches along these tr
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # the location of the igphyml executable
 # this is location in Docker image, will likely be different if you've set it up yourself
+# note this is the location of the compiled executable file, not just the source folder
 igphyml_location = "/usr/local/share/igphyml/src/igphyml"
 
 # calculate switches along trees compared to 100 random permutations 
@@ -133,9 +134,9 @@ print(sp$means)
 ```
 
 
-**PS test** The object `ps` contains the results of the PS test. The `means` dataframe contains the test summary statistics, while the `reps` dataframe contains information from each repetition. `RECON` shows the number of switches across all trees, `PERMUTE` shows the mean number of switches across all permutations. `PLT` is the P value that there are at least as many switches in the observed trees as in the permuted data. If `PLT < 0.05`, this indicates that there are signifcantly fewer switches among biopsies than expected by random tree/trait association. This indicates that sequences within the sample biopsies are more clustered together within the trees than expected. In this case, `PLT` is 0.4, so we can't draw that conclusion.
+**PS test** The object `ps` contains the results of the PS test. The `means` dataframe contains the test summary statistics, while the `reps` dataframe contains information from each repetition. `RECON` shows the number of switches across all trees, `PERMUTE` shows the mean number of switches across all permutations, and `DELTA` shows the mean difference between these two values. `PLT` is the P value that there are at least as many switches in the observed trees as in the permuted data. If `PLT < 0.05`, this indicates that there are signifcantly fewer switches among biopsies than expected by random tree/trait association. This indicates that sequences within the sample biopsies are more clustered together within the trees than expected. In this case, `PLT` is 0.4, so we can't draw that conclusion.
 
-**SP test** The object `sp` contains the results of the SP test. As with the PS test, the `means` dataframe contains summary statistics. The columns are largely the same as in the PS test, but the SP test is performed in a particular direction. In this case, we have an SP test from Lung to Nose and then from Nose to Lung. We can see that the SP value from Nose to Lung in our trees (`RECON`) is much higher than the mean SP statistic in our permuted trees (`PERMUTE`). The p value in the `PGT` column (0) shows that the SP statistic from Nose to Lung is significant. This indicates that there are a greater proportion of switches from the Nose to the Lungs within these trees than expected from random tree/trait association. This is consistent with biased movement from Nose to Lungs in this dataset (but see [Caveats and interpretting results](#caveats-and-interpretting-results) section).
+**SP test** The object `sp` contains the results of the SP test. As with the PS test, the `means` dataframe contains summary statistics. The columns are largely the same as in the PS test, but the SP test is performed in a particular direction. In this case, we have an SP test from Lung to Nose and then from Nose to Lung. We can see that the SP value from Nose to Lung in our trees (`RECON`) is much higher than the mean SP statistic in our permuted trees (`PERMUTE`). `DELTA` is the mean difference between `RECON` and `PERMUTE` values, so a positive `DELTA` indicates greater SP values in observed trees than permuted trees. The p value in the `PGT` column (0) shows that the SP statistic from Nose to Lung is significant. This indicates that there are a greater proportion of switches from the Nose to the Lungs within these trees than expected from random tree/trait association. This is consistent with biased movement from Nose to Lungs in this dataset (but see [Caveats and interpretting results](#caveats-and-interpretting-results) section).
 
 
 ## Accounting for uncertainty in tree topology
