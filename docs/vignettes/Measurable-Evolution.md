@@ -1,14 +1,15 @@
 # Measurable evolution
 
-**These features are currently only in the development version of Dowser, not the version on CRAN. Please see install page for details on the latest version.**
-
 Dowser implements recently developed phylogenetic tests to detect measurable B cell evolution from longitudinally sampled data.
+
+** If you use these functions, please cite (this paper)[https://elifesciences.org/articles/70873]**
+
 
 ## Date randomization test
 
 The goal of this test is to determine if a B cell lineage has a detectable relationship between mutation and time. If a lineage is accumulating new mutations over a sample interval, we expect a positive correlation between the divergence (sum of branch length to the most recent common ancestor, MRCA) and time elapsed. 
 
-[Full published deatils on these methods is available here](https://elifesciences.org/articles/70873)
+[Full published details available here](https://elifesciences.org/articles/70873)
 
 ## Set up data structures and trees
 

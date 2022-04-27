@@ -21,7 +21,46 @@ Dowser has 6 primary functions:
 
 [What's a dowser?](https://en.wikipedia.org/wiki/Dowsing)
 
-Contact
+# Citing
+
+To cite the dowser package in publications, please use:
+
+Hoehn KB, Pybus OG, Kleinstein SH (2022). "Phylogenetic analysis of
+migration, differentiation, and class switching in B cells." _PLoS Computational Biology_.
+doi: 10.1371/journal.pcbi.1009885 (URL:
+https://doi.org/10.1371/journal.pcbi.1009885), <URL:
+https://doi.org/10.1371/journal.pcbi.1009885>.
+
+If you use the correlationTest function, please also cite:
+
+Hoehn KB, Turner JS, Miller FI, Jiang R, Pybus OG, Ellebedy AH, Kleinstein SH, (2021). "Human B cell lineages associated with germinal centers following influenza vaccination are measurably evolving." _eLife_ doi: 10.7554/eLife.70873  (URL:
+https://elifesciences.org/articles/70873), <URL:
+https://elifesciences.org/articles/70873>.
+
+BibTeX entries for LaTeX users are here:
+
+  @Article{,
+    style = {citation},
+    title = {Phylogenetic analysis of migration, differentiation, and class switching in B cells.},
+    author = {Kenneth B. Hoehn and Oliver G. Pybus and Steven H. Kleinstein},
+    year = {2022},
+    journal = {PLoS Computational Biology},
+    url = {https://doi.org/10.1371/journal.pcbi.1009885},
+    doi = {10.1371/journal.pcbi.1009885},
+  }
+
+  @Article{,
+    style = {citation},
+    title = {Human B cell lineages associated with germinal centers following influenza vaccination are measurably evolving.},
+    author = {Kenneth B. Hoehn and Jackson S. Turner and Roy Jiang and Oliver G. Pybus and Ali H. Ellebedy and Steven H. Kleinstein},
+    year = {2021},
+    journal = {eLife},
+    url = {https://elifesciences.org/articles/70873},
+    doi = {10.7554/eLife.70873},
+  }
+
+
+# Contact
 -------------------------------------------------------------------------------
 
 For help and questions please contact the [Immcantation Group](mailto:immcantation@googlegroups.com)
@@ -42,30 +81,6 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
-
-
-# Citing
-
-
-To cite the dowser package in publications, please use:
-
-Hoehn K, Pybus O, Kleinstein S (2020). “Phylogenetic analysis of
-migration, differentiation, and class switching in B cells.” _bioRxiv_.
-doi: 10.1101/2020.05.30.124446 (URL:
-https://doi.org/10.1101/2020.05.30.124446), <URL:
-https://doi.org/10.1101/2020.05.30.124446>.
-
-A BibTeX entry for LaTeX users is
-
-  @Article{,
-    style = {citation},
-    title = {Phylogenetic analysis of migration, differentiation, and class switching in B cells.},
-    author = {Kenneth B. Hoehn and Oliver G. Pybus and Steven H. Kleinstein},
-    year = {2020},
-    journal = {bioRxiv},
-    url = {https://doi.org/10.1101/2020.05.30.124446},
-    doi = {10.1101/2020.05.30.124446},
-  }
 
 
 
