@@ -1,4 +1,5 @@
 site_name: dowser
+site_favicon: img/favicon.ico
 site_url: https://dowser.readthedocs.io
 repo_url: https://bitbucket.org/kleinstein/dowser
 edit_uri: src/master/docs/
