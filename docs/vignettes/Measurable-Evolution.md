@@ -2,8 +2,7 @@
 
 Dowser implements recently developed phylogenetic tests to detect measurable B cell evolution from longitudinally sampled data.
 
-** If you use these functions, please cite (this paper)[https://elifesciences.org/articles/70873]**
-
+** If you use these functions, please cite [this paper](https://elifesciences.org/articles/70873)**
 
 ## Date randomization test
 

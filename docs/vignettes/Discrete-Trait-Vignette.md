@@ -2,7 +2,7 @@
 
 Dowser implements recently developed phylogenetic tests to characterize B cell migration, differentiation, and isotype switching. These are "discrete" traits because their values are not continuous. 
 
-** If you use these functions, please cite (this paper)[https://doi.org/10.1371/journal.pcbi.1009885]**
+** If you use these functions, please cite [this paper](https://doi.org/10.1371/journal.pcbi.1009885)**
 
 ## Discrete trait statistics
 
