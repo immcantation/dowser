@@ -1,8 +1,6 @@
 Dowser
 -------------------------------------------------------------------------------
 
-<img src="img/rod_white_leaf.png" width="200" align=right>
-
 Dowser is part of the [Immcantation](http://immcantation.readthedocs.io) 
 analysis framework for Adaptive Immune Receptor Repertoire sequencing 
 (AIRR-seq). Dowser provides a set of tools for performing phylogenetic analysis
