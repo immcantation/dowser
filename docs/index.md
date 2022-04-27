@@ -27,7 +27,7 @@ Dowser has 6 primary functions:
 Hoehn KB, Pybus OG, Kleinstein SH (2022). "Phylogenetic analysis of
 migration, differentiation, and class switching in B cells." _PLoS Computational Biology_.
 doi: 10.1371/journal.pcbi.1009885 [URL:
-https://doi.org/10.1371/journal.pcbi.1009885](https://doi.org/10.1371/journal.pcbi.1009885]).
+https://doi.org/10.1371/journal.pcbi.1009885](https://doi.org/10.1371/journal.pcbi.1009885).
 
 - If you use the [correlationTest](vignettes/Measurable-Evolution.md) function for measurable evolution, please also cite:
 
