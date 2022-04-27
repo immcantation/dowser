@@ -20,14 +20,6 @@ Dowser has 6 primary functions:
 
 [What's a dowser?](https://en.wikipedia.org/wiki/Dowsing)
 
-
-## Authors
-
-[Kenneth Hoehn](mailto:kenneth.hoehn@yale.edu) (aut, cre)  
-[Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
-[Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
-[Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
-
 ## Citing
 
 - If you use the [dowser](index.md) package in publications, please cite:
@@ -79,6 +71,12 @@ Hoehn KB, Vander Heiden JA, Zhou JQ, Lunter G, Pybus OG, Kleinstein SH (2019). "
   }
 
 
+## Authors
+
+[Kenneth Hoehn](mailto:kenneth.hoehn@yale.edu) (aut, cre)  
+[Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
+[Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
+[Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
 
 ## Contact
 -------------------------------------------------------------------------------
