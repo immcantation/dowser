@@ -1293,6 +1293,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
         stop("exec must be specified for this build option")
     }
+    if(!is.null(dir)){
+        dir <- path.expand(dir)
+    }
 
     data <- clones$data
     if(fixtrees){
@@ -1905,6 +1908,9 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         }
     }else if(is.null(rep)){
         print("Keeping tree topology constant. Use fixtrees=FALSE to bootstrap topologies.")
+    }
+    if(!is.null(dir)){
+        dir <- path.expand(dir)
     }
 
     data <- clones$data
