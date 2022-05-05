@@ -111,7 +111,7 @@ ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 clones <- formatClones(ExampleAirr, trait="sample_id")
 
 igphyml <- "~/apps/igphyml/src/igphyml"
-btrees <- findSwitches(clones[1:2], permutations=10, nproc=1,
+btrees <- findSwitches(clones[1:2,], permutations=10, nproc=1,
    igphyml=igphyml, trait="sample_id")
 plotTrees(btrees$trees[[4]])[[1]]
 testPS(btrees$switches)
