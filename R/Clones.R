@@ -223,6 +223,11 @@ function(data, id="sequence_id", seq="sequence_alignment",
         }else{
             regions <- rep("N", times=nchar(hlgermline))
         }
+        if(length(regions) != nchar(hlgermline)){
+            warning(paste("Excluding clone",unique(dplyr::pull(data,clone)),
+                "due to incomplete region definition."))
+            return(NULL)
+        }
         if(length(chains) != unique(nchar(tmp_df$hlsequence))){
             stop(paste("clone",unique(dplyr::pull(data,clone)),
                 "chains vector not equal to total sequence length!"))
@@ -330,7 +335,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
         tmp_df2[[id]] <- paste0(tmp_df[[id]],"_DUPLICATE")
         tmp_df <- bind_rows(tmp_df, tmp_df2)
     }
-    
+
     outclone <- new("airrClone", 
         data=as.data.frame(tmp_df),
         clone=as.character(unique(data[[clone]])),
@@ -347,7 +352,8 @@ function(data, id="sequence_id", seq="sequence_alignment",
         region=regions,
         numbers=numbers,
         phylo_seq=phylo_seq)
-    
+
+
     outclone
 }
 
@@ -519,6 +525,17 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
         dplyr::group_by(!!rlang::sym(clone)) %>%
         dplyr::do(data=makeAirrClone(.data, seq=seq,
             clone=clone, chain=chain, heavy=heavy, cell=cell, ...))
+
+    # remove NULL clone objects
+    exclude_clones <- unlist(lapply(clones$data,function(x)is.null(x)))
+    if(sum(exclude_clones) > 0){
+        warning(paste("Excluding",sum(exclude_clones),"clones"))
+    }
+    clones <- clones[!exclude_clones,]
+
+    if(nrow(clones) == 0){
+        stop("No clones remain after makeAirrClone")
+    }
 
     if(chain == "HL"){
         seq_name <- "hlsequence"

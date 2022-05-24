@@ -477,6 +477,17 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
             stop(paste("phylo_seq not recognized",c@clone))
         }
 
+        if(partition != "single"){
+            acceptable <- c("fwr1","fwr2","fwr3","fwr4","cdr1","cdr2","cdr3")
+            unacceptable <- unlist(lapply(data, function(x)sum(!x@region %in% acceptable) > 0))
+            exclude_clones <- unlist(lapply(data[unacceptable], function(x)x@clone))
+            if(length(exclude_clones) > 0){
+                stop(paste("non-standard regions found in these clones,",
+                    "either remove or set partition='single':",paste(exclude_clones, collapse=","),
+                    "\nAllowable regions:",paste(acceptable,collapse=",")))
+            }
+        }
+
         if(partition == "cf"){ #make file specifying sequence regions
             nomega <- 2
             regions <- data[[i]]@region
@@ -864,6 +875,13 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     if(!optimize %in% valid_o){
         stop(paste("Invalid optimize specification, must be one of:",valid_o))
     }
+    na_regions <- unlist(lapply(clone, function(x)sum(is.na(x@region)) > 0))
+    if(sum(na_regions) > 0){
+        exclude_clones <- unlist(lapply(clone[na_regions], function(x)x@clone))
+        stop(paste("NA regions found in clones",paste(exclude_clones, collapse=","), 
+            "remove before continuing"))
+    }
+
     os <- strsplit(omega,split=",")[[1]]
     file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
             partition=partition, ...)
