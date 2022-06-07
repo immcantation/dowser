@@ -404,7 +404,7 @@ buildGermline <- function(receptor, references,
 
     # Build V segment germline sequence
     germ_vseq <- getGermline(receptor, references$V, segment="V",
-      field=v_call, germ_start=v_germ_start,germ_end=v_germ_end,
+      field=v_call, germ_start=v_germ_start, germ_end=v_germ_end,
     germ_length=v_germ_length, amino_acid=amino_acid)
    
     # Build D segment germline sequence
@@ -700,6 +700,26 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   }
   if(!j_germ_length %in% names(data)){
     data[[j_germ_length]] <- data[[j_germ_end]] - data[[j_germ_start]] + 1
+  }
+  if(sum(is.na(data[[v_germ_length]])) > 0){
+    data[[v_germ_length]][is.na(data[[v_germ_length]])] = 
+      data[[v_germ_end]][is.na(data[[v_germ_length]])] -
+      data[[v_germ_start]][is.na(data[[v_germ_length]])] + 1
+  }
+  if(sum(is.na(data[[d_germ_length]])) > 0){
+    data[[d_germ_length]][is.na(data[[d_germ_length]])] = 
+      data[[d_germ_end]][is.na(data[[d_germ_length]])] -
+      data[[d_germ_start]][is.na(data[[d_germ_length]])] + 1
+  }
+  if(sum(is.na(data[[j_germ_length]])) > 0){
+    data[[j_germ_length]][is.na(data[[j_germ_length]])] = 
+      data[[j_germ_end]][is.na(data[[j_germ_length]])] -
+      data[[j_germ_start]][is.na(data[[j_germ_length]])] + 1
+  }
+
+  if(sum(is.na(data[[v_germ_length]])) > 0 | 
+    sum(is.na(data[[j_germ_length]])) > 0){
+    stop("Missing values in v_germ_length or j_germ_length")
   }
 
   unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
