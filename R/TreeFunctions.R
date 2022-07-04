@@ -670,6 +670,11 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
     names <- c(names,"Germline")
     seqs <- strsplit(seqs,split="")
     names(seqs) <- names
+    lengths = unlist(lapply(seqs,function(x)length(x)))
+    if(sum(lengths != lengths[1]) > 0){
+        stop(paste0("Sequence and/or germline lengths of clone ",
+            clone@clone," are not equal"))
+    }
     if(data_type=="DNA"){
         data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
     }else{
