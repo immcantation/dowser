@@ -21,7 +21,7 @@ install.packages("dowser_x.y.z.tar.gz", repos=NULL, type="source")
 ```
 
 If you have any trouble installing the package, it may be due to the Bioconductor 
-dependencies. You can run the following command to see what other packages are needed:
+dependencies. You can run the following command to see what other packages may be needed:
 
 ```R
 available.packages()["dowser", "Imports"]
@@ -45,8 +45,8 @@ install_bitbucket("kleinstein/dowser@master")
 ```
 
 Note, using `install_bitbucket` will not build the documentation. To generate the 
-documentation, clone the repository and build as normal using devtools, 
-roxygen and knitr:
+documentation, clone the repository and build as normal using `devtools`, 
+`roxygen` and `knitr`:
 
 ```R
 library(devtools)
