@@ -1,7 +1,5 @@
 # Discrete Trait Analysis
 
-**These features are currently only in the development version of Dowser, not the version on CRAN. Please see install page for details on the latest version.**
-
 Dowser implements recently developed phylogenetic tests to characterize B cell migration, differentiation, and isotype switching. These are "discrete" traits because their values are not continuous. 
 
 ## Discrete trait statistics

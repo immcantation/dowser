@@ -1,7 +1,5 @@
 # Measurable evolution
 
-**These features are currently only in the development version of Dowser, not the version on CRAN. Please see install page for details on the latest version.**
-
 Dowser implements recently developed phylogenetic tests to detect measurable B cell evolution from longitudinally sampled data.
 
 ## Date randomization test
