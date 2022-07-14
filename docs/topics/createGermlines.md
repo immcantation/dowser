@@ -169,7 +169,7 @@ imgt <- readIMGT(vdj_dir)
 db <- createGermlines(ExampleAirr[1,], imgt)
 ```
 
-*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-13*01 is not in the provided germline database.
+*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-19*01 is not in the provided germline database.
 
 See also
 -------------------
