@@ -87,7 +87,7 @@ switches = findSwitches(trees, permutations=100, trait=trait,
 # Perform PS test on switches
 ps = testPS(switches$switches)
 print(ps$means)
-# A tibble: 1 × 6
+# A tibble: 1 x 6
 #  RECON PERMUTE   PLT DELTA STAT   REPS
 #  <dbl>   <dbl> <dbl> <dbl> <chr> <int>
 #1     8     8.6   0.4  -0.6 PS      100
@@ -95,7 +95,7 @@ print(ps$means)
 
 sp = testSP(switches$switches, alternative="greater")
 print(sp$means)
-# A tibble: 2 × 8
+# A tibble: 2 x 8
 # Groups:   FROM [2]
 #  FROM  TO    RECON PERMUTE   PGT  DELTA STAT   REPS
 #  <chr> <chr> <dbl>   <dbl> <dbl>  <dbl> <chr> <int>
@@ -123,7 +123,7 @@ switches = findSwitches(trees, permutations=10, trait=trait,
 
 sp = testSP(switches$switches, alternative="greater")
 print(sp$means)
-# A tibble: 2 × 8
+# A tibble: 2 x 8
 # Groups:   FROM [2]
 #  FROM  TO    RECON PERMUTE   PGT  DELTA STAT   REPS
 #  <chr> <chr> <dbl>   <dbl> <dbl>  <dbl> <chr> <int>
@@ -139,7 +139,7 @@ In some cases it may be preferable to permute trait values among trees rather th
 ```r
 sp = testSP(switches$switches, alternative="greater", permuteAll=TRUE)
 print(sp$means)
-# A tibble: 2 × 8
+# A tibble: 2 x 8
 # Groups:   FROM [2]
 #  FROM  TO    RECON PERMUTE   PGT   DELTA STAT   REPS
 #  <chr> <chr> <dbl>   <dbl> <dbl>   <dbl> <chr> <int>
@@ -161,7 +161,7 @@ switches = findSwitches(trees, permutations=100, trait=trait,
 # didn't have much effect for this dataset
 sp = testSP(switches$switches, alternative="greater")
 print(sp$means)
-# A tibble: 2 × 8
+# A tibble: 2 x 8
 # Groups:   FROM [2]
 #  FROM  TO    RECON PERMUTE   PGT  DELTA STAT   REPS
 #  <chr> <chr> <dbl>   <dbl> <dbl>  <dbl> <chr> <int>
