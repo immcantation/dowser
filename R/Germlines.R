@@ -676,10 +676,6 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     stop("NA values in clone id column found, please remove.")
   }
 
-  if(max(table(data[[id]])) != 1){
-      stop("Sequence IDs are not unique!")
-  }
-
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 
     np1_length, np1_length, 
@@ -690,6 +686,11 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   if(sum(!required %in% names(data)) != 0){
     stop(paste("Required columns not found in data:",
       paste(required[!required %in% names(data)],collapse=", ")))
+  }
+  
+  has_dup_ids <- max(table(data %>% select(!!!rlang::syms(c(id, fields))))) != 1
+  if (has_dup_ids){
+      stop("Sequence IDs are not unique!")
   }
 
   if(!v_germ_length %in% names(data)){
