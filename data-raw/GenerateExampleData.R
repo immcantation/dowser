@@ -241,3 +241,26 @@ IsotypeTrees = trees
 usethis::use_data(IsotypeTrees, overwrite=TRUE)
 usethis::use_data(BiopsyTrees, overwrite=TRUE)
 
+# generate time trees for plotting
+library(dowser)
+
+# load example AIRR tsv data
+data(ExampleAirr)
+
+# Process example data using default settings
+clones = formatClones(ExampleAirr, traits="timepoint", minseq=3)
+
+# Calculate number of tissues sampled in tree
+timepoints = unlist(lapply(clones$data, function(x)
+  length(unique(x@data$timepoint))))
+
+# Filter to multi-type trees
+clones = clones[timepoints > 1,]
+
+# Build trees using maximum likelihood (can use alternative builds if desired)
+trees = getTrees(clones, build="pml")
+test = correlationTest(trees, permutations=10000, time="timepoint")
+
+TimeTrees = test
+usethis::use_data(TimeTrees, overwrite=TRUE)
+

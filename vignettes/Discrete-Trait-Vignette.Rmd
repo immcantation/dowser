@@ -98,7 +98,7 @@ trees = getTrees(clones, build="pml")
 
 ## Visualize maximum parsimony trait reconstruction
 
-Sometimes it can be useful to visualize the predicted state of each internal node in the tree using maximum parsimony. In Dowser, this can be accomplished by modifying the `getTrees` call to specify the `trait` value of interest, and the location of the `igphyml` executable. The internal node states can be plotted using plotTrees with `nodes=TRUE` and `tips` specifying the trait value.
+Sometimes it can be useful to visualize the predicted state of each internal node in the tree using maximum parsimony. In Dowser, this can be accomplished by modifying the `getTrees` call to specify the `trait` value of interest, and the location of the `igphyml` executable. The internal node states can be plotted using plotTrees with `nodes=TRUE` and `tips` specifying the trait value. Edges in the tree are colored by the predicted state of their descendant (lower) node.
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # the location of the igphyml executable
@@ -220,7 +220,7 @@ print(sp$means)
 
 ```
 
-## Incorporating switching contraints
+## Incorporating switching constraints
 
 Some processes, like Ig isotype switching, can only happen in a particular direction. Using regular parsimony to reconstruct these processes will likely end up predicting impossible switches. Instead, it's possible to contrain the maximum parsimony reconstruction to only happen in a particular direction. There are a couple of steps to do this.
 
@@ -228,7 +228,7 @@ Some processes, like Ig isotype switching, can only happen in a particular direc
 2. Create a model file with `makeModelFile`.
 3. Repeat maximum parsimony analyses with IgPhyML specifying the model file.
 
-`makeModelFile` produces a physical file - you can open it with a text editor to inspect it. All runs of `findSwitches` create a model file, it's just normally not seen by the user and contains no constraints.
+`makeModelFile` produces a physical file - you can open it with a text editor to inspect it. All runs of `findSwitches` create a model file, it's just normally not seen by the user and by default contains no constraints.
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # the location of the igphyml executable
@@ -246,8 +246,7 @@ isotypes = c("IGHM","IGHD","IGHG3","IGHG1","IGHA1","IGHG2",
   "IGHG4","IGHE","IGHA2")
 
 # Process example data using default settings with "c_call" as a trait value
-clones = formatClones(ExampleAirr,
-    traits=trait,num_fields="duplicate_count", minseq=3)
+clones = formatClones(ExampleAirr, traits=trait, minseq=3)
 
 # Column shows which constant region associated with a BCR
 print(table(ExampleAirr[[trait]]))
@@ -258,10 +257,9 @@ print(table(ExampleAirr[[trait]]))
 isotype_counts = unlist(lapply(clones$data, function(x)
   length(unique(x@data[[trait]]))))
 
-# make model file with irreveribility constraints
-# this will prohibit switches going from right to left
-# list IGHD to IGHM switching as an exception, since this
-# can occur biologically
+# make model file with irreversibility constraints
+# Will prohibit switches from right to left in the "states" vector
+# IGHD to IGHM switching listed as an exception, since this can occur
 makeModelFile(file="isotype_model.txt", states=isotypes, 
   constraints="irrev", exceptions=c("IGHD,IGHM"))
 
@@ -278,7 +276,7 @@ data(IsotypeTrees)
 plotTrees(IsotypeTrees, tips="c_call", nodes=TRUE, node_palette="Paired", ambig="grey")[[1]]
 ```
 
-Performing the SP test is the same as before, just specify the model file created earlier. Note that no switches occur in directions that are forbidden by our model. If you try this without specifying the model file, you'll likely get many biologically impossible switches!
+Performing the SP test is the same as before, just specify the model file created earlier using the `modelfile` option. Note that no switches occur in directions that are forbidden by our model. If you try this without specifying the model file, you'll likely get many biologically impossible switches!
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Downsample each tree to a tip-to-switch ratio of 10 instead of 20 
@@ -338,7 +336,7 @@ print(sp$means,n=42)
 #42 IGHG4 IGHG3 0       0        1     0        SP      100
 ```
 
-If you're interested only in switches to a particular tissue or isotype, you can specify this in the `testSP` function. Here, we only look at the proportion of switches that go to IGHA2:
+If you're interested only in switches to a particular tissue or isotype, you can specify this using the `to` option in the `testSP` function. Here, we only look at the proportion of switches that go to IGHA2:
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 sp = testSP(switches$switches, alternative="greater", to="IGHA2")
