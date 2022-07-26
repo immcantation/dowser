@@ -1,8 +1,6 @@
 Dowser
 -------------------------------------------------------------------------------
 
-<img src="img/rod_white_leaf.png" width="200" align=right>
-
 Dowser is part of the [Immcantation](http://immcantation.readthedocs.io) 
 analysis framework for Adaptive Immune Receptor Repertoire sequencing 
 (AIRR-seq). Dowser provides a set of tools for performing phylogenetic analysis
@@ -18,7 +16,7 @@ Dowser has 6 primary functions:
 3. Reconstruct intermediate sequences within lineage trees using different methods. 
 4. Create publication-quality lineage tree plots.
 5. Analyze trees to detect ongoing B cell evolution over time.
-6. Understand B cell migration and differentiation (under development).
+6. Understand B cell migration and differentiation.
 
 
 [What's a dowser?](https://en.wikipedia.org/wiki/Dowsing)

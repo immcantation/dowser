@@ -183,10 +183,10 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             if(is.numeric(tipstates)){
                 stop("Can't currently plot numeric tip values and node values")
             }
-            tipstates = c(tipstates,"Germline")
-            nodestates <- unique(unlist(lapply(trees$trees,function(x)
+            tipstates = c(sort(tipstates),"Germline")
+            nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
                     unique(unlist(strsplit(x$state,split=",")))
-                    )))
+                    ))))
             combpalette <- getPalette(c(nodestates,tipstates),node_palette)
             trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
             nodestates <- unlist(lapply(trees$trees,function(x){
@@ -205,7 +205,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     tiptype <- "numeric"
                     cols <- range(tipstates)
                 }else{
-                    tipstates = c(tipstates,"Germline")
+                    tipstates = c(sort(tipstates),"Germline")
                     if(is.null(names(tip_palette))){
                         tip_palette <- getPalette(tipstates,tip_palette)
                         tip_palette <- tip_palette[!is.na(names(tip_palette))]
@@ -224,7 +224,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     nodestates <- unique(unlist(lapply(trees$trees,function(x)
                         unique(unlist(strsplit(x$state,split=",")))
                         )))
-                    statepalette <- getPalette(nodestates,node_palette)
+                    statepalette <- getPalette(sort(nodestates),node_palette)
                     statepalette <- statepalette[!is.na(names(statepalette))]
                 }else{
                     statepalette <- node_palette

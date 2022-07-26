@@ -1,8 +1,6 @@
 Dowser
 -------------------------------------------------------------------------------
 
-<img src="img/rod_white_leaf.png" width="200" align=right>
-
 Dowser is part of the [Immcantation](http://immcantation.readthedocs.io) 
 analysis framework for Adaptive Immune Receptor Repertoire sequencing 
 (AIRR-seq). Dowser provides a set of tools for performing phylogenetic analysis
@@ -18,7 +16,7 @@ Dowser has 6 primary functions:
 3. Reconstruct intermediate sequences within lineage trees using different methods. 
 4. Create publication-quality lineage tree plots.
 5. Analyze trees to detect ongoing B cell evolution over time.
-6. Understand B cell migration and differentiation (under development).
+6. Understand B cell migration and differentiation.
 
 
 [What's a dowser?](https://en.wikipedia.org/wiki/Dowsing)
@@ -49,25 +47,33 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 # Citing
 
 
-To cite the dowser package in publications, please use:
+To cite the dowser package in publications, please use
 
-Hoehn K, Pybus O, Kleinstein S (2020). “Phylogenetic analysis of
-migration, differentiation, and class switching in B cells.” _bioRxiv_.
-doi: 10.1101/2020.05.30.124446 (URL:
-https://doi.org/10.1101/2020.05.30.124446), <URL:
-https://doi.org/10.1101/2020.05.30.124446>.
+Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of
+migration, differentiation, and class switching in B cells.” _PLoS
+Computational Biology_. doi: 10.1371/journal.pcbi.1009885 (URL:
+https://doi.org/10.1371/journal.pcbi.1009885), <URL:
+https://doi.org/10.1371/journal.pcbi.1009885>.
 
-A BibTeX entry for LaTeX users is
+If you use the [correlationTest](vignettes/Measurable-Evolution.md)
+function for measurable evolution, please also cite
 
-  @Article{,
-    style = {citation},
-    title = {Phylogenetic analysis of migration, differentiation, and class switching in B cells.},
-    author = {Kenneth B. Hoehn and Oliver G. Pybus and Steven H. Kleinstein},
-    year = {2020},
-    journal = {bioRxiv},
-    url = {https://doi.org/10.1101/2020.05.30.124446},
-    doi = {10.1101/2020.05.30.124446},
-  }
+Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein S
+(2021). “Human B cell lineages associated with germinal centers
+following influenza vaccination are measurably evolving.” _eLife_. doi:
+10.7554/eLife.70873 (URL: https://doi.org/10.7554/eLife.70873), <URL:
+https://elifesciences.org/articles/70873>.
+
+If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for
+building trees please also cite
+
+Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S
+(2019). “Repertoire-wide phylogenetic models of B cell molecular
+evolution reveal evolutionary signatures of aging and vaccination.”
+_PNAS_. doi: 10.1073/pnas.1906020116 (URL:
+https://doi.org/10.1073/pnas.1906020116), <URL:
+https://www.pnas.org/content/116/45/22664>.
+
 
 
 

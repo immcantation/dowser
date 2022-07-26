@@ -207,6 +207,7 @@ Some processes, like Ig isotype switching, can only happen in a particular direc
 # note this is the location of the compiled executable file, not just the source folder
 igphyml_location = "/usr/local/share/igphyml/src/igphyml"
 
+# constant region column name
 trait = "c_call"
 
 # Vector of human isotypes in the proper order. Isotype switching

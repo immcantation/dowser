@@ -49,7 +49,7 @@ clones = formatClones(ExampleAirr, trait="c_call")
 trees <- getTrees(clones)
 
 # simple tree plotting with ggtree R package with isotypes at tips
-plots <- plotTrees(trees, tips="c_call")
+plots <- plotTrees(trees, tips="c_call",tipsize=2)
 
 # plot tree of largest clone
 plots[[1]]

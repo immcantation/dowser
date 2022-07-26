@@ -12,8 +12,8 @@ vignettes:\cr
 }
 \references{
 \enumerate{
-  \item  Hoehn, KB, Pybus, OG, Kleinstein SH (2020) Phylogenetic analysis of 
+  \item  Hoehn, KB, Pybus, OG, Kleinstein SH (2022) Phylogenetic analysis of 
         migration, differentiation, and class switching in B cells.
-        https://www.biorxiv.org/content/10.1101/2020.05.30.124446v1
+        PLoS Computational Biology. https://doi.org/10.1371/journal.pcbi.1009885
 }
 }
