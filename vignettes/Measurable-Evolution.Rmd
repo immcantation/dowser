@@ -121,7 +121,7 @@ test = test[order(test$p),]
 
 # Plot times on tree with lowest p value (not convincingly evolving)
 plotTrees(test)[[1]] + 
-    geom_tippoint(aes(fill=timepoint), pch=21) +
+    geom_tippoint(aes(fill=timepoint), pch=21, size=2) +
     scale_fill_distiller(palette="RdYlBu")
 ```
 
