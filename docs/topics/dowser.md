@@ -17,7 +17,7 @@ References
 -------------------
 
 
-1. Hoehn, KB, Pybus, OG, Kleinstein SH (2022) Phylogenetic analysis of 
+1. Hoehn KB, Pybus OG, Kleinstein SH (2022) Phylogenetic analysis of 
 migration, differentiation, and class switching in B cells.
 PLoS Computational Biology. https://doi.org/10.1371/journal.pcbi.1009885
 
