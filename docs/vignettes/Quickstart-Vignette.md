@@ -21,7 +21,6 @@ clones = formatClones(ExampleAirr, trait="c_call")
 # phangorn package in R
 trees <- getTrees(clones)
 
-
 # simple tree plotting with ggtree R package with isotypes at tips
 plots <- plotTrees(trees, tips="c_call")
 

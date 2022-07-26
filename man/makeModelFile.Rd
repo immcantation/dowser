@@ -4,7 +4,7 @@
 \alias{makeModelFile}
 \title{Make a parsimony model file}
 \usage{
-makeModelFile(file, states, constraints = NULL)
+makeModelFile(file, states, constraints = NULL, exceptions = NULL)
 }
 \arguments{
 \item{file}{model file name to write.}
@@ -12,6 +12,9 @@ makeModelFile(file, states, constraints = NULL)
 \item{states}{vector of states to include in model.}
 
 \item{constraints}{constraints to add to model.}
+
+\item{exceptions}{vector of comma-separated states that are 
+exceptions to constraints}
 }
 \value{
 Name of model file

@@ -160,9 +160,18 @@ for(tree in simtrees){
 }
 simulated2$timepoint = as.numeric(gsub("d","",simulated2$location))
 
-
 ExampleAirr = simulated2
 
+# Assign subisotypes to c_call randomly
+ExampleAirr[ExampleAirr$c_call == "IGHA",]$c_call = 
+    sample(c("IGHA1","IGHA2"), 
+        size=sum(ExampleAirr$c_call == "IGHA"), replace=TRUE)
+
+ExampleAirr[ExampleAirr$c_call == "IGHG",]$c_call = 
+    sample(c("IGHG1","IGHG2","IGHG3","IGHG4"), 
+        size=sum(ExampleAirr$c_call == "IGHG"), replace=TRUE)
+
+# format clones
 f = formatClones(ExampleAirr, 
     traits=c("c_call","biopsy","timepoint"), 
     num_fields="duplicate_count")
@@ -172,4 +181,63 @@ ExampleClones <- getTrees(f)
 # Save
 usethis::use_data(ExampleAirr, overwrite=TRUE)
 usethis::use_data(ExampleClones, overwrite=TRUE)
+
+
+# generate Tissue trees to plot in vignettes
+# load example AIRR tsv data
+data(ExampleAirr)
+
+trait="biopsy"
+
+# Process example data using default settings
+clones = formatClones(ExampleAirr,
+    traits=trait,num_fields="duplicate_count", minseq=3)
+
+# Calculate number of tissues sampled in tree
+tissue_types = unlist(lapply(clones$data, function(x)
+  length(unique(x@data[[trait]]))))
+
+# Filter to multi-type trees
+clones = clones[tissue_types > 1,]
+
+# the location of the igphyml executable
+igphyml_location = "~/Dropbox/Projects/IgPhyML_development/igphyml/src/igphyml"
+
+# build trees as before, but use IgPhyML to reconstruct the states of internal
+# nodes using maximum parsimony
+trees = getTrees(clones, trait=trait, igphyml=igphyml_location, 
+  build="pml")
+
+BiopsyTrees = trees
+
+# Generate Isotype trees
+trait = "c_call"
+
+# Process example data using default settings with "c_call" as a trait value
+clones = formatClones(ExampleAirr,
+    traits=trait,num_fields="duplicate_count", minseq=3)
+
+# vector of isotypes in the proper order
+isotypes = c("IGHM","IGHD","IGHG3","IGHG1","IGHA1","IGHG2",
+  "IGHG4","IGHE","IGHA2")
+
+isotype_counts = unlist(lapply(clones$data, function(x)
+  length(unique(x@data[[trait]]))))
+
+# make model file with irreveribility constraints
+# this will prohibit switches going from right to left
+# list IGHD to IGHM switching as an exception, since this
+# can occur biologically
+makeModelFile(file="isotype_model.txt", states=isotypes, 
+  constraints="irrev", exceptions=c("IGHD,IGHM"))
+
+# Build trees and predict states at internal nodes using maximum parsimony
+trees = getTrees(clones[isotype_counts > 1,], trait=trait, igphyml=igphyml_location, build="pml",
+  modelfile="isotype_model.txt", palette="Paired")
+
+IsotypeTrees = trees
+
+# Save
+usethis::use_data(IsotypeTrees, overwrite=TRUE)
+usethis::use_data(BiopsyTrees, overwrite=TRUE)
 

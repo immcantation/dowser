@@ -117,6 +117,9 @@ readModelFile <- function(file, useambig=FALSE){
 #' @param    file          model file name to write.
 #' @param    states        vector of states to include in model.
 #' @param    constraints   constraints to add to model.
+#' @param    exceptions    vector of comma-separated states that are 
+#'                         exceptions to constraints
+#'
 #'
 #' @return   Name of model file
 #'
@@ -127,7 +130,7 @@ readModelFile <- function(file, useambig=FALSE){
 #' @seealso \link{readModelFile}, \link{getTrees}, \link{findSwitches}
 #'
 #' @export
-makeModelFile <- function(file, states, constraints=NULL){
+makeModelFile <- function(file, states, constraints=NULL, exceptions=NULL){
     write("#BEGIN", file=file)
     write(length(states), file=file, append=TRUE)
     write("", file=file, append=TRUE)
@@ -141,6 +144,11 @@ makeModelFile <- function(file, states, constraints=NULL){
         if(constraints=="irrev"){
             for(i in 1:(length(states)-1)){
                 for(j in (i+1):length(states)){
+                    if(paste0(states[j],",",states[i]) %in% exceptions){
+                        print(paste("Excepting",paste0(states[j],",",states[i]),
+                            "from constraints"))
+                        next
+                    }
                     write(paste(states[j], states[i], "1000"), 
                         file=file, append=TRUE)
                 }
@@ -1310,7 +1318,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' @export
 getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
     modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
-    fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE,    palette=NULL,
+    fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
     seq=NULL, collapse=FALSE, ...){
 
     if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
@@ -1378,7 +1386,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                 datat <- data[[x]]
                 for(id in datat@data$sequence_id){
                     trait_temp <- filter(datat@data,
-                        rlang::sym("sequence_id")==id)[[trait]]
+                        !!rlang::sym("sequence_id")==id)[[trait]]
                     tree$tip.label[tree$tip.label == id] <- 
                     paste0(id,"_",trait_temp)
                 }
@@ -1388,7 +1396,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
             x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
             x})
     }
-    if(build=="dnapars" || build=="igphyml" || build=="dnaml"){
+    if(build=="dnapars" || build=="igphyml" || build=="dnaml" || !is.null(igphyml)){
         if(!is.null(dir)){
             if(!dir.exists(dir)){
                 dir.create(dir)

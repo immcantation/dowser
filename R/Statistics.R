@@ -150,7 +150,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' @param    permuteAll   Permute among trees?
 #' @param    from         Include only switches from this state?
 #' @param    to           Include only switches to this state?
-#' @param    dropzeros    Drop switches with zero counts?
+#' @param    dropzeroes    Drop switches with zero counts?
 #' @param    bylineage    Perform test for each lineage individually?
 #' @param    pseudocount  Pseudocount for P value calculations
 #' @param    alternative  Perform one-sided (\code{greater} or \code{less})
@@ -194,7 +194,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #' }
 #' @export
 testSP <- function(switches, permuteAll=FALSE, 
-    from=NULL, to=NULL, dropzeros=TRUE,
+    from=NULL, to=NULL, dropzeroes=TRUE,
     bylineage=FALSE, pseudocount=0, alternative=c("greater","two.sided","less"),
     tip_switch=20, exclude=FALSE){
 
@@ -260,7 +260,7 @@ testSP <- function(switches, permuteAll=FALSE,
     
     reps <- reps %>% dplyr::mutate(DELTA = !!rlang::sym("RECON")-!!permute)
     
-    if(dropzeros){
+    if(dropzeroes){
         from_type <- 
             reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
             dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%
@@ -369,7 +369,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #' @param    permuteAll   Permute among trees?
 #' @param    from         Include only switches from this state?
 #' @param    to           Include only switches to this state?
-#' @param    dropzeros    Drop switches with zero counts?
+#' @param    dropzeroes    Drop switches with zero counts?
 #' @param    bylineage    Perform test for each lineage individually?
 #' @param    pseudocount  Pseudocount for P value calculations
 #' @param    alternative  Perform one-sided (\code{greater} or \code{less})
@@ -410,7 +410,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #' testSC(btrees$switches)
 #' }
 #' @export
-testSC <- function(switches,dropzeros=TRUE,
+testSC <- function(switches,dropzeroes=TRUE,
     bylineage=FALSE, pseudocount=0, from=NULL, to=NULL,
     permuteAll=FALSE, alternative=c("two.sided","greater","less")){
 
@@ -456,7 +456,7 @@ testSC <- function(switches,dropzeros=TRUE,
 
     reps <- reps %>% dplyr::mutate(DELTA = !!rlang::sym("RECON")-!!permute)
 
-    if(dropzeros){
+    if(dropzeroes){
         from_type <- 
             reps %>% dplyr::group_by(!!rlang::sym("FROM")) %>%
             dplyr::summarize(d = sum(!!rlang::sym("RECON"))) %>%

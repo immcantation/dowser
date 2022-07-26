@@ -14,7 +14,7 @@ switches,
 permuteAll = FALSE,
 from = NULL,
 to = NULL,
-dropzeros = TRUE,
+dropzeroes = TRUE,
 bylineage = FALSE,
 pseudocount = 0,
 alternative = c("greater", "two.sided", "less"),
@@ -38,7 +38,7 @@ from
 to
 :   Include only switches to this state?
 
-dropzeros
+dropzeroes
 :   Drop switches with zero counts?
 
 bylineage

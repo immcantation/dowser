@@ -98,17 +98,27 @@ The `tip_palette` is constant among all trees plotted at once, and can be specif
 
 # Plot tree with sequence isotype at the tips, with palette "Set1"
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
-    tip_palette="Set1")
+    tip_palette="Paired")
 
 # or, specify a named palette vector
-custom_palette=c("IGHA"="#E41A1C", "IGHG"="#377EB8",
-    "IGHD"="#4DAF4A", "Germline"="#984EA3")
+custom_palette=c(
+    "IGHM"    ="#a6cee3",
+    "IGHD"    ="#1f78b4",
+    "IGHG3"   ="#b2df8a",
+    "IGHG1"   ="#33a02c",
+    "IGHA1"   ="#fb9a99",
+    "IGHG2"   ="#e31a1c",
+    "IGHG4"   ="#fdbf6f",
+    "IGHE"    ="#ff7f00",
+    "IGHA2"   ="#cab2d6",
+    "Germline"="#6a3d9a")
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     tip_palette=custom_palette)
 
 # or, use the getPalette function to create a named palette vector
-custom_palette=getPalette(c("IGHA", "IGHG", "IGHD", "Germline"), "Set1")
+custom_palette = getPalette(c("IGHM","IGHD","IGHG3","IGHG1","IGHA1",
+    "IGHG2","IGHG4","IGHE","IGHA2","Germline"), "Paired")
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     tip_palette=custom_palette)

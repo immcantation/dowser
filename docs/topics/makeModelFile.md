@@ -9,7 +9,7 @@ Description
 Usage
 --------------------
 ```
-makeModelFile(file, states, constraints = NULL)
+makeModelFile(file, states, constraints = NULL, exceptions = NULL)
 ```
 
 Arguments
@@ -23,6 +23,10 @@ states
 
 constraints
 :   constraints to add to model.
+
+exceptions
+:   vector of comma-separated states that are 
+exceptions to constraints
 
 
 

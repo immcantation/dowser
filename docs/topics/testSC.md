@@ -11,7 +11,7 @@ Usage
 ```
 testSC(
 switches,
-dropzeros = TRUE,
+dropzeroes = TRUE,
 bylineage = FALSE,
 pseudocount = 0,
 from = NULL,
@@ -27,7 +27,7 @@ Arguments
 switches
 :   Data frame from findSwitches
 
-dropzeros
+dropzeroes
 :   Drop switches with zero counts?
 
 bylineage

@@ -9,7 +9,7 @@ testSP(
   permuteAll = FALSE,
   from = NULL,
   to = NULL,
-  dropzeros = TRUE,
+  dropzeroes = TRUE,
   bylineage = FALSE,
   pseudocount = 0,
   alternative = c("greater", "two.sided", "less"),
@@ -26,7 +26,7 @@ testSP(
 
 \item{to}{Include only switches to this state?}
 
-\item{dropzeros}{Drop switches with zero counts?}
+\item{dropzeroes}{Drop switches with zero counts?}
 
 \item{bylineage}{Perform test for each lineage individually?}
 

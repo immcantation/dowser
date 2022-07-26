@@ -6,7 +6,7 @@
 \usage{
 testSC(
   switches,
-  dropzeros = TRUE,
+  dropzeroes = TRUE,
   bylineage = FALSE,
   pseudocount = 0,
   from = NULL,
@@ -18,7 +18,7 @@ testSC(
 \arguments{
 \item{switches}{Data frame from findSwitches}
 
-\item{dropzeros}{Drop switches with zero counts?}
+\item{dropzeroes}{Drop switches with zero counts?}
 
 \item{bylineage}{Perform test for each lineage individually?}
 

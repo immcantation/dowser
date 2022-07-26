@@ -18,7 +18,8 @@ plotTrees(
   tip_nums = FALSE,
   title = TRUE,
   labelsize = NULL,
-  common_scale = FALSE
+  common_scale = FALSE,
+  ambig = "blend"
 )
 }
 \arguments{
@@ -51,6 +52,8 @@ objects}
 
 \item{common_scale}{strecth plots so branches are on same scale?
 determined by sequence with highest divergence}
+
+\item{ambig}{How to color ambiguous node reconstructions? (blend or grey)}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
