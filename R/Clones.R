@@ -531,8 +531,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(sum(exclude_clones) > 0){
         warning(paste("Excluding",sum(exclude_clones),"clones"))
     }
-    clones <- clones[!exclude_clones,]
-
+    clones <- clones[exclude_clones==F,]
+    
     if(nrow(clones) == 0){
         stop("No clones remain after makeAirrClone")
     }
