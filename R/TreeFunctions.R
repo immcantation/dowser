@@ -1795,6 +1795,10 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
     }
     states <- unique(cdata[[trait]])
 
+    if(sum(is.na(states) > 0)){
+        stop("NA trait values detected, must be removed before trait analysis.")
+    }
+
     if(length(states) > 1){
         # if at least one of each state is preserved, there is a minimum
         # of length(states)-1 switches, and a minimum of length(states) tips
@@ -1997,6 +2001,9 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
         }else{
             states <- readModelFile(modelfile)
+        }
+        if(sum(is.na(states) > 0)){
+            stop("NA trait values detected, must be removed before trait analysis.")
         }
         # if trees are fixed, add trait value to tree tips
         if(fixtrees){

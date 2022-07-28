@@ -115,6 +115,7 @@ plotTrees(trees, tips=trait, nodes=TRUE, node_palette="Set1")[[1]]
 ```
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(dowser)
 # Load data instead of running phylip
 data(BiopsyTrees)
 plotTrees(BiopsyTrees, tips="biopsy", nodes=TRUE, node_palette="Set1")[[1]]

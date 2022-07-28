@@ -134,5 +134,20 @@
 #' @seealso \link{IsotypeTrees}
 "IsotypeTrees"
 
+#' Example Ig lineage trees sampled over time.
+#'
+#' Same as ExampleClones but with timepoint as a trait value
+#'
+#' @format   A tibble of airrClone and phylo objects output by getTrees.
+#'   \itemize{
+#'     \item  \code{clone_id}:   Clonal cluster
+#'     \item  \code{data}:       List of airrClone objects
+#'     \item  \code{seqs}:       Number of sequences
+#'     \item  \code{trees}:      List of phylo objects
+#'   }
+#'   
+#' @seealso \link{TimeTrees}
+"TimeTrees"
+
 
 NULL

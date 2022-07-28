@@ -111,7 +111,7 @@ The `correlationTest` function returns the same object that was provided as inpu
 
 ## Plot trees
 
-Plotting trees with time values on the tips is simple. Just specify the time column as the `tips` value in `plotTrees`. This is detailed in the [Plotting Trees Vignette](Plotting-Trees-Vignette.md) There are many ways to customize these plots, personally, I (Ken) typically use the following options for visualizing longitudinal data:
+Plotting trees with time values on the tips is simple. Just specify the time column as the `tips` value in `plotTrees`. This is detailed in the [Plotting Trees Vignette](Plotting-Trees-Vignette.md). There are many ways to customize these plots. Personally, I (Ken) typically use the following options for visualizing longitudinal data:
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 library(ggtree)
@@ -126,6 +126,7 @@ plotTrees(test)[[1]] +
 ```
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(dowser)
 data(TimeTrees)
 TimeTrees = TimeTrees[order(TimeTrees$p),]
 plotTrees(TimeTrees)[[1]] + 
