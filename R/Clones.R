@@ -615,7 +615,6 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     dplyr::group_by(!!rlang::sym(clone)) %>%
     dplyr::do(data=makeAirrClone(.data, seq=seq,
                                  clone=clone, chain=chain, heavy=heavy, cell=cell, ...))
-  saveRDS(clones, file = "~/Downloads/clones.rds")
   
   # remove NULL clone objects
   exclude_clones <- unlist(lapply(clones$data,function(x)is.null(x)))
