@@ -100,262 +100,345 @@
 #' airr_clone <- makeAirrClone(ExampleAirr[ExampleAirr$clone_id=="3184",])
 #' @export
 makeAirrClone <- 
-function(data, id="sequence_id", seq="sequence_alignment", 
-    germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
-    junc_len="junction_length", clone="clone_id", mask_char="N",
-    max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
-    add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
-    cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-    use_regions=TRUE, dup_singles=FALSE){
-
-    # Check for valid fields
+  function(data, id="sequence_id", seq="sequence_alignment", 
+           germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
+           junc_len="junction_length", clone="clone_id", mask_char="N",
+           max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
+           add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
+           cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
+           use_regions=TRUE, dup_singles=FALSE){
+    
     check <- alakazam::checkColumns(data, 
-        unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
-        text_fields, num_fields, seq_fields, traits)))
-    if (check != TRUE) { stop(check) }
-
+                                    unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
+                                             text_fields, num_fields, seq_fields, traits)))
     if(chain=="HL"){
-        check <- alakazam::checkColumns(data, c(cell,locus))
-        if (check != TRUE) { stop(check) }
-        if(is.null(heavy)){
-            stop(paste("clone",unique(dplyr::pull(data,clone)),
-                "heavy chain loci ID must be specified if combining loci!"))
+      check <- alakazam::checkColumns(data, c(cell,locus))
+      if (check != TRUE) { stop(check) }
+      if(is.null(heavy)){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "heavy chain loci ID must be specified if combining loci!"))
+      }
+      
+      heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
+      if(max(heavycount) > 1){
+        stop(paste0(sum(heavycount > 1),
+                    " cells with multiple heavy chains found. Remove before proceeeding"))
+      }
+      
+      # Ensure cell and loci columns are not duplicated
+      text_fields <- text_fields[text_fields != rlang::sym(cell)]
+      text_fields <- text_fields[text_fields != rlang::sym(locus)]
+      seq_fields <- seq_fields[seq_fields != rlang::sym(cell)]
+      seq_fields <- seq_fields[seq_fields != rlang::sym(locus)]
+      # Replace gaps with Ns and masked ragged ends
+      tmp_df <- data[, unique(c(id, seq, junc_len, text_fields, num_fields, 
+                                seq_fields, cell, locus, traits))]
+      tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
+                                             outer_only=FALSE)
+      hc <- dplyr::filter(tmp_df,!!rlang::sym(locus)==rlang::sym(heavy))
+      alt <- dplyr::filter(tmp_df,!!rlang::sym(locus)!=rlang::sym(heavy))
+      if(nrow(hc) == 0){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "heavy chain locus not found in dataset!"))
+      }
+      if(nrow(alt) == 0){
+        chain <- "H"
+      }else{
+        if(length(unique(dplyr::pull(alt,!!locus))) > 1){
+          stop(paste("clone",paste(unique(dplyr::pull(data,clone)),collapse=""),
+                     "currently only one alternate loci per clone supported"))
         }
-
-        heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
-        if(max(heavycount) > 1){
-            stop(paste0(sum(heavycount > 1),
-                " cells with multiple heavy chains found. Remove before proceeeding"))
-        }
-
-        # Ensure cell and loci columns are not duplicated
-        text_fields <- text_fields[text_fields != rlang::sym(cell)]
-        text_fields <- text_fields[text_fields != rlang::sym(locus)]
-        seq_fields <- seq_fields[seq_fields != rlang::sym(cell)]
-        seq_fields <- seq_fields[seq_fields != rlang::sym(locus)]
-        # Replace gaps with Ns and masked ragged ends
-        tmp_df <- data[, unique(c(id, seq, junc_len, text_fields, num_fields, 
-            seq_fields, cell, locus, traits))]
-        tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
-            outer_only=FALSE)
-        hc <- dplyr::filter(tmp_df,!!rlang::sym(locus)==rlang::sym(heavy))
-        alt <- dplyr::filter(tmp_df,!!rlang::sym(locus)!=rlang::sym(heavy))
-        if(nrow(hc) == 0){
-            stop(paste("clone",unique(dplyr::pull(data,clone)),
-                "heavy chain locus not found in dataset!"))
-        }
-        if(nrow(alt) == 0){
-            chain <- "H"
-        }else{
-            if(length(unique(dplyr::pull(alt,!!locus))) > 1){
-                stop(paste("clone",paste(unique(dplyr::pull(data,clone)),collapse=""),
-                    "currently only one alternate loci per clone supported"))
-            }
-        }
-    }else{
-        # Replace gaps with Ns and masked ragged ends
-        tmp_df <- data[, unique(c(id, seq, text_fields, num_fields, seq_fields, traits))]
-        tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
-            outer_only=FALSE)
+      }
     }
-
-    if(chain=="HL"){
-        hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char, 
-            max_mask=max_mask, trim=FALSE)
-        alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
-            max_mask=max_mask, trim=FALSE)
-        # Pad ends
-        if(pad_end) {
-            hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char, mod3=mod3)
-            alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char, mod3=mod3)
-        }
-        hc_length <- unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
-        alt_length <- unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
-        if(length(hc_length) > 1){
-            stop(paste("clone",unique(dplyr::pull(data,clone)),
-                "Heavy chain sequences must be same length!"))
-        }
-        if(length(hc_length) > 1){
-            stop(paste("clone",unique(dplyr::pull(data,clone)),
-                "Light chain sequences must be same length!"))
-        }
-        hc$lsequence <- ""
-        hc$hlsequence <- ""
-        for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
-            if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
-                altseq <- paste(rep(mask_char,alt_length),collapse="")
-            }else{
-                altseq <- dplyr::pull(dplyr::filter(alt,
-                    !!rlang::sym(cell) == cell_name),rlang::sym(seq))
-            }
-            hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
-            hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$hlsequence <- 
-                paste0(hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,seq],altseq)
-        }
-        hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
-        altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
-        germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
-            outer_only=FALSE)
-        lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
-            outer_only=FALSE)
-        if(pad_end){
-             germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
-            lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
-        }
-        hlgermline <- paste0(germline,lgermline)
-        tmp_df <- hc
-        loci <- unique(dplyr::pull(data,!!locus))
-        tmp_df[[locus]] <- NULL
-        tmp_df[[locus]] <- paste(loci,collapse=",")
-        chains <- c(rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
-                 rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
-        numbers <- c(1:hc_length,1:alt_length)
-        if(use_regions){
-            hregions <- as.character(
-                shazam::setRegionBoundaries(unique(hc[[junc_len]]),
-                germline,
-                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
-            lregions <- as.character(
-                shazam::setRegionBoundaries(unique(alt[[junc_len]]),
-                lgermline,
-                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
-            regions <- c(hregions, lregions)
-        }else{
-            regions <- rep("N", times=nchar(hlgermline))
-        }
-        if(length(regions) != nchar(hlgermline)){
-            warning(paste("Excluding clone",unique(dplyr::pull(data,clone)),
-                "due to incomplete region definition."))
-            return(NULL)
-        }
-        if(length(chains) != unique(nchar(tmp_df$hlsequence))){
-            stop(paste("clone",unique(dplyr::pull(data,clone)),
-                "chains vector not equal to total sequence length!"))
-        }
-        if(length(chains) != nchar(hlgermline)){
-            stop(paste("clone",unique(dplyr::pull(data,clone)),
-                "chains vector not equal to germline sequence length!"))
-        }
-        new_seq <- "hlsequence"
+    if(chain=="L"){
+      check <- alakazam::checkColumns(data, c(cell,locus))
+      if (check != TRUE) { stop(check) }
+      
+      #  heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
+      # if(max(heavycount) > 1){
+      #  stop(paste0(sum(heavycount > 1),
+      #             " cells with multiple heavy chains found. Remove before proceeeding"))
+      #}
+      
+      # Ensure cell and loci columns are not duplicated
+      text_fields <- text_fields[text_fields != rlang::sym(cell)]
+      text_fields <- text_fields[text_fields != rlang::sym(locus)]
+      seq_fields <- seq_fields[seq_fields != rlang::sym(cell)]
+      seq_fields <- seq_fields[seq_fields != rlang::sym(locus)]
+      # Replace gaps with Ns and masked ragged ends
+      tmp_df <- data[, unique(c(id, seq, junc_len, text_fields, num_fields, 
+                                seq_fields, cell, locus, traits))]
+      tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
+                                             outer_only=FALSE)
+      hc <- dplyr::filter(tmp_df,!!rlang::sym(locus)==rlang::sym(heavy))
+      alt <- dplyr::filter(tmp_df,!!rlang::sym(locus)!=rlang::sym(heavy))
+      if(nrow(alt) == 0){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "light chain locus not found in dataset!"))
+      }
+      if(nrow(hc) != 0 & nrow(alt) != 0){
+        chain <- "HL"
+        print("chain presented as HL. Clone moving forward as if having an HL chain")
+      }
+      if(length(unique(dplyr::pull(alt,!!locus))) > 1){
+        stop(paste("clone",paste(unique(dplyr::pull(data,clone)),collapse=""),
+                   "currently only one alternative loci per clone supported"))
+      }
     }else{
-        tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
-            mask_char=mask_char, max_mask=max_mask, trim=FALSE)
-        if(pad_end){
-            tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], 
-                pad_char=mask_char, mod3=mod3)
-        }
-        germline <- alakazam::maskSeqGaps(data[[germ]][1], 
-            mask_char=mask_char, outer_only=FALSE)
-        if(pad_end){
-            germline <- alakazam::padSeqEnds(germline, 
-                pad_char=mask_char, mod3=mod3)
-        }
-        check <- alakazam::checkColumns(data, c(locus))
-        if(check == TRUE){
-            loci <- unique(dplyr::pull(data,locus))
-            if(length(loci) > 1){
-                warning(paste("clone",unique(dplyr::pull(data,clone)),
-                    "mutliple loci present but not dealt with!"))
-                loci <- paste(loci,collapse=",")
-            }
-        }else{
-            loci <- "N"
-        }
-        chains <- rep(loci,times=nchar(germline))
-        numbers <- 1:nchar(germline) #assumes IMGT numbers
-        lgermline <- ""
-        hlgermline <- germline
-        tmp_df$lsequence <- ""
-        tmp_df$hlsequence <- tmp_df[[seq]]
-        new_seq <- seq
-        if(use_regions){
-            regions <- as.character(
-                shazam::setRegionBoundaries(unique(data[[junc_len]]),
-                germline,
-                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
-        }else{
-            regions <- rep("N", times=nchar(germline))
-        }
+      # Replace gaps with Ns and masked ragged ends
+      tmp_df <- data[, unique(c(id, seq, text_fields, num_fields, seq_fields, traits))]
+      tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
+                                             outer_only=FALSE)
     }
     
+    if(chain=="HL"){
+      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char,
+                                         max_mask=max_mask, trim=FALSE)
+      alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
+                                          max_mask=max_mask, trim=FALSE)
+      # Pad ends
+      if(pad_end) {
+        hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char, mod3=mod3)
+        alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char, mod3=mod3)
+      }
+      hc_length <- unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
+      alt_length <- unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
+      if(length(hc_length) > 1){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "Heavy chain sequences must be same length!"))
+      }
+      if(length(alt_length) > 1){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "Light chain sequences must be same length!"))
+      }
+      hc$lsequence <- ""
+      hc$hlsequence <- ""
+      for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
+        if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
+          altseq <- paste(rep(mask_char,alt_length),collapse="")
+        }else{
+          altseq <- dplyr::pull(dplyr::filter(alt,
+                                              !!rlang::sym(cell) == cell_name),rlang::sym(seq))
+        }
+        hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
+        hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$hlsequence <- 
+          paste0(hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,seq],altseq)
+      }
+      hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
+      altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+      germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
+                                        outer_only=FALSE)
+      lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
+                                         outer_only=FALSE)
+      if(pad_end){
+        germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
+        lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
+      }
+      hlgermline <- paste0(germline,lgermline)
+      tmp_df <- hc
+      loci <- unique(dplyr::pull(data,!!locus))
+      tmp_df[[locus]] <- NULL
+      tmp_df[[locus]] <- paste(loci,collapse=",")
+      chains <- c(rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
+                  rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
+      numbers <- c(1:hc_length,1:alt_length)
+      if(use_regions){
+        hregions <- as.character(
+          shazam::setRegionBoundaries(unique(hc[[junc_len]]),
+                                      germline,
+                                      shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+        lregions <- as.character(
+          shazam::setRegionBoundaries(unique(alt[[junc_len]]),
+                                      lgermline,
+                                      shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+        regions <- c(hregions, lregions)
+      } 
+    }else if(chain=="L"){
+      alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
+                                          max_mask=max_mask, trim=FALSE)
+      # Pad ends
+      if(pad_end) {
+        #hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char, mod3=mod3)
+        alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char, mod3=mod3)
+      }
+      #hc_length <- unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
+      alt_length <- unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
+      if(length(alt_length) > 1){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "Light chain sequences must be same length!"))
+      }
+      alt$lsequence <- ""
+      alt$hlsequence <- ""
+      for(cell_name in unique(dplyr::pull(alt,!!rlang::sym(cell)))){
+        if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
+          altseq <- paste(rep(mask_char,alt_length),collapse="")
+        }else{
+          altseq <- dplyr::pull(dplyr::filter(alt,
+                                              !!rlang::sym(cell) == cell_name),rlang::sym(seq))
+        }
+        alt[dplyr::pull(alt,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
+        alt[dplyr::pull(alt,!!rlang::sym(cell)) == cell_name,]$hlsequence <- altseq
+      }
+      #hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym("IGH"))
+      altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+      germline <- ""
+      lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
+                                         outer_only=FALSE)
+      if(pad_end){
+        germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
+        lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
+      }
+      hlgermline <- paste0(germline,lgermline)
+      tmp_df <- alt
+      loci <- unique(dplyr::pull(data,!!locus))
+      tmp_df[[locus]] <- NULL
+      tmp_df[[locus]] <- paste(loci,collapse=",")
+      chains <- c(rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
+      numbers <- c(1:alt_length)
+      if(use_regions){
+        hregions <- c()
+        lregions <- as.character(
+          shazam::setRegionBoundaries(unique(alt[[junc_len]]),
+                                      lgermline,
+                                      shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+        regions <- c(hregions, lregions)
+      }else{
+        regions <- rep("N", times=nchar(hlgermline))
+      }
+      if(length(regions) != nchar(hlgermline)){
+        warning(paste("Excluding clone",unique(dplyr::pull(data,clone)),
+                      "due to incomplete region definition."))
+        return(NULL)
+      }
+      if(length(chains) != unique(nchar(tmp_df$hlsequence))){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "chains vector not equal to total sequence length!"))
+      }
+      if(length(chains) != nchar(hlgermline)){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "chains vector not equal to germline sequence length!"))
+      }
+      new_seq <- "hlsequence"
+    }else{
+      tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
+                                             mask_char=mask_char, max_mask=max_mask, trim=FALSE)
+      if(pad_end){
+        tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], 
+                                              pad_char=mask_char, mod3=mod3)
+      }
+      germline <- alakazam::maskSeqGaps(data[[germ]][1], 
+                                        mask_char=mask_char, outer_only=FALSE)
+      if(pad_end){
+        germline <- alakazam::padSeqEnds(germline, 
+                                         pad_char=mask_char, mod3=mod3)
+      }
+      check <- alakazam::checkColumns(data, c(locus))
+      if(check == TRUE){
+        loci <- unique(dplyr::pull(data,locus))
+        if(length(loci) > 1){
+          warning(paste("clone",unique(dplyr::pull(data,clone)),
+                        "mutliple loci present but not dealt with!"))
+          loci <- paste(loci,collapse=",")
+        }
+      }else{
+        loci <- "N"
+      }
+      chains <- rep(loci,times=nchar(germline))
+      numbers <- 1:nchar(germline) #assumes IMGT numbers
+      lgermline <- ""
+      hlgermline <- germline
+      tmp_df$lsequence <- ""
+      tmp_df$hlsequence <- tmp_df[[seq]]
+      new_seq <- seq
+      if(use_regions){
+        regions <- as.character(
+          shazam::setRegionBoundaries(unique(data[[junc_len]]),
+                                      germline,
+                                      shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+      }else{
+        regions <- rep("N", times=nchar(germline))
+      }
+    }
     seq_len <- nchar(tmp_df[[seq]])
     if(any(seq_len != seq_len[1])){
-        len_message <- paste0("All sequences are not the same length for data with first ", 
-                id, " = ", tmp_df[[id]][1], ".")
-        if (!pad_end){
-            len_message <- paste(len_message, 
-                "Consider specifying pad_end=TRUE and verify the multiple alignment.")
-        }else{
-            len_message <- paste(len_message,
-                "Verify that all sequences are properly multiple-aligned.")
-        }
-        stop(len_message)
+      len_message <- paste0("All sequences are not the same length for data with first ", 
+                            id, " = ", tmp_df[[id]][1], ".")
+      if (!pad_end){
+        len_message <- paste(len_message, 
+                             "Consider specifying pad_end=TRUE and verify the multiple alignment.")
+      }else{
+        len_message <- paste(len_message,
+                             "Verify that all sequences are properly multiple-aligned.")
+      }
+      stop(len_message)
     }
     
     # Remove duplicates
     if(collapse){
-        if(is.null(traits)){
-            tmp_df <- alakazam::collapseDuplicates(tmp_df, id=id, seq=new_seq, 
-            text_fields=text_fields, 
-            num_fields=num_fields, seq_fields=seq_fields,
-            add_count=add_count, verbose=verbose)
-        }else{
-            tmp_df <- tmp_df %>%
-                dplyr::group_by_at(dplyr::vars(tidyselect::all_of(traits))) %>%
-                dplyr::do(alakazam::collapseDuplicates(!!rlang::sym("."), id=id, seq=new_seq, 
-                text_fields=text_fields, 
-                num_fields=num_fields, seq_fields=seq_fields,
-                add_count=add_count, verbose=verbose)) %>%
-                dplyr::ungroup()
-        }
+      if(is.null(traits)){
+        tmp_df <- alakazam::collapseDuplicates(tmp_df, id=id, seq=new_seq, 
+                                               text_fields=text_fields, 
+                                               num_fields=num_fields, seq_fields=seq_fields,
+                                               add_count=add_count, verbose=verbose)
+      }else{
+        tmp_df <- tmp_df %>%
+          dplyr::group_by_at(dplyr::vars(tidyselect::all_of(traits))) %>%
+          dplyr::do(alakazam::collapseDuplicates(!!rlang::sym("."), id=id, seq=new_seq, 
+                                                 text_fields=text_fields, 
+                                                 num_fields=num_fields, seq_fields=seq_fields,
+                                                 add_count=add_count, verbose=verbose)) %>%
+          dplyr::ungroup()
+      }
     }
     if(randomize){
-        tmp_df <- tmp_df[sample(1:nrow(tmp_df),replace=FALSE),]
+      tmp_df <- tmp_df[sample(1:nrow(tmp_df),replace=FALSE),]
     }
     
     # Define return object
     tmp_names <- names(tmp_df)
     if ("sequence" %in% tmp_names & seq != "sequence") {
-        tmp_df <- tmp_df[, tmp_names != "sequence"]
-        tmp_names <- names(tmp_df)
+      tmp_df <- tmp_df[, tmp_names != "sequence"]
+      tmp_names <- names(tmp_df)
     }
     names(tmp_df)[tmp_names == seq] <- "sequence"
     names(tmp_df)[tmp_names == id] <- "sequence_id"
     
     if(chain=="HL"){
-        phylo_seq <- "hlsequence"
+      phylo_seq <- "hlsequence"
     }else if(chain=="L"){
-        phylo_seq <- "lsequence"
+      phylo_seq <- "lsequence"
+      # double check this is okay
+      tmp_df$sequence <- ""
     }else{
-        phylo_seq <- "sequence"
+      phylo_seq <- "sequence"
     }
-
+    
     if(nrow(tmp_df) == 1 && dup_singles){
-        tmp_df2 <- tmp_df
-        tmp_df2[[id]] <- paste0(tmp_df[[id]],"_DUPLICATE")
-        tmp_df <- bind_rows(tmp_df, tmp_df2)
+      tmp_df2 <- tmp_df
+      tmp_df2[[id]] <- paste0(tmp_df[[id]],"_DUPLICATE")
+      tmp_df <- bind_rows(tmp_df, tmp_df2)
     }
-
+    
     outclone <- new("airrClone", 
-        data=as.data.frame(tmp_df),
-        clone=as.character(unique(data[[clone]])),
-        germline=alakazam::maskSeqGaps(germline, mask_char=mask_char, 
-           outer_only=FALSE),
-        lgermline=alakazam::maskSeqGaps(lgermline, mask_char=mask_char, 
-           outer_only=FALSE),
-        hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
-           outer_only=FALSE), 
-        v_gene=alakazam::getGene(data[[v_call]][1]), 
-        j_gene=alakazam::getGene(data[[j_call]][1]), 
-        junc_len=data[[junc_len]][1],
-        locus=chains,
-        region=regions,
-        numbers=numbers,
-        phylo_seq=phylo_seq)
-
-
+                    data=as.data.frame(tmp_df),
+                    clone=as.character(unique(data[[clone]])),
+                    germline=alakazam::maskSeqGaps(germline, mask_char=mask_char, 
+                                                   outer_only=FALSE),
+                    lgermline=alakazam::maskSeqGaps(lgermline, mask_char=mask_char, 
+                                                    outer_only=FALSE),
+                    hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
+                                                     outer_only=FALSE), 
+                    v_gene=alakazam::getGene(data[[v_call]][1]), 
+                    j_gene=alakazam::getGene(data[[j_call]][1]), 
+                    junc_len=data[[junc_len]][1],
+                    locus=chains,
+                    region=regions,
+                    numbers=numbers,
+                    phylo_seq=phylo_seq)
+    
+    
     outclone
-}
+  }
 
 
 # Remove uniformative columns from data and germline
@@ -366,46 +449,46 @@ function(data, id="sequence_id", seq="sequence_alignment",
 # @return   \code{airrClone} object with cleaned alignment
 #
 cleanAlignment <- function(clone){
-    seq <- clone@phylo_seq
-    if(seq == "hlsequence"){
-        g <- strsplit(clone@hlgermline[1],split="")[[1]]
-    }else if(seq == "sequence"){
-        g <- strsplit(clone@germline[1],split="")[[1]]
-    }else if(seq == "lsequence"){
-        g <- strsplit(clone@lgermline[1],split="")[[1]]
-    }else{
-        stop(paste(seq, "not a recognized sequence type"))
-    }
-    sk <- strsplit(clone@data[[seq]],split="")
-    sites <- seq(1,length(g)-3,by=3)
-    ns <- c()
-    for(i in sites){ #for each codon site, tally number of NNN codons
-        l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
-        ns <- c(ns,rep(sum(l),length=3))
-    }
-    # remove uninformative sites from germline and data
-    informative <- ns != length(sk)
-    l <- lapply(sk,function(x) x=paste(x[informative],collapse=""))
-    gm <- paste(g[informative],collapse="")
-
-    if(.hasSlot(clone,"locus")){
-        clone@locus <- clone@locus[informative]
-    }
-    if(.hasSlot(clone,"region")){
-        clone@region <- clone@region[informative]  
-    }
-    if(.hasSlot(clone,"numbers")){
-        clone@numbers <- clone@numbers[informative]
-    }
-    if(seq == "hlsequence"){
-        clone@hlgermline=gm
-    }else if(seq == "sequence"){
-        clone@germline=gm
-    }else if(seq == "lsequence"){
-        clone@lgermline=gm
-    }
-    clone@data[[seq]]=unlist(l)
-    return(clone)
+  seq <- clone@phylo_seq
+  if(seq == "hlsequence"){
+    g <- strsplit(clone@hlgermline[1],split="")[[1]]
+  }else if(seq == "sequence"){
+    g <- strsplit(clone@germline[1],split="")[[1]]
+  }else if(seq == "lsequence"){
+    g <- strsplit(clone@lgermline[1],split="")[[1]]
+  }else{
+    stop(paste(seq, "not a recognized sequence type"))
+  }
+  sk <- strsplit(clone@data[[seq]],split="")
+  sites <- seq(1,length(g)-3,by=3)
+  ns <- c()
+  for(i in sites){ #for each codon site, tally number of NNN codons
+    l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
+    ns <- c(ns,rep(sum(l),length=3))
+  }
+  # remove uninformative sites from germline and data
+  informative <- ns != length(sk)
+  l <- lapply(sk,function(x) x=paste(x[informative],collapse=""))
+  gm <- paste(g[informative],collapse="")
+  
+  if(.hasSlot(clone,"locus")){
+    clone@locus <- clone@locus[informative]
+  }
+  if(.hasSlot(clone,"region")){
+    clone@region <- clone@region[informative]  
+  }
+  if(.hasSlot(clone,"numbers")){
+    clone@numbers <- clone@numbers[informative]
+  }
+  if(seq == "hlsequence"){
+    clone@hlgermline=gm
+  }else if(seq == "sequence"){
+    clone@germline=gm
+  }else if(seq == "lsequence"){
+    clone@lgermline=gm
+  }
+  clone@data[[seq]]=unlist(l)
+  return(clone)
 }
 
 #### Preprocessing functions ####
@@ -452,140 +535,148 @@ cleanAlignment <- function(clone){
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
-                subclone="subclone_id",
-                nproc=1, chain="H", heavy="IGH", cell="cell_id", 
-                locus="locus", minseq=2, split_light=FALSE, majoronly=FALSE,
-                columns=NULL, ...) {
-
-    if(majoronly){
-        if(!subclone %in% names(data)){
-            stop("Need subclone designation if majoronly=TRUE")
-        }
-        data <- filter(data, !!rlang::sym(subclone) <= 1)
+                         subclone="subclone_id",
+                         nproc=1, chain="H", heavy="IGH", cell="cell_id", 
+                         locus="locus", minseq=2, split_light=FALSE, majoronly=FALSE,
+                         columns=NULL, ...) {
+  
+  if(majoronly){
+    if(!subclone %in% names(data)){
+      stop("Need subclone designation if majoronly=TRUE")
     }
-    if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
-        if(!is.null(heavy)){
-            if(locus %in% names(data)){
-                data <- filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
-            }
-        }
+    data <- filter(data, !!rlang::sym(subclone) <= 1)
+  }
+  if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
+    if(!is.null(heavy)){
+      if(locus %in% names(data)){
+        data <- filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
+      }
     }
-    if(chain == "HL"){
-        if(!subclone %in% names(data)){
-            stop("Need subclone designation for heavy+light chain clones")
-        }
-        if(!locus %in% names(data)){
-            stop("Need locus designation for heavy+light chain clones")
-        }
-        if(is.null(heavy)){
-            stop("Need heavy chain (heavy) designation for heavy+light chain clones")
-        }    
-        lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell]]
-        hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell]]
-        nohcells <- lcells[!lcells %in% hcells]
-        if(length(nohcells) > 0){
-            data <- filter(data,!(!!rlang::sym(cell) %in% nohcells))
-            warning(paste("Removed",length(nohcells),
-                "cells with no heavy chain information"))
-        }
+  }
+  if(chain == "HL"){
+    if(!subclone %in% names(data)){
+      stop("Need subclone designation for heavy+light chain clones")
     }
-    #edit based on subclone options
-    if(split_light){
-        if(!subclone %in% names(data)){
-            stop("Need subclone designation for heavy+light chain clones")
-        }
-        if(sum(data[[subclone]] == 0) > 0){
-            warning("Assigning subclone 0 (missing light chain) to subclone 1")
-            data[data[[subclone]] == 0,][[subclone]] <- 1
-        }
-        data[[clone]] <- paste0(data[[clone]],"_",data[[subclone]])
-    }else if(!split_light && chain=="HL"){
-        data <- filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
-            !!rlang::sym(subclone) > 1))
+    if(!locus %in% names(data)){
+      stop("Need locus designation for heavy+light chain clones")
     }
-    if(!is.null(columns)){
-        if(sum(!columns %in% names(data)) != 0){
-            stop(paste("column",
-                paste(columns[!columns %in% names(data)]),
-                "not in data table!"))
-        }
+    if(is.null(heavy)){
+      stop("Need heavy chain (heavy) designation for heavy+light chain clones")
+    }    
+    lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell]]
+    hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell]]
+    nohcells <- lcells[!lcells %in% hcells]
+    if(length(nohcells) > 0){
+      data <- filter(data,!(!!rlang::sym(cell) %in% nohcells))
+      warning(paste("Removed",length(nohcells),
+                    "cells with no heavy chain information"))
     }
-    if(sum(is.na(data[[seq]])) > 0){
-        warning(paste("Removing",sum(is.na(data[[seq]]))
-            ,"with missing sequences"))
-        data <- data[!is.na(data[[seq]]),]
+  }
+  if(chain == "L"){ #if chain is light and, discard all IGH sequences
+    if(!is.null(heavy)){
+      if(locus %in% names(data)){
+        data <- filter(data, !!rlang::sym(locus) != rlang::sym(heavy))
+      }
     }
-
-    # TODO: Adjust for heavy/light sequences
-    counts <- table(data[[clone]])
-    rmclones <- names(counts[counts < minseq])
-    data <- data[!data[[clone]] %in% rmclones,]
-
-    clones <- data %>%
-        dplyr::group_by(!!rlang::sym(clone)) %>%
-        dplyr::do(data=makeAirrClone(.data, seq=seq,
-            clone=clone, chain=chain, heavy=heavy, cell=cell, ...))
-
-    # remove NULL clone objects
-    exclude_clones <- unlist(lapply(clones$data,function(x)is.null(x)))
-    if(sum(exclude_clones) > 0){
-        warning(paste("Excluding",sum(exclude_clones),"clones"))
+  }
+  #edit based on subclone options
+  if(split_light){
+    if(!subclone %in% names(data)){
+      stop("Need subclone designation for heavy+light chain clones")
     }
-    clones <- clones[exclude_clones==F,]
-    
-    if(nrow(clones) == 0){
-        stop("No clones remain after makeAirrClone")
+    if(sum(data[[subclone]] == 0) > 0){
+      warning("Assigning subclone 0 (missing light chain) to subclone 1")
+      data[data[[subclone]] == 0,][[subclone]] <- 1
     }
-
-    if(chain == "HL"){
-        seq_name <- "hlsequence"
-    }else if(chain == "H"){
-        seq_name <- "sequence"
-    }else if(chain == "L"){
-        seq_name <- "lsequence"
+    data[[clone]] <- paste0(data[[clone]],"_",data[[subclone]])
+  }else if(!split_light && chain=="HL"){
+    data <- filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
+                             !!rlang::sym(subclone) > 1))
+  }
+  if(!is.null(columns)){
+    if(sum(!columns %in% names(data)) != 0){
+      stop(paste("column",
+                 paste(columns[!columns %in% names(data)]),
+                 "not in data table!"))
+    }
+  }
+  if(sum(is.na(data[[seq]])) > 0){
+    warning(paste("Removing",sum(is.na(data[[seq]]))
+                  ,"with missing sequences"))
+    data <- data[!is.na(data[[seq]]),]
+  }
+  
+  # TODO: Adjust for heavy/light sequences
+  counts <- table(data[[clone]])
+  rmclones <- names(counts[counts < minseq])
+  data <- data[!data[[clone]] %in% rmclones,]
+  
+  clones <- data %>%
+    dplyr::group_by(!!rlang::sym(clone)) %>%
+    dplyr::do(data=makeAirrClone(.data, seq=seq,
+                                 clone=clone, chain=chain, heavy=heavy, cell=cell, ...))
+  saveRDS(clones, file = "~/Downloads/clones.rds")
+  
+  # remove NULL clone objects
+  exclude_clones <- unlist(lapply(clones$data,function(x)is.null(x)))
+  if(sum(exclude_clones) > 0){
+    warning(paste("Excluding",sum(exclude_clones),"clones"))
+  }
+  clones <- clones[exclude_clones==F,]
+  
+  if(nrow(clones) == 0){
+    stop("No clones remain after makeAirrClone")
+  }
+  
+  if(chain == "HL"){
+    seq_name <- "hlsequence"
+  }else if(chain == "H"){
+    seq_name <- "sequence"
+  }else if(chain == "L"){
+    seq_name <- "lsequence"
+  }else{
+    stop(paste("Chain option",chain,"not recognized"))
+  }
+  
+  fclones <- processClones(clones, nproc=nproc, seq=seq_name, minseq=minseq)
+  
+  # clone_id must be used for clone ids
+  if(clone != "clone_id"){
+    fclones$clone_id <- fclones[[clone]]
+    fclones <- dplyr::select(fclones, -!!clone)
+  }
+  
+  colpaste <- function(x){
+    s <- sort(unique(x))
+    if(length(s) > 1){
+      paste(s,collapse=",")
     }else{
-        stop(paste("Chain option",chain,"not recognized"))
+      s
     }
+  }
+  if(!is.null(columns)){
+    d <- data %>%
+      dplyr::select(!!rlang::sym(clone),dplyr::all_of(columns)) %>%
+      dplyr::group_by(!!rlang::sym(clone)) %>%
+      dplyr::summarize(dplyr::across(dplyr::all_of(columns), dplyr::n_distinct)) %>%
+      dplyr::ungroup() %>%
+      dplyr::summarize(dplyr::across(dplyr::all_of(columns),max)) %>%
+      unlist()
+    multi <- names(d[d > 1])
+    if(length(multi) > 0){
+      warning(paste("columns",paste(multi,collapse=" "),
+                    "contain multiple values per clone, flattening with comma"))
+    }
+    d <- data %>%
+      dplyr::select(!!rlang::sym(clone),columns) %>%
+      dplyr::group_by(!!rlang::sym(clone)) %>%
+      dplyr::summarize(dplyr::across(columns, colpaste))
     
-    fclones <- processClones(clones, nproc=nproc, seq=seq_name, minseq=minseq)
-
-    # clone_id must be used for clone ids
-    if(clone != "clone_id"){
-        fclones$clone_id <- fclones[[clone]]
-        fclones <- dplyr::select(fclones, -!!clone)
-    }
-
-    colpaste <- function(x){
-        s <- sort(unique(x))
-        if(length(s) > 1){
-            paste(s,collapse=",")
-        }else{
-            s
-        }
-    }
-    if(!is.null(columns)){
-        d <- data %>%
-            dplyr::select(!!rlang::sym(clone),dplyr::all_of(columns)) %>%
-            dplyr::group_by(!!rlang::sym(clone)) %>%
-            dplyr::summarize(dplyr::across(dplyr::all_of(columns), dplyr::n_distinct)) %>%
-            dplyr::ungroup() %>%
-            dplyr::summarize(dplyr::across(dplyr::all_of(columns),max)) %>%
-            unlist()
-        multi <- names(d[d > 1])
-        if(length(multi) > 0){
-            warning(paste("columns",paste(multi,collapse=" "),
-            "contain multiple values per clone, flattening with comma"))
-        }
-        d <- data %>%
-            dplyr::select(!!rlang::sym(clone),columns) %>%
-            dplyr::group_by(!!rlang::sym(clone)) %>%
-            dplyr::summarize(dplyr::across(columns, colpaste))
-        
-        m <- match(fclones[[clone]],d[[clone]])
-        fclones[,columns] <- d[m,columns]
-    }
-
-    fclones
+    m <- match(fclones[[clone]],d[[clone]])
+    fclones[,columns] <- d[m,columns]
+  }
+  
+  fclones
 }
 
 
@@ -1074,61 +1165,63 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #  
 processClones <- function(clones, nproc=1 ,minseq=2, seq){
 
-    if(!"tbl" %in% class(clones)){
-        print(paste("clones is of class",class(clones)))
-        stop("clones must be a tibble of airrClone objects!")
-    }else{
-        if(class(clones$data[[1]]) != "airrClone"){
-            print(paste("clones is list of class",class(clones$data[[1]])))
-            stop("clones$data must be a list of airrClone objects!")
-        }
+  
+  if(!"tbl" %in% class(clones)){
+    print(paste("clones is of class",class(clones)))
+    stop("clones must be a tibble of airrClone objects!")
+  }else{
+    if(class(clones$data[[1]]) != "airrClone"){
+      print(paste("clones is list of class",class(clones$data[[1]])))
+      stop("clones$data must be a list of airrClone objects!")
     }
-
-    threshold <- unlist(lapply(clones$data,function(x)
+  }
+  
+  threshold <- unlist(lapply(clones$data,function(x)
     length(x@data[[seq]]) >= minseq))
-    clones <- clones[threshold,]
-    if(nrow(clones) == 0){
-        warning(paste("All clones have less than minseq =",minseq,"sequences"))
-        return(clones)
-    }
-
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=    gsub(":","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub(";","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub(",","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub("=","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub(" ","_",x@data$sequence_id);
-        x })
-
-    max <- max(unlist(lapply(clones$data,function(x)max(nchar(x@data$sequence_id)))))
-    if(max > 1000){
-        wc <- which.max(unlist(lapply(clones$data,function(x)
-            max(nchar(x@data$sequence_id)))))
-        stop(paste("Sequence ID of clone",clones$data[[wc]]@clone,"index",
-            wc,"too long - over 1000 characters!"))
-    }
-
-    or <- order(unlist(lapply(clones$data,function(x) nrow(x@data))),
-        decreasing=TRUE)
-    clones <- clones[or,]
-
-    clones$data <- parallel::mclapply(clones$data,
-        function(x)cleanAlignment(x),mc.cores=nproc)
-
-    if(.hasSlot(clones$data[[1]],"locus")){
-        clones$locus <- unlist(lapply(clones$data,function(x)
-            paste(sort(unique(x@locus)),collapse=",")))
-    }
-    clones$seqs <- unlist(lapply(clones$data,function(x)nrow(x@data)))
-    clones <- dplyr::rowwise(clones)
-    clones <- dplyr::ungroup(clones)
-    clones
+  clones <- clones[threshold,]
+  if(nrow(clones) == 0){
+    warning(paste("All clones have less than minseq =",minseq,"sequences"))
+    return(clones)
+  }
+  
+  clones$data <- lapply(clones$data,function(x){
+    x@data$sequence_id=    gsub(":","_",x@data$sequence_id);
+    x })
+  clones$data <- lapply(clones$data,function(x){
+    x@data$sequence_id=gsub(";","_",x@data$sequence_id);
+    x })
+  clones$data <- lapply(clones$data,function(x){
+    x@data$sequence_id=gsub(",","_",x@data$sequence_id);
+    x })
+  clones$data <- lapply(clones$data,function(x){
+    x@data$sequence_id=gsub("=","_",x@data$sequence_id);
+    x })
+  clones$data <- lapply(clones$data,function(x){
+    x@data$sequence_id=gsub(" ","_",x@data$sequence_id);
+    x })
+  
+  max <- max(unlist(lapply(clones$data,function(x)max(nchar(x@data$sequence_id)))))
+  if(max > 1000){
+    wc <- which.max(unlist(lapply(clones$data,function(x)
+      max(nchar(x@data$sequence_id)))))
+    stop(paste("Sequence ID of clone",clones$data[[wc]]@clone,"index",
+               wc,"too long - over 1000 characters!"))
+  }
+  
+  or <- order(unlist(lapply(clones$data,function(x)nrow(x@data))),
+              decreasing=TRUE)
+  clones <- clones[or,]
+  
+  clones$data <- parallel::mclapply(clones$data,
+                                    function(x)cleanAlignment(x),mc.cores=nproc)
+  
+  if(.hasSlot(clones$data[[1]],"locus")){
+    clones$locus <- unlist(lapply(clones$data,function(x)
+      paste(sort(unique(x@locus)),collapse=",")))
+  }
+  clones$seqs <- unlist(lapply(clones$data,function(x)nrow(x@data)))
+  clones <- dplyr::rowwise(clones)
+  clones <- dplyr::ungroup(clones)
+  clones
 }
+

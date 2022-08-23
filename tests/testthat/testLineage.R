@@ -12,6 +12,17 @@ test_that("makeAirrClone",{
                      clone_id=1,
                      isotype=c("IgG", "IgG", "IgM", "IgA"),
                      stringsAsFactors=FALSE)
+    db_l <- data.frame(sequence_id=LETTERS[1:4],
+                     sequence_alignment=c("CCCCTGGG", "CCCCTGGN", "NAACTGGN", "NNNCTGNN"),
+                     v_call="Homsap IGKV1-39*01 F",
+                     j_call="Homsap IGKJ5*01 F",
+                     junction_length=2,
+                     germline_alignment="CCCCAGGG",
+                     clone_id=1,
+                     isotype=c("IgG", "IgG", "IgM", "IgA"),
+                     cell_id =1,
+                     locus=c("IGK", "IGK", "IGK", "IGK"),
+                     stringsAsFactors=FALSE)
 
     exp <- data.frame("sequence_id"=c("C", "A"),
                       "sequence"=c("NAACTGGNN", "CCCCTGGGN"),
@@ -26,6 +37,16 @@ test_that("makeAirrClone",{
                       "lsequence"=c("", "", ""),
                       "hlsequence"=c("NNNCTGNNN","CCCCTGGGN", "NAACTGGNN"),
                       "collapse_count"=c(1, 2, 1),
+                      stringsAsFactors=FALSE)
+    
+    exp_l <- data.frame("sequence_id"=c("C", "A"),
+                      "sequence"=c("", ""),
+                      "junction_length"=2,
+                      "cell_id"=1,
+                      "lsequence"=c("NAACTGGNN", "CCCCTGGGN"),
+                      "hlsequence"=c("NAACTGGNN", "CCCCTGGGN"),
+                      "locus" = "IGK",
+                      "collapse_count"=c(1, 2),
                       stringsAsFactors=FALSE)
     
     # Without splitting by trait value
@@ -61,6 +82,23 @@ test_that("makeAirrClone",{
     expect_equal(clone@hlgermline,"CCCCAGGGN")
     expect_equal(clone@germline,"CCCCAGGGN")
     expect_equal(clone@data, exp_trait, tolerance=0.001)
+    
+    clones <- formatClones(db_l,germ="germline_alignment",randomize=FALSE,
+                           use_regions=FALSE, chain="L", seq = "sequence_alignment")
+    clone <- clones$data[[1]]
+    
+    expect_equal(clone@clone, "1")
+    expect_equal(clone@germline, "")
+    expect_equal(clone@lgermline, "CCCCAGGGN")
+    expect_equal(clone@hlgermline, "CCCCAGGGN")
+    expect_equal(clone@hlgermline, clone@lgermline)
+    expect_equal(clone@v_gene, "IGKV1-39")
+    expect_equal(clone@j_gene, "IGKJ5")
+    expect_equal(clone@junc_len, 2)
+    expect_equal(clone@locus,rep("IGK",length=9))
+    expect_equal(clone@region,rep("N",length=9))
+    expect_equal(clone@phylo_seq,"lsequence")
+    expect_equal(clone@data, exp_l, tolerance=0.001)
 })
 
 test_that("getTreesPhangorn", {
