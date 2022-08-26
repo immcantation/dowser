@@ -2228,3 +2228,151 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
             boot_part=boot_part, force_resolve=force_resolve, ...)
     return(s)
 }
+
+
+
+#' update pa more! getBootstraps is name
+#' 
+#' \code{bootstrapTrees} Phylogenetic bootstrap function.
+#' @param clones         tibble \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
+#' @param bootstraps    number of bootstrap replicates to perform
+#' @param build           program to use for tree building (phangorn, dnapars, igphyml)
+#' @param exec           location of desired phylogenetic executable
+#' @param id            unique identifer for this analysis (required if 
+#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param dir           directory where temporary files will be placed (required
+#'                      if \code{igphyml} or \code{dnapars} specified)
+#' @param modelfile        file specifying parsimony model to use
+#' @param nproc            number of cores to parallelize computations
+#' @param quiet           amount of rubbish to print to console
+#' @param rm_temp       remove temporary files (default=TRUE)
+#' @param rep             current bootstrap replicate (experimental)
+#' @param seq           column name containing sequence information
+#' @param ...        additional arguments to be passed to tree building program
+#'
+#' @return   A list of trees and/or switch counts for each bootstrap replicate.
+#'  
+#' @export
+bootstrapping <- function(clones, permutations,
+                          nproc=1, dir=NULL, id=NULL, build="pratchet", exec=NULL, 
+                          quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
+                          boot_part="locus", ...){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+    stop("exec must be specified for this build option")
+  }
+  if(build=="igphyml" && file.access(exec, mode=1) == -1) {
+    stop("Igphyml executable at ", exec, " cannot be executed.")
+  }
+  if(!is.null(dir)){
+    dir <- path.expand(dir)
+  }
+  
+  data <- clones$data
+  if(is.null(id)){
+    id <- "sample"
+  }
+  if(class(data) != "list"){
+    data <- list(data)
+  }
+  if(!is.null(dir)){
+    if(!dir.exists(dir)){
+      dir.create(dir)
+    }
+  }
+  if(class(data[[1]]) != "airrClone"){
+    stop("Input data must be a list of airrClone objects")
+  }
+  big <- FALSE
+  if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
+    big <- TRUE
+  }
+  if(!rm_temp && big){
+    warning("Large dataset - best to set rm_temp=TRUE")
+  }
+  if(build == "igphyml"){
+    igphmyl <= path.expand(exec)
+    if(!is.null(dir)){
+      if(!dir.exists(dir)){
+        dir.create(dir)
+      }
+    } else{
+      dir <- alakazam::makeTempDir(id)
+      if(big){
+        warning("Large dataset - best to set dir and id params")
+      }
+    }
+  }
+  if(build=="dnapars"){
+    if(is.null(dir) || is.null(id)){
+      stop("dir, and id parameters must be specified when running dnapars")
+    }
+  }
+  for(i in 1:length(data)){
+    data[[i]] <- bootstrapClones(data[[i]], reps=1, partition=boot_part)[[1]]
+  }
+  if(quiet > 1){print("building trees")}
+  reps <- as.list(1:length(data))
+  if(is.null(seq)){
+    seqs <- unlist(lapply(data,function(x)x@phylo_seq))
+  }else{
+    seqs <- rep(seq,length=length(data))
+  }
+  bootstrap_trees <- list()
+  if(build=="pratchet"){
+    for(i in 1:permutations){
+      trees <- parallel::mclapply(reps,function(x)
+        buildPratchet(data[[x]],seq=seqs[x]),
+        mc.cores=nproc)
+      trees <- list(trees)
+      bootstrap_trees <- append(bootstrap_trees, trees)
+    }
+  }else if(build=="dnapers" || build=="dnaml"){
+    for(i in 1:permutations){
+      trees <- parallel::mclapply(reps,function(x)
+        buildPhylo(data[[x]],
+                   exec=exec,
+                   temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
+                   rm_temp = rm_temp,
+                   seq=seqs[x]),
+        mc.cores=nproc)
+      trees <- list(trees)
+      bootstrap_trees <- append(bootstrap_trees, trees)
+    }
+  }else if(build=="pml"){
+    for(i in 1:permutations){
+      trees <- parallel::mclapply(reps,function(x)
+        buildPML(data[[x]],seq=seqs[x]),
+        mc.cores=nproc)
+      trees <- list()
+      bootstrap_trees <- append(bootstrap_trees, trees)
+    }
+  }else if(build=="igphyml"){
+    if(rm_temp){
+      rm_dir <- file.path(dir,paste0(id,rep))
+    }else{
+      rm_dir <- NULL
+    }
+    for(i in 1:permutations){
+      trees <- 
+        buildIgphyml(data, 
+                     igphyml = exec,
+                     temp_path = file.path(dir,paste0(id,rep)),
+                     rm_files=rm_tmp,
+                     rm_dir = rm_dir,
+                     nproc=nproc,
+                     id=id)
+      trees <- list(trees)
+      bootstrap_trees <- append(bootstrap_trees, trees)
+    }
+  }else{
+    stop("build specification",build,"not recognized")
+  }
+  clones$bootstrap_trees <- "NOTHING TO LOOK AT HERE"
+  for(i in 1:length(clones$clone_id)){
+    clone_bootstraps <- lapply(bootstrap_trees, function(x)x[[i]])
+    clone_bootstraps <- list(clone_bootstraps)
+    clones$bootstrap_trees[i] <- clone_bootstraps
+  }
+  return(clones)
+}
