@@ -420,7 +420,7 @@ readLineages <- function(file, states=NULL, palette="Dark2",
             tf <- condenseTrees(tf,states,palette)
         }
         germ <- tf$tip.label[grep("_GERM",tf$tip.label)]
-        tf$name <- strsplit(germ,split="_")[[1]][1]
+        tf$name <- gsub("_GERM$","",germ)
         tf$tip.label[which(tf$tip.label == germ)] <- "Germline"
         nnodes <- length(unique(c(tf$edge[,1],tf$edge[,2])))
         tf$nodes <- rep(list(sequence=NULL),times=nnodes)
@@ -582,6 +582,9 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
         }
 
         if(!is.null(trees)){
+            if("node.label" %in% names(tree)){
+                tree$node.label <- NULL
+            }
             tree$tip.label[which(tree$tip.label == "Germline")] <- germid
             tree <- ape::multi2di(tree)
             ape::write.tree(tree,file=treefile)
@@ -1494,6 +1497,13 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     }else{
         mtrees <- trees
     }
+    # Sanity checks
+    match <- unlist(lapply(1:length(data), function(x){
+        data[[x]]@clone == mtrees[[x]]$name
+    }))
+    if(sum(!match) > 0){
+        stop("Clone and tree names not in proper order!")
+    }
     clones$trees <- mtrees
     if(collapse){
         clones <- collapseNodes(clones)
@@ -2066,12 +2076,14 @@ findSwitches <- function(clones, permutations, trait, igphyml,
                 downsampleClone(clone=data[[x]], 
                 tree=trees[[x]], trait=trait,
                 tip_switch=tip_switch))
-            if(fixtrees){
-                trees <- lapply(rarefied, function(x)x$tree)
-            }
             data <- lapply(rarefied, function(x)x$clone)
             seqs <- unlist(lapply(data, function(x)nrow(x@data)))
-            data <- data[order(seqs, decreasing=TRUE)]
+            index <- order(seqs, decreasing=TRUE)
+            data <- data[index]
+            if(fixtrees){
+                trees <- lapply(rarefied, function(x)x$tree)
+                trees <- trees[index]
+            }
         }
         if(!fixtrees){
             for(i in 1:length(data)){
@@ -2122,6 +2134,14 @@ findSwitches <- function(clones, permutations, trait, igphyml,
                 stop("build specification",build,"not recognized")
             }
         }
+
+        match <- unlist(lapply(1:length(data), function(x){
+            data[[x]]@clone == trees[[x]]$name
+        }))
+        if(sum(!match) > 0){
+            stop("Clone and tree names not in proper order!")
+        }
+        
         results <- list()
         if(!is.null(igphyml)){
             if(is.null(lfile)){    
