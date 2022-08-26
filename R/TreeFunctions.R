@@ -170,7 +170,6 @@ makeModelFile <- function(file, states, constraints=NULL, exceptions=NULL){
     return(file)
 }
 
-
 # Read in a switches file from IgPhyML
 # 
 # \code{readSwitches} Filler

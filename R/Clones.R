@@ -450,6 +450,7 @@ cleanAlignment <- function(clone){
 #' # Select two clones, for demonstration purpose
 #' sel <- c("3170", "3184")
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
+#' print(dim(clones))
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
                 subclone="subclone_id",
