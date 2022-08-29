@@ -2075,53 +2075,12 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             data <- data[order(seqs, decreasing=TRUE)]
         }
         if(!fixtrees){
-            for(i in 1:length(data)){
-                if(quiet > 3){
-                    print(table(data[[i]]@data[,trait]))
-                }    
-                data[[i]] <- bootstrapClones(data[[i]], reps=1, 
-                    partition=boot_part)[[1]]
-            }
-            if(quiet > 1){print("building trees")}
-            reps <- as.list(1:length(data))
-            if(is.null(seq)){
-                  seqs <- unlist(lapply(data,function(x)x@phylo_seq))
-            }else{
-                  seqs <- rep(seq,length=length(data))
-            }
-            if(build=="dnapars" || build=="dnaml"){
-                trees <- parallel::mclapply(reps,function(x)
-                    buildPhylo(data[[x]],
-                        exec=exec,
-                        temp_path=file.path(dir,paste0(id,"_",rep,"_trees_",x)),
-                        rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
-                    mc.cores=nproc)
-            }else if(build=="pratchet"){
-                trees <- parallel::mclapply(reps,function(x)
-                    buildPratchet(data[[x]],seq=seqs[x],
-                            tree=trees[[x]],...),
-                        mc.cores=nproc)
-            }else if(build=="pml"){
-                trees <- parallel::mclapply(reps,function(x)
-                    buildPML(data[[x]],seq=seqs[x],
-                        tree=trees[[x]],...),
-                        mc.cores=nproc)
-            }else if(build=="igphyml"){
-                if(rm_temp){
-                    rm_dir <- file.path(dir,paste0(id,rep))
-                }else{
-                    rm_dir <- NULL
-                }
-                trees <- 
-                    buildIgphyml(data,
-                        igphyml=exec,
-                        temp_path=file.path(dir,paste0(id,rep)),
-                        rm_files=rm_temp,
-                        rm_dir=rm_dir,
-                        trees=trees,nproc=nproc,id=id)
-            }else{
-                stop("build specification",build,"not recognized")
-            }
+          temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data,function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
+          clones_with_trees <- getBootstraps(clones = temp_clones, permutations = 1, nproc = nproc, 
+                                             dir = dir, id = id, build = build, exec = exec,
+                                             quiet = quiet, rm_temp = rm_temp, seq = seq,
+                                             boot_part = boot_part, ...)
+          trees <- lapply(clones_with_trees$bootstrap_trees, function(x)x[[1]])
         }
         results <- list()
         if(!is.null(igphyml)){
@@ -2233,28 +2192,28 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 
 #' update pa more! getBootstraps is name
 #' 
-#' \code{bootstrapTrees} Phylogenetic bootstrap function.
+#' \code{getBootstraps} Phylogenetic bootstrap function.
 #' @param clones         tibble \code{airrClone} objects, the output of 
 #'                      \link{formatClones}
-#' @param bootstraps    number of bootstrap replicates to perform
-#' @param build           program to use for tree building (phangorn, dnapars, igphyml)
-#' @param exec           location of desired phylogenetic executable
-#' @param id            unique identifer for this analysis (required if 
-#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param permutations    number of bootstrap replicates to perform
+#' @param nproc            number of cores to parallelize computations
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
-#' @param modelfile        file specifying parsimony model to use
-#' @param nproc            number of cores to parallelize computations
+#' @param id            unique identifer for this analysis (required if 
+#'                      \code{igphyml} or \code{dnapars} specified)
+#' @param build           program to use for tree building (phangorn, dnapars, igphyml)
+#' @param exec           location of desired phylogenetic executable
 #' @param quiet           amount of rubbish to print to console
 #' @param rm_temp       remove temporary files (default=TRUE)
 #' @param rep             current bootstrap replicate (experimental)
 #' @param seq           column name containing sequence information
+#' @param boot_part     is  "locus" bootstrap columns for each locus separately
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
 #'  
 #' @export
-bootstrapping <- function(clones, permutations,
+getBootstraps <- function(clones, permutations,
                           nproc=1, dir=NULL, id=NULL, build="pratchet", exec=NULL, 
                           quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", ...){
