@@ -2190,7 +2190,8 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 
 
 
-#' update pa more! getBootstraps is name
+#' Creates a bootstrap distribution for clone sequence alignments, and returns estimated 
+#' trees for each bootstrap replicate as a nested list as a new input tibble column.
 #' 
 #' \code{getBootstraps} Phylogenetic bootstrap function.
 #' @param clones         tibble \code{airrClone} objects, the output of 
@@ -2210,7 +2211,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 #' @param boot_part     is  "locus" bootstrap columns for each locus separately
 #' @param ...        additional arguments to be passed to tree building program
 #'
-#' @return   A list of trees and/or switch counts for each bootstrap replicate.
+#' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
 #' @export
 getBootstraps <- function(clones, permutations,
