@@ -194,6 +194,15 @@ function(data, id="sequence_id", seq="sequence_alignment",
         }
         hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
         altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+
+        if(any(hcd[[germ]][1] != hcd[[germ]]) || 
+            any(altd[[germ]][1] != altd[[germ]])){
+            stop(paste0("Germline sequences for clone ",
+                unique(dplyr::pull(data,clone)),
+                " are not identical. All predicted germline sequences ",
+                "must be identical for each locus within a clone. Be sure to use the",
+                "createGermlines function before formatClones or makeAirrClone."))
+        }
         germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
             outer_only=FALSE)
         lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
@@ -201,6 +210,24 @@ function(data, id="sequence_id", seq="sequence_alignment",
         if(pad_end){
              germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
             lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
+             length <- max(c(nchar(germline), max(nchar(hcd[[seq]]))))
+            llength <- max(c(nchar(lgermline),max(nchar(altd[[seq]]))))
+            if(length > nchar(germline)){
+                warning(paste0(
+                    "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+                    ", may indicate misalignment.",
+                    " Should not happen if using createGermlines."))
+                germline <- alakazam::padSeqEnds(germline, 
+                    pad_char=mask_char, mod3=mod3, len=length)
+            }
+            if(length > nchar(lgermline)){
+                warning(paste0(
+                    "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+                    ", may indicate misalignment.",
+                    "Should not happen if using createGermlines."))
+                lgermline <- alakazam::padSeqEnds(lgermline, 
+                    pad_char=mask_char, mod3=mod3, len=length)
+            }
         }
         hlgermline <- paste0(germline,lgermline)
         tmp_df <- hc
@@ -244,11 +271,27 @@ function(data, id="sequence_id", seq="sequence_alignment",
             tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], 
                 pad_char=mask_char, mod3=mod3)
         }
+        if(any(data[[germ]][1] != data[[germ]])){
+            stop(paste0("Germline sequences for clone ",
+                unique(dplyr::pull(data,clone)),
+                " are not identical. All predicted germline sequences ",
+                "must be identical within a clone. Be sure to use the",
+                "createGermlines function before formatClones or makeAirrClone."))
+        }
         germline <- alakazam::maskSeqGaps(data[[germ]][1], 
             mask_char=mask_char, outer_only=FALSE)
         if(pad_end){
             germline <- alakazam::padSeqEnds(germline, 
                 pad_char=mask_char, mod3=mod3)
+            length <- max(c(nchar(germline),max(nchar(tmp_df[[seq]]))))
+            if(length > nchar(germline)){
+                warning(paste0(
+                    "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+                    ", may indicate misalignment.",
+                    " Should not happen if using createGermlines."))
+                germline <- alakazam::padSeqEnds(germline, 
+                    pad_char=mask_char, mod3=mod3, len=length)
+            }
         }
         check <- alakazam::checkColumns(data, c(locus))
         if(check == TRUE){
@@ -352,8 +395,6 @@ function(data, id="sequence_id", seq="sequence_alignment",
         region=regions,
         numbers=numbers,
         phylo_seq=phylo_seq)
-
-
     outclone
 }
 

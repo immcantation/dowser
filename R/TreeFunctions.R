@@ -681,7 +681,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
     seqs <- strsplit(seqs,split="")
     names(seqs) <- names
     lengths = unlist(lapply(seqs,function(x)length(x)))
-    if(sum(lengths != lengths[1]) > 0){
+    if(any(lengths != lengths[1])){
         stop(paste0("Sequence and/or germline lengths of clone ",
             clone@clone," are not equal"))
     }
@@ -1331,6 +1331,23 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     }
 
     data <- clones$data
+    # make sure all sequences and germlines within a clone are the same length
+    length_check <- unlist(lapply(data, function(x){
+        if(x@phylo_seq == "hlsequence"){
+            germline <- x@hlgermline
+            seqs <- x@data$hlsequence
+        }else if(x@phylo_seq == "lsequence"){
+            germline <- x@lgermline
+            seqs <- x@data$lsequence
+        }else{
+            germline <- x@germline
+            seqs <- x@data$sequence
+        }
+        if(any(nchar(germline) != nchar(seqs))){
+            stop(paste0("Sequence and/or germline lengths of clone ",
+                x@clone," are not equal."))
+        }
+    }))
     if(fixtrees){
         if(!"trees" %in% names(clones)){
             stop("trees column must be specified if fixtrees=TRUE")
