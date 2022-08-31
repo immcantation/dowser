@@ -2214,7 +2214,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
 #' @export
-getBootstraps <- function(clones, permutations,
+getBootstraps <- function(clones, bootstraps,
                           nproc=1, dir=NULL, id=NULL, build="pratchet", exec=NULL, 
                           quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", ...){
@@ -2280,7 +2280,7 @@ getBootstraps <- function(clones, permutations,
   }
   bootstrap_trees <- list()
   if(build=="pratchet"){
-    for(i in 1:permutations){
+    for(i in 1:bootstraps){
       trees <- parallel::mclapply(reps,function(x)
         buildPratchet(data[[x]],seq=seqs[x]),
         mc.cores=nproc)
@@ -2288,7 +2288,7 @@ getBootstraps <- function(clones, permutations,
       bootstrap_trees <- append(bootstrap_trees, trees)
     }
   }else if(build=="dnapers" || build=="dnaml"){
-    for(i in 1:permutations){
+    for(i in 1:bootstraps){
       trees <- parallel::mclapply(reps,function(x)
         buildPhylo(data[[x]],
                    exec=exec,
@@ -2300,7 +2300,7 @@ getBootstraps <- function(clones, permutations,
       bootstrap_trees <- append(bootstrap_trees, trees)
     }
   }else if(build=="pml"){
-    for(i in 1:permutations){
+    for(i in 1:bootstraps){
       trees <- parallel::mclapply(reps,function(x)
         buildPML(data[[x]],seq=seqs[x]),
         mc.cores=nproc)
@@ -2313,7 +2313,7 @@ getBootstraps <- function(clones, permutations,
     }else{
       rm_dir <- NULL
     }
-    for(i in 1:permutations){
+    for(i in 1:bootstraps){
       trees <- 
         buildIgphyml(data, 
                      igphyml = exec,
