@@ -1134,21 +1134,9 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
     }
 
     clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=    gsub(":","_",x@data$sequence_id);
+        x@data$sequence_id=gsub(":|;|,|=| ","_",x@data$sequence_id);
         x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub(";","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub(",","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub("=","_",x@data$sequence_id);
-        x })
-    clones$data <- lapply(clones$data,function(x){
-        x@data$sequence_id=gsub(" ","_",x@data$sequence_id);
-        x })
-
+    
     max <- max(unlist(lapply(clones$data,function(x)max(nchar(x@data$sequence_id)))))
     if(max > 1000){
         wc <- which.max(unlist(lapply(clones$data,function(x)

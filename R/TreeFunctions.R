@@ -1390,6 +1390,10 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         if(is.null(trait)){
             stop("trait must be specified when igphyml-based trait reconstruction")
         }
+        # remove problematic characters from trait values
+        data <- lapply(data,function(x){
+            x@data[[trait]] <- gsub(":|;|,|=| ","-",x@data[[trait]])
+            x})
         if(is.null(modelfile)){
             states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
             modelfile <- makeModelFile(states,
@@ -2022,6 +2026,10 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         if(is.null(trait)){
             stop("trait must be specified when running igphyml")
         }
+        # remove problematic characters from trait values
+        data <- lapply(data,function(x){
+            x@data[[trait]] <- gsub(":|;|,|=| ","-",x@data[[trait]])
+            x})
         if(is.null(modelfile)){
             states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
             modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
