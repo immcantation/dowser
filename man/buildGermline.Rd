@@ -30,8 +30,7 @@ buildGermline(
 \arguments{
 \item{receptor}{row from AIRR-table containing sequence of interest}
 
-\item{references}{list of reference segments. Must be specific to organism 
-and locus}
+\item{references}{list of reference segments. Must be specific to locus}
 
 \item{seq}{Column name for sequence alignment}
 
