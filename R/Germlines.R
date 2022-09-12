@@ -587,7 +587,8 @@ buildClonalGermline <- function(receptors, references,
         v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
         amino_acid=amino_acid,...),error=function(e)e)
       if("error" %in% class(germlines)){
-        warning(germlines)
+        warning(paste("Clone",unique(receptors[[clone]]),
+          "germline reconstruction error."))
         germlines  <- list()
         germlines$full <- NA
         germlines$dmask <- NA
@@ -723,7 +724,6 @@ createGermlines <- function(data, references, locus="locus",
     sum(is.na(data[[j_germ_length]])) > 0){
     stop("Missing values in v_germ_length or j_germ_length")
   }
-
   unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
   data[['tmp_row_id']] <- 1:nrow(data)
   complete <- parallel::mclapply(1:nrow(unique_clones), function(x){
@@ -757,12 +757,19 @@ createGermlines <- function(data, references, locus="locus",
       ...)
     })
     gline <- dplyr::bind_rows(glines)
+    gline
   }, mc.cores=nproc)
   results <- dplyr::bind_rows(complete) %>%
       arrange(!!rlang::sym("tmp_row_id")) %>%
       select(-!!rlang::sym("tmp_row_id"))
   if(na.rm){
-    results <- results[!is.na(results$germline_alignment_d_mask),]
+    bad_clones <- unique(results[is.na(results$germline_alignment_d_mask),][[clone]])
+    if(dplyr::n_distinct(bad_clones) > 0){
+      warning(paste("Removing",
+        dplyr::n_distinct(bad_clones),"failed clonal germlines. Clones:",
+          paste(bad_clones,collapse=",")))
+      results <- results[!is.na(results$germline_alignment_d_mask),]
+      }
   }
   results
 }
