@@ -2415,6 +2415,10 @@ getBootstraps <- function(clones, bootstraps,
           bootstraps_df <- rbind(bootstraps_df, to_bind)
         }
         matches <- matching_function_parallel(tree_comp_df, bootstraps_df, 10)
+        if(quiet > 0){
+          print(paste0("The bootstrap matches values for ", clones$clone_id[clone], " are:"))
+          print(matches)
+        }
         matches_df <- as.data.frame(matches)
         matches_df$nodes <- tree_comp_df$node
         for(node in min(matches_df$nodes):max(matches_df$nodes)){
