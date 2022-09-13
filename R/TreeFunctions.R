@@ -185,13 +185,13 @@ readSwitches <- function(file){
 
 # Make bootstrap replicate of clonal alignment
 # 
-# \code{bootstrapClones} Filler
+# \code{lones} Filler
 # @param    clone     \code{airrClone} object
 # @param    reps      Number of bootstrap replicates
 # @param    partition If "locus" Bootstrap heavy/lights separately
 #
 # @return   A list of \code{airrClone} objects with 
-# bootstrapped sequneces
+# bootstrapped sequences
 bootstrapClones  <- function(clone, reps=100, partition="locus"){
     if(clone@phylo_seq == "hlsequence"){
         sarray <- strsplit(clone@data$hlsequence,split="")
@@ -246,7 +246,15 @@ bootstrapClones  <- function(clone, reps=100, partition="locus"){
 #' @param    igphyml       location of igphyml executable
 #' @param    mode          return trees or count switches? (switches or trees)
 #' @param    type          get observed switches or permuted switches?
-#' @param    nproc         cores to use for parallelization
+#' @param    n# Make bootstrap replicate of clonal alignment
+# 
+# \code{lones} Filler
+# @param    clone     \code{airrClone} object
+# @param    reps      Number of bootstrap replicates
+# @param    partition If "locus" Bootstrap heavy/lights separately
+#
+# @return   A list of \code{airrClone} objects with 
+# bootstrapped sequencesproc         cores to use for parallelization
 #' @param    quiet         amount of rubbish to print
 #' @param    rm_files      remove temporary files?
 #' @param    rm_dir        remove temporary directory?
@@ -2189,6 +2197,62 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 }
 
 
+# Turn your tree data into a nodes based dataframe
+# 
+# \code{lones} Filler
+# @param    input_tree     \code{phylo} object
+# @param    bootstrap_number      Which bootstrap replicate to use. With only one tree, this has to be one. 
+#
+# @return   A dataframe that lists out the value of found or absent tips for each node within a tree. This is done for each tree inputted.
+# bootstrapped sequences
+splits_func <- function(input_tree, bootstrap_number){
+  # NOTE: ASSUMES subtrees list is indexed by internal node number (seems to be the case)
+  splits <- data.frame(found=I(lapply(subtrees(input_tree[[bootstrap_number]]),function(x)x$tip.label)))
+  splits$node <- (Ntip(input_tree[[bootstrap_number]]) + 1):(Ntip(input_tree[[bootstrap_number]]) + input_tree[[bootstrap_number]]$Nnode)
+  
+  # find the difference between tip labels and the tips in 'found'
+  full_tips <- as.vector(input_tree[[bootstrap_number]]$tip.label)
+  absent <- c()
+  for(i in 1:length(splits$found)){
+    found <- as.vector(splits$found[[i]])
+    not_found <- setdiff(full_tips, found)
+    absent[i] <- list(not_found)
+  }
+  splits$absent <- data.frame(absent=I(absent))
+  splits$tree_num <- bootstrap_number
+  # reorder it to make sense -- tree number, node number, found tips, and absent tips
+  splits <- splits[, c(4,2, 1, 3)]
+  return(splits)
+}
+
+# Match the tips found in the various nodes of two different trees. 
+# 
+# \code{lones} Filler
+# @param    tree_comp_df     The tree the bootstrap tree nodes should be compared to. This needs to already be a dataframe made from the splits_func.
+# @param    bootstrap_df     The dataframe made by the splits_func that has the found and absent tips in the bootstrap trees.
+# @param    nproc            The number of processors to be used
+#
+# @return   Returns a vector with the number of matches. 
+matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
+  #print("matching")
+  match_vector <- vector()
+  match_vector = unlist(mclapply(unique(tree_comp_df$node), function(node){
+    #print(node)
+    sub_full_tree_df <- tree_comp_df[which(tree_comp_df$node==node),]
+    matches = unlist(lapply(1:length(bootstrap_df$tree_num), function(x){
+      match_test1 <- dplyr::setequal(bootstrap_df$found[[x]], sub_full_tree_df$found[[1]])
+      match_test2 <- dplyr::setequal(bootstrap_df$found[[x]], sub_full_tree_df$absent[[1]])
+      if(match_test1 == TRUE || match_test2 == TRUE){
+        return(1)
+      }else{
+        return(0)
+      }}))
+    sum(matches)
+  },mc.cores=nproc))
+  match_vector <- match_vector[!is.na(match_vector)]
+  return(match_vector)
+}
+
 
 #' Creates a bootstrap distribution for clone sequence alignments, and returns estimated 
 #' trees for each bootstrap replicate as a nested list as a new input tibble column.
@@ -2215,8 +2279,8 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 #'  
 #' @export
 getBootstraps <- function(clones, bootstraps,
-                          nproc=1, dir=NULL, id=NULL, build="pratchet", exec=NULL, 
-                          quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
+                          nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
+                          exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", ...){
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
@@ -2333,6 +2397,37 @@ getBootstraps <- function(clones, bootstraps,
     clone_bootstraps <- lapply(bootstrap_trees, function(x)x[[i]])
     clone_bootstraps <- list(clone_bootstraps)
     clones$bootstrap_trees[i] <- clone_bootstraps
+  }
+  if(bootstrap_nodes == FALSE){
+    return(clones)
+  }
+  else if(bootstrap_nodes == TRUE){
+    if(!"trees" %in% colnames(clones)){
+      stop("A tree column created by getTrees(your input data) is required for bootstrap_nodes == TRUE")
+    }
+    else{
+      for (clone in 1:length(clones$clone_id)) {
+        b_trees <- clones[clone,]$bootstrap_trees
+        tree_comp_df <- splits_func(clones[clone,]$trees,1)
+        bootstraps_df <- c()
+        for (i in 1:length(b_trees[[1]])) {
+          to_bind <- splits_func(b_trees[[1]],i)
+          bootstraps_df <- rbind(bootstraps_df, to_bind)
+        }
+        matches <- matching_function_parallel(tree_comp_df, bootstraps_df, 10)
+        matches_df <- as.data.frame(matches)
+        matches_df$nodes <- tree_comp_df$node
+        if(quiet != 0){
+          print()
+        }
+        for(i in 1:length(b_trees[[1]])){
+          for(node in min(matches_df$nodes):max(matches_df$nodes)){
+            b_trees[[1]][[i]]$nodes[[node]]$bootstrap_value <- subset(matches_df, nodes ==node)$matches
+          }
+        }
+        clones[clone,]$bootstrap_trees <- b_trees
+      }
+    }
   }
   return(clones)
 }
