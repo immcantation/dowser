@@ -2417,15 +2417,9 @@ getBootstraps <- function(clones, bootstraps,
         matches <- matching_function_parallel(tree_comp_df, bootstraps_df, 10)
         matches_df <- as.data.frame(matches)
         matches_df$nodes <- tree_comp_df$node
-        if(quiet != 0){
-          print()
+        for(node in min(matches_df$nodes):max(matches_df$nodes)){
+          clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- subset(matches_df, nodes == node)$matches
         }
-        for(i in 1:length(b_trees[[1]])){
-          for(node in min(matches_df$nodes):max(matches_df$nodes)){
-            b_trees[[1]][[i]]$nodes[[node]]$bootstrap_value <- subset(matches_df, nodes ==node)$matches
-          }
-        }
-        clones[clone,]$bootstrap_trees <- b_trees
       }
     }
   }
