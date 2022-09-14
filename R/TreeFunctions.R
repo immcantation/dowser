@@ -2209,15 +2209,17 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 # bootstrapped sequences
 splits_func <- function(input_tree, bootstrap_number){
   # NOTE: ASSUMES subtrees list is indexed by internal node number (seems to be the case)
-  # KEN: Remember always call package::function when doing method calls in R packages
   # Can we add a sanity check for the subtree/node assumption?
-  tree <- input_tree[[bootstrap_number]] #KEN: cleans up code to store as variable
+  # COLE: See below. ape's nodepath shows the paths of the nodes in the tree. 
+  # Everything should be rooted at the first node (germline)   # and we can test
+  # that as well as if our splits df records the same root node as nodepath does.
+  tree <- input_tree[[bootstrap_number]] 
   splits <- data.frame(found=I(lapply(ape::subtrees(tree),function(x)x$tip.label)))
   splits$node <- (ape::Ntip(tree) + 1):(ape::Ntip(tree) + tree$Nnode)
   
   # find the difference between tip labels and the tips in 'found'
-  full_tips <- tree$tip.label #KEN: should already be a vector
-  absent <- list() #KEN: for list of lists, start out as list, then add elements with double brackets
+  full_tips <- tree$tip.label 
+  absent <- list() 
   for(i in 1:length(splits$found)){
     found <- splits$found[[i]]
     not_found <- setdiff(full_tips, found)
@@ -2225,16 +2227,31 @@ splits_func <- function(input_tree, bootstrap_number){
   }
   splits$absent <- data.frame(absent=I(absent))
   splits$tree_num <- bootstrap_number
-  # reorder it to make sense -- tree number, node number, found tips, and absent tips
+  # reorder it to make sense -- tree number, node number, found tips, and absent
   splits <- splits[, c(4, 2, 1, 3)]
+  # add the sanity check 
+  sanity <- ape::nodepath(input_tree[[bootstrap_number]])
+  sanity <- unlist(lapply(1:length(sanity), function(x) sanity[[x]][[1]]))
+  check_one <- unlist(lapply(1:length(sanity), 
+                             function(x) sanity[x] == sanity[1]))
+  if(isFALSE(check_one)){
+    stop("input tree is not indexed by internal node number")
+  }
+  # check two 
+  if(splits$node[1] != sanity[1]){
+    stop("input tree is not indexed by internal node number")
+  }
   return(splits)
 }
 
 # Match the tips found in the various nodes of two different trees. 
 # 
 # \code{lones} Filler
-# @param    tree_comp_df     The tree the bootstrap tree nodes should be compared to. This needs to already be a dataframe made from the splits_func.
-# @param    bootstrap_df     The dataframe made by the splits_func that has the found and absent tips in the bootstrap trees.
+# @param    tree_comp_df     The tree the bootstrap tree nodes should be 
+#                            compared to. This needs to already be a dataframe 
+#                            made from splits_func.
+# @param    bootstrap_df     The dataframe made by the splits_func that has the 
+#                            found and absent tips in the bootstrap trees.
 # @param    nproc            The number of processors to be used
 #
 # @return   Returns a vector with the number of matches. 
@@ -2256,8 +2273,14 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
       }}))
     sum(matches)
   },mc.cores=nproc))
-  match_vector <- match_vector[!is.na(match_vector)]
-  return(match_vector)
+  # COLE: I took out the is.na since every value should 0 or greater. I also 
+  # added in the df with the proper node id matched with the matches value
+  #match_vector <- match_vector[!is.na(match_vector)]
+  nodes <- 1:max(tree_comp_df$node)
+  matches <- rep(NA, min(tree_comp_df$node)-1)
+  matches <- append(matches, match_vector, after=length(matches))
+  matches_df <- data.frame(nodes, matches)
+  return(matches_df)
 }
 
 # KEN: Output very suspicious, this may be one we need to do ourselves..
@@ -2275,14 +2298,17 @@ consensus_tree <- function(trees){
 }
 
 
-#' Creates a bootstrap distribution for clone sequence alignments, and returns estimated 
-#' trees for each bootstrap replicate as a nested list as a new input tibble column.
+#' Creates a bootstrap distribution for clone sequence alignments, and returns  
+#' estimated trees for each bootstrap replicate as a nested list as a new input 
+#' tibble column.
 #' 
 #' \code{getBootstraps} Phylogenetic bootstrap function.
 #' @param clones         tibble \code{airrClone} objects, the output of 
 #'                      \link{formatClones}
 #' @param permutations    number of bootstrap replicates to perform
 #' @param nproc            number of cores to parallelize computations
+#' @param bootstrap_nodes a logical if the the nodes for each tree in the trees
+#'                        column (required) should report their bootstrap value
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
 #' @param id            unique identifer for this analysis (required if 
@@ -2353,10 +2379,7 @@ getBootstraps <- function(clones, bootstraps,
       stop("dir, and id parameters must be specified when running dnapars")
     }
   }
-  # KEN: was only doing one bootstrap replicate of the data
-  # changed so a new replicate is done for each bootstrap
-  # should probably parallelize by replicate and not tree, but this okay for now
-  # removed a layer from the resulting bootstrap_trees list
+  # KEN: should probably parallelize by replicate and not tree, but this okay for now
   bootstrap_trees <- list()
   for(bootstrap in 1:bootstraps){
       tmp_data <- list()
@@ -2433,30 +2456,20 @@ getBootstraps <- function(clones, bootstraps,
   }
   else if(bootstrap_nodes){
     if(!"trees" %in% colnames(clones)){
-      stop("A tree column created by getTrees(your input data) is required for bootstrap_nodes=TRUE")
+      stop("A tree column created by getTrees(your input data) is required for 
+           bootstrap_nodes=TRUE")
     }else{
       for(clone in 1:length(clones$clone_id)) {
         b_trees <- clones$bootstrap_trees[[clone]] # KEN: safer if clones is empty
         tree_comp_df <- splits_func(list(clones$trees[[clone]]), 1)
         bootstraps_df <- c()
         # KEN: replace with lapply eventually, okay for now
-        # removed layer from b_trees
         for(i in 1:length(b_trees)){
           to_bind <- splits_func(b_trees,i)
           bootstraps_df <- dplyr::bind_rows(bootstraps_df, to_bind)
         }
-        matches <- matching_function_parallel(tree_comp_df, bootstraps_df, nproc)
-        if(quiet > 0){
-          print(paste0("The bootstrap matches values for ", clones$clone_id[clone], " are:"))
-          print(matches)
-        }
-        # KEN: I'm worried about this part, where we assume that the output from 
-        # matching_function_parallel is always in the right order, especially when we're
-        # removing NA values. It would be more robust if matching_function_parallel returned
-        # a dataframe with the node Id and match value, then you could be sure you're
-        # matching values 1 to 1.
-        matches_df <- as.data.frame(matches)
-        matches_df$nodes <- tree_comp_df$node
+        matches_df <- matching_function_parallel(tree_comp_df, bootstraps_df, 
+                                                 nproc)
         for(node in unique(matches_df$nodes)){
           clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- 
             subset(matches_df, nodes == node)$matches
