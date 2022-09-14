@@ -2214,7 +2214,8 @@ splits_func <- function(input_tree, bootstrap_number){
   # Everything should be rooted at the first node (germline)   # and we can test
   # that as well as if our splits df records the same root node as nodepath does.
   tree <- input_tree[[bootstrap_number]] 
-  splits <- data.frame(found=I(lapply(ape::subtrees(tree),function(x)x$tip.label)))
+  splits <- data.frame(found=I(lapply((Ntip(tree)+1):length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)))
+  #splits <- lapply(Ntip(tree)+1:length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)
   splits$node <- (ape::Ntip(tree) + 1):(ape::Ntip(tree) + tree$Nnode)
   
   # find the difference between tip labels and the tips in 'found'
@@ -2229,21 +2230,29 @@ splits_func <- function(input_tree, bootstrap_number){
   splits$tree_num <- bootstrap_number
   # reorder it to make sense -- tree number, node number, found tips, and absent
   splits <- splits[, c(4, 2, 1, 3)]
-  # add the sanity check 
-  sanity <- ape::nodepath(input_tree[[bootstrap_number]])
-  sanity <- unlist(lapply(1:length(sanity), function(x) sanity[[x]][[1]]))
-  check_one <- unlist(lapply(1:length(sanity), 
-                             function(x) sanity[x] == sanity[1]))
-  if(isFALSE(check_one)){
-    stop("input tree is not indexed by internal node number")
-  }
+  # add the sanity check -- removed since we changed from subtree to 
+  # extract.clades
+  #sanity <- ape::nodepath(input_tree[[bootstrap_number]])
+  #sanity <- unlist(lapply(1:length(sanity), function(x) sanity[[x]][[1]]))
+  #check_one <- unlist(lapply(1:length(sanity), 
+   #                          function(x) sanity[x] == sanity[1]))
+  #if(isFALSE(check_one)){
+   # stop("input tree is not indexed by internal node number")
+  #}
   # check two 
-  if(splits$node[1] != sanity[1]){
-    stop("input tree is not indexed by internal node number")
-  }
+  #if(splits$node[1] != sanity[1]){
+   # stop("input tree is not indexed by internal node number")
+  #}
   return(splits)
 }
 
+# silly functions that will make the matching more robust until I get lapply to play nice
+get_matches <- function(x){
+  subset(x, x%% 2 ==0)
+}
+get_nodes <- function(x){
+  subset(x, x%% 2 !=0)
+}
 # Match the tips found in the various nodes of two different trees. 
 # 
 # \code{lones} Filler
@@ -2271,17 +2280,20 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
       }else{
         return(0)
       }}))
-    sum(matches)
+    dplyr::tibble(nodes = node, matches = sum(matches))
   },mc.cores=nproc))
   # COLE: I took out the is.na since every value should 0 or greater. I also 
   # added in the df with the proper node id matched with the matches value
   #match_vector <- match_vector[!is.na(match_vector)]
-  nodes <- 1:max(tree_comp_df$node)
-  matches <- rep(NA, min(tree_comp_df$node)-1)
-  matches <- append(matches, match_vector, after=length(matches))
-  matches_df <- data.frame(nodes, matches)
-  return(matches_df)
+  node_index <- get_nodes(1:length(match_vector))
+  match_index <- get_matches(1:length(match_vector))
+  nodes <- dplyr::tibble()
+  nodes <- dplyr::tibble(nodes = sapply(unique(node_index), function(x)match_vector[x]))
+  matches <- dplyr::tibble(matches = sapply(unique(match_index), function(x)match_vector[x]))
+  matches <- dplyr::bind_cols(nodes, matches)
+  return(matches)
 }
+
 
 # KEN: Output very suspicious, this may be one we need to do ourselves..
 # Build a bootstrap consensus tree using list of bootstrapped trees
