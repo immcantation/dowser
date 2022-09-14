@@ -36,8 +36,6 @@ reconIgPhyML(
 
 \item{type}{get observed switches or permuted switches?}
 
-\item{nproc}{cores to use for parallelization}
-
 \item{quiet}{amount of rubbish to print}
 
 \item{rm_files}{remove temporary files?}
@@ -56,6 +54,8 @@ reconIgPhyML(
 \item{force_resolve}{continue even if polytomy resolution fails?}
 
 \item{...}{additional arguments}
+
+\item{n#}{Make bootstrap replicate of clonal alignment}
 }
 \value{
 Either a tibble of switch counts or a list

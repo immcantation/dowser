@@ -9,6 +9,7 @@ getBootstraps(
   clones,
   bootstraps,
   nproc = 1,
+  bootstrap_nodes = TRUE,
   dir = NULL,
   id = NULL,
   build = "pratchet",

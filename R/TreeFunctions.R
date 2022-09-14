@@ -2083,7 +2083,8 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             data <- data[order(seqs, decreasing=TRUE)]
         }
         if(!fixtrees){
-          temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data,function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
+          temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data, 
+            function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
           clones_with_trees <- getBootstraps(clones = temp_clones, permutations = 1, nproc = nproc, 
                                              dir = dir, id = id, build = build, exec = exec,
                                              quiet = quiet, rm_temp = rm_temp, seq = seq,
@@ -2196,6 +2197,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
     return(s)
 }
 
+# KEN: Try to keep lines to 80 characters or less, which is here -------------->|
 
 # Turn your tree data into a nodes based dataframe
 # 
@@ -2207,21 +2209,24 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 # bootstrapped sequences
 splits_func <- function(input_tree, bootstrap_number){
   # NOTE: ASSUMES subtrees list is indexed by internal node number (seems to be the case)
-  splits <- data.frame(found=I(lapply(subtrees(input_tree[[bootstrap_number]]),function(x)x$tip.label)))
-  splits$node <- (Ntip(input_tree[[bootstrap_number]]) + 1):(Ntip(input_tree[[bootstrap_number]]) + input_tree[[bootstrap_number]]$Nnode)
+  # KEN: Remember always call package::function when doing method calls in R packages
+  # Can we add a sanity check for the subtree/node assumption?
+  tree <- input_tree[[bootstrap_number]] #KEN: cleans up code to store as variable
+  splits <- data.frame(found=I(lapply(ape::subtrees(tree),function(x)x$tip.label)))
+  splits$node <- (ape::Ntip(tree) + 1):(ape::Ntip(tree) + tree$Nnode)
   
   # find the difference between tip labels and the tips in 'found'
-  full_tips <- as.vector(input_tree[[bootstrap_number]]$tip.label)
-  absent <- c()
+  full_tips <- tree$tip.label #KEN: should already be a vector
+  absent <- list() #KEN: for list of lists, start out as list, then add elements with double brackets
   for(i in 1:length(splits$found)){
-    found <- as.vector(splits$found[[i]])
+    found <- splits$found[[i]]
     not_found <- setdiff(full_tips, found)
-    absent[i] <- list(not_found)
+    absent[[i]] <- not_found
   }
   splits$absent <- data.frame(absent=I(absent))
   splits$tree_num <- bootstrap_number
   # reorder it to make sense -- tree number, node number, found tips, and absent tips
-  splits <- splits[, c(4,2, 1, 3)]
+  splits <- splits[, c(4, 2, 1, 3)]
   return(splits)
 }
 
@@ -2235,14 +2240,16 @@ splits_func <- function(input_tree, bootstrap_number){
 # @return   Returns a vector with the number of matches. 
 matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
   #print("matching")
-  match_vector <- vector()
-  match_vector = unlist(mclapply(unique(tree_comp_df$node), function(node){
+  match_vector <- c()
+  match_vector = unlist(parallel::mclapply(unique(tree_comp_df$node), function(node){
     #print(node)
-    sub_full_tree_df <- tree_comp_df[which(tree_comp_df$node==node),]
+    # KEN: There must be a more efficient way of doing this but I can't think of 
+    # one right now
+    sub_full_tree_df <- tree_comp_df[tree_comp_df$node==node,]
     matches = unlist(lapply(1:length(bootstrap_df$tree_num), function(x){
       match_test1 <- dplyr::setequal(bootstrap_df$found[[x]], sub_full_tree_df$found[[1]])
       match_test2 <- dplyr::setequal(bootstrap_df$found[[x]], sub_full_tree_df$absent[[1]])
-      if(match_test1 == TRUE || match_test2 == TRUE){
+      if(match_test1 || match_test2){
         return(1)
       }else{
         return(0)
@@ -2251,6 +2258,20 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
   },mc.cores=nproc))
   match_vector <- match_vector[!is.na(match_vector)]
   return(match_vector)
+}
+
+# KEN: Output very suspicious, this may be one we need to do ourselves..
+# Build a bootstrap consensus tree using list of bootstrapped trees
+# 
+# \code{lones} Filler
+# @param    trees     List of trees to use for tree building
+#
+# @return   Returns a vector with the number of matches. 
+consensus_tree <- function(trees){
+  consensus <- ape::consensus(trees, check.labels=TRUE)
+  consensus$edge.length <- rep(1, nrow(consensus$edge))
+  consenus <- rerootTree(consensus, germline="Germline", verbose=0)
+  return(consensus)
 }
 
 
@@ -2332,97 +2353,113 @@ getBootstraps <- function(clones, bootstraps,
       stop("dir, and id parameters must be specified when running dnapars")
     }
   }
-  for(i in 1:length(data)){
-    data[[i]] <- bootstrapClones(data[[i]], reps=1, partition=boot_part)[[1]]
-  }
-  if(quiet > 1){print("building trees")}
-  reps <- as.list(1:length(data))
-  if(is.null(seq)){
-    seqs <- unlist(lapply(data,function(x)x@phylo_seq))
-  }else{
-    seqs <- rep(seq,length=length(data))
-  }
+  # KEN: was only doing one bootstrap replicate of the data
+  # changed so a new replicate is done for each bootstrap
+  # should probably parallelize by replicate and not tree, but this okay for now
+  # removed a layer from the resulting bootstrap_trees list
   bootstrap_trees <- list()
-  if(build=="pratchet"){
-    for(i in 1:bootstraps){
-      trees <- parallel::mclapply(reps,function(x)
-        buildPratchet(data[[x]],seq=seqs[x]),
-        mc.cores=nproc)
-      trees <- list(trees)
-      bootstrap_trees <- append(bootstrap_trees, trees)
-    }
-  }else if(build=="dnapers" || build=="dnaml"){
-    for(i in 1:bootstraps){
-      trees <- parallel::mclapply(reps,function(x)
-        buildPhylo(data[[x]],
-                   exec=exec,
-                   temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
-                   rm_temp = rm_temp,
-                   seq=seqs[x]),
-        mc.cores=nproc)
-      trees <- list(trees)
-      bootstrap_trees <- append(bootstrap_trees, trees)
-    }
-  }else if(build=="pml"){
-    for(i in 1:bootstraps){
-      trees <- parallel::mclapply(reps,function(x)
-        buildPML(data[[x]],seq=seqs[x]),
-        mc.cores=nproc)
-      trees <- list()
-      bootstrap_trees <- append(bootstrap_trees, trees)
-    }
-  }else if(build=="igphyml"){
-    if(rm_temp){
-      rm_dir <- file.path(dir,paste0(id,rep))
-    }else{
-      rm_dir <- NULL
-    }
-    for(i in 1:bootstraps){
-      trees <- 
-        buildIgphyml(data, 
-                     igphyml = exec,
-                     temp_path = file.path(dir,paste0(id,rep)),
-                     rm_files=rm_tmp,
-                     rm_dir = rm_dir,
-                     nproc=nproc,
-                     id=id)
-      trees <- list(trees)
-      bootstrap_trees <- append(bootstrap_trees, trees)
-    }
-  }else{
-    stop("build specification",build,"not recognized")
+  for(bootstrap in 1:bootstraps){
+      tmp_data <- list()
+      for(i in 1:length(data)){
+        tmp_data[[i]] <- bootstrapClones(data[[i]], reps=1, partition=boot_part)[[1]]
+      }
+      if(quiet > 1){print("building trees")}
+      reps <- as.list(1:length(tmp_data))
+      if(is.null(seq)){
+        seqs <- unlist(lapply(tmp_data,function(x)x@phylo_seq))
+      }else{
+        seqs <- rep(seq,length=length(tmp_data))
+      }
+      if(build=="pratchet"){
+        #for(i in 1:bootstraps){
+          trees <- parallel::mclapply(reps,function(x)
+            buildPratchet(tmp_data[[x]],seq=seqs[x]),
+            mc.cores=nproc)
+          trees <- list(trees)
+          #bootstrap_trees <- append(bootstrap_trees, trees)
+        #}
+      }else if(build=="dnapers" || build=="dnaml"){
+        #for(i in 1:bootstraps){
+          trees <- parallel::mclapply(reps,function(x)
+            buildPhylo(tmp_data[[x]],
+                       exec=exec,
+                       temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
+                       rm_temp = rm_temp,
+                       seq=seqs[x]),
+            mc.cores=nproc)
+          #trees <- list(trees)
+          #bootstrap_trees <- append(bootstrap_trees, trees)
+        #}
+      }else if(build=="pml"){
+        #for(i in 1:bootstraps){
+          trees <- parallel::mclapply(reps,function(x)
+            buildPML(tmp_data[[x]],seq=seqs[x]),
+            mc.cores=nproc)
+          #trees <- list()
+          #bootstrap_trees <- append(bootstrap_trees, trees)
+        #}
+      }else if(build=="igphyml"){
+        if(rm_temp){
+          rm_dir <- file.path(dir,paste0(id,rep))
+        }else{
+          rm_dir <- NULL
+        }
+        #for(i in 1:bootstraps){
+          trees <- 
+            buildIgphyml(tmp_data, 
+                         igphyml = exec,
+                         temp_path = file.path(dir,paste0(id,rep)),
+                         rm_files=rm_tmp,
+                         rm_dir = rm_dir,
+                         nproc=nproc,
+                         id=id)
+          #trees <- list(trees)
+          #bootstrap_trees <- append(bootstrap_trees, trees)
+        #}
+      }else{
+        stop("build specification",build,"not recognized")
+      }
+      bootstrap_trees[bootstrap] = trees
   }
-  clones$bootstrap_trees <- "NOTHING TO LOOK AT HERE"
+  # KEN: removed a layer from the bootstrap_trees list
+  clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
-    clone_bootstraps <- lapply(bootstrap_trees, function(x)x[[i]])
-    clone_bootstraps <- list(clone_bootstraps)
-    clones$bootstrap_trees[i] <- clone_bootstraps
+    clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
+    #clone_bootstraps <- list(clone_bootstraps)
+    #clones$bootstrap_trees[i] <- clone_bootstraps
   }
-  if(bootstrap_nodes == FALSE){
+  if(!bootstrap_nodes){
     return(clones)
   }
-  else if(bootstrap_nodes == TRUE){
+  else if(bootstrap_nodes){
     if(!"trees" %in% colnames(clones)){
-      stop("A tree column created by getTrees(your input data) is required for bootstrap_nodes == TRUE")
-    }
-    else{
-      for (clone in 1:length(clones$clone_id)) {
-        b_trees <- clones[clone,]$bootstrap_trees
-        tree_comp_df <- splits_func(clones[clone,]$trees,1)
+      stop("A tree column created by getTrees(your input data) is required for bootstrap_nodes=TRUE")
+    }else{
+      for(clone in 1:length(clones$clone_id)) {
+        b_trees <- clones$bootstrap_trees[[clone]] # KEN: safer if clones is empty
+        tree_comp_df <- splits_func(list(clones$trees[[clone]]), 1)
         bootstraps_df <- c()
-        for (i in 1:length(b_trees[[1]])) {
-          to_bind <- splits_func(b_trees[[1]],i)
-          bootstraps_df <- rbind(bootstraps_df, to_bind)
+        # KEN: replace with lapply eventually, okay for now
+        # removed layer from b_trees
+        for(i in 1:length(b_trees)){
+          to_bind <- splits_func(b_trees,i)
+          bootstraps_df <- dplyr::bind_rows(bootstraps_df, to_bind)
         }
-        matches <- matching_function_parallel(tree_comp_df, bootstraps_df, 10)
+        matches <- matching_function_parallel(tree_comp_df, bootstraps_df, nproc)
         if(quiet > 0){
           print(paste0("The bootstrap matches values for ", clones$clone_id[clone], " are:"))
           print(matches)
         }
+        # KEN: I'm worried about this part, where we assume that the output from 
+        # matching_function_parallel is always in the right order, especially when we're
+        # removing NA values. It would be more robust if matching_function_parallel returned
+        # a dataframe with the node Id and match value, then you could be sure you're
+        # matching values 1 to 1.
         matches_df <- as.data.frame(matches)
         matches_df$nodes <- tree_comp_df$node
-        for(node in min(matches_df$nodes):max(matches_df$nodes)){
-          clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- subset(matches_df, nodes == node)$matches
+        for(node in unique(matches_df$nodes)){
+          clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- 
+            subset(matches_df, nodes == node)$matches
         }
       }
     }
