@@ -2246,13 +2246,6 @@ splits_func <- function(input_tree, bootstrap_number){
   return(splits)
 }
 
-# silly functions that will make the matching more robust until I get lapply to play nice
-get_matches <- function(x){
-  subset(x, x%% 2 ==0)
-}
-get_nodes <- function(x){
-  subset(x, x%% 2 !=0)
-}
 # Match the tips found in the various nodes of two different trees. 
 # 
 # \code{lones} Filler
@@ -2267,7 +2260,7 @@ get_nodes <- function(x){
 matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
   #print("matching")
   match_vector <- c()
-  match_vector = unlist(parallel::mclapply(unique(tree_comp_df$node), function(node){
+  match_vector = parallel::mclapply(unique(tree_comp_df$node), function(node){
     #print(node)
     # KEN: There must be a more efficient way of doing this but I can't think of 
     # one right now
@@ -2281,17 +2274,9 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
         return(0)
       }}))
     dplyr::tibble(nodes = node, matches = sum(matches))
-  },mc.cores=nproc))
-  # COLE: I took out the is.na since every value should 0 or greater. I also 
-  # added in the df with the proper node id matched with the matches value
-  #match_vector <- match_vector[!is.na(match_vector)]
-  node_index <- get_nodes(1:length(match_vector))
-  match_index <- get_matches(1:length(match_vector))
-  nodes <- dplyr::tibble()
-  nodes <- dplyr::tibble(nodes = sapply(unique(node_index), function(x)match_vector[x]))
-  matches <- dplyr::tibble(matches = sapply(unique(match_index), function(x)match_vector[x]))
-  matches <- dplyr::bind_cols(nodes, matches)
-  return(matches)
+  },mc.cores=nproc)
+  match_vector <- dplyr::bind_rows(match_vector)
+  return(match_vector)
 }
 
 
