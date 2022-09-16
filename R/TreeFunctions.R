@@ -2214,8 +2214,6 @@ splits_func <- function(input_tree, bootstrap_number){
   # Everything should be rooted at the first node (germline)   # and we can test
   # that as well as if our splits df records the same root node as nodepath does.
   tree <- input_tree[[bootstrap_number]] 
-  #splits <- data.frame(found=I(lapply((Ntip(tree)+1):length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)))
-  #splits <- lapply(Ntip(tree)+1:length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)
   splits <- data.frame(found=I(lapply(ape::subtrees(tree),function(x)x$tip.label)))
   splits$node <- (ape::Ntip(tree) + 1):(ape::Ntip(tree) + tree$Nnode)
   
@@ -2231,12 +2229,11 @@ splits_func <- function(input_tree, bootstrap_number){
   splits$tree_num <- bootstrap_number
   # reorder it to make sense -- tree number, node number, found tips, and absent
   splits <- splits[, c(4, 2, 1, 3)]
-  # add the sanity check -- removed since we changed from subtree to 
-  # extract.clades
+  # add the sanity check 
   sanity <- ape::nodepath(input_tree[[bootstrap_number]])
   sanity <- unlist(lapply(1:length(sanity), function(x) sanity[[x]][[1]]))
   check_one <- unlist(lapply(1:length(sanity), 
-   #                          function(x) sanity[x] == sanity[1]))
+                             function(x) sanity[x] == sanity[1]))
   if(isFALSE(check_one)){
     stop("input tree is not indexed by internal node number")
   }
