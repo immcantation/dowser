@@ -2214,8 +2214,9 @@ splits_func <- function(input_tree, bootstrap_number){
   # Everything should be rooted at the first node (germline)   # and we can test
   # that as well as if our splits df records the same root node as nodepath does.
   tree <- input_tree[[bootstrap_number]] 
-  splits <- data.frame(found=I(lapply((Ntip(tree)+1):length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)))
+  #splits <- data.frame(found=I(lapply((Ntip(tree)+1):length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)))
   #splits <- lapply(Ntip(tree)+1:length(tree$nodes), function(x)ape::extract.clade(tree, node = x)$tip.label)
+  splits <- data.frame(found=I(lapply(ape::subtrees(tree),function(x)x$tip.label)))
   splits$node <- (ape::Ntip(tree) + 1):(ape::Ntip(tree) + tree$Nnode)
   
   # find the difference between tip labels and the tips in 'found'
@@ -2232,17 +2233,17 @@ splits_func <- function(input_tree, bootstrap_number){
   splits <- splits[, c(4, 2, 1, 3)]
   # add the sanity check -- removed since we changed from subtree to 
   # extract.clades
-  #sanity <- ape::nodepath(input_tree[[bootstrap_number]])
-  #sanity <- unlist(lapply(1:length(sanity), function(x) sanity[[x]][[1]]))
-  #check_one <- unlist(lapply(1:length(sanity), 
+  sanity <- ape::nodepath(input_tree[[bootstrap_number]])
+  sanity <- unlist(lapply(1:length(sanity), function(x) sanity[[x]][[1]]))
+  check_one <- unlist(lapply(1:length(sanity), 
    #                          function(x) sanity[x] == sanity[1]))
-  #if(isFALSE(check_one)){
-   # stop("input tree is not indexed by internal node number")
-  #}
+  if(isFALSE(check_one)){
+    stop("input tree is not indexed by internal node number")
+  }
   # check two 
-  #if(splits$node[1] != sanity[1]){
-   # stop("input tree is not indexed by internal node number")
-  #}
+  if(splits$node[1] != sanity[1]){
+    stop("input tree is not indexed by internal node number")
+  }
   return(splits)
 }
 
