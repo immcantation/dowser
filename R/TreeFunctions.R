@@ -246,15 +246,7 @@ bootstrapClones  <- function(clone, reps=100, partition="locus"){
 #' @param    igphyml       location of igphyml executable
 #' @param    mode          return trees or count switches? (switches or trees)
 #' @param    type          get observed switches or permuted switches?
-#' @param    n# Make bootstrap replicate of clonal alignment
-# 
-# \code{lones} Filler
-# @param    clone     \code{airrClone} object
-# @param    reps      Number of bootstrap replicates
-# @param    partition If "locus" Bootstrap heavy/lights separately
-#
-# @return   A list of \code{airrClone} objects with 
-# bootstrapped sequencesproc         cores to use for parallelization
+#' @param    nproc         cores to use for parallelization
 #' @param    quiet         amount of rubbish to print
 #' @param    rm_files      remove temporary files?
 #' @param    rm_dir        remove temporary directory?
@@ -2195,6 +2187,36 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
             lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
             boot_part=boot_part, force_resolve=force_resolve, ...)
     return(s)
+}
+
+
+#' Get the tip labels as part of a clade defined by an internal node
+#' 
+#' \code{getSubTaxa} Gets the tip labels from a clade
+#' @param  node    node number that defines the target clade
+#' @param  tree    \code{phylo} object
+#'
+#' @return   A vector containing tip labels of the clade
+#' @examples
+#' # Get taxa from all subtrees
+#' data(BiopsyTrees)
+#' tree <- BiopsyTrees$trees[[8]]
+#' all_subtrees <- lapply(1:length(tree$nodes), function(x)getSubTaxa(x, tree))
+#' 
+#' @export
+getSubTaxa = function(node, tree){
+    if(node > length(tree$tip.label) + tree$Nnode){
+        stop(paste("Node", node, "too large for tree"))
+    }
+    children <- tree$edge[tree$edge[,1] == node, 2]
+    if(length(children) == 0){
+        if(node > length(tree$tip.label)){
+            stop(paste("Malformed base case at node", node))
+        }
+        return(tree$tip.label[node])
+    }
+    tips <- unlist(lapply(children, function(x)getSubTaxa(x, tree)))
+    return(tips)
 }
 
 # KEN: Try to keep lines to 80 characters or less, which is here -------------->|

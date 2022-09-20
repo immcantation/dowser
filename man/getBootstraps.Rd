@@ -2,8 +2,9 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{getBootstraps}
 \alias{getBootstraps}
-\title{Creates a bootstrap distribution for clone sequence alignments, and returns estimated 
-trees for each bootstrap replicate as a nested list as a new input tibble column.}
+\title{Creates a bootstrap distribution for clone sequence alignments, and returns  
+estimated trees for each bootstrap replicate as a nested list as a new input 
+tibble column.}
 \usage{
 getBootstraps(
   clones,
@@ -27,6 +28,9 @@ getBootstraps(
 \link{formatClones}}
 
 \item{nproc}{number of cores to parallelize computations}
+
+\item{bootstrap_nodes}{a logical if the the nodes for each tree in the trees
+column (required) should report their bootstrap value}
 
 \item{dir}{directory where temporary files will be placed (required
 if \code{igphyml} or \code{dnapars} specified)}
