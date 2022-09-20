@@ -894,7 +894,7 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
         print(paste("clones is of class",class(clones)))
         stop("clones must be a tibble of airrClone objects!")
     }else{
-        if(class(clones$data[[1]]) != "airrClone"){
+        if(!inherits(clones$data[[1]], "airrClone")){
             print(paste("clones is list of class",class(clones$data[[1]])))
             stop("clones must be a list of airrClone objects!")
         }

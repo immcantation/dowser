@@ -1169,7 +1169,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
     print(paste("clones is of class",class(clones)))
     stop("clones must be a tibble of airrClone objects!")
   }else{
-    if(class(clones$data[[1]]) != "airrClone"){
+    if(!inherits(clones$data[[1]], "airrClone")){
       print(paste("clones is list of class",class(clones$data[[1]])))
       stop("clones$data must be a list of airrClone objects!")
     }

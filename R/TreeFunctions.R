@@ -1333,8 +1333,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         if(!"trees" %in% names(clones)){
             stop("trees column must be specified if fixtrees=TRUE")
         }
-        if(class(clones$trees[[1]]) != "phylo"){
-            stop("Trees must be a list of class phylo")
+        if(!inherits(clones$trees[[1]], "phylo")){
+          stop("Trees must be a list of class phylo")
         }
         trees <- clones$trees
     }else{
@@ -1343,10 +1343,10 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     if(is.null(id)){
             id <- "sample"
     }
-    if(class(data) != "list"){
+    if(!inherits(data, "list")){
         data <- list(data)
     }
-    if(class(data[[1]]) != "airrClone"){
+    if(!inherits(data[[1]], "airrClone")){
         stop("Input data must be a list of airrClone objects")
     }
     big <- FALSE
@@ -1409,7 +1409,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         }
     }
 
-    if(class(data) != "list"){
+    if(!inherits(data, "list")){
         data <- list(data)
     }
     if(!is.null(dir)){
@@ -1529,7 +1529,7 @@ scaleBranches <- function(clones, edge_type="mutations"){
         print(paste("clones is of class",class(clones)))
         stop("clones must be a tibble of airrClone objects!")
     }else{
-        if(class(clones$data[[1]]) != "airrClone"){
+        if(!inherits(clones$data[[1]], "airrClone")){
             print(paste("clones is list of class",class(clones$data[[1]])))
             stop("clones must be a list of airrClone objects!")
         }
@@ -1953,7 +1953,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         if(!"trees" %in% names(clones)){
             stop("trees column must be included in input if fixtrees=TRUE (use getTrees first)")
         }
-        if(class(clones$trees[[1]]) != "phylo"){
+        if(!inherits(clones$trees[[1]], "phylo")){
             stop("Trees must be a list of class phylo")
         }
         trees <- clones$trees
@@ -1963,7 +1963,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     if(is.null(id)){
             id <- "sample"
     }
-    if(class(data) != "list"){
+    if(!inherits(data, "list")){
         data <- list(data)
     }
     if(!is.null(dir)){
@@ -1971,7 +1971,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             dir.create(dir)
         }
     }
-    if(class(data[[1]]) != "airrClone"){
+    if(!inherits(data[[1]], "airrClone")){
         stop("Input data must be a list of airrClone objects")
     }
     big <- FALSE
@@ -2338,7 +2338,7 @@ getBootstraps <- function(clones, bootstraps,
   if(is.null(id)){
     id <- "sample"
   }
-  if(class(data) != "list"){
+  if(!inherits(data,"list")){
     data <- list(data)
   }
   if(!is.null(dir)){
@@ -2346,7 +2346,7 @@ getBootstraps <- function(clones, bootstraps,
       dir.create(dir)
     }
   }
-  if(class(data[[1]]) != "airrClone"){
+  if(!inherits(data[[1]], "airrClone")){
     stop("Input data must be a list of airrClone objects")
   }
   big <- FALSE
