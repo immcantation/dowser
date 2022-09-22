@@ -351,31 +351,32 @@ makeAirrClone <-
       new_seq <- "hlsequence"
     }else{
       tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
-                                             mask_char=mask_char, max_mask=max_mask, trim=FALSE)
+          mask_char=mask_char, max_mask=max_mask, trim=FALSE)
       if(pad_end){
-        tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], 
-                                              pad_char=mask_char, mod3=mod3)
+          tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], 
+              pad_char=mask_char, mod3=mod3)
       }
       if(any(data[[germ]][1] != data[[germ]])){
-        stop(paste0("Germline sequences for clone ",
-                    unique(dplyr::pull(data,clone)),
-                    " are not identical. All predicted germline sequences ",
-                    "must be identical within a clone. Be sure to use the",
-                    "createGermlines function before formatClones or makeAirrClone."))
+          stop(paste0("Germline sequences for clone ",
+              unique(dplyr::pull(data,clone)),
+              " are not identical. All predicted germline sequences ",
+              "must be identical within a clone. Be sure to use the",
+              "createGermlines function before formatClones or makeAirrClone."))
       }
       germline <- alakazam::maskSeqGaps(data[[germ]][1], 
-                                        mask_char=mask_char, outer_only=FALSE)
+          mask_char=mask_char, outer_only=FALSE)
       if(pad_end){
-        germline <- alakazam::padSeqEnds(germline, 
-                                         pad_char=mask_char, mod3=mod3)
-        length <- max(c(nchar(germline),max(nchar(tmp_df[[seq]]))))
-        if(length > nchar(germline)){
-          warning(paste0(
-            "Padding germline for clone ",unique(dplyr::pull(data,clone)),
-            ", may indicate misalignment.",
-            " Should not happen if using createGermlines."))
           germline <- alakazam::padSeqEnds(germline, 
-                                           pad_char=mask_char, mod3=mod3, len=length)
+              pad_char=mask_char, mod3=mod3)
+          length <- max(c(nchar(germline),max(nchar(tmp_df[[seq]]))))
+          if(length > nchar(germline)){
+              warning(paste0(
+                  "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+                  ", may indicate misalignment.",
+                  " Should not happen if using createGermlines."))
+              germline <- alakazam::padSeqEnds(germline, 
+                  pad_char=mask_char, mod3=mod3, len=length)
+          }
         }
       }
       check <- alakazam::checkColumns(data, c(locus))
@@ -467,21 +468,21 @@ makeAirrClone <-
     }
     
     outclone <- new("airrClone", 
-                    data=as.data.frame(tmp_df),
-                    clone=as.character(unique(data[[clone]])),
-                    germline=alakazam::maskSeqGaps(germline, mask_char=mask_char, 
-                                                   outer_only=FALSE),
-                    lgermline=alakazam::maskSeqGaps(lgermline, mask_char=mask_char, 
-                                                    outer_only=FALSE),
-                    hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
-                                                     outer_only=FALSE), 
-                    v_gene=alakazam::getGene(data[[v_call]][1]), 
-                    j_gene=alakazam::getGene(data[[j_call]][1]), 
-                    junc_len=data[[junc_len]][1],
-                    locus=chains,
-                    region=regions,
-                    numbers=numbers,
-                    phylo_seq=phylo_seq)
+        data=as.data.frame(tmp_df),
+        clone=as.character(unique(data[[clone]])),
+        germline=alakazam::maskSeqGaps(germline, mask_char=mask_char, 
+           outer_only=FALSE),
+        lgermline=alakazam::maskSeqGaps(lgermline, mask_char=mask_char, 
+           outer_only=FALSE),
+        hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
+           outer_only=FALSE), 
+        v_gene=alakazam::getGene(data[[v_call]][1]), 
+        j_gene=alakazam::getGene(data[[j_call]][1]), 
+        junc_len=data[[junc_len]][1],
+        locus=chains,
+        region=regions,
+        numbers=numbers,
+        phylo_seq=phylo_seq)
     outclone
   }
 
@@ -1255,3 +1256,4 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones <- dplyr::ungroup(clones)
   clones
 }
+

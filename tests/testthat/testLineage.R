@@ -157,19 +157,20 @@ test_that("getGermlines", {
                      junction_length=41,
                      clone_id=c(1,1,1,1,1),
                      subject_id=c(1,1,2,2,2),
+                     locus="IGH",
                      stringsAsFactors=FALSE)
     
     
    references <- list()
-   references$human <- list()
-   references$human$IGH <- list()
-   references$human$IGH$V <- list()
-   references$human$IGH$D <- list()
-   references$human$IGH$J <- list()
-   references$human$IGH$V[["IGHV0-0*02"]] <- "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGA"
-   references$human$IGH$D[["IGHD0-0*01"]] <- "GTATTACGATTTTTGGAGTGGTTATTATACC"
-   references$human$IGH$J[["IGHJ0*01"]] <- "TGATGCTTTTGATGTCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAG"
-   references$human$IGH$J[["IGHJ1*00"]] <- "TGATGCAAAACATGTCTGGGGCCAAGGGACAATGGTCAGGGTCTCTTCAG"
+   references <- list()
+   references$IGH <- list()
+   references$IGH$V <- list()
+   references$IGH$D <- list()
+   references$IGH$J <- list()
+   references$IGH$V[["IGHV0-0*02"]] <- "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGA"
+   references$IGH$D[["IGHD0-0*01"]] <- "GTATTACGATTTTTGGAGTGGTTATTATACC"
+   references$IGH$J[["IGHJ0*01"]] <- "TGATGCTTTTGATGTCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAG"
+   references$IGH$J[["IGHJ1*00"]] <- "TGATGCAAAACATGTCTGGGGCCAAGGGACAATGGTCAGGGTCTCTTCAG"
    # reconstruct germline
    dbg <- createGermlines(db,references,fields="subject_id")
    exp <- db
@@ -251,17 +252,18 @@ test_that("changeo", {
                      J_GERM_END=47,
                      JUNCTION_LENGTH=41,
                      CLONE=1,
+                     LOCUS="IGH",
                      stringsAsFactors=FALSE)
 
     references <- list()
-    references$human <- list()
-    references$human$IGH <- list()
-    references$human$IGH$V <- list()
-    references$human$IGH$D <- list()
-    references$human$IGH$J <- list()
-    references$human$IGH$V[["IGHV0-0*02"]] <- "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGA"
-    references$human$IGH$D[["IGHD0-0*01"]] <- "GTATTACGATTTTTGGAGTGGTTATTATACC"
-    references$human$IGH$J[["IGHJ0*01"]] <- "TGATGCTTTTGATGTCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAG"
+    references <- list()
+    references$IGH <- list()
+    references$IGH$V <- list()
+    references$IGH$D <- list()
+    references$IGH$J <- list()
+    references$IGH$V[["IGHV0-0*02"]] <- "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGA"
+    references$IGH$D[["IGHD0-0*01"]] <- "GTATTACGATTTTTGGAGTGGTTATTATACC"
+    references$IGH$J[["IGHJ0*01"]] <- "TGATGCTTTTGATGTCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAG"
 
     # reconstruct germline
     dbg <- createGermlines(db,references,
@@ -270,7 +272,7 @@ test_that("changeo", {
   v_call="V_CALL", d_call="D_CALL", j_call="J_CALL",
   v_germ_start="V_GERM_START_IMGT",v_germ_end="V_GERM_END_IMGT",
   d_germ_start="D_GERM_START",d_germ_end="D_GERM_END",
-  j_germ_start="J_GERM_START",j_germ_end="J_GERM_END")
+  j_germ_start="J_GERM_START",j_germ_end="J_GERM_END",locus="LOCUS")
 
     exp <- db
     exp$SEQUENCE_IMGT=c(

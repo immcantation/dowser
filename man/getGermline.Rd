@@ -20,8 +20,8 @@ getGermline(
 \arguments{
 \item{receptor}{row from AIRR-table containing sequence of interest}
 
-\item{references}{list of reference segments. Must be specific to organism, 
-locus, and segment}
+\item{references}{list of reference segments. Must be specific to
+locus and segment}
 
 \item{segment}{Gene segment to search. Must be V, D, or J.}
 

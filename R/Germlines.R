@@ -9,8 +9,7 @@
 #' @param dir      directory containing Immcantation-formatted IMGT database
 #' @param quiet    print warnings?
 #' @return List of lists, leading to IMGT-gapped nucleotide sequences.
-#' Structure of object is list[[organism]][[locus]][[segment]]
-#' Organism refers to species (i.e. human, mouse)
+#' Structure of object is list[[locus]][[segment]]
 #' locus refers to locus (e.g. IGH, IGK, TRA)
 #' segment refers to gene segment caegory (V, D, or J)
 #' @details Input directory must be formatted to Immcantation standard.
@@ -40,7 +39,6 @@ readIMGT <- function(dir, quiet=FALSE){
     if(length < 3){
       stop(paste("Improperly formatted input file name:",file))
     }
-    organism <- info[length-1]
     locus <- info[length]
     segment <- substr(info[length],4,4)
     locus <- substr(info[length],1,3)
@@ -63,14 +61,10 @@ readIMGT <- function(dir, quiet=FALSE){
       warning(paste("Segment IDs not unique in",
       file,"\n",paste(duplicates,collapse=",")))
     }
-
-    if(!organism %in% names(database)){
-      database[[organism]] <- list()
+    if(!locus %in% names(database)){
+      database[[locus]] <- list()
     }
-    if(!locus %in% names(database[[organism]])){
-      database[[organism]][[locus]] <- list()
-    }
-    database[[organism]][[locus]][[segment]] <- fasta
+    database[[locus]][[segment]] <- fasta
     sequences <- sequences + length(fasta)
   }
   print(paste("Read in",sequences,"from",length(files),"fasta files"))
@@ -82,8 +76,8 @@ readIMGT <- function(dir, quiet=FALSE){
 #   Note: This is separated into three functions in CreateGermlines.py
 #' \link{getGermline} get germline segment from specified receptor and segment
 #' @param receptor       row from AIRR-table containing sequence of interest
-#' @param references     list of reference segments. Must be specific to organism, 
-#'                       locus, and segment
+#' @param references     list of reference segments. Must be specific to  
+#'                       locus and segment
 #' @param segment        Gene segment to search. Must be V, D, or J.
 #' @param field          Column name for segment gene call (e.g. v_call)
 #' @param germ_start     Column name of index of segment start within germline 
@@ -364,8 +358,7 @@ stitchRegions <- function(receptor, v_seq, d_seq, j_seq,
 #' Reconstruct germlines from alignment data.
 #' 
 #' @param receptor      row from AIRR-table containing sequence of interest
-#' @param references    list of reference segments. Must be specific to organism 
-#'                      and locus
+#' @param references    list of reference segments. Must be specific to locus
 #' @param seq           Column name for sequence alignment
 #' @param id            Column name for sequence ID
 #' @param clone         Column name for clone ID
@@ -432,7 +425,7 @@ buildGermline <- function(receptor, references,
       len_check <- nchar(germ_seq) - nchar(receptor[[seq]])
       if(len_check != 0){
         stop(paste("Germline sequence differs from input sequence by",
-          len_check,"in clone", receptor[[clone]]))
+          len_check,"in clone", receptor[[clone]], ", discarding"))
       }
 
       # Define return germlines object
@@ -452,7 +445,7 @@ buildGermline <- function(receptor, references,
       len_check <- nchar(germ_dmask) - nchar(receptor[[seq]])
       if(len_check != 0){
         stop(paste("Germline dmask sequence differs from input sequence by",
-          len_check,"in clone", receptor[[clone]]))
+          len_check,"in clone", receptor[[clone]], ", discarding"))
       }
     }else{
       germ_seq = NA
@@ -476,8 +469,7 @@ buildGermline <- function(receptor, references,
 #' 
 #' @param receptors        AIRR-table containing sequences from one clone
 #' @param references       Full list of reference segments, see \link{readIMGT}
-#' @param organism         Species in \code{references} being analyzed
-#' @param locus            locus in \code{references} being analyzed
+#' @param chain            chain in \code{references} being analyzed
 #' @param use_regions       Return string of VDJ regions? (optional)
 #' @param vonly            Return germline of only v segment?
 #' @param seq              Column name for sequence alignment
@@ -500,7 +492,7 @@ buildGermline <- function(receptor, references,
 #' }
 #' @seealso \link{createGermlines} \link{buildGermline}, \link{stitchVDJ}
 buildClonalGermline <- function(receptors, references, 
-  organism="human", locus="IGH", use_regions=FALSE, vonly=FALSE,
+  chain="IGH", use_regions=FALSE, vonly=FALSE,
   seq="sequence_alignment", id="sequence_id", clone="clone_id",
   v_call="v_call", j_call="j_call", j_germ_length="j_germline_length",
   j_germ_aa_length= "j_germline_aa_length",amino_acid=FALSE,...){
@@ -584,17 +576,19 @@ buildClonalGermline <- function(receptors, references,
             paste0(rep(pad_char,l),collapse=""))
        }))
 
-      sub_db <- references[[organism]][[locus]]
+      sub_db <- references[[chain]]
 
       if(length(sub_db) == 0){
-        stop(paste("Reference database for",organism,locus,"is empty"))
+        stop(paste("Reference database for",chain,"is empty"))
       }
 
       # Stitch consensus germline
       germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
         v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
-        amino_acid=amino_acid, ...),error=function(e)print(e))
+        amino_acid=amino_acid,...),error=function(e)e)
       if("error" %in% class(germlines)){
+        warning(paste("Clone",unique(receptors[[clone]]),
+          "germline reconstruction error."))
         germlines  <- list()
         germlines$full <- NA
         germlines$dmask <- NA
@@ -618,8 +612,7 @@ buildClonalGermline <- function(receptors, references,
 #' \link{createGermlines} Determine consensus clone sequence and create germline for clone
 #' @param data          AIRR-table containing sequences from one clone
 #' @param references    Full list of reference segments, see \link{readIMGT}
-#' @param organism      Species in \code{references} being analyzed
-#' @param locus         locus in \code{references} being analyzed
+#' @param locus         Name of the locus column in the input data
 #' @param nproc         Number of cores to use
 #' @param na.rm         Remove clones with failed germline reconstruction?
 #' @param seq           Column name for sequence alignment
@@ -660,7 +653,7 @@ buildClonalGermline <- function(receptors, references,
 #' imgt <- readIMGT(vdj_dir)
 #' db <- createGermlines(ExampleAirr[1,], imgt)
 #' @export
-createGermlines <- function(data, references, organism="human",locus="IGH",
+createGermlines <- function(data, references, locus="locus",
   nproc=1, seq="sequence_alignment", v_call="v_call", d_call="d_call", 
   j_call="j_call", amino_acid=FALSE,  id="sequence_id", clone="clone_id",
   v_germ_start="v_germline_start", v_germ_end="v_germline_end", v_germ_length="v_germline_length",
@@ -675,6 +668,15 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
   if(sum(is.na(data[[clone]])) > 0){
     stop("NA values in clone id column found, please remove.")
   }
+  if(locus %in% c("IGH", "IGK", "IGL")){
+    stop(paste0("locus option now indicates locus column name, not value. Sorry for the change!",
+      " createGermlines now does all loci at once, so no need to separate by locus."))
+  }
+  if(!locus %in% names(data)){
+    warning(paste0(locus, " column not found, attempting to extract locus from V call"))
+    data[[locus]] = substr(data[[v_call]],1,3)
+    warning(paste("Loci found:",unique(data[[locus]])))
+  }
 
   complete <- dplyr::tibble()
   required <- c(seq, id, clone, 
@@ -682,7 +684,7 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     v_call, d_call, j_call,
     v_germ_start, v_germ_end,
     d_germ_start, d_germ_end,
-    j_germ_start, j_germ_end, fields)
+    j_germ_start, j_germ_end, locus, fields)
   if(sum(!required %in% names(data)) != 0){
     stop(paste("Required columns not found in data:",
       paste(required[!required %in% names(data)],collapse=", ")))
@@ -722,7 +724,6 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     sum(is.na(data[[j_germ_length]])) > 0){
     stop("Missing values in v_germ_length or j_germ_length")
   }
-
   unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
   data[['tmp_row_id']] <- 1:nrow(data)
   complete <- parallel::mclapply(1:nrow(unique_clones), function(x){
@@ -730,10 +731,11 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
     if(verbose > 0){
       print(unique(sub[[clone]]))
     }
-    gline <- buildClonalGermline(sub, 
+    glines <- lapply(unique(sub[[locus]]), function(l){
+      buildClonalGermline(
+      sub[sub[[locus]] == l,], 
       references=references,
-      organism=organism,
-      locus=locus,
+      chain=l,
       seq=seq,
       v_call=v_call,
       d_call=d_call,
@@ -753,13 +755,21 @@ createGermlines <- function(data, references, organism="human",locus="IGH",
       np1_length=np1_length,
       np2_length=np2_length,
       ...)
+    })
+    gline <- dplyr::bind_rows(glines)
     gline
   }, mc.cores=nproc)
   results <- dplyr::bind_rows(complete) %>%
       arrange(!!rlang::sym("tmp_row_id")) %>%
       select(-!!rlang::sym("tmp_row_id"))
   if(na.rm){
-    results <- results[!is.na(results$germline_alignment_d_mask),]
+    bad_clones <- unique(results[is.na(results$germline_alignment_d_mask),][[clone]])
+    if(dplyr::n_distinct(bad_clones) > 0){
+      warning(paste("Removing",
+        dplyr::n_distinct(bad_clones),"failed clonal germlines. Clones:",
+          paste(bad_clones,collapse=",")))
+      results <- results[!is.na(results$germline_alignment_d_mask),]
+      }
   }
   results
 }
