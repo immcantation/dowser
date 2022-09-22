@@ -107,10 +107,13 @@ makeAirrClone <-
            add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
            cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
            use_regions=TRUE, dup_singles=FALSE){
-    
+
+    # Check for valid fields
     check <- alakazam::checkColumns(data, 
                                     unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
                                              text_fields, num_fields, seq_fields, traits)))
+    if (check != TRUE) { stop(check) }
+
     if(chain=="HL"){
       check <- alakazam::checkColumns(data, c(cell,locus))
       if (check != TRUE) { stop(check) }
@@ -192,7 +195,7 @@ makeAirrClone <-
     }
     
     if(chain=="HL"){
-      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char,
+      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char, 
                                          max_mask=max_mask, trim=FALSE)
       alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
                                           max_mask=max_mask, trim=FALSE)
@@ -207,7 +210,7 @@ makeAirrClone <-
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "Heavy chain sequences must be same length!"))
       }
-      if(length(alt_length) > 1){
+      if(length(hc_length) > 1){
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "Light chain sequences must be same length!"))
       }
@@ -226,6 +229,15 @@ makeAirrClone <-
       }
       hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
       altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+      
+      if(any(hcd[[germ]][1] != hcd[[germ]]) || 
+         any(altd[[germ]][1] != altd[[germ]])){
+        stop(paste0("Germline sequences for clone ",
+                    unique(dplyr::pull(data,clone)),
+                    " are not identical. All predicted germline sequences ",
+                    "must be identical for each locus within a clone. Be sure to use the",
+                    "createGermlines function before formatClones or makeAirrClone."))
+      }
       germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
                                         outer_only=FALSE)
       lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
@@ -233,6 +245,24 @@ makeAirrClone <-
       if(pad_end){
         germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
         lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
+        length <- max(c(nchar(germline), max(nchar(hcd[[seq]]))))
+        llength <- max(c(nchar(lgermline),max(nchar(altd[[seq]]))))
+        if(length > nchar(germline)){
+          warning(paste0(
+            "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+            ", may indicate misalignment.",
+            " Should not happen if using createGermlines."))
+          germline <- alakazam::padSeqEnds(germline, 
+                                           pad_char=mask_char, mod3=mod3, len=length)
+        }
+        if(length > nchar(lgermline)){
+          warning(paste0(
+            "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+            ", may indicate misalignment.",
+            "Should not happen if using createGermlines."))
+          lgermline <- alakazam::padSeqEnds(lgermline, 
+                                            pad_char=mask_char, mod3=mod3, len=length)
+        }
       }
       hlgermline <- paste0(germline,lgermline)
       tmp_df <- hc
@@ -326,11 +356,27 @@ makeAirrClone <-
         tmp_df[[seq]] <- alakazam::padSeqEnds(tmp_df[[seq]], 
                                               pad_char=mask_char, mod3=mod3)
       }
+      if(any(data[[germ]][1] != data[[germ]])){
+        stop(paste0("Germline sequences for clone ",
+                    unique(dplyr::pull(data,clone)),
+                    " are not identical. All predicted germline sequences ",
+                    "must be identical within a clone. Be sure to use the",
+                    "createGermlines function before formatClones or makeAirrClone."))
+      }
       germline <- alakazam::maskSeqGaps(data[[germ]][1], 
                                         mask_char=mask_char, outer_only=FALSE)
       if(pad_end){
         germline <- alakazam::padSeqEnds(germline, 
                                          pad_char=mask_char, mod3=mod3)
+        length <- max(c(nchar(germline),max(nchar(tmp_df[[seq]]))))
+        if(length > nchar(germline)){
+          warning(paste0(
+            "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+            ", may indicate misalignment.",
+            " Should not happen if using createGermlines."))
+          germline <- alakazam::padSeqEnds(germline, 
+                                           pad_char=mask_char, mod3=mod3, len=length)
+        }
       }
       check <- alakazam::checkColumns(data, c(locus))
       if(check == TRUE){
@@ -359,6 +405,7 @@ makeAirrClone <-
         regions <- rep("N", times=nchar(germline))
       }
     }
+    
     seq_len <- nchar(tmp_df[[seq]])
     if(any(seq_len != seq_len[1])){
       len_message <- paste0("All sequences are not the same length for data with first ", 
@@ -408,7 +455,7 @@ makeAirrClone <-
     }else if(chain=="L"){
       phylo_seq <- "lsequence"
       # double check this is okay
-      tmp_df$sequence <- ""
+      # tmp_df$sequence <- ""
     }else{
       phylo_seq <- "sequence"
     }
@@ -435,8 +482,6 @@ makeAirrClone <-
                     region=regions,
                     numbers=numbers,
                     phylo_seq=phylo_seq)
-    
-    
     outclone
   }
 
@@ -710,154 +755,154 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 #' print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
 #' @export
 maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5, 
-    gap_extension=1, keep_insertions=FALSE, mask=TRUE){
-    results <- list(
-        sequence_id =id,
-        sequence_masked="",
-        masking_note="",
-        insertions="",
-        subject_alignment="",
-        query_alignment="")
-    
-    # remove in-frame IMGT gaps
-    sg <- gsub("\\.\\.\\.","",s)
+  gap_extension=1, keep_insertions=FALSE, mask=TRUE){
+  results <- list(
+    sequence_id =id,
+    sequence_masked="",
+    masking_note="",
+    insertions="",
+    subject_alignment="",
+    query_alignment="")
+  
+  # remove in-frame IMGT gaps
+  sg <- gsub("\\.\\.\\.","",s)
+  
+  # if sequences are identical, nothing to fix
+  if(sg == q || !mask){
+    results$subject_alignment <- sg
+    results$query_alignment <- q
+    results$sequence_masked_v <- s
+    return(results)
+  }
 
-    # if sequences are identical, nothing to fix
-    if(sg == q || !mask){
-        results$subject_alignment <- sg
-        results$query_alignment <- q
-        results$sequence_masked_v <- s
-        return(results)
+  # store in-frame IMGT gap positions
+  gaps <- stringr::str_locate_all(s,"\\.\\.\\.")
+
+  # remove in-frame gaps
+  sgf <- gsub("---", "", sg)
+  if(grepl("-",sgf)){ # if read-shifting gaps present, quit
+    results$sequence_masked_v <- NA
+    results$masking_note <- "Frameshift in sequence"
+    return(results)
+  }
+  # mark in-frame gaps to keep them during alignment
+  sg <- gsub("---", "XXX", sg)
+
+  # perform global alignment
+  n <- Biostrings::pairwiseAlignment(q, sg, type="global",
+                gapOpening=gap_opening, gapExtension=gap_extension)
+  qa <- as.character(n@pattern)
+  sa <- as.character(n@subject)
+  if(keep_alignment){
+    results$subject_alignment <- sa
+    results$query_alignment <- qa
+  }
+
+  if(keep_insertions){
+    insertions <- stringr::str_locate_all(sa,"\\-+")[[1]]
+    indels <- ""
+    if(nrow(insertions) > 0){
+      for(i in 1:nrow(insertions)){
+        ins <- substr(qa,insertions[i,1],insertions[i,2])
+        if(i == 1){
+          indels <- paste0(insertions[i,1],"-",ins)
+        }else{
+          indels <- paste0(indels,",",
+                           paste0(insertions[i,1],"-",ins))
+        }
+      }
     }
-
-    # store in-frame IMGT gap positions
-    gaps <- stringr::str_locate_all(s,"\\.\\.\\.")
-
-    # remove in-frame gaps
-    sgf <- gsub("---", "", sg)
-    if(grepl("-",sgf)){ # if read-shifting gaps present, quit
-        results$sequence_masked_v <- NA
-        results$masking_note <- "Frameshift in sequence"
-        return(results)
-    }
-    # mark in-frame gaps to keep them during alignment
-    sg <- gsub("---", "XXX", sg)
-
-    # perform global alignment
-    n <- Biostrings::pairwiseAlignment(q, sg, type="global",
-            gapOpening=gap_opening, gapExtension=gap_extension)
-    qa <- as.character(n@pattern)
-    sa <- as.character(n@subject)
+    results$insertions <- indels
+  }
+  
+  # if s began out of frame, add IMGT dots back.
+  if(grepl("^\\.\\.",sg)){
+    sa <- paste0("..",sa)
     if(keep_alignment){
-        results$subject_alignment <- sa
-        results$query_alignment <- qa
+      results$subject_alignment <- sa
+    }
+  }else if(grepl("^\\.",sg)){
+    sa <- paste0(".",sa)
+    if(keep_alignment){
+      results$subject_alignment <- sa
+    }
+  }
+  
+  # if alignment is poor, pairwiseAlignment will trim sequences
+  # freak out and die if this happens
+  if(nchar(sa) < nchar(sg) || nchar(qa) < nchar(q)){
+    results$sequence_masked_v <- NA
+    results$masking_note <- "Alignment error"
+    return(results)
+  }
+
+  # check for frameshifts after alignment
+  sgf <- gsub("---", "", sa)
+  if(grepl("-",sgf)){
+    results$sequence_masked_v <- NA
+    results$masking_note <- "Frameshift after alignment"
+    return(results)
+  }
+  
+  # if aligned sequences differ by a gap character, maybe mask
+  if(qa != sa && grepl("\\-",sa)){
+    sas <- strsplit(sa,split="")[[1]]
+    mask <- c()
+    nseq <- c()
+    # loop through subject alignment one codon at a time.
+    for(j in 1:ceiling(length(sas)/3)){
+      index <- (j-1)*3 + 1
+      triple <- paste0(sas[index:(index+2)],collapse="")
+      triple <- gsub("NA","",triple) # happens if sequence isn't mod 3
+      # if codon contains > 0 but < 3 gap characters, mask it.
+      m  <- 0
+      if(grepl("\\-",triple)){
+        triple <- gsub("[A-Z]","N",triple) #mask characters
+        triple <- gsub("\\-","",triple) #discard gaps
+        if(nchar(triple) != 0){ #if anything left, it's a masked codon
+          m <- 1
+        }
+      }
+      mask <- c(mask,m)
+      nseq <- c(nseq,triple) #build new sequence
+    }
+    maskseq <- paste0(nseq,collapse="")
+
+    # masked sequence should be same length as sg
+    if(nchar(maskseq) != nchar(sg)){
+      print(paste(maskseq,"\n",sg))
+      stop("Sequence masking failed")
     }
 
-    if(keep_insertions){
-        insertions <- stringr::str_locate_all(sa,"\\-+")[[1]]
-        indels <- ""
-        if(nrow(insertions) > 0){
-            for(i in 1:nrow(insertions)){
-                ins <- substr(qa,insertions[i,1],insertions[i,2])
-                if(i == 1){
-                    indels <- paste0(insertions[i,1],"-",ins)
-                }else{
-                    indels <- paste0(indels,",",
-                        paste0(insertions[i,1],"-",ins))
-                }
-            }
-        }
-        results$insertions <- indels
+    # add IMGT gaps back in
+    sequence_alignment <- maskseq
+    if(nrow(gaps[[1]]) > 0){
+      for(j in 1:nrow(gaps[[1]])){
+        sequence_alignment <- 
+          paste0(substr(sequence_alignment,1,gaps[[1]][j,1]-1),
+                 "...",substr(sequence_alignment,gaps[[1]][j,1],
+                              nchar(sequence_alignment)))
+      }
     }
 
-    # if s began out of frame, add IMGT dots back.
-    if(grepl("^\\.\\.",sg)){
-        sa <- paste0("..",sa)
-        if(keep_alignment){
-            results$subject_alignment <- sa
-        }
-    }else if(grepl("^\\.",sg)){
-        sa <- paste0(".",sa)
-        if(keep_alignment){
-            results$subject_alignment <- sa
-        }
+    # convert marked gap characters back into gaps
+    sequence_alignment <- gsub("X","-",sequence_alignment)
+
+    # masked sequence should have no mismatched from starting sequence
+    if(alakazam::seqDist(sequence_alignment,s) != 0){
+      print(paste(sequence_alignment,"\n",s))
+      stop("Adding gaps failed")
     }
-
-    # if alignment is poor, pairwiseAlignment will trim sequences
-    # freak out and die if this happens
-    if(nchar(sa) < nchar(sg) || nchar(qa) < nchar(q)){
-        results$sequence_masked_v <- NA
-        results$masking_note <- "Alignment error"
-        return(results)
+    results$sequence_masked_v <- sequence_alignment
+    if(sum(mask == 1) > 0){ #note which positions were masked
+      results$masking_note <- 
+        paste(which(mask == 1),collapse=",")
     }
-
-    # check for frameshifts after alignment
-    sgf <- gsub("---", "", sa)
-    if(grepl("-",sgf)){
-        results$sequence_masked_v <- NA
-        results$masking_note <- "Frameshift after alignment"
-        return(results)
-    }
-
-    # if aligned sequences differ by a gap character, maybe mask
-    if(qa != sa && grepl("\\-",sa)){
-        sas <- strsplit(sa,split="")[[1]]
-        mask <- c()
-        nseq <- c()
-        # loop through subject alignment one codon at a time.
-        for(j in 1:ceiling(length(sas)/3)){
-            index <- (j-1)*3 + 1
-            triple <- paste0(sas[index:(index+2)],collapse="")
-            triple <- gsub("NA","",triple) # happens if sequence isn't mod 3
-            # if codon contains > 0 but < 3 gap characters, mask it.
-            m  <- 0
-            if(grepl("\\-",triple)){
-                triple <- gsub("[A-Z]","N",triple) #mask characters
-                triple <- gsub("\\-","",triple) #discard gaps
-                if(nchar(triple) != 0){ #if anything left, it's a masked codon
-                    m <- 1
-                }
-            }
-            mask <- c(mask,m)
-            nseq <- c(nseq,triple) #build new sequence
-        }
-        maskseq <- paste0(nseq,collapse="")
-
-        # masked sequence should be same length as sg
-        if(nchar(maskseq) != nchar(sg)){
-            print(paste(maskseq,"\n",sg))
-            stop("Sequence masking failed")
-        }
-
-        # add IMGT gaps back in
-        sequence_alignment <- maskseq
-        if(nrow(gaps[[1]]) > 0){
-            for(j in 1:nrow(gaps[[1]])){
-                sequence_alignment <- 
-                paste0(substr(sequence_alignment,1,gaps[[1]][j,1]-1),
-                    "...",substr(sequence_alignment,gaps[[1]][j,1],
-                        nchar(sequence_alignment)))
-            }
-        }
-
-        # convert marked gap characters back into gaps
-        sequence_alignment <- gsub("X","-",sequence_alignment)
-
-        # masked sequence should have no mismatched from starting sequence
-        if(alakazam::seqDist(sequence_alignment,s) != 0){
-            print(paste(sequence_alignment,"\n",s))
-            stop("Adding gaps failed")
-        }
-        results$sequence_masked_v <- sequence_alignment
-        if(sum(mask == 1) > 0){ #note which positions were masked
-            results$masking_note <- 
-                paste(which(mask == 1),collapse=",")
-        }
-        return(results)
-    }else{
-        results$sequence_masked_v <- s
-        return(results)
-    }
+    return(results)
+  }else{
+    results$sequence_masked_v <- s
+    return(results)
+  }
 }
 
 #' \code{maskSequences} Mask codons split by insertions in V gene
@@ -896,105 +941,105 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5,
 #' 
 #' @export
 maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequence",
- sequence_alignment="sequence_alignment", v_sequence_start = "v_sequence_start", 
- v_sequence_end = "v_sequence_end", v_germline_start = "v_germline_start", 
- v_germline_end = "v_germline_end", junction_length="junction_length",
- keep_alignment = FALSE, keep_insertions=FALSE, 
- mask_codons=TRUE, mask_cdr3=TRUE, nproc=1){
-
-    ids <- data[[sequence_id]]
-    qi <- substr(data[[sequence]],
-        data[[v_sequence_start]],data[[v_sequence_end]])
-    # v segment
-    si <- substr(data[[sequence_alignment]],
-        data[[v_germline_start]],
-        data[[v_germline_end]])
-    # rest of the sequence
-    ei <- substr(data[[sequence_alignment]],
-        data[[v_germline_end]]+1,
-        nchar(data[[sequence_alignment]]))
-
-    if(max(table(ids)) > 1){
-        stop("Sequence IDs are not unique")
-    }
-
-    results <- dplyr::bind_rows(
-        parallel::mclapply(1:length(qi),function(x){
-            mask <- maskCodons(ids[x], qi[x], si[x],
-                keep_alignment=keep_alignment,
-                keep_insertions=keep_insertions,
-                mask=mask_codons)
-            if(is.na(mask$sequence_masked_v)){
-                mask$sequence_masked <- NA
-            }else{
-            mask$sequence_masked <- 
-                paste0(mask$sequence_masked_v,ei[x])
-            }
-            mask
-        }, mc.cores=nproc))
-
-    m <- match(data[[sequence_id]], results[[sequence_id]])
-
-    if(sum(results[m,]$sequence_id != data$sequence_id) > 0){
-        stop("Sequence ids don't match")
-    }
-
+                          sequence_alignment="sequence_alignment", v_sequence_start = "v_sequence_start", 
+                          v_sequence_end = "v_sequence_end", v_germline_start = "v_germline_start", 
+                          v_germline_end = "v_germline_end", junction_length="junction_length",
+                          keep_alignment = FALSE, keep_insertions=FALSE, 
+                          mask_codons=TRUE, mask_cdr3=TRUE, nproc=1){
+  
+  ids <- data[[sequence_id]]
+  qi <- substr(data[[sequence]],
+               data[[v_sequence_start]],data[[v_sequence_end]])
+  # v segment
+  si <- substr(data[[sequence_alignment]],
+               data[[v_germline_start]],
+               data[[v_germline_end]])
+  # rest of the sequence
+  ei <- substr(data[[sequence_alignment]],
+               data[[v_germline_end]]+1,
+               nchar(data[[sequence_alignment]]))
+  
+  if(max(table(ids)) > 1){
+    stop("Sequence IDs are not unique")
+  }
+  
+  results <- dplyr::bind_rows(
+    parallel::mclapply(1:length(qi),function(x){
+      mask <- maskCodons(ids[x], qi[x], si[x],
+                         keep_alignment=keep_alignment,
+                         keep_insertions=keep_insertions,
+                         mask=mask_codons)
+      if(is.na(mask$sequence_masked_v)){
+        mask$sequence_masked <- NA
+      }else{
+        mask$sequence_masked <- 
+          paste0(mask$sequence_masked_v,ei[x])
+      }
+      mask
+    }, mc.cores=nproc))
+  
+  m <- match(data[[sequence_id]], results[[sequence_id]])
+  
+  if(sum(results[m,]$sequence_id != data$sequence_id) > 0){
+    stop("Sequence ids don't match")
+  }
+  
+  data <- bind_cols(data,
+                    sequence_masked=results[m,]$sequence_masked,
+                    masking_note=results [m,]$masking_note)
+  if(keep_alignment){
     data <- bind_cols(data,
-        sequence_masked=results[m,]$sequence_masked,
-        masking_note=results [m,]$masking_note)
-    if(keep_alignment){
-        data <- bind_cols(data,
-        subject_alignment=results[m,]$subject_alignment,
-        query_alignment=results[m,]$query_alignment)
-    }
-    if(keep_insertions){
-         data <- bind_cols(data,
-        insertions=results[m,]$insertions)
-    }
-
-    if(mask_cdr3){
-        data$sequence_masked <- unlist(lapply(1:nrow(data),function(x){
-            if(is.na(data$sequence_masked[x])){
-                return(data$sequence_masked[x])
-            }
-            regions <- as.character(
-                shazam::setRegionBoundaries(data[[junction_length]][x],
-                data$sequence_masked[x],
-                shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
-            if(!is.na(data$sequence_masked[x]) && sum(regions == "cdr3") > 0){
-                s <- strsplit(data$sequence_masked[x],split="")[[1]]
-                s[regions == "cdr3"] = "N"
-                s <- paste(s, collapse="")
-            }else{
-                s <- data$sequence_masked[x]
-            }
-            s
-        }))
-    }
-
-    include <- !is.na(data$sequence_masked)
-    if(sum(include) == 0){
-        warning("Masking failed for all sequences")
-        return(data)
-    }
-
-    #masked sequences should be same length as sequence_alignment
-    diffs <- nchar(data$sequence_alignment[include]) - 
-    nchar(data$sequence_masked[include])
-    if(sum(diffs) > 0){
-        print(data[diffs > 0,]$sequence_id)
-        stop("Error in masking above sequences (length)")
-    }
-    
-    #masked sequences should have no mismatches from sequence_alignment
-    dists <- unlist(parallel::mclapply(1:nrow(data[include,]), function(x)
-        alakazam::seqDist(data$sequence_alignment[include][x],
-        data$sequence_masked[include][x]),mc.cores=nproc))
-    if(sum(dists) > 0){
-        print(data[dists > 0,]$sequence_id)
-        stop("Error in masking above sequences (mismatches)")
-    }
+                      subject_alignment=results[m,]$subject_alignment,
+                      query_alignment=results[m,]$query_alignment)
+  }
+  if(keep_insertions){
+    data <- bind_cols(data,
+                      insertions=results[m,]$insertions)
+  }
+  
+  if(mask_cdr3){
+    data$sequence_masked <- unlist(lapply(1:nrow(data),function(x){
+      if(is.na(data$sequence_masked[x])){
+        return(data$sequence_masked[x])
+      }
+      regions <- as.character(
+        shazam::setRegionBoundaries(data[[junction_length]][x],
+                                    data$sequence_masked[x],
+                                    shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
+      if(!is.na(data$sequence_masked[x]) && sum(regions == "cdr3") > 0){
+        s <- strsplit(data$sequence_masked[x],split="")[[1]]
+        s[regions == "cdr3"] = "N"
+        s <- paste(s, collapse="")
+      }else{
+        s <- data$sequence_masked[x]
+      }
+      s
+    }))
+  }
+  
+  include <- !is.na(data$sequence_masked)
+  if(sum(include) == 0){
+    warning("Masking failed for all sequences")
     return(data)
+  }
+  
+  #masked sequences should be same length as sequence_alignment
+  diffs <- nchar(data$sequence_alignment[include]) - 
+    nchar(data$sequence_masked[include])
+  if(sum(diffs) > 0){
+    print(data[diffs > 0,]$sequence_id)
+    stop("Error in masking above sequences (length)")
+  }
+  
+  #masked sequences should have no mismatches from sequence_alignment
+  dists <- unlist(parallel::mclapply(1:nrow(data[include,]), function(x)
+    alakazam::seqDist(data$sequence_alignment[include][x],
+                      data$sequence_masked[include][x]),mc.cores=nproc))
+  if(sum(dists) > 0){
+    print(data[dists > 0,]$sequence_id)
+    stop("Error in masking above sequences (mismatches)")
+  }
+  return(data)
 }
 
 
@@ -1040,112 +1085,112 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 # TODO: light chains also require clone_id? Currently cell_id might not be unique
 #' @export
 getSubclones <- function(heavy, light, nproc=1, minseq=1,
-    id="sequence_id", seq="sequence_alignment", 
-    clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
-    junc_len="junction_length", nolight="missing"){
-    
-    subclone <- "subclone_id"
-    scount <- table(heavy[[clone]])
-    big <- names(scount)[scount >= minseq]
-    heavy <- dplyr::filter(heavy,(!!rlang::sym(clone) %in% big))
-
-    if(max(table(heavy[[id]])) > 1){
-        stop("Sequence IDs in heavy dataframe must be unique!")
+                         id="sequence_id", seq="sequence_alignment", 
+                         clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
+                         junc_len="junction_length", nolight="missing"){
+  
+  subclone <- "subclone_id"
+  scount <- table(heavy[[clone]])
+  big <- names(scount)[scount >= minseq]
+  heavy <- dplyr::filter(heavy,(!!rlang::sym(clone) %in% big))
+  
+  if(max(table(heavy[[id]])) > 1){
+    stop("Sequence IDs in heavy dataframe must be unique!")
+  }
+  if(max(table(light[[id]])) > 1){
+    stop("Sequence IDs in light dataframe must be unique!")
+  }
+  
+  heavycount = table(heavy[[cell]])
+  if(max(heavycount) > 1){
+    stop(paste0(sum(heavycount > 1),
+                " cells with multiple heavy chains found. Remove before proceeeding"))
+  }
+  
+  heavy$vj_gene <- nolight
+  heavy$vj_alt_cell <- nolight
+  heavy$subclone_id <- 0
+  light$vj_gene <- nolight
+  light$vj_alt_cell <- nolight
+  light$subclone_id <- 0
+  light[[clone]] <- -1
+  paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
+    hd <- filter(heavy,!!rlang::sym(clone) == cloneid)
+    ld <- filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
+    hd <- filter(hd,(!!rlang::sym(cell) %in% ld[[!!cell]]))
+    # hr <- filter(hd,!(!!rlang::sym(cell) %in% ld[[!!cell]]))
+    if(nrow(ld) == 0){
+      return(hd)
     }
-    if(max(table(light[[id]])) > 1){
-        stop("Sequence IDs in light dataframe must be unique!")
+    ltemp <- ld
+    ltemp$clone_id <- -1
+    ld <- dplyr::tibble()
+    lclone <- 1
+    while(nrow(ltemp) > 0){
+      lvs <- strsplit(ltemp[[v_call]],split=",")
+      ljs <- strsplit(ltemp[[j_call]],split=",")
+      combos <- 
+        lapply(1:length(lvs),function(w)
+          unlist(lapply(lvs[[w]],function(x)
+            lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
+      cells <- unique(ltemp[[cell]])
+      cellcombos <- lapply(cells,function(x)
+        unique(unlist(combos[ltemp[[cell]] == x])))
+      lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
+      max <- names(lcounts)[which.max(lcounts)]
+      cvs <- unlist(lapply(combos,function(x)max %in% x))
+      ltemp[cvs,][[subclone]] <- lclone
+      ltemp[cvs,]$vj_gene <- max
+      
+      # if a cell has the same combo for two rearrangements, only pick one
+      rmseqs <- c()
+      cell_counts <- table(ltemp[cvs,][[cell]])
+      mcells <- names(cell_counts)[cell_counts > 1]
+      for(cellname in mcells){
+        ttemp <- filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
+        ttemp$str_counts <- 
+          stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
+        # keep version with most non-N characters
+        keepseq <- ttemp[[id]][which.max(ttemp$str_counts)]
+        rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
+        rmseqs <- c(rmseqs,rmtemp[[id]])
+      }
+      include <- filter(ltemp,cvs & !(!!rlang::sym(id) %in% rmseqs))
+      leave <- filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
+      
+      # find other cells still in ltemp and add as vj_alt_cell
+      mcells <- unique(include[[cell]])
+      for(cellname in mcells){
+        if(cellname %in% leave[[cell]]){
+          include[include[[cell]] == cellname,]$vj_alt_cell <- 
+            paste(paste0(leave[leave[[cell]] == cellname,][[v_call]],":",
+                         leave[leave[[cell]] == cellname,][[j_call]]),
+                  collapse=",")
+        }
+      }
+      ld <- bind_rows(ld,include)
+      ltemp <- filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
+      lclone <- lclone + 1
     }
-
-    heavycount = table(heavy[[cell]])
-    if(max(heavycount) > 1){
-        stop(paste0(sum(heavycount > 1),
-        " cells with multiple heavy chains found. Remove before proceeeding"))
+    ld[[clone]] <- cloneid
+    for(cellname in unique(hd[[cell]])){
+      #hclone <- hd[hd[[cell]] == cell,][[clone]]
+      if(cellname %in% ld[[cell]]){
+        lclone <- ld[ld[[cell]] == cellname,][[subclone]]
+        ld[ld[[cell]] == cellname,][[subclone]] <- lclone
+        hd[hd[[cell]] == cellname,][[subclone]] <- lclone
+        hd[hd[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
+        hd[hd[[cell]] == cellname,]$vj_alt_cell <- 
+          ld[ld[[cell]] == cellname,]$vj_alt_cell
+      }
     }
-
-    heavy$vj_gene <- nolight
-    heavy$vj_alt_cell <- nolight
-    heavy$subclone_id <- 0
-    light$vj_gene <- nolight
-    light$vj_alt_cell <- nolight
-    light$subclone_id <- 0
-    light[[clone]] <- -1
-    paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
-        hd <- filter(heavy,!!rlang::sym(clone) == cloneid)
-        ld <- filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
-        hd <- filter(hd,(!!rlang::sym(cell) %in% ld[[!!cell]]))
-        # hr <- filter(hd,!(!!rlang::sym(cell) %in% ld[[!!cell]]))
-        if(nrow(ld) == 0){
-            return(hd)
-        }
-        ltemp <- ld
-        ltemp$clone_id <- -1
-        ld <- dplyr::tibble()
-        lclone <- 1
-        while(nrow(ltemp) > 0){
-            lvs <- strsplit(ltemp[[v_call]],split=",")
-            ljs <- strsplit(ltemp[[j_call]],split=",")
-            combos <- 
-                lapply(1:length(lvs),function(w)
-                unlist(lapply(lvs[[w]],function(x)
-                lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
-            cells <- unique(ltemp[[cell]])
-            cellcombos <- lapply(cells,function(x)
-                unique(unlist(combos[ltemp[[cell]] == x])))
-            lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
-            max <- names(lcounts)[which.max(lcounts)]
-            cvs <- unlist(lapply(combos,function(x)max %in% x))
-            ltemp[cvs,][[subclone]] <- lclone
-            ltemp[cvs,]$vj_gene <- max
-
-            # if a cell has the same combo for two rearrangements, only pick one
-            rmseqs <- c()
-            cell_counts <- table(ltemp[cvs,][[cell]])
-            mcells <- names(cell_counts)[cell_counts > 1]
-            for(cellname in mcells){
-                ttemp <- filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
-                ttemp$str_counts <- 
-                    stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
-                # keep version with most non-N characters
-                keepseq <- ttemp[[id]][which.max(ttemp$str_counts)]
-                rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
-                rmseqs <- c(rmseqs,rmtemp[[id]])
-            }
-            include <- filter(ltemp,cvs & !(!!rlang::sym(id) %in% rmseqs))
-            leave <- filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
-
-            # find other cells still in ltemp and add as vj_alt_cell
-            mcells <- unique(include[[cell]])
-            for(cellname in mcells){
-                if(cellname %in% leave[[cell]]){
-                    include[include[[cell]] == cellname,]$vj_alt_cell <- 
-                        paste(paste0(leave[leave[[cell]] == cellname,][[v_call]],":",
-                            leave[leave[[cell]] == cellname,][[j_call]]),
-                            collapse=",")
-                }
-            }
-            ld <- bind_rows(ld,include)
-            ltemp <- filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
-            lclone <- lclone + 1
-        }
-        ld[[clone]] <- cloneid
-        for(cellname in unique(hd[[cell]])){
-            #hclone <- hd[hd[[cell]] == cell,][[clone]]
-            if(cellname %in% ld[[cell]]){
-                lclone <- ld[ld[[cell]] == cellname,][[subclone]]
-                ld[ld[[cell]] == cellname,][[subclone]] <- lclone
-                hd[hd[[cell]] == cellname,][[subclone]] <- lclone
-                hd[hd[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
-                hd[hd[[cell]] == cellname,]$vj_alt_cell <- 
-                    ld[ld[[cell]] == cellname,]$vj_alt_cell
-            }
-        }
-        comb <- bind_rows(hd,ld)
-        comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subclone]])
-        comb$vj_cell <- paste(comb$vj_gene,comb$vj_alt_cell,sep=",")
-        comb
-    },mc.cores=nproc)
-    paired <- bind_rows(paired)
-    return(paired)
+    comb <- bind_rows(hd,ld)
+    comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subclone]])
+    comb$vj_cell <- paste(comb$vj_gene,comb$vj_alt_cell,sep=",")
+    comb
+  },mc.cores=nproc)
+  paired <- bind_rows(paired)
+  return(paired)
 }
 
 
@@ -1163,7 +1208,6 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #  aligments
 #  
 processClones <- function(clones, nproc=1 ,minseq=2, seq){
-
   
   if(!"tbl" %in% class(clones)){
     print(paste("clones is of class",class(clones)))
@@ -1184,19 +1228,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   }
   
   clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=    gsub(":","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub(";","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub(",","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub("=","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub(" ","_",x@data$sequence_id);
+    x@data$sequence_id=gsub(":|;|,|=| ","_",x@data$sequence_id);
     x })
   
   max <- max(unlist(lapply(clones$data,function(x)max(nchar(x@data$sequence_id)))))
@@ -1207,7 +1239,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
                wc,"too long - over 1000 characters!"))
   }
   
-  or <- order(unlist(lapply(clones$data,function(x)nrow(x@data))),
+  or <- order(unlist(lapply(clones$data,function(x) nrow(x@data))),
               decreasing=TRUE)
   clones <- clones[or,]
   
@@ -1223,4 +1255,3 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones <- dplyr::ungroup(clones)
   clones
 }
-
