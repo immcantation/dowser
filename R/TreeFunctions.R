@@ -2506,7 +2506,7 @@ getBootstraps <- function(clones, bootstraps,
         matches_df <- matching_function_parallel(tree_comp_df, bootstraps_df, nproc)
         for(node in unique(matches_df$nodes)){
           clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- 
-            subset(matches_df, !!rlang::sym("nodes") == node)$matches
+            dplyr::filter(matches_df, !!rlang::sym("nodes") == node)$matches
         }
       }
     }
