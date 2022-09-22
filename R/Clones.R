@@ -377,7 +377,6 @@ makeAirrClone <-
               germline <- alakazam::padSeqEnds(germline, 
                   pad_char=mask_char, mod3=mod3, len=length)
           }
-        }
       }
       check <- alakazam::checkColumns(data, c(locus))
       if(check == TRUE){
@@ -484,7 +483,7 @@ makeAirrClone <-
         numbers=numbers,
         phylo_seq=phylo_seq)
     outclone
-  }
+}
 
 
 # Remove uniformative columns from data and germline
