@@ -13,7 +13,8 @@ readIMGT(dir, quiet = FALSE)
 }
 \value{
 List of lists, leading to IMGT-gapped nucleotide sequences.
-Structure of object is list[[locus]][[segment]]
+Structure of object is list[[organism]][[locus]][[segment]]
+Organism refers to species (i.e. human, mouse)
 locus refers to locus (e.g. IGH, IGK, TRA)
 segment refers to gene segment caegory (V, D, or J)
 }

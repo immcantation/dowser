@@ -27,6 +27,8 @@ getBootstraps(
 \item{clones}{tibble \code{airrClone} objects, the output of 
 \link{formatClones}}
 
+\item{bootstraps}{number of bootstrap replicates to perform}
+
 \item{nproc}{number of cores to parallelize computations}
 
 \item{bootstrap_nodes}{a logical if the the nodes for each tree in the trees
@@ -53,8 +55,6 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{boot_part}{is  "locus" bootstrap columns for each locus separately}
 
 \item{...}{additional arguments to be passed to tree building program}
-
-\item{permutations}{number of bootstrap replicates to perform}
 }
 \value{
 The input clones tibble with an additional column for the bootstrap replicate trees.
