@@ -220,13 +220,13 @@ function(data, id="sequence_id", seq="sequence_alignment",
                 germline <- alakazam::padSeqEnds(germline, 
                     pad_char=mask_char, mod3=mod3, len=length)
             }
-            if(length > nchar(lgermline)){
+            if(llength > nchar(lgermline)){
                 warning(paste0(
                     "Padding germline for clone ",unique(dplyr::pull(data,clone)),
                     ", may indicate misalignment.",
                     "Should not happen if using createGermlines."))
                 lgermline <- alakazam::padSeqEnds(lgermline, 
-                    pad_char=mask_char, mod3=mod3, len=length)
+                    pad_char=mask_char, mod3=mod3, len=llength)
             }
         }
         hlgermline <- paste0(germline,lgermline)
