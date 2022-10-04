@@ -1332,7 +1332,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 
     data <- clones$data
     # make sure all sequences and germlines within a clone are the same length
-    length_check <- unlist(lapply(data, function(x){
+    unlist(lapply(data, function(x){
         if(x@phylo_seq == "hlsequence"){
             germline <- x@hlgermline
             seqs <- x@data$hlsequence
