@@ -801,7 +801,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
             }
             return(fit)
         }
-        tree <- fit$tree
+        tree <- ape::unroot(fit$tree)
         tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
         tree$edge_type <- "genetic_distance"
         nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
@@ -1331,6 +1331,12 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     }
 
     data <- clones$data
+    if(!inherits(data, "list")){
+        data <- list(data)
+    }
+    if(!inherits(data[[1]], "airrClone")){
+        stop("Input data must be a list of airrClone objects")
+    }
     # make sure all sequences and germlines within a clone are the same length
     unlist(lapply(data, function(x){
         if(x@phylo_seq == "hlsequence"){
@@ -1361,12 +1367,6 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     }
     if(is.null(id)){
             id <- "sample"
-    }
-    if(!inherits(data, "list")){
-        data <- list(data)
-    }
-    if(!inherits(data[[1]], "airrClone")){
-        stop("Input data must be a list of airrClone objects")
     }
     big <- FALSE
     if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
@@ -1978,6 +1978,12 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     }
 
     data <- clones$data
+    if(!inherits(data, "list")){
+        data <- list(data)
+    }
+    if(!inherits(data[[1]], "airrClone")){
+        stop("Input data must be a list of airrClone objects")
+    }
     if(fixtrees){
         if(!"trees" %in% names(clones)){
             stop("trees column must be included in input if fixtrees=TRUE (use getTrees first)")
@@ -1992,16 +1998,10 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     if(is.null(id)){
             id <- "sample"
     }
-    if(!inherits(data, "list")){
-        data <- list(data)
-    }
     if(!is.null(dir)){
         if(!dir.exists(dir)){
             dir.create(dir)
         }
-    }
-    if(!inherits(data[[1]], "airrClone")){
-        stop("Input data must be a list of airrClone objects")
     }
     big <- FALSE
     if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){

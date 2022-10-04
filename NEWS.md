@@ -1,3 +1,10 @@
+Version 1.1.0:  October 4, 2022
+-------------------------------------------------------------------------------
+
++ createGermlines now works on all loci simultaneously
++ Vignettes for measurable evolution and discrete trait analysis
++ Corrected bugs in createGermlines and findSwitches
+
 Version 1.0.0:  April 8, 2022
 -------------------------------------------------------------------------------
 

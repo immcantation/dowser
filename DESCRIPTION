@@ -28,10 +28,10 @@ LazyData: true
 BuildVignettes: true
 VignetteBuilder: knitr
 Encoding: UTF-8
-biocViews:
 Depends:
     R (>= 3.1.2),
     ggplot2 (>= 3.2.0)
+biocViews:
 Imports:
     alakazam (>= 1.1.0),
     ape (>= 5.6),

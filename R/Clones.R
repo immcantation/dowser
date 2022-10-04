@@ -200,7 +200,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
             stop(paste0("Germline sequences for clone ",
                 unique(dplyr::pull(data,clone)),
                 " are not identical. All predicted germline sequences ",
-                "must be identical for each locus within a clone. Be sure to use the",
+                "must be identical for each locus within a clone. Be sure to use the ",
                 "createGermlines function before formatClones or makeAirrClone."))
         }
         germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
@@ -275,7 +275,7 @@ function(data, id="sequence_id", seq="sequence_alignment",
             stop(paste0("Germline sequences for clone ",
                 unique(dplyr::pull(data,clone)),
                 " are not identical. All predicted germline sequences ",
-                "must be identical within a clone. Be sure to use the",
+                "must be identical within a clone. Be sure to use the ",
                 "createGermlines function before formatClones or makeAirrClone."))
         }
         germline <- alakazam::maskSeqGaps(data[[germ]][1], 
