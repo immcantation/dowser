@@ -36,7 +36,9 @@ objects}
 
 \item{node_palette}{color palette for nodes}
 
-\item{tip_palette}{color palette for tips}
+\item{tip_palette}{color palette for tips. Can supply a named vector
+for all tip states, or a palette named passed to
+ggplot2::scale_color_brewer}
 
 \item{base}{recursion base case (don't edit)}
 

@@ -38,5 +38,5 @@ bibentry(bibtype = "Article",
                      person("Steven H.", "Kleinstein")),
          year    = 2019,
          journal = "PNAS",
-         url = "https://www.pnas.org/content/116/45/22664",
+         url = "https://www.pnas.org/doi/10.1073/pnas.1906020116",
          doi = "10.1073/pnas.1906020116")
