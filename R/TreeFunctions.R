@@ -1859,7 +1859,6 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
             # if tree provided, drop selected tips
             if(!is.null(tree)){
                 od <- getDivergence(tree)
-                otree <- tree
                 tree <- ape::drop.tip(tree, tip=rm)
                 nd <- getDivergence(tree)
                 maxdiff <- max(nd - od[names(nd)])
