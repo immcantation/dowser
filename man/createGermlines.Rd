@@ -7,8 +7,7 @@
 createGermlines(
   data,
   references,
-  organism = "human",
-  locus = "IGH",
+  locus = "locus",
   nproc = 1,
   seq = "sequence_alignment",
   v_call = "v_call",
@@ -39,9 +38,7 @@ createGermlines(
 
 \item{references}{Full list of reference segments, see \link{readIMGT}}
 
-\item{organism}{Species in \code{references} being analyzed}
-
-\item{locus}{locus in \code{references} being analyzed}
+\item{locus}{Name of the locus column in the input data}
 
 \item{nproc}{Number of cores to use}
 

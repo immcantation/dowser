@@ -7,8 +7,7 @@
 buildClonalGermline(
   receptors,
   references,
-  organism = "human",
-  locus = "IGH",
+  chain = "IGH",
   use_regions = FALSE,
   vonly = FALSE,
   seq = "sequence_alignment",
@@ -27,9 +26,7 @@ buildClonalGermline(
 
 \item{references}{Full list of reference segments, see \link{readIMGT}}
 
-\item{organism}{Species in \code{references} being analyzed}
-
-\item{locus}{locus in \code{references} being analyzed}
+\item{chain}{chain in \code{references} being analyzed}
 
 \item{use_regions}{Return string of VDJ regions? (optional)}
 

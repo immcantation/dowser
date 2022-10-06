@@ -2438,9 +2438,8 @@ getBootstraps <- function(clones, bootstraps,
             buildPratchet(tmp_data[[x]],seq=seqs[x]),
             mc.cores=nproc)
           trees <- list(trees)
-          #bootstrap_trees <- append(bootstrap_trees, trees)
-        #}
-      }else if(build=="dnapers" || build=="dnaml"){
+          bootstrap_trees[bootstrap] = trees
+      }else if(build=="dnapars" || build=="dnaml"){
         #for(i in 1:bootstraps){
           trees <- parallel::mclapply(reps,function(x)
             buildPhylo(tmp_data[[x]],
@@ -2449,17 +2448,13 @@ getBootstraps <- function(clones, bootstraps,
                        rm_temp = rm_temp,
                        seq=seqs[x]),
             mc.cores=nproc)
-          #trees <- list(trees)
-          #bootstrap_trees <- append(bootstrap_trees, trees)
-        #}
+          bootstrap_trees[[bootstrap]] = trees
       }else if(build=="pml"){
         #for(i in 1:bootstraps){
           trees <- parallel::mclapply(reps,function(x)
             buildPML(tmp_data[[x]],seq=seqs[x]),
             mc.cores=nproc)
-          #trees <- list()
-          #bootstrap_trees <- append(bootstrap_trees, trees)
-        #}
+          bootstrap_trees[bootstrap] = trees
       }else if(build=="igphyml"){
         if(rm_temp){
           rm_dir <- file.path(dir,paste0(id,rep))
@@ -2475,20 +2470,14 @@ getBootstraps <- function(clones, bootstraps,
                          rm_dir = rm_dir,
                          nproc=nproc,
                          id=id)
-          #trees <- list(trees)
-          #bootstrap_trees <- append(bootstrap_trees, trees)
-        #}
+          bootstrap_trees[bootstrap] = trees
       }else{
         stop("build specification",build,"not recognized")
       }
-      bootstrap_trees[bootstrap] = trees
   }
-  # KEN: removed a layer from the bootstrap_trees list
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
-    #clone_bootstraps <- list(clone_bootstraps)
-    #clones$bootstrap_trees[i] <- clone_bootstraps
   }
   if(!bootstrap_nodes){
     return(clones)

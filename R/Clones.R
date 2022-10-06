@@ -152,8 +152,7 @@ makeAirrClone <-
                      "currently only one alternate loci per clone supported"))
         }
       }
-    }
-    if(chain=="L"){
+    } else if(chain=="L"){
       check <- alakazam::checkColumns(data, c(cell,locus))
       if (check != TRUE) { stop(check) }
       
@@ -195,7 +194,7 @@ makeAirrClone <-
     }
     
     if(chain=="HL"){
-      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char,
+      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char, 
                                          max_mask=max_mask, trim=FALSE)
       alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
                                           max_mask=max_mask, trim=FALSE)
@@ -255,13 +254,13 @@ makeAirrClone <-
           germline <- alakazam::padSeqEnds(germline, 
                                            pad_char=mask_char, mod3=mod3, len=length)
         }
-        if(length > nchar(lgermline)){
+        if(llength > nchar(lgermline)){
           warning(paste0(
             "Padding germline for clone ",unique(dplyr::pull(data,clone)),
             ", may indicate misalignment.",
             "Should not happen if using createGermlines."))
           lgermline <- alakazam::padSeqEnds(lgermline, 
-                                            pad_char=mask_char, mod3=mod3, len=length)
+                                            pad_char=mask_char, mod3=mod3, len=llength)
         }
       }
       hlgermline <- paste0(germline,lgermline)
@@ -405,6 +404,7 @@ makeAirrClone <-
         regions <- rep("N", times=nchar(germline))
       }
     }
+    
     seq_len <- nchar(tmp_df[[seq]])
     if(any(seq_len != seq_len[1])){
       len_message <- paste0("All sequences are not the same length for data with first ", 
@@ -453,8 +453,6 @@ makeAirrClone <-
       phylo_seq <- "hlsequence"
     }else if(chain=="L"){
       phylo_seq <- "lsequence"
-      # double check this is okay
-      tmp_df$sequence <- ""
     }else{
       phylo_seq <- "sequence"
     }
@@ -481,8 +479,6 @@ makeAirrClone <-
                     region=regions,
                     numbers=numbers,
                     phylo_seq=phylo_seq)
-    
-    
     outclone
   }
 
@@ -1210,7 +1206,6 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #  
 processClones <- function(clones, nproc=1 ,minseq=2, seq){
   
-  
   if(!"tbl" %in% class(clones)){
     print(paste("clones is of class",class(clones)))
     stop("clones must be a tibble of airrClone objects!")
@@ -1230,19 +1225,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   }
   
   clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=    gsub(":","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub(";","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub(",","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub("=","_",x@data$sequence_id);
-    x })
-  clones$data <- lapply(clones$data,function(x){
-    x@data$sequence_id=gsub(" ","_",x@data$sequence_id);
+    x@data$sequence_id=gsub(":|;|,|=| ","_",x@data$sequence_id);
     x })
   
   max <- max(unlist(lapply(clones$data,function(x)max(nchar(x@data$sequence_id)))))
@@ -1253,7 +1236,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
                wc,"too long - over 1000 characters!"))
   }
   
-  or <- order(unlist(lapply(clones$data,function(x)nrow(x@data))),
+  or <- order(unlist(lapply(clones$data,function(x) nrow(x@data))),
               decreasing=TRUE)
   clones <- clones[or,]
   
@@ -1269,4 +1252,3 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones <- dplyr::ungroup(clones)
   clones
 }
-
