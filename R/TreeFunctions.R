@@ -2308,8 +2308,8 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
     # one right now
     sub_full_tree_df <- tree_comp_df[tree_comp_df$node==node,]
     matches = unlist(lapply(1:length(bootstrap_df$tree_num), function(x){
-      match_test1 <- dplyr::setequal(bootstrap_df$found[[x]], sub_full_tree_df$found[[1]])
-      match_test2 <- dplyr::setequal(bootstrap_df$found[[x]], sub_full_tree_df$absent[[1]])
+      match_test1 <- setequal(bootstrap_df$found[[x]], sub_full_tree_df$found[[1]])
+      match_test2 <- setequal(bootstrap_df$found[[x]], sub_full_tree_df$absent[[1]])
       if(match_test1 || match_test2){
         return(1)
       }else{
