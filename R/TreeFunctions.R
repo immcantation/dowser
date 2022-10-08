@@ -1489,12 +1489,17 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
 
     #catch any tree inference errors
     errors <- unlist(lapply(trees, function(x) "error" %in% class(x)))
+    messages <- trees[errors]
     errorclones <- clones$clone_id[errors]
     trees <- trees[!errors]
     clones <- clones[!errors,]
     if(length(errorclones) > 0){
+        warning(lapply(messages, function(x)x$message))
         warning(paste("Tree building failed for clones",
             paste(errorclones,collapse=", ")))
+    }
+    if(length(trees) == 0){
+        stop("No trees left!")
     }
 
     if(!is.null(igphyml)){
