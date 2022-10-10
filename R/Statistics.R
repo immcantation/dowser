@@ -203,12 +203,6 @@ testSP <- function(switches, permuteAll=FALSE,
         permute <- dplyr::quo(!!rlang::sym("PERMUTEALL"))
     }
 
-    tips <- dplyr::filter(switches, !!rlang::sym("TO")=="NTIP" &
-        !!rlang::sym("TYPE")=="RECON")
-
-    # germline doesn't count in downsampling algorithm
-    tips$SWITCHES <- tips$SWITCHES - 1
-
     switches <- switches %>% 
         dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
             !!rlang::sym("FROM") != "UCA")
@@ -225,17 +219,26 @@ testSP <- function(switches, permuteAll=FALSE,
         stop("No switches left after filtering!")
     }
 
-    counts <- testPS(switches, bylineage=TRUE)$means
-    m <- match(counts$CLONE, tips$CLONE)
-    counts$tips <- tips[m,]$SWITCHES
-    counts$ratio <- counts$tips/counts$RECON
-
-    excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tip_switch)$CLONE
-    if(length(excluded) > 0 & exclude){
-        warning(paste("Excluding clone(s)",paste(excluded,collapse=",")
-            ,"due to high tip/switch ratio"))
-
-        switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% excluded))
+    if(exclude){
+        # separate tips
+        tips <- dplyr::filter(switches, !!rlang::sym("TO")=="NTIP" &
+            !!rlang::sym("TYPE")=="RECON")
+    
+        # germline doesn't count in downsampling algorithm
+        tips$SWITCHES <- tips$SWITCHES - 1
+    
+        counts <- testPS(switches, bylineage=TRUE)$means
+        m <- match(counts$CLONE, tips$CLONE)
+        counts$tips <- tips[m,]$SWITCHES
+        counts$ratio <- counts$tips/counts$RECON
+    
+        excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tip_switch)$CLONE
+        if(length(excluded) > 0){
+            warning(paste("Excluding clone(s)",paste(excluded,collapse=",")
+                ,"due to high tip/switch ratio"))
+    
+            switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% excluded))
+        }
     }
 
     if(!bylineage){
@@ -279,6 +282,13 @@ testSP <- function(switches, permuteAll=FALSE,
         remove <- to_type[to_type %in% from_type]
         reps <- reps[!reps$FROM %in% remove &
             !reps$TO %in% remove, ]
+    }
+
+    if(sum(is.na(reps$DELTA)) > 0){
+        na_reps <- unique(reps[is.na(reps$DELTA),]$REP)
+        warning(paste0("NA delta values in ",
+            length(na_reps)," replicates, discarding"))
+        reps <- dplyr::filter(reps, !(!!rlang::sym("REP") %in% na_reps))
     }
 
     if(!bylineage){
