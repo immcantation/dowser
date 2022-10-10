@@ -221,6 +221,9 @@ testSP <- function(switches, permuteAll=FALSE,
         to <- dplyr::enquo(to)
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
     }
+    if(nrow(switches) == 0){
+        stop("No switches left after filtering!")
+    }
 
     counts <- testPS(switches, bylineage=TRUE)$means
     m <- match(counts$CLONE, tips$CLONE)
@@ -430,6 +433,9 @@ testSC <- function(switches,dropzeroes=TRUE,
     if(!is.null(to)){
         to <-dplyr::enquo(to)
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
+    }
+    if(nrow(switches) == 0){
+        stop("No switches left after filtering!")
     }
 
     if(!bylineage){
