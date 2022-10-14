@@ -107,13 +107,15 @@ makeAirrClone <-
            add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
            cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
            use_regions=TRUE, dup_singles=FALSE){
-
+    
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
                                     unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
                                              text_fields, num_fields, seq_fields, traits)))
     if (check != TRUE) { stop(check) }
-
+    if(chain=="L"){warning(paste("The input data needs to be have already been filtered
+                                 to only include light chains. Otherwise it will revert to 
+                                 chain == 'HL'"))}
     if(chain=="HL"){
       check <- alakazam::checkColumns(data, c(cell,locus))
       if (check != TRUE) { stop(check) }
@@ -155,11 +157,15 @@ makeAirrClone <-
     } else if(chain=="L"){
       check <- alakazam::checkColumns(data, c(cell,locus))
       if (check != TRUE) { stop(check) }
+      if(is.null(heavy)){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "heavy chain loci ID must be specified if combining loci!"))
+      }
       
-      #  heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
-      # if(max(heavycount) > 1){
+      #heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
+      #if(max(heavycount) > 1){
       #  stop(paste0(sum(heavycount > 1),
-      #             " cells with multiple heavy chains found. Remove before proceeeding"))
+      #              " cells with multiple heavy chains found. Remove before proceeeding"))
       #}
       
       # Ensure cell and loci columns are not duplicated
@@ -178,15 +184,17 @@ makeAirrClone <-
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "light chain locus not found in dataset!"))
       }
-      if(nrow(hc) != 0 & nrow(alt) != 0){
+      if(nrow(alt) == 0 & nrow(hc) != 0){
+        chain <- "H"
+      } else if(nrow(alt) !=0 & nrow(hc) != 0){
         chain <- "HL"
-        print("chain presented as HL. Clone moving forward as if having an HL chain")
+      } else{
+        if(length(unique(dplyr::pull(alt,!!locus))) > 1){
+          stop(paste("clone",paste(unique(dplyr::pull(data,clone)),collapse=""),
+                     "currently only one alternate loci per clone supported"))
+        }
       }
-      if(length(unique(dplyr::pull(alt,!!locus))) > 1){
-        stop(paste("clone",paste(unique(dplyr::pull(data,clone)),collapse=""),
-                   "currently only one alternative loci per clone supported"))
-      }
-    }else{
+    } else{ 
       # Replace gaps with Ns and masked ragged ends
       tmp_df <- data[, unique(c(id, seq, text_fields, num_fields, seq_fields, traits))]
       tmp_df[[seq]] <- alakazam::maskSeqGaps(tmp_df[[seq]], mask_char=mask_char, 
@@ -228,13 +236,13 @@ makeAirrClone <-
       }
       hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
       altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
-
+      
       if(any(hcd[[germ]][1] != hcd[[germ]]) || 
          any(altd[[germ]][1] != altd[[germ]])){
         stop(paste0("Germline sequences for clone ",
                     unique(dplyr::pull(data,clone)),
                     " are not identical. All predicted germline sequences ",
-                    "must be identical for each locus within a clone. Be sure to use the",
+                    "must be identical for each locus within a clone. Be sure to use the ",
                     "createGermlines function before formatClones or makeAirrClone."))
       }
       germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
@@ -281,8 +289,26 @@ makeAirrClone <-
                                       lgermline,
                                       shazam::IMGT_VDJ_BY_REGIONS)@boundaries)
         regions <- c(hregions, lregions)
-      } 
-    }else if(chain=="L"){
+      }else{
+        regions <- rep("N", times=nchar(hlgermline))
+      }
+      if(length(regions) != nchar(hlgermline)){
+        warning(paste("Excluding clone",unique(dplyr::pull(data,clone)),
+                      "due to incomplete region definition."))
+        return(NULL)
+      }
+      if(length(chains) != unique(nchar(tmp_df$hlsequence))){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "chains vector not equal to total sequence length!"))
+      }
+      if(length(chains) != nchar(hlgermline)){
+        stop(paste("clone",unique(dplyr::pull(data,clone)),
+                   "chains vector not equal to germline sequence length!"))
+      }
+      new_seq <- "hlsequence"
+    } else if(chain=="L"){
+      #hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char, 
+      #                                  max_mask=max_mask, trim=FALSE)
       alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
                                           max_mask=max_mask, trim=FALSE)
       # Pad ends
@@ -292,40 +318,71 @@ makeAirrClone <-
       }
       #hc_length <- unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
       alt_length <- unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
+      #if(length(hc_length) > 1){
+      #  stop(paste("clone",unique(dplyr::pull(data,clone)),
+      #             "Heavy chain sequences must be same length!"))
+      #}
       if(length(alt_length) > 1){
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "Light chain sequences must be same length!"))
       }
-      alt$lsequence <- ""
-      alt$hlsequence <- ""
-      for(cell_name in unique(dplyr::pull(alt,!!rlang::sym(cell)))){
+      hc$lsequence <- ""
+      hc$hlsequence <- ""
+      for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
         if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
           altseq <- paste(rep(mask_char,alt_length),collapse="")
         }else{
           altseq <- dplyr::pull(dplyr::filter(alt,
                                               !!rlang::sym(cell) == cell_name),rlang::sym(seq))
         }
-        alt[dplyr::pull(alt,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
-        alt[dplyr::pull(alt,!!rlang::sym(cell)) == cell_name,]$hlsequence <- altseq
+        alt[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
+        alt[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$hlsequence <- altseq
       }
-      #hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym("IGH"))
+      #hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
       altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+      
+      if(any(altd[[germ]][1] != altd[[germ]])){
+        stop(paste0("Germline sequences for clone ",
+                    unique(dplyr::pull(data,clone)),
+                    " are not identical. All predicted germline sequences ",
+                    "must be identical for each locus within a clone. Be sure to use the ",
+                    "createGermlines function before formatClones or makeAirrClone."))
+      }
       germline <- ""
       lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
                                          outer_only=FALSE)
       if(pad_end){
         germline <- alakazam::padSeqEnds(germline, pad_char=mask_char, mod3=mod3)
         lgermline <- alakazam::padSeqEnds(lgermline, pad_char=mask_char, mod3=mod3)
+        #length <- max(c(nchar(germline), max(nchar(hcd[[seq]]))))
+        llength <- max(c(nchar(lgermline),max(nchar(altd[[seq]]))))
+        #if(length > nchar(germline)){
+        #  warning(paste0(
+        #    "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+        #    ", may indicate misalignment.",
+        #    " Should not happen if using createGermlines."))
+        #  germline <- alakazam::padSeqEnds(germline, 
+        #                                   pad_char=mask_char, mod3=mod3, len=length)
+        #}
+        if(llength > nchar(lgermline)){
+          warning(paste0(
+            "Padding germline for clone ",unique(dplyr::pull(data,clone)),
+            ", may indicate misalignment.",
+            "Should not happen if using createGermlines."))
+          lgermline <- alakazam::padSeqEnds(lgermline, 
+                                            pad_char=mask_char, mod3=mod3, len=llength)
+        }
       }
       hlgermline <- paste0(germline,lgermline)
       tmp_df <- alt
       loci <- unique(dplyr::pull(data,!!locus))
       tmp_df[[locus]] <- NULL
       tmp_df[[locus]] <- paste(loci,collapse=",")
-      chains <- c(rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
+      chains <- c(#rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
+        rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
       numbers <- c(1:alt_length)
       if(use_regions){
-        hregions <- c()
+        hregions <- as.character()
         lregions <- as.character(
           shazam::setRegionBoundaries(unique(alt[[junc_len]]),
                                       lgermline,
@@ -347,8 +404,8 @@ makeAirrClone <-
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "chains vector not equal to germline sequence length!"))
       }
-      new_seq <- "hlsequence"
-    }else{
+      new_seq <- "lsequence"
+    } else{ 
       tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
                                              mask_char=mask_char, max_mask=max_mask, trim=FALSE)
       if(pad_end){
@@ -359,7 +416,7 @@ makeAirrClone <-
         stop(paste0("Germline sequences for clone ",
                     unique(dplyr::pull(data,clone)),
                     " are not identical. All predicted germline sequences ",
-                    "must be identical within a clone. Be sure to use the",
+                    "must be identical within a clone. Be sure to use the ",
                     "createGermlines function before formatClones or makeAirrClone."))
       }
       germline <- alakazam::maskSeqGaps(data[[germ]][1], 

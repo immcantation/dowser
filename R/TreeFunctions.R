@@ -2337,6 +2337,73 @@ consensus_tree <- function(trees){
 }
 
 
+# Build some trees based on the clones object's $data and other parameters.
+# This results in a list of trees. 
+#
+# \code{lones} Filler
+# @param data          an AIRRE clone's data object (e.g. clones$data)
+# @param seq           column name containing sequence information
+# @param build         program to use for tree building (phangorn, dnapars, igphyml)
+# @param boot_part     is  "locus" bootstrap columns for each locus separately
+# @param exec          location of desired phylogenetic executable
+# @param dir           directory where temporary files will be placed (required
+#                      if \code{igphyml} or \code{dnapars} specified)
+# @param rm_temp       remove temporary files (default=TRUE)
+# @param rm_dir        remove temporary directory (default=TRUE)
+# @param id            unique identifier for this analysis (required if 
+#                      \code{igphyml} or \code{dnapars} specified)
+# @return              Returns a list of trees.
+makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, rm_dir=TRUE, id){
+  for(i in 1:length(data)){
+    data[[i]] <- bootstrapClones(data[[i]], reps = 1, 
+                                 partition = boot_part)[[1]]
+  }
+  reps <- as.list(1:length(data))
+  if(is.null(seq)){
+    seqs <- unlist(lapply(data,function(x)x@phylo_seq))
+  }else{
+    seqs <- rep(seq,length=length(data))
+  }
+  if(build=="pratchet"){
+    trees <- lapply(reps,function(x)
+      buildPratchet(data[[x]],seq=seqs[x]))
+    trees <- list(trees)
+    return(trees)
+  } else if(build=="dnapars" || build=="dnaml"){
+    trees <- lapply(reps,function(x)
+      buildPhylo(tmp_data[[x]],
+                 exec=exec,
+                 temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
+                 rm_temp = rm_temp,
+                 seq=seqs[x]))
+    trees <- list(trees)
+    return(trees)
+  }else if(build=="pml"){
+    trees <- lapply(reps,function(x)
+      buildPML(tmp_data[[x]],seq=seqs[x]))
+    trees <- list(trees)
+    return(trees)
+  }else if(build=="igphyml"){
+    if(rm_temp){
+      rm_dir <- file.path(dir,paste0(id,rep))
+    }else{
+      rm_dir <- NULL
+    }
+    trees <- 
+      buildIgphyml(tmp_data, 
+                   igphyml = exec,
+                   temp_path = file.path(dir,paste0(id,rep)),
+                   rm_files=rm_temp,
+                   rm_dir = rm_dir,
+                   id=id)
+    trees <- list(trees)
+    return(trees)
+  }else{
+    stop("build specification",build,"not recognized")
+  }
+}
+
+
 #' Creates a bootstrap distribution for clone sequence alignments, and returns  
 #' estimated trees for each bootstrap replicate as a nested list as a new input 
 #' tibble column.
@@ -2413,68 +2480,23 @@ getBootstraps <- function(clones, bootstraps,
       }
     }
   }
-  if(build=="dnapars"){
-    if(is.null(dir) || is.null(id)){
-      stop("dir, and id parameters must be specified when running dnapars")
+  if(build=="dnapars" || build=="dnaml"){
+    exec <- path.expand(exec)
+    if(!is.null(dir)){
+      if(!dir.exists(dir)){
+        dir.create(dir)
+      }
+    } else{
+      dir <- alakazam::makeTempDir(id)
+      if(big){
+        warning("Large dataset - best to set dir and id params")
+      }
     }
   }
-  # KEN: should probably parallelize by replicate and not tree, but this okay for now
-  bootstrap_trees <- list()
-  for(bootstrap in 1:bootstraps){
-      tmp_data <- list()
-      for(i in 1:length(data)){
-        tmp_data[[i]] <- bootstrapClones(data[[i]], reps=1, partition=boot_part)[[1]]
-      }
-      if(quiet > 1){print("building trees")}
-      reps <- as.list(1:length(tmp_data))
-      if(is.null(seq)){
-        seqs <- unlist(lapply(tmp_data,function(x)x@phylo_seq))
-      }else{
-        seqs <- rep(seq,length=length(tmp_data))
-      }
-      if(build=="pratchet"){
-        #for(i in 1:bootstraps){
-          trees <- parallel::mclapply(reps,function(x)
-            buildPratchet(tmp_data[[x]],seq=seqs[x]),
-            mc.cores=nproc)
-          trees <- list(trees)
-          bootstrap_trees[bootstrap] = trees
-      }else if(build=="dnapars" || build=="dnaml"){
-        #for(i in 1:bootstraps){
-          trees <- parallel::mclapply(reps,function(x)
-            buildPhylo(tmp_data[[x]],
-                       exec=exec,
-                       temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
-                       rm_temp = rm_temp,
-                       seq=seqs[x]),
-            mc.cores=nproc)
-          bootstrap_trees[[bootstrap]] = trees
-      }else if(build=="pml"){
-        #for(i in 1:bootstraps){
-          trees <- parallel::mclapply(reps,function(x)
-            buildPML(tmp_data[[x]],seq=seqs[x]),
-            mc.cores=nproc)
-          bootstrap_trees[bootstrap] = trees
-      }else if(build=="igphyml"){
-        if(rm_temp){
-          rm_dir <- file.path(dir,paste0(id,rep))
-        }else{
-          rm_dir <- NULL
-        }
-        #for(i in 1:bootstraps){
-          trees <- 
-            buildIgphyml(tmp_data, 
-                         igphyml = exec,
-                         temp_path = file.path(dir,paste0(id,rep)),
-                         rm_files=rm_temp,
-                         rm_dir = rm_dir,
-                         nproc=nproc,
-                         id=id)
-          bootstrap_trees[bootstrap] = trees
-      }else{
-        stop("build specification",build,"not recognized")
-      }
-  }
+  # here
+  bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)makeTrees(
+    data = data, seq=seq, build=build, boot_part = boot_part, exec = exec, 
+    dir=dir, rm_temp=rm_temp, rm_dir=rm_dir, id=id), mc.cores=nproc), recursive = FALSE)
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
