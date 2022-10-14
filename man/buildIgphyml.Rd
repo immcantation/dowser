@@ -26,7 +26,7 @@ buildIgphyml(
 )
 }
 \arguments{
-\item{clone}{\code{airrClone} object}
+\item{clone}{list of \code{airrClone} objects}
 
 \item{igphyml}{igphyml executable}
 

@@ -631,11 +631,21 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
             clone@germline <- clone@lgermline
         }
     }
+    if(nrow(clone@data) < 2){
+        stop("Clone ",paste0(clone@clone," has only one sequence, skipping"))
+    }
     if(is.null(tree)){
-        tree <- tryCatch({
-            alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,branch_length="distance",
-                verbose=verbose>0,temp_path=temp_path,onetree=onetree)},
-            error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
+        tree <- tryCatch(
+            alakazam::buildPhylipLineage(clone, exec, rm_temp=rm_temp, 
+                branch_length="distance", verbose=verbose>0, 
+                temp_path=temp_path,onetree=onetree),
+            error=function(e)e)
+        if(is.null(tree)){
+            stop(paste0("buildPhylipLineage failed for clone ",clone@clone))
+        }
+        if(inherits(tree, "error")){
+            stop(tree)
+        }
         tree <- alakazam::graphToPhylo(tree)
         tree <- rerootTree(tree, germline="Germline",verbose=0)
         tree <- ape::ladderize(tree,right=FALSE)
@@ -668,6 +678,9 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
     names <- clone@data$sequence_id
     if(verbose > 0){
         print(clone@clone)
+    }
+    if(length(seqs) < 2){
+        stop(paste0(clone@clone," has only one sequence, skipping"))
     }
     if(seq == "hlsequence"){
         germline <- clone@hlgermline
@@ -763,9 +776,11 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @export
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
     asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, verbose=FALSE){
-    
     seqs <- clone@data[[seq]]
     names <- clone@data$sequence_id
+    if(length(seqs) < 2){
+        stop(paste0(clone@clone," has only one sequence, skipping"))
+    }
     if(seq == "hlsequence"){
         germline <- clone@hlgermline
     }else if(seq == "lsequence"){
@@ -844,7 +859,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 
 #' Wrapper to build IgPhyML trees and infer intermediate nodes
 #' 
-#' @param    clone      \code{airrClone} object
+#' @param    clone      list of \code{airrClone} objects
 #' @param    igphyml    igphyml executable
 #' @param    trees      list of tree topologies if desired
 #' @param    nproc      number of cores for parallelization
@@ -896,7 +911,16 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
         stop(paste("NA regions found in clones",paste(exclude_clones, collapse=","), 
             "remove before continuing"))
     }
-
+    seqs <- unlist(lapply(clone, function(x)nrow(x@data)))
+    if(sum(seqs < 2) > 0){
+        warning("Discarding ",paste0(sum(seqs < 2), " clones with only one sequence. ",
+            "Consider running formatClones with dup_singles=TRUE to duplicate these ",
+            "sequences if they're important to include."))
+        clone <- clone[seqs > 1]
+    }
+    if(length(clone) == 0){
+        stop("No clones for tree building!")
+    }
     os <- strsplit(omega,split=",")[[1]]
     file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
             partition=partition, ...)
@@ -1392,7 +1416,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         }
         # remove problematic characters from trait values
         data <- lapply(data,function(x){
-            x@data[[trait]] <- gsub(":|;|,|=| ","-",x@data[[trait]])
+            x@data[[trait]] <- gsub(":|;|,|=| |_","-",x@data[[trait]])
             x})
         if(is.null(modelfile)){
             states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
@@ -1453,20 +1477,21 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     }
     if(build=="dnapars" || build=="dnaml"){
         trees <- parallel::mclapply(reps,function(x)
-            buildPhylo(data[[x]],
+            tryCatch(buildPhylo(data[[x]],
                 exec=exec,
                 temp_path=file.path(dir,paste0(id,"_trees_",x)),
                 rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
+            error=function(e)e),
             mc.cores=nproc)
     }else if(build=="pratchet"){
         trees <- parallel::mclapply(reps,function(x)
-            buildPratchet(data[[x]],seq=seqs[x],
-                    tree=trees[[x]],...),
+            tryCatch(buildPratchet(data[[x]],seq=seqs[x],
+                    tree=trees[[x]],...),error=function(e)e),
                 mc.cores=nproc)
     }else if(build=="pml"){
         trees <- parallel::mclapply(reps,function(x)
-            buildPML(data[[x]],seq=seqs[x],
-                tree=trees[[x]],...),
+            tryCatch(buildPML(data[[x]],seq=seqs[x],
+                tree=trees[[x]],...),error=function(e)e),
                 mc.cores=nproc)
     }else if(build=="igphyml"){
         if(rm_temp){
@@ -1475,32 +1500,48 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
             rm_dir <- NULL
         }
         trees <- 
-            buildIgphyml(data,
+            tryCatch(buildIgphyml(data,
                 igphyml=exec,
                 temp_path=file.path(dir,id),
                 rm_files=rm_temp,
                 rm_dir=rm_dir,
                 trees=trees,nproc=nproc,id=id,
-                ...)
-        clones$parameters <- lapply(trees,function(x)x$parameters)
+                ...),error=function(e)e)
+        if(inherits(trees, "error")){
+            stop(trees)
+        }
     }else{
         stop("build specification",build,"not recognized")
     }
 
     #catch any tree inference errors
-    errors <- unlist(lapply(trees, function(x) "error" %in% class(x)))
-    messages <- trees[errors]
-    errorclones <- clones$clone_id[errors]
-    trees <- trees[!errors]
-    data <- data[!errors]
-    clones <- clones[!errors,]
-    if(length(errorclones) > 0){
-        warning(paste("Tree building failed for clones",
-            paste(errorclones,collapse=", ")))
-        me <- lapply(messages, function(x)warning(x$message))
+    if(build != "igphyml"){
+        errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
+        messages <- trees[errors]
+        errorclones <- clones$clone_id[errors]
+        trees <- trees[!errors]
+        data <- data[!errors]
+        clones <- clones[!errors,]
+        if(length(errorclones) > 0){
+            warning(paste("Tree building failed for clones",
+                paste(errorclones,collapse=", ")))
+            me <- lapply(messages, function(x)warning(x$message))
+        }
     }
     if(length(trees) == 0){
         stop("No trees left!")
+    }
+
+    # make sure trees, data, and clone objects are in same order
+    tree_names <- unlist(lapply(trees, function(x)x$name))
+    data_names <- unlist(lapply(data, function(x)x@clone))
+    m <- match(tree_names, data_names)
+    data <- data[m]
+    m <- match(tree_names, clones$clone_id)
+    clones <- clones[m,]
+
+    if(build == "igphyml"){
+        clones$parameters <- lapply(trees,function(x)x$parameters)
     }
 
     if(!is.null(igphyml)){
@@ -1937,6 +1978,9 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' will contain a \code{tibble} named "switches" containing switch count 
 #' information. This object can be passed to \link{testSP} and other functions 
 #' to perform parsimony based trait value tests. 
+#' 
+#' Trait values cannot contain values N, UCA, or NTIP. These are reserved for 
+#' use by test statistic functions.
 #'  
 #' @seealso Uses output from \link{formatClones} with similar arguments to 
 #' \link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
@@ -2033,8 +2077,15 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         }
         # remove problematic characters from trait values
         data <- lapply(data,function(x){
-            x@data[[trait]] <- gsub(":|;|,|=| ","-",x@data[[trait]])
+            x@data[[trait]] <- gsub(":|;|,|=| |_","-",x@data[[trait]])
             x})
+        
+        traits <- unique(unlist(lapply(data, function(x)unique(x@data[[trait]]))))
+        if("N" %in% traits || "NTIP" %in% traits || "UCA" %in% traits){
+            stop(paste("Forbidden trait values (e.g. N, NTIP, UCA) detected.",
+                "Please remove or change, then re-run formatClones."))
+        }
+
         if(is.null(modelfile)){
             states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
             modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
@@ -2073,7 +2124,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     if(is.null(rep)){
         reps <- as.list(1:permutations)
         l <- parallel::mclapply(reps,function(x)
-            findSwitches(clones ,rep=x, 
+            tryCatch(findSwitches(clones ,rep=x, 
             trait=trait, modelfile=modelfile, build=build, 
             exec=exec, igphyml=igphyml, 
             id=id, dir=dir, permutations=permutations,
@@ -2081,7 +2132,14 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
             lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
             boot_part=boot_part, force_resolve=force_resolve, ...),
-            mc.cores=nproc)
+            error=function(e)e),mc.cores=nproc)
+        errors <- unlist(lapply(l, function(x) inherits(x, "error")))
+        messages <- l[errors]
+        if(sum(errors) > 0){
+            me <- lapply(messages, function(x)warning(x$message))
+            stop(paste("findSwitches failed for",sum(errors),
+                "repetitions (see warnings, more info if nproc=1)"))
+        }
         results <- list()
         results$switches <- NULL
         results$trees <- NULL
@@ -2132,20 +2190,21 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             }
             if(build=="dnapars" || build=="dnaml"){
                 trees <- parallel::mclapply(reps,function(x)
-                    buildPhylo(data[[x]],
+                    tryCatch(buildPhylo(data[[x]],
                         exec=exec,
                         temp_path=file.path(dir,paste0(id,"_",rep,"_trees_",x)),
                         rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
+                    error=function(e)e),
                     mc.cores=nproc)
             }else if(build=="pratchet"){
                 trees <- parallel::mclapply(reps,function(x)
-                    buildPratchet(data[[x]],seq=seqs[x],
-                            tree=trees[[x]],...),
+                    tryCatch(buildPratchet(data[[x]],seq=seqs[x],
+                            tree=trees[[x]],...),error=function(e)e),
                         mc.cores=nproc)
             }else if(build=="pml"){
                 trees <- parallel::mclapply(reps,function(x)
-                    buildPML(data[[x]],seq=seqs[x],
-                        tree=trees[[x]],...),
+                    tryCatch(buildPML(data[[x]],seq=seqs[x],
+                        tree=trees[[x]],...),error=function(e)e),
                         mc.cores=nproc)
             }else if(build=="igphyml"){
                 if(rm_temp){
@@ -2154,23 +2213,46 @@ findSwitches <- function(clones, permutations, trait, igphyml,
                     rm_dir <- NULL
                 }
                 trees <- 
-                    buildIgphyml(data,
+                    tryCatch(buildIgphyml(data,
                         igphyml=exec,
                         temp_path=file.path(dir,paste0(id,rep)),
                         rm_files=rm_temp,
                         rm_dir=rm_dir,
-                        trees=trees,nproc=nproc,id=id)
+                        trees=trees,nproc=nproc,id=id,
+                        ...),error=function(e)e)
+                if(inherits(trees, "error")){
+                   stop(trees)
+                }
             }else{
                 stop("build specification",build,"not recognized")
             }
         }
 
-        match <- unlist(lapply(1:length(data), function(x){
-            data[[x]]@clone == trees[[x]]$name
-        }))
-        if(sum(!match) > 0){
-            stop("Clone and tree names not in proper order!")
+        #catch any tree inference errors
+        if(build != "igphyml"){
+            errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
+            messages <- trees[errors]
+            errorclones <- clones$clone_id[errors]
+            trees <- trees[!errors]
+            data <- data[!errors]
+            clones <- clones[!errors,]
+            if(length(errorclones) > 0){
+                warning(paste("Tree building failed for clones",
+                    paste(errorclones,collapse=", ")))
+                me <- lapply(messages, function(x)warning(x$message))
+            }
         }
+        if(length(trees) == 0){
+            stop("No trees left!")
+        }
+    
+        # make sure trees, data, and clone objects are in same order
+        tree_names <- unlist(lapply(trees, function(x)x$name))
+        data_names <- unlist(lapply(data, function(x)x@clone))
+        m <- match(tree_names, data_names)
+        data <- data[m]
+        m <- match(tree_names, clones$clone_id)
+        clones <- clones[m,]
         
         results <- list()
         if(!is.null(igphyml)){

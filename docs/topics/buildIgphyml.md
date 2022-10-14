@@ -35,7 +35,7 @@ Arguments
 -------------------
 
 clone
-:   `airrClone` object
+:   list of `airrClone` objects
 
 igphyml
 :   igphyml executable

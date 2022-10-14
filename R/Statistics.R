@@ -48,6 +48,9 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
         dplyr::filter(!!rlang::sym("TO") != "N" & 
             !!rlang::sym("TO") != !!rlang::sym("FROM") &
              !!rlang::sym("FROM") != "UCA")
+    if(nrow(switches) == 0){
+        stop("No switches left after filtering!")
+    }
     if(!bylineage){
         reps <- switches  %>%
             dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE")) %>% 
@@ -215,6 +218,10 @@ testSP <- function(switches, permuteAll=FALSE,
         to <- dplyr::enquo(to)
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
     }
+
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != "N")
+
     if(nrow(switches) == 0){
         stop("No switches left after filtering!")
     }
@@ -444,6 +451,10 @@ testSC <- function(switches,dropzeroes=TRUE,
         to <-dplyr::enquo(to)
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
     }
+
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != "N")
+
     if(nrow(switches) == 0){
         stop("No switches left after filtering!")
     }
