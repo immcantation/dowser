@@ -34,7 +34,7 @@ ls germlines
 
 To reconstruct clonal germlines, read in the IMGT-gapped sequence directory and supply it, along with your data, to the createGermlines function.
 
-Input data *must* be from one locus, such as only IGH.
+Input data can be from multiple loci (this is different from older Dowser versions). However, the input reference sequences must be from one organism, such as human.
 
 
 ```r
