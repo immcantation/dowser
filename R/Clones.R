@@ -113,6 +113,7 @@ makeAirrClone <-
                                     unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
                                              text_fields, num_fields, seq_fields, traits)))
     if (check != TRUE) { stop(check) }
+    
     if(chain=="HL"){
       check <- alakazam::checkColumns(data, c(cell,locus))
       if (check != TRUE) { stop(check) }
@@ -154,10 +155,11 @@ makeAirrClone <-
     } else if(chain=="L"){
       check <- alakazam::checkColumns(data, c(cell,locus))
       if (check != TRUE) { stop(check) }
-      #heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
-      #if(max(heavycount) > 1){
+      
+      #  heavycount = max(table(data[data[[locus]] == heavy,][[cell]]))
+      # if(max(heavycount) > 1){
       #  stop(paste0(sum(heavycount > 1),
-      #              " cells with multiple heavy chains found. Remove before proceeeding"))
+      #             " cells with multiple heavy chains found. Remove before proceeeding"))
       #}
       
       # Ensure cell and loci columns are not duplicated
@@ -184,7 +186,7 @@ makeAirrClone <-
     }
     
     if(chain=="HL"){
-      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char, 
+      hc[[seq]] <- alakazam::maskSeqEnds(hc[[seq]], mask_char=mask_char,
                                          max_mask=max_mask, trim=FALSE)
       alt[[seq]] <- alakazam::maskSeqEnds(alt[[seq]], mask_char=mask_char, 
                                           max_mask=max_mask, trim=FALSE)
@@ -224,7 +226,7 @@ makeAirrClone <-
         stop(paste0("Germline sequences for clone ",
                     unique(dplyr::pull(data,clone)),
                     " are not identical. All predicted germline sequences ",
-                    "must be identical for each locus within a clone. Be sure to use the ",
+                    "must be identical for each locus within a clone. Be sure to use the",
                     "createGermlines function before formatClones or makeAirrClone."))
       }
       germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
@@ -300,8 +302,8 @@ makeAirrClone <-
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "Light chain sequences must be same length!"))
       }
-      hc$lsequence <- ""
-      hc$hlsequence <- ""
+      alt$lsequence <- ""
+      alt$hlsequence <- ""
       for(cell_name in unique(dplyr::pull(alt,!!rlang::sym(cell)))){
         if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
           altseq <- paste(rep(mask_char,alt_length),collapse="")
@@ -382,7 +384,7 @@ makeAirrClone <-
         stop(paste0("Germline sequences for clone ",
                     unique(dplyr::pull(data,clone)),
                     " are not identical. All predicted germline sequences ",
-                    "must be identical within a clone. Be sure to use the ",
+                    "must be identical within a clone. Be sure to use the",
                     "createGermlines function before formatClones or makeAirrClone."))
       }
       germline <- alakazam::maskSeqGaps(data[[germ]][1], 
@@ -427,7 +429,6 @@ makeAirrClone <-
         regions <- rep("N", times=nchar(germline))
       }
     }
-    
     seq_len <- nchar(tmp_df[[seq]])
     if(any(seq_len != seq_len[1])){
       len_message <- paste0("All sequences are not the same length for data with first ", 
@@ -609,12 +610,12 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(!subclone %in% names(data)){
       stop("Need subclone designation if majoronly=TRUE")
     }
-    data <- filter(data, !!rlang::sym(subclone) <= 1)
+    data <- dplyr::filter(data, !!rlang::sym(subclone) <= 1)
   }
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
     if(!is.null(heavy)){
       if(locus %in% names(data)){
-        data <- filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
+        data <- dplyr::filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
       }
     }
   }
@@ -628,11 +629,11 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(is.null(heavy)){
       stop("Need heavy chain (heavy) designation for heavy+light chain clones")
     }    
-    lcells <- filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell]]
-    hcells <- filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell]]
+    lcells <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))[[cell]]
+    hcells <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))[[cell]]
     nohcells <- lcells[!lcells %in% hcells]
     if(length(nohcells) > 0){
-      data <- filter(data,!(!!rlang::sym(cell) %in% nohcells))
+      data <- dplyr::filter(data,!(!!rlang::sym(cell) %in% nohcells))
       warning(paste("Removed",length(nohcells),
                     "cells with no heavy chain information"))
     }
@@ -640,7 +641,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
   if(chain == "L"){ #if chain is light and, discard all IGH sequences
     if(!is.null(heavy)){
       if(locus %in% names(data)){
-        data <- filter(data, !!rlang::sym(locus) != rlang::sym(heavy))
+        data <- dplyr::filter(data, !!rlang::sym(locus) != rlang::sym(heavy))
       }
     }
   }
@@ -655,7 +656,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     data[[clone]] <- paste0(data[[clone]],"_",data[[subclone]])
   }else if(!split_light && chain=="HL"){
-    data <- filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
+    data <- dplyr::filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
                              !!rlang::sym(subclone) > 1))
   }
   if(!is.null(columns)){
@@ -1135,9 +1136,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
   light$subclone_id <- 0
   light[[clone]] <- -1
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
-    hd <- filter(heavy,!!rlang::sym(clone) == cloneid)
-    ld <- filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
-    hd <- filter(hd,(!!rlang::sym(cell) %in% ld[[!!cell]]))
+    hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
+    ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
+    hd <- dplyr::filter(hd,(!!rlang::sym(cell) %in% ld[[!!cell]]))
     # hr <- filter(hd,!(!!rlang::sym(cell) %in% ld[[!!cell]]))
     if(nrow(ld) == 0){
       return(hd)
@@ -1167,7 +1168,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
       cell_counts <- table(ltemp[cvs,][[cell]])
       mcells <- names(cell_counts)[cell_counts > 1]
       for(cellname in mcells){
-        ttemp <- filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
+        ttemp <- dplyr::filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
         ttemp$str_counts <- 
           stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
         # keep version with most non-N characters
@@ -1175,8 +1176,8 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
         rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
         rmseqs <- c(rmseqs,rmtemp[[id]])
       }
-      include <- filter(ltemp,cvs & !(!!rlang::sym(id) %in% rmseqs))
-      leave <- filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
+      include <- dplyr::filter(ltemp,cvs & !(!!rlang::sym(id) %in% rmseqs))
+      leave <- dplyr::filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
       
       # find other cells still in ltemp and add as vj_alt_cell
       mcells <- unique(include[[cell]])
@@ -1189,7 +1190,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
         }
       }
       ld <- bind_rows(ld,include)
-      ltemp <- filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
+      ltemp <- dplyr::filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
       lclone <- lclone + 1
     }
     ld[[clone]] <- cloneid
@@ -1259,7 +1260,7 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
                wc,"too long - over 1000 characters!"))
   }
   
-  or <- order(unlist(lapply(clones$data,function(x) nrow(x@data))),
+  or <- order(unlist(lapply(clones$data,function(x)nrow(x@data))),
               decreasing=TRUE)
   clones <- clones[or,]
   
