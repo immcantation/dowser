@@ -588,7 +588,7 @@ buildClonalGermline <- function(receptors, references,
         amino_acid=amino_acid,...),error=function(e)e)
       if("error" %in% class(germlines)){
         warning(paste("Clone",unique(receptors[[clone]]),
-          "germline reconstruction error."))
+          "germline reconstruction error.",germlines$message))
         germlines  <- list()
         germlines$full <- NA
         germlines$dmask <- NA
