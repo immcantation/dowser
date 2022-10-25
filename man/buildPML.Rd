@@ -15,7 +15,8 @@ buildPML(
   data_type = "DNA",
   optNni = TRUE,
   optQ = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  resolve_random = TRUE
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ buildPML(
 \item{optQ}{Optimize Q matrix}
 
 \item{verbose}{Print error messages as they happen?}
+
+\item{resolve_random}{randomly resolve polytomies?}
 }
 \value{
 \code{phylo} object created by phangorn::optim.pml with nodes

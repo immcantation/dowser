@@ -662,87 +662,91 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
-    tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,
-    data_type="DNA"){
-    seqs <- clone@data[[seq]]
-    names <- clone@data$sequence_id
-    if(verbose > 0){
-        print(clone@clone)
+                          tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,
+                          data_type="DNA"){
+  seqs <- clone@data[[seq]]
+  names <- clone@data$sequence_id
+  if(verbose > 0){
+    print(clone@clone)
+  }
+  if(length(seqs) < 2){
+    stop(paste0(clone@clone," has only one sequence, skipping"))
+  }
+  if(seq == "hlsequence"){
+    germline <- clone@hlgermline
+  }else if(seq == "lsequence"){
+    germline <- clone@lgermline
+  }else{
+    germline <- clone@germline
+  }
+  seqs <- base::append(seqs,germline)
+  names <- c(names,"Germline")
+  seqs <- strsplit(seqs,split="")
+  names(seqs) <- names
+  lengths = unlist(lapply(seqs,function(x)length(x)))
+  if(any(lengths != lengths[1])){
+    stop(paste0("Sequence and/or germline lengths of clone ",
+                clone@clone," are not equal"))
+  }
+  if(data_type=="DNA"){
+    data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+  }else{
+    data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows(seqs)))),
+                             type="AA")
+  }
+  if(is.null(tree)){
+    tree <- tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
+    tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
+    tree <- ape::unroot(tree)
+    tree$edge.length <- tree$edge.length/nchar(germline)
+    tree$tree_method <- "phangorn::prachet"
+    tree$edge_type <- "genetic_distance"
+    nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
+    tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+    tree$node.label <- NULL
+  }else if(is.null(tree$nodes)){
+    nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
+    tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+  }
+  tree$name <- clone@clone
+  tree$seq <- seq
+  if(asr != "none" && data_type=="DNA"){
+    seqs_pars <- phangorn::ancestral.pars(tree, data, 
+                                          type=asr_type, cost=NULL, return="prob")
+    ASR <- list()
+    for(i in 1:max(tree$edge)){
+      patterns <- t(subset(seqs_pars, i)[[1]])
+      pat <- patterns[,attr(seqs_pars,"index")]
+      if(asr == "seq"){
+        thresh <- pat > asr_thresh
+        acgt <- c("A","C","G","T")
+        seq_ar <- unlist(lapply(1:ncol(pat),function(x){
+          site <- acgt[thresh[,x]]
+          site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+          if(length(site) == 0){
+            site <- "N"
+          }
+          site}))
+        ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+      }else{
+        ASR[[as.character(i)]] <- pat
+      }
     }
-    if(seq == "hlsequence"){
-        germline <- clone@hlgermline
-    }else if(seq == "lsequence"){
-        germline <- clone@lgermline
-    }else{
-        germline <- clone@germline
-    }
-    seqs <- base::append(seqs,germline)
-    names <- c(names,"Germline")
-    seqs <- strsplit(seqs,split="")
-    names(seqs) <- names
-    lengths = unlist(lapply(seqs,function(x)length(x)))
-    if(any(lengths != lengths[1])){
-        stop(paste0("Sequence and/or germline lengths of clone ",
-            clone@clone," are not equal"))
-    }
-    if(data_type=="DNA"){
-        data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
-    }else{
-        data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows(seqs)))),
-            type="AA")
-    }
-    if(is.null(tree)){
-        tree <- tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
-        tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
-        tree <- ape::unroot(tree)
-        tree$edge.length <- tree$edge.length/nchar(germline)
-        tree$tree_method <- "phangorn::prachet"
-        tree$edge_type <- "genetic_distance"
-        nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
-        tree$nodes <- rep(list(sequence=NULL),times=nnodes)
-        tree$node.label <- NULL
-    }else if(is.null(tree$nodes)){
-        nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
-        tree$nodes <- rep(list(sequence=NULL),times=nnodes)
-    }
-    tree$name <- clone@clone
-    tree$seq <- seq
-    if(asr != "none" && data_type=="DNA"){
-        seqs_pars <- phangorn::ancestral.pars(tree, data, 
-            type=asr_type, cost=NULL, return="prob")
-        ASR <- list()
-        for(i in 1:max(tree$edge)){
-            patterns <- t(subset(seqs_pars, i)[[1]])
-            pat <- patterns[,attr(seqs_pars,"index")]
-            if(asr == "seq"){
-                thresh <- pat > asr_thresh
-                acgt <- c("A","C","G","T")
-                seq_ar <- unlist(lapply(1:ncol(pat),function(x){
-                    site <- acgt[thresh[,x]]
-                    site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
-                    if(length(site) == 0){
-                        site <- "N"
-                    }
-                    site}))
-                ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-            }else{
-                ASR[[as.character(i)]] <- pat
-            }
-        }
-        tree$nodes <- lapply(1:length(tree$nodes),function(x){
-            tree$nodes[[x]]$sequence <- ASR[[x]]
-            tree$nodes[[x]]
-        })
-    }
-    opars <- phangorn::parsimony(ape::di2multi(tree),data)
-    tree <- rerootTree(tree,"Germline",verbose=0)
-    npars <- phangorn::parsimony(ape::di2multi(tree),data)
-    if(npars != opars){
-        stop(paste("Error in rerooting tree",tree$name,
-            "parsimony score not consistent:",opars,npars))
-    }
-    return(tree)
+    tree$nodes <- lapply(1:length(tree$nodes),function(x){
+      tree$nodes[[x]]$sequence <- ASR[[x]]
+      tree$nodes[[x]]
+    })
+  }
+  opars <- phangorn::parsimony(ape::di2multi(tree),data)
+  tree <- rerootTree(tree,"Germline",verbose=0)
+  npars <- phangorn::parsimony(ape::di2multi(tree),data)
+  if(npars != opars){
+    stop(paste("Error in rerooting tree",tree$name,
+               "parsimony score not consistent:",opars,npars))
+  }
+  return(tree)
 }
+
 
 #' Wrapper for phangorn::optim.pml
 #' 
@@ -757,90 +761,93 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @param    verbose    Print error messages as they happen?
 #' @param    optNni     Optimize tree topology
 #' @param    optQ       Optimize Q matrix
+#' @param    resolve_random  randomly resolve polytomies?
 #'
 #' @return  \code{phylo} object created by phangorn::optim.pml with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
-    asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, verbose=FALSE){
-    
-    seqs <- clone@data[[seq]]
-    names <- clone@data$sequence_id
-    if(seq == "hlsequence"){
-        germline <- clone@hlgermline
-    }else if(seq == "lsequence"){
-        germline <- clone@lgermline
-    }else{
-        germline <- clone@germline
+                     asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, 
+                     verbose=FALSE, resolve_random=TRUE){
+  seqs <- clone@data[[seq]]
+  names <- clone@data$sequence_id
+  if(length(seqs) < 2){
+    stop(paste0(clone@clone," has only one sequence, skipping"))
+  }
+  if(seq == "hlsequence"){
+    germline <- clone@hlgermline
+  }else if(seq == "lsequence"){
+    germline <- clone@lgermline
+  }else{
+    germline <- clone@germline
+  }
+  seqs <- base::append(seqs,germline)
+  names <- c(names,"Germline")
+  seqs <- strsplit(seqs,split="")
+  names(seqs) <- names
+  if(data_type=="DNA"){
+    data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
+  }else{
+    data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
+                             type="AA")
+    print(sub_model)
+    if(sub_model == "GTR"){
+      warning("GTR model shouldn't be used for AA.")
     }
-    seqs <- base::append(seqs,germline)
-    names <- c(names,"Germline")
-    seqs <- strsplit(seqs,split="")
-    names(seqs) <- names
-    if(data_type=="DNA"){
-        data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
-    }else{
-        data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
-            type="AA")
-        print(sub_model)
-        if(sub_model == "GTR"){
-            warning("GTR model shouldn't be used for AA.")
-        }
+  }
+  if(is.null(tree)){
+    dm  <- phangorn::dist.ml(data)
+    treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random)
+    treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
+    pml <- phangorn::pml(ape::unroot(treeNJ),data=data)
+    fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
+                                        optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                                                                                                          maxit=10, trace=0)), error=function(e)e)
+    if("error" %in% class(fit)){
+      if(verbose){
+        print(fit)
+      }
+      return(fit)
     }
-    if(is.null(tree)){
-        dm  <- phangorn::dist.ml(data)
-        treeNJ  <- ape::multi2di(phangorn::NJ(dm))
-        treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
-        pml <- phangorn::pml(ape::unroot(treeNJ),data=data)
-        fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
-         optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
-          maxit=10, trace=0)), error=function(e)e)
-        if("error" %in% class(fit)){
-            if(verbose){
-                print(fit)
-            }
-            return(fit)
-        }
-        tree <- fit$tree
-        tree <- ape::unroot(fit$tree)
-        tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
-        tree$edge_type <- "genetic_distance"
-        nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
-        tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+    tree <- ape::unroot(fit$tree)
+    tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
+    tree$edge_type <- "genetic_distance"
+    nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
+    tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+  }
+  tree$name <- clone@clone
+  tree$seq <- seq
+  
+  if(asr != "none" && data_type=="DNA"){
+    seqs_ml <- phangorn::ancestral.pml(fit,
+                                       type="marginal",return="prob")
+    ASR <- list()
+    for(i in 1:max(tree$edge)){
+      patterns <- t(subset(seqs_ml, i)[[1]])
+      pat <- patterns[,attr(seqs_ml,"index")]
+      if(asr == "seq"){
+        thresh <- pat > asr_thresh
+        acgt <- c("A","C","G","T")
+        seq_ar <- unlist(lapply(1:ncol(pat),function(x){
+          site <- acgt[thresh[,x]]
+          site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+          if(length(site) == 0){
+            site <- "N"
+          }
+          site}))
+        ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+      }else{
+        ASR[[as.character(i)]] <- pat
+      }
     }
-    tree$name <- clone@clone
-    tree$seq <- seq
-
-    if(asr != "none" && data_type=="DNA"){
-        seqs_ml <- phangorn::ancestral.pml(fit,
-            type="marginal",return="prob")
-        ASR <- list()
-        for(i in 1:max(tree$edge)){
-            patterns <- t(subset(seqs_ml, i)[[1]])
-            pat <- patterns[,attr(seqs_ml,"index")]
-            if(asr == "seq"){
-                thresh <- pat > asr_thresh
-                acgt <- c("A","C","G","T")
-                seq_ar <- unlist(lapply(1:ncol(pat),function(x){
-                    site <- acgt[thresh[,x]]
-                    site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
-                    if(length(site) == 0){
-                        site <- "N"
-                    }
-                    site}))
-                ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-            }else{
-                ASR[[as.character(i)]] <- pat
-            }
-        }
-        #tree$sequences <- ASR
-        tree$nodes <- lapply(1:length(tree$nodes),function(x){
-            tree$nodes[[x]]$sequence <- ASR[[x]]
-            tree$nodes[[x]]
-        })
-    }
-    tree <- rerootTree(tree,"Germline",verbose=0)
-    return(tree)
+    #tree$sequences <- ASR
+    tree$nodes <- lapply(1:length(tree$nodes),function(x){
+      tree$nodes[[x]]$sequence <- ASR[[x]]
+      tree$nodes[[x]]
+    })
+  }
+  tree <- rerootTree(tree,"Germline",verbose=0)
+  return(tree)
 }
 
 #' Wrapper to build IgPhyML trees and infer intermediate nodes
@@ -1320,223 +1327,252 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' }
 #' @export
 getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
-    modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
-    fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
-    seq=NULL, collapse=FALSE, ...){
-
-    if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
-        stop("exec must be specified for this build option")
-    }
-    if(!is.null(dir)){
-        dir <- path.expand(dir)
-    }
-
-    data <- clones$data
-    if(!inherits(data, "list")){
-      data <- list(data)
-    }
-    if(!inherits(data[[1]], "airrClone")){
-      stop("Input data must be a list of airrClone objects")
-    }
-    # make sure all sequences and germlines within a clone are the same length
-    length_check <- unlist(lapply(data, function(x){
-        if(x@phylo_seq == "hlsequence"){
-            germline <- x@hlgermline
-            seqs <- x@data$hlsequence
-        }else if(x@phylo_seq == "lsequence"){
-            germline <- x@lgermline
-            seqs <- x@data$lsequence
-        }else{
-            germline <- x@germline
-            seqs <- x@data$sequence
-        }
-        if(any(nchar(germline) != nchar(seqs))){
-            stop(paste0("Sequence and/or germline lengths of clone ",
-                x@clone," are not equal."))
-        }
-    }))
-    if(fixtrees){
-        if(!"trees" %in% names(clones)){
-            stop("trees column must be specified if fixtrees=TRUE")
-        }
-        if(!inherits(clones$trees[[1]], "phylo")){
-          stop("Trees must be a list of class phylo")
-        }
-        trees <- clones$trees
+                     modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
+                     fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
+                     seq=NULL, collapse=FALSE, ...){
+  
+  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+    stop("exec must be specified for this build option")
+  }
+  if(!is.null(dir)){
+    dir <- path.expand(dir)
+  }
+  
+  data <- clones$data
+  if(!inherits(data, "list")){
+    data <- list(data)
+  }
+  if(!inherits(data[[1]], "airrClone")){
+    stop("Input data must be a list of airrClone objects")
+  }
+  # make sure all sequences and germlines within a clone are the same length
+  unlist(lapply(data, function(x){
+    if(x@phylo_seq == "hlsequence"){
+      germline <- x@hlgermline
+      seqs <- x@data$hlsequence
+    }else if(x@phylo_seq == "lsequence"){
+      germline <- x@lgermline
+      seqs <- x@data$lsequence
     }else{
-        trees <- NULL
+      germline <- x@germline
+      seqs <- x@data$sequence
     }
-    if(is.null(id)){
-            id <- "sample"
+    if(any(nchar(germline) != nchar(seqs))){
+      stop(paste0("Sequence and/or germline lengths of clone ",
+                  x@clone," are not equal."))
     }
-    big <- FALSE
-    if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
-        big <- TRUE
+  }))
+  if(fixtrees){
+    if(!"trees" %in% names(clones)){
+      stop("trees column must be specified if fixtrees=TRUE")
     }
-    if(!rm_temp && big){
-        warning("Large dataset - best to set rm_temp=TRUE")
+    if(!inherits(clones$trees[[1]], "phylo")){
+      stop("Trees must be a list of class phylo")
     }
-    if(!is.null(igphyml)){
-        igphyml <- path.expand(igphyml)
-        if(!is.null(dir)){
-            if(!dir.exists(dir)){
-                dir.create(dir)
-            }
-        }else{
-            dir <- alakazam::makeTempDir(id)
-            if(big){
-                warning("Large dataset - best to set dir and id params")
-            }
-        }
-        if(is.null(trait)){
-            stop("trait must be specified when igphyml-based trait reconstruction")
-        }
-        # remove problematic characters from trait values
-        data <- lapply(data,function(x){
-            x@data[[trait]] <- gsub(":|;|,|=| ","-",x@data[[trait]])
-            x})
-        if(is.null(modelfile)){
-            states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
-            modelfile <- makeModelFile(states,
-                file=file.path(dir,paste0(id,"_modelfile.txt")))
-        }else{
-            states <- readModelFile(modelfile)
-        }
-        #if igphyml is specified, append trait value to sequence ids
-        if(!is.null(trees)){
-            indexes <- 1:length(data)
-            trees <- lapply(indexes,function(x){
-                tree <- trees[[x]]
-                datat <- data[[x]]
-                for(id in datat@data$sequence_id){
-                    trait_temp <- filter(datat@data,
-                        !!rlang::sym("sequence_id")==id)[[trait]]
-                    tree$tip.label[tree$tip.label == id] <- 
-                    paste0(id,"_",trait_temp)
-                }
-                tree})
-        }
-        data <- lapply(data,function(x){
-            x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
-            x})
-    }
-    if(build=="dnapars" || build=="igphyml" || build=="dnaml" || !is.null(igphyml)){
-        if(!is.null(dir)){
-            if(!dir.exists(dir)){
-                dir.create(dir)
-            }
-        }else{
-            dir <- alakazam::makeTempDir(id)
-            if(big){
-                warning("Large dataset - best to set dir and id params")
-            }
-        }
-    }
-
-    if(!inherits(data, "list")){
-        data <- list(data)
-    }
+    trees <- clones$trees
+  }else{
+    trees <- NULL
+  }
+  if(is.null(id)){
+    id <- "sample"
+  }
+  big <- FALSE
+  if(sum(unlist(lapply(data, function(x)nrow(x@data)))) > 10000){
+    big <- TRUE
+  }
+  if(!rm_temp && big){
+    warning("Large dataset - best to set rm_temp=TRUE")
+  }
+  if(!is.null(igphyml)){
+    igphyml <- path.expand(igphyml)
     if(!is.null(dir)){
-        if(!dir.exists(dir)){
-            dir.create(dir)
-        }
+      if(!dir.exists(dir)){
+        dir.create(dir)
+      }
+    }else{
+      dir <- alakazam::makeTempDir(id)
+      if(big){
+        warning("Large dataset - best to set dir and id params")
+      }
     }
-    rm_dir <- NULL
+    if(is.null(trait)){
+      stop("trait must be specified when igphyml-based trait reconstruction")
+    }
+    # remove problematic characters from trait values
+    data <- lapply(data,function(x){
+      x@data[[trait]] <- gsub(":|;|,|=| |_","-",x@data[[trait]])
+      x})
+    if(is.null(modelfile)){
+      states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
+      modelfile <- makeModelFile(states,
+                                 file=file.path(dir,paste0(id,"_modelfile.txt")))
+    }else{
+      states <- readModelFile(modelfile)
+    }
+    #if igphyml is specified, append trait value to sequence ids
+    if(!is.null(trees)){
+      indexes <- 1:length(data)
+      trees <- lapply(indexes,function(x){
+        tree <- trees[[x]]
+        datat <- data[[x]]
+        for(id in datat@data$sequence_id){
+          trait_temp <- filter(datat@data,
+                               !!rlang::sym("sequence_id")==id)[[trait]]
+          tree$tip.label[tree$tip.label == id] <- 
+            paste0(id,"_",trait_temp)
+        }
+        tree})
+    }
+    data <- lapply(data,function(x){
+      x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
+      x})
+  }
+  if(build=="dnapars" || build=="igphyml" || build=="dnaml" || !is.null(igphyml)){
+    if(!is.null(dir)){
+      if(!dir.exists(dir)){
+        dir.create(dir)
+      }
+    }else{
+      dir <- alakazam::makeTempDir(id)
+      if(big){
+        warning("Large dataset - best to set dir and id params")
+      }
+    }
+  }
+  
+  if(!inherits(data, "list")){
+    data <- list(data)
+  }
+  if(!is.null(dir)){
+    if(!dir.exists(dir)){
+      dir.create(dir)
+    }
+  }
+  rm_dir <- NULL
+  if(rm_temp){
+    rm_dir=file.path(dir,paste0(id,"_recon_trees"))
+  }
+  
+  reps <- as.list(1:length(data))
+  if(is.null(seq)){
+    seqs <- unlist(lapply(data,function(x)x@phylo_seq))
+  }else{
+    seqs <- rep(seq,length=length(data))
+  }
+  if(build=="dnapars" || build=="dnaml"){
+    trees <- parallel::mclapply(reps,function(x)
+      tryCatch(buildPhylo(data[[x]],
+                          exec=exec,
+                          temp_path=file.path(dir,paste0(id,"_trees_",x)),
+                          rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
+               error=function(e)e),
+      mc.cores=nproc)
+  }else if(build=="pratchet"){
+    trees <- parallel::mclapply(reps,function(x)
+      tryCatch(buildPratchet(data[[x]],seq=seqs[x],
+                             tree=trees[[x]],...),error=function(e)e),
+      mc.cores=nproc)
+  }else if(build=="pml"){
+    trees <- parallel::mclapply(reps,function(x)
+      tryCatch(buildPML(data[[x]],seq=seqs[x],
+                        tree=trees[[x]],...),error=function(e)e),
+      mc.cores=nproc)
+    # removed the '...' from tree=trees[[x]],... so it would produce trees
+  }else if(build=="igphyml"){
     if(rm_temp){
-        rm_dir=file.path(dir,paste0(id,"_recon_trees"))
-    }
-    
-    reps <- as.list(1:length(data))
-    if(is.null(seq)){
-        seqs <- unlist(lapply(data,function(x)x@phylo_seq))
+      rm_dir <- file.path(dir,id)
     }else{
-        seqs <- rep(seq,length=length(data))
+      rm_dir <- NULL
     }
-    if(build=="dnapars" || build=="dnaml"){
-        trees <- parallel::mclapply(reps,function(x)
-            buildPhylo(data[[x]],
-                exec=exec,
-                temp_path=file.path(dir,paste0(id,"_trees_",x)),
-                rm_temp=rm_temp,seq=seqs[x],tree=trees[[x]]),
-            mc.cores=nproc)
-    }else if(build=="pratchet"){
-        trees <- parallel::mclapply(reps,function(x)
-            buildPratchet(data[[x]],seq=seqs[x],
-                    tree=trees[[x]],...),
-                mc.cores=nproc)
-    }else if(build=="pml"){
-        trees <- parallel::mclapply(reps,function(x)
-            buildPML(data[[x]],seq=seqs[x],
-                tree=trees[[x]],...),
-                mc.cores=nproc)
-    }else if(build=="igphyml"){
-        if(rm_temp){
-            rm_dir <- file.path(dir,id)
-        }else{
-            rm_dir <- NULL
-        }
-        trees <- 
-            buildIgphyml(data,
-                igphyml=exec,
-                temp_path=file.path(dir,id),
-                rm_files=rm_temp,
-                rm_dir=rm_dir,
-                trees=trees,nproc=nproc,id=id,
-                ...)
-        clones$parameters <- lapply(trees,function(x)x$parameters)
-    }else{
-        stop("build specification",build,"not recognized")
+    trees <- 
+      tryCatch(buildIgphyml(data,
+                            igphyml=exec,
+                            temp_path=file.path(dir,id),
+                            rm_files=rm_temp,
+                            rm_dir=rm_dir,
+                            trees=trees,nproc=nproc,id=id,
+                            ...),error=function(e)e)
+    if(inherits(trees, "error")){
+      stop(trees)
     }
-
-    #catch any tree inference errors
-    errors <- unlist(lapply(trees, function(x) "error" %in% class(x)))
+  }else{
+    stop("build specification",build,"not recognized")
+  }
+  
+  # save points for data have been saved as the following 
+  # trees -> trees_save
+  # data -> data_save
+  # clones -> clones_save
+  #catch any tree inference errors
+  if(build != "igphyml"){
+    errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
+    messages <- trees[errors]
     errorclones <- clones$clone_id[errors]
     trees <- trees[!errors]
+    data <- data[!errors]
     clones <- clones[!errors,]
     if(length(errorclones) > 0){
-        warning(paste("Tree building failed for clones",
-            paste(errorclones,collapse=", ")))
+      warning(paste("Tree building failed for clones",
+                    paste(errorclones,collapse=", ")))
+      me <- lapply(messages, function(x)warning(x$message))
     }
-
-    if(!is.null(igphyml)){
-        file <- writeLineageFile(data=data, trees=trees, dir=dir,
-            id=id, trait=trait, rep="trees")
+  }
+  if(length(trees) == 0){
+    stop("No trees left!")
+  }
+  
+  # make sure trees, data, and clone objects are in same order
+  tree_names <- unlist(lapply(trees, function(x)x$name))
+  data_names <- unlist(lapply(data, function(x)x@clone))
+  m <- match(tree_names, data_names)
+  data <- data[m]
+  m <- match(tree_names, clones$clone_id)
+  clones <- clones[m,]
+  
+  if(build == "igphyml"){
+    clones$parameters <- lapply(trees,function(x)x$parameters)
+  }
+  
+  if(!is.null(igphyml)){
+    file <- writeLineageFile(data=data, trees=trees, dir=dir,
+                             id=id, trait=trait, rep="trees")
     
-        mtrees <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
-            mode="trees", id=NULL, quiet=quiet, nproc=nproc,
-            rm_files=rm_temp, rm_dir=rm_dir, states=states, 
-            palette=palette, ...)
-
-        # remove trait value from tips
-        mtrees <- lapply(mtrees,function(x){
-            ids <- strsplit(x$tip.label,split="_")
-            x$tip.label <- unlist(lapply(ids,function(t)
-                paste(t[1:(length(t)-1)],collapse="_")))
-            x$tip.label[x$tip.label == x$name] <- "Germline"
-            x
-            })
-
-    }else{
-        mtrees <- trees
-    }
-    # Sanity checks
-    match <- unlist(lapply(1:length(data), function(x){
-        data[[x]]@clone == mtrees[[x]]$name
-    }))
-    if(sum(!match) > 0){
-        stop("Clone and tree names not in proper order!")
-    }
-    clones$trees <- mtrees
-    if(collapse){
-        clones <- collapseNodes(clones)
-    }
-    if(sum(clones$clone_id != 
-        unlist(lapply(trees,function(x)x$name))) > 0){
-        stop("Tree column names don't match clone IDs")
-    }
-
-    clones
+    mtrees <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
+                           mode="trees", id=NULL, quiet=quiet, nproc=nproc,
+                           rm_files=rm_temp, rm_dir=rm_dir, states=states, 
+                           palette=palette, ...)
+    
+    # remove trait value from tips
+    mtrees <- lapply(mtrees,function(x){
+      ids <- strsplit(x$tip.label,split="_")
+      x$tip.label <- unlist(lapply(ids,function(t)
+        paste(t[1:(length(t)-1)],collapse="_")))
+      x$tip.label[x$tip.label == x$name] <- "Germline"
+      x
+    })
+    
+  }else{
+    mtrees <- trees
+  }
+  # Sanity checks
+  match <- unlist(lapply(1:length(data), function(x){
+    data[[x]]@clone == mtrees[[x]]$name
+  }))
+  if(sum(!match) > 0){
+    stop("Clone and tree names not in proper order!")
+  }
+  clones$trees <- mtrees
+  if(collapse){
+    clones <- collapseNodes(clones)
+  }
+  if(sum(clones$clone_id != 
+         unlist(lapply(trees,function(x)x$name))) > 0){
+    stop("Tree column names don't match clone IDs")
+  }
+  
+  clones
 }
+
 
 
 #' Scale branch lengths to represent either mutations or mutations per site.
@@ -2354,7 +2390,10 @@ consensus_tree <- function(trees){
 # @param id            unique identifier for this analysis (required if 
 #                      \code{igphyml} or \code{dnapars} specified)
 # @return              Returns a list of trees.
-makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, rm_dir=TRUE, id){
+makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, id, quiet=0){
+  if(quiet > 0){
+    print("Bootstrapping Trees")
+  }
   for(i in 1:length(data)){
     data[[i]] <- bootstrapClones(data[[i]], reps = 1, 
                                  partition = boot_part)[[1]]
@@ -2372,7 +2411,7 @@ makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, rm_d
     return(trees)
   } else if(build=="dnapars" || build=="dnaml"){
     trees <- lapply(reps,function(x)
-      buildPhylo(tmp_data[[x]],
+      buildPhylo(data[[x]],
                  exec=exec,
                  temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
                  rm_temp = rm_temp,
@@ -2381,7 +2420,7 @@ makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, rm_d
     return(trees)
   }else if(build=="pml"){
     trees <- lapply(reps,function(x)
-      buildPML(tmp_data[[x]],seq=seqs[x]))
+      buildPML(data[[x]],seq=seqs[x]))
     trees <- list(trees)
     return(trees)
   }else if(build=="igphyml"){
@@ -2391,7 +2430,7 @@ makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, rm_d
       rm_dir <- NULL
     }
     trees <- 
-      buildIgphyml(tmp_data, 
+      buildIgphyml(data, 
                    igphyml = exec,
                    temp_path = file.path(dir,paste0(id,rep)),
                    rm_files=rm_temp,
@@ -2497,7 +2536,7 @@ getBootstraps <- function(clones, bootstraps,
   # here
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)makeTrees(
     data = data, seq=seq, build=build, boot_part = boot_part, exec = exec, 
-    dir=dir, rm_temp=rm_temp, rm_dir=rm_dir, id=id), mc.cores=nproc), recursive = FALSE)
+    dir=dir, rm_temp=rm_temp, id=id, quiet=quiet), mc.cores=nproc), recursive = FALSE)
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
