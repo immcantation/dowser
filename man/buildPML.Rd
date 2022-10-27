@@ -16,7 +16,9 @@ buildPML(
   optNni = TRUE,
   optQ = TRUE,
   verbose = FALSE,
-  resolve_random = TRUE
+  resolve_random = TRUE,
+  quiet = 0,
+  rep = NULL
 )
 }
 \arguments{
@@ -43,6 +45,10 @@ buildPML(
 \item{verbose}{Print error messages as they happen?}
 
 \item{resolve_random}{randomly resolve polytomies?}
+
+\item{quiet}{amount of rubbish to print to console}
+
+\item{rep}{current bootstrap replicate (experimental)}
 }
 \value{
 \code{phylo} object created by phangorn::optim.pml with nodes

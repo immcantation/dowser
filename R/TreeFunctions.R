@@ -762,13 +762,22 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @param    optNni     Optimize tree topology
 #' @param    optQ       Optimize Q matrix
 #' @param    resolve_random  randomly resolve polytomies?
+#' @param    quiet           amount of rubbish to print to console
+#' @param    rep             current bootstrap replicate (experimental)
 #'
 #' @return  \code{phylo} object created by phangorn::optim.pml with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
                      asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, 
-                     verbose=FALSE, resolve_random=TRUE){
+                     verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL){
+  if(quiet > 0){
+    output_name <- paste0("pml_output_", rep, ".txt")
+    file_conn <- file(output_name)
+    lines <- paste0("PML tree ", rep, " started")
+    writeLines(lines, file_conn)
+  }
+  #stop(file_conn)
   seqs <- clone@data[[seq]]
   names <- clone@data$sequence_id
   if(length(seqs) < 2){
@@ -785,17 +794,34 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
   names <- c(names,"Germline")
   seqs <- strsplit(seqs,split="")
   names(seqs) <- names
+  if(quiet >0){
+    write("seqs, names, and germline created", file=output_name, append=TRUE)
+    write("phyDat started", file=output_name, append=TRUE)
+  }
   if(data_type=="DNA"){
+    if(quiet > 0){
+      write("starting phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))", file=output_name, append=TRUE)
+    }
     data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
   }else{
+    if(quiet > 0){
+      write('starting phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
+                             type="AA")', file=output_name, append=TRUE)
+    }
     data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
                              type="AA")
-    print(sub_model)
+    write(sub_model)
     if(sub_model == "GTR"){
       warning("GTR model shouldn't be used for AA.")
     }
   }
+  if(quiet >0){
+    write('phyDat completed', file=output_name, append=TRUE)
+  }
   if(is.null(tree)){
+    if(quiet >0){
+      write("starting the options for if tree is null", file=output_name, append=TRUE)
+    }
     dm  <- phangorn::dist.ml(data)
     treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random)
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
@@ -803,26 +829,54 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
                                         optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
                                                                                                           maxit=10, trace=0)), error=function(e)e)
+    if(quiet > 0){
+      write("primary fit completed", file=output_name, append=TRUE)
+      write("checking for errors", file=output_name, append=TRUE)
+    }
     if("error" %in% class(fit)){
       if(verbose){
-        print(fit)
+        write(fit)
+      }
+      if(quiet > 0){
+        write("fit completed", file=output_name, append=TRUE)
       }
       return(fit)
     }
-    tree <- ape::unroot(fit$tree)
+    if(quiet > 0){
+      write("unrooting tree", file=output_name, append=TRUE)
+    }
+    tree <- ape::unroot(ape::multi2di(fit$tree))
+    if(quiet > 0){
+      write("adding tree method and edge type", file=output_name, append=TRUE)
+    }
     tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
     tree$edge_type <- "genetic_distance"
+    if(quiet > 0){
+      write("creating nnodes", file=output_name, append=TRUE)
+    }
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
+    if(quiet > 0){
+      write("creating nodes", file=output_name, append=TRUE)
+    }
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+  }
+  if(quiet > 0){
+    write("adding name and seq", file=output_name, append=TRUE)
   }
   tree$name <- clone@clone
   tree$seq <- seq
   
   if(asr != "none" && data_type=="DNA"){
+    if(quiet > 0){
+      write("ancestral pml started")
+    }
     seqs_ml <- phangorn::ancestral.pml(fit,
                                        type="marginal",return="prob")
     ASR <- list()
     for(i in 1:max(tree$edge)){
+      if(quiet > 3){
+        write(paste0("Starting ASR ", i, " of ", max(tree$edge)))
+      }
       patterns <- t(subset(seqs_ml, i)[[1]])
       pat <- patterns[,attr(seqs_ml,"index")]
       if(asr == "seq"){
@@ -840,14 +894,27 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
         ASR[[as.character(i)]] <- pat
       }
     }
+    if(quiet > 0){
+      write("ASR completed", file=output_name, append=TRUE)
+      write("starting tree$nodes", file=output_name, append=TRUE)
+    }
     #tree$sequences <- ASR
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]
       tree$nodes[[x]]
     })
   }
+  if(quiet > 0){
+    write("rerooting tree", file=output_name, append=TRUE)
+  }
   tree <- rerootTree(tree,"Germline",verbose=0)
+  if(quiet > 0){
+    write("PML tree done", file=output_name, append=TRUE)
+  }
   return(tree)
+  if(quiet > 0){
+    close(file_conn) 
+  }
 }
 
 #' Wrapper to build IgPhyML trees and infer intermediate nodes
@@ -1475,7 +1542,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else if(build=="pml"){
     trees <- parallel::mclapply(reps,function(x)
       tryCatch(buildPML(data[[x]],seq=seqs[x],
-                        tree=trees[[x]],...),error=function(e)e),
+                        tree=trees[[x]]),error=function(e)e),
       mc.cores=nproc)
     # removed the '...' from tree=trees[[x]],... so it would produce trees
   }else if(build=="igphyml"){
@@ -2389,39 +2456,59 @@ consensus_tree <- function(trees){
 # @param rm_dir        remove temporary directory (default=TRUE)
 # @param id            unique identifier for this analysis (required if 
 #                      \code{igphyml} or \code{dnapars} specified)
+# @param quiet           amount of rubbish to print to console
+# @param rep             current bootstrap replicate (experimental)
 # @return              Returns a list of trees.
-makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, id, quiet=0){
+makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, id, quiet=0, rep=1){
   if(quiet > 0){
-    print("Bootstrapping Trees")
+    output_name <- paste0("bootstraptrees_output_", rep, ".txt")
+    sink(output_name, append=FALSE, split=FALSE)
+    print(paste0("Starting the bootstrapping replicate ", rep))
   }
+  data_tmp <- list()
   for(i in 1:length(data)){
-    data[[i]] <- bootstrapClones(data[[i]], reps = 1, 
+    if(quiet > 3){
+      print(paste0("boostrapping coles ", i, " of ", length(data)))
+    }
+    data_tmp[[i]] <- bootstrapClones(data[[i]], reps = 1, 
                                  partition = boot_part)[[1]]
   }
-  reps <- as.list(1:length(data))
+  reps <- as.list(1:length(data_tmp))
   if(is.null(seq)){
-    seqs <- unlist(lapply(data,function(x)x@phylo_seq))
+    seqs <- unlist(lapply(data_tmp,function(x)x@phylo_seq))
   }else{
-    seqs <- rep(seq,length=length(data))
+    seqs <- rep(seq,length=length(data_tmp))
+  }
+  if(quiet > 0){
+    print("starting to build trees")
   }
   if(build=="pratchet"){
     trees <- lapply(reps,function(x)
-      buildPratchet(data[[x]],seq=seqs[x]))
+      buildPratchet(data_tmp[[x]],seq=seqs[x]))
     trees <- list(trees)
+    if(quiet > 0){
+      print("Trees made")
+    }
     return(trees)
   } else if(build=="dnapars" || build=="dnaml"){
     trees <- lapply(reps,function(x)
-      buildPhylo(data[[x]],
+      buildPhylo(data_tmp[[x]],
                  exec=exec,
                  temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
                  rm_temp = rm_temp,
                  seq=seqs[x]))
     trees <- list(trees)
+    if(quiet > 0){
+      print("Trees made")
+    }
     return(trees)
   }else if(build=="pml"){
-    trees <- lapply(reps,function(x)
-      buildPML(data[[x]],seq=seqs[x]))
+    trees <- lapply(reps,function(x)buildPML(data_tmp[[x]],seq=seqs[x],
+                                             quiet=quiet, rep=x))
     trees <- list(trees)
+    if(quiet > 0){
+      print("Trees made")
+    }
     return(trees)
   }else if(build=="igphyml"){
     if(rm_temp){
@@ -2430,17 +2517,22 @@ makeTrees <- function(data, seq, build, boot_part, exec, dir, rm_temp=TRUE, id, 
       rm_dir <- NULL
     }
     trees <- 
-      buildIgphyml(data, 
+      buildIgphyml(data_tmp, 
                    igphyml = exec,
                    temp_path = file.path(dir,paste0(id,rep)),
                    rm_files=rm_temp,
                    rm_dir = rm_dir,
                    id=id)
     trees <- list(trees)
+    if(quiet > 0){
+      print("Trees made")
+    }
     return(trees)
   }else{
-    stop("build specification",build,"not recognized")
+    stop("build specification ",build," not recognized")
   }
+  sink()
+  closeAllConnections()
 }
 
 
@@ -2536,7 +2628,7 @@ getBootstraps <- function(clones, bootstraps,
   # here
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)makeTrees(
     data = data, seq=seq, build=build, boot_part = boot_part, exec = exec, 
-    dir=dir, rm_temp=rm_temp, id=id, quiet=quiet), mc.cores=nproc), recursive = FALSE)
+    dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep = x), mc.cores=nproc), recursive = FALSE)
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
