@@ -2673,31 +2673,17 @@ getBootstraps <- function(clones, bootstraps,
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
       exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none'), error=function(e)e), mc.cores=nproc), recursive = FALSE)
-  clones_to_remove <- c()
-  display_messages <- c()
-  for(clone in 1:nrow(clones)){
-    errors <- unlist(lapply(bootstrap_trees[[i]], function(x) inherits(x, "error")))
-    messages <- bootstrap_trees[[i]][errors]
-    errorclones <- clones$clone_id[errors]
-    clones_to_remove <- append(clones_to_remove, errorclones)
-    display_messages <- append(display_messages, messages)
-  }
   
-  for(clone in unique(clones_to_remove)){
-    idx <- which(clones_to_remove == clone)
-    wow <- display_messages[idx]
-    warning(paste0("Clone ", clone, " has been REMOVED from the clones object because it failed to properly bootstrap due to various iterations of the bootstrapping due to ",
-                   unique(wow), "."))
-  }
   if(quiet > 3){
-    saveRDS(bootstrap_trees, "bootstrap_trees.rds")
+    b_name <- paste0("bootstrap_trees_", build, ".rds")
+    saveRDS(bootstrap_trees, b_name)
     saveRDS(clones, "clones.rds")
+    rm(b_name)
   }
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
   }
-  
   errors <- c()
   messages <- c()
   for(clone in unique(clones$clone_id)){
