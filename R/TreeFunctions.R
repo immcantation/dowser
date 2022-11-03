@@ -2690,7 +2690,7 @@ getBootstraps <- function(clones, bootstraps,
     if(quiet > 0){
       print(clone)
     }
-    sub_clone <- dplyr::filter(clones, clone_id == clone)
+    sub_clone <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone)
     tree_error <- c()
     tree_message <- c()
     for(i in 1:bootstraps){
@@ -2710,7 +2710,7 @@ getBootstraps <- function(clones, bootstraps,
                    "because it failed to properly bootstrap due in at least one iteration of ",
                    "bootstrapping due to ", unique(wow), "."))
   }
-  clones <- dplyr::filter(clones, !clone_id %in% unique(errors))
+  clones <- dplyr::filter(clones, !(!!rlang::sym("clone_id") %in% unique(errors)))
   rm(errors, messages, idx, wow, tree_message, tree_error, sub_clone)
   if(!bootstrap_nodes){
     return(clones)
