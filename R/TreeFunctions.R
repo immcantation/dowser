@@ -1256,6 +1256,11 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
         tree$nodes[[nnode]] <- tree$nodes[[uca]]
         tree$nodes[[uca]] <- tree$nodes[[germid]]
     }
+
+    # reset and re-order tree
+    attr(tree, "order") <- NULL
+    tree <- ape::ladderize(tree)
+
     # sanity check tree length, divergence, and internal node distances
     nlength <- sum(tree$edge.length)
     ndiv <- ape::cophenetic.phylo(tree)["Germline",]
@@ -1761,6 +1766,10 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
             x$id
         }}))
     trees$node.label <- nodelabs[(length(ttips)+1):length(nsequences)]
+
+    # reset and re-order tree
+    attr(trees, "order") <- NULL
+    trees <- ape::ladderize(trees)
 
     if(check){
         if(tips){
