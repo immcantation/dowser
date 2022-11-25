@@ -121,12 +121,13 @@ test_that("getTreesPhangorn", {
   trees <- scaleBranches(trees)
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
   
+  # note, node re-order 11/17/22
   expect_equal(trees$trees[[1]]$edge.length,
-               c(0,1,2,0))
+               c(1,0,2,0))
   expect_equal(trees$trees[[1]]$edge[,1],
-               c(5,4,5,4))
+               c(4,5,5,4))
   expect_equal(trees$trees[[1]]$edge[,2],
-               c(2,5,1,3))
+               c(5,2,1,3))
   expect_equal(trees$trees[[1]]$tip.label,
                c("C","A","Germline"))
   expect_equal(seqs,c("NAACTGGNN","CCCCTGGGN","CCCCAGGGN",
@@ -211,12 +212,13 @@ test_that("getGermlines", {
   trees <- scaleBranches(trees)
   
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
+  # note, node re-order 11/17/22
   expect_equal(trees$trees[[1]]$edge.length,
-               c(2,27,0,0))
+               c(27,2,0,0))
   expect_equal(trees$trees[[1]]$edge[,1],
-               c(5,4,5,4))
+               c(4,5,5,4))
   expect_equal(trees$trees[[1]]$edge[,2],
-               c(2,5,1,3))
+               c(5,2,1,3))
   expect_equal(trees$trees[[1]]$tip.label,
                c("A","B","Germline"))
   expect_equal(seqs,c(
@@ -300,12 +302,13 @@ test_that("changeo", {
   
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
   
+  # note, node re-order 11/17/22
   expect_equal(trees$trees[[1]]$edge.length,
-               c(2,27,0,0))
+               c(27,2,0,0))
   expect_equal(trees$trees[[1]]$edge[,1],
-               c(5,4,5,4))
+               c(4,5,5,4))
   expect_equal(trees$trees[[1]]$edge[,2],
-               c(2,5,1,3))
+               c(5,2,1,3))
   expect_equal(trees$trees[[1]]$tip.label,
                c("A","B","Germline"))
   expect_equal(seqs,c(

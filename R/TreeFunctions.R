@@ -191,7 +191,7 @@ readSwitches <- function(file){
 #
 # @return   A list of \code{airrClone} objects with 
 # bootstrapped sequences
-bootstrapClones  <- function(clone, reps=100, partition="locus"){
+bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE){
     if(clone@phylo_seq == "hlsequence"){
         sarray <- strsplit(clone@data$hlsequence,split="")
         garray <- strsplit(clone@hlgermline,split="")[[1]]
@@ -207,20 +207,52 @@ bootstrapClones  <- function(clone, reps=100, partition="locus"){
     }else{
         stop(paste("phyloseq option",clone@phylo_seq,"not recognized"))
     }
-    bootstraps <- list()
-    for(i in 1:reps){
-        clone_copy <- clone
-        if(partition == "locus"){
-            sindex <- unlist(lapply(unique(clone@locus), function(x)
-                sample(which(clone@locus == x), replace=TRUE)))
-        }else{
-            sindex <- sample(index,length(index),replace=TRUE)
+  bootstraps <- list()
+  for(i in 1:reps){
+    clone_copy <- clone
+    if(by_codon == TRUE){
+      if(partition == "locus"){
+        sindex <- unlist(lapply(unique(clone@locus), function(x){
+          locus = which(clone@locus == x)
+          seq = seq(1,length(locus),by=3)
+          codons=lapply(seq, function(x)c(locus[x],locus[x+1],locus[x+2]))
+          codons = sample(codons, replace=TRUE)
+          return(codons)}))
+        
+      }else{
+        seq = seq(1,length(index),by=3)
+        codons=lapply(seq, function(x)c(index[x],index[x+1],index[x+2]))
+        codons = sample(codons, replace=TRUE)
+        sindex <- unlist(codons)
+      }
+    }else{
+      if(partition == "locus"){
+        sindex <- unlist(lapply(unique(clone@locus), function(x){
+          locus = which(clone@locus == x)
+          seq = seq(1,length(locus),by=1)
+          codons=lapply(seq, function(x)c(locus[x]))
+          codons = sample(codons, replace=TRUE)
+          return(codons)}))
+      }else{
+        sindex <- sample(index,length(index),replace=TRUE)
+      }
+    }
+    if(clone@phylo_seq == "sequence"){
+      ## add check step where you translate it and search for \\*
+      check <- grepl("\\*", alakazam::translateDNA(clone_copy@data$sequence))
+      if(TRUE %in% check){
+        trues <- c()
+        for(i in 1:length(check)){
+          if(check[i] == TRUE){
+            trues <- append(trues, clone_copy@data$sequence_id[i])
+          }
         }
-        if(clone@phylo_seq == "sequence"){
-            clone_copy@data$sequence <- unlist(lapply(sarray,
-                function(x)paste(x[sindex],collapse="")))
-            clone_copy@germline <- paste(garray[sindex],collapse="")
-        }else if(clone@phylo_seq == "hlsequence"){
+        stop(paste0("Stop codon(s) have been found in sequence(s) ", trues, " of clone ", clone_copy@clone))
+      }
+      clone_copy@data$sequence <- unlist(lapply(sarray,
+                                                function(x)paste(x[sindex],collapse="")))
+      clone_copy@germline <- paste(garray[sindex],collapse="")
+    }else if(clone@phylo_seq == "hlsequence"){
             clone_copy@data$hlsequence <- unlist(lapply(sarray,
                 function(x)paste(x[sindex],collapse="")))
             clone_copy@hlgermline <- paste(garray[sindex],collapse="")
@@ -771,9 +803,9 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
                      asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, 
                      verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL){
-  output_name <- paste0("pml_output_rep_", rep, "_clone_", clone@clone, ".txt")
-  sink(file=output_name)
-  print(paste0("PML tree ", rep, " ", clone@clone, " started"))
+  #output_name <- paste0("pml_output_rep_", rep, "_clone_", clone@clone, ".txt")
+  #sink(file=output_name)
+  #print(paste0("PML tree ", rep, " ", clone@clone, " started"))
   #stop(file_conn)
   seqs <- clone@data[[seq]]
   names <- clone@data$sequence_id
@@ -791,24 +823,24 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
   names <- c(names,"Germline")
   seqs <- strsplit(seqs,split="")
   names(seqs) <- names
-  print("seqs, names, and germline created")
-  print("phyDat started")
+  #print("seqs, names, and germline created")
+  #print("phyDat started")
   if(data_type=="DNA"){
-    print("starting phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))")
+    #print("starting phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))")
     data <- phangorn::phyDat(ape::as.DNAbin(t(as.matrix(dplyr::bind_rows(seqs)))))
   }else{
-    print('starting phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
-                           type="AA")')
+    #print('starting phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
+    #                       type="AA")')
     data <- phangorn::phyDat(ape::as.AAbin(t(as.matrix(dplyr::bind_rows( seqs)))),
                              type="AA")
-    print(sub_model)
+    #print(sub_model)
     if(sub_model == "GTR"){
       warning("GTR model shouldn't be used for AA.")
     }
   }
-  print('phyDat completed')
+  #print('phyDat completed')
   if(is.null(tree)){
-    print("starting the options for if tree is null")
+    #print("starting the options for if tree is null")
     dm  <- phangorn::dist.ml(data)
     treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random)
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
@@ -816,36 +848,36 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
                                         optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
                                                                                                           maxit=10, trace=0)), error=function(e)e)
-    print("primary fit completed")
-    print("checking for errors")
+    #print("primary fit completed")
+    #print("checking for errors")
     if("error" %in% class(fit)){
       if(verbose){
         print(fit)
       }
-      print("fit completed")
+      #print("fit completed")
       return(fit)
     }
-    print("unrooting tree")
+    #print("unrooting tree")
     tree <- ape::unroot(ape::multi2di(fit$tree))
-    print("adding tree method and edge type")
+    #print("adding tree method and edge type")
     tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
     tree$edge_type <- "genetic_distance"
-    print("creating nnodes")
+    #print("creating nnodes")
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
-    print("creating nodes")
+    #print("creating nodes")
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
   }
-  print("adding name and seq")
+  #print("adding name and seq")
   tree$name <- clone@clone
   tree$seq <- seq
   
   if(asr != "none" && data_type=="DNA"){
-    print("ancestral pml started")
+    #print("ancestral pml started")
     seqs_ml <- phangorn::ancestral.pml(fit,
                                        type="marginal",return="prob")
     ASR <- list()
     for(i in 1:max(tree$edge)){
-      print(paste0("Starting ASR ", i, " of ", max(tree$edge)))
+      #print(paste0("Starting ASR ", i, " of ", max(tree$edge)))
       bob <- tryCatch(subset(seqs_ml, i), error=function(e)e)
       if(inherits(bob, "error")){
         saveRDS(fit, "fit.rds")
@@ -870,19 +902,19 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
         ASR[[as.character(i)]] <- pat
       }
     }
-    print("ASR completed")
-    print("starting tree$nodes")
+    #print("ASR completed")
+    #print("starting tree$nodes")
     #tree$sequences <- ASR
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]
       tree$nodes[[x]]
     })
   }
-  print("rerooting tree")
+  #print("rerooting tree")
   tree <- rerootTree(tree,"Germline",verbose=0)
-  print("PML tree done")
-  sink()
-  closeAllConnections()
+  #print("PML tree done")
+  #sink()
+  #closeAllConnections()
   return(tree)
 }
 
@@ -1276,6 +1308,11 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
         tree$nodes[[nnode]] <- tree$nodes[[uca]]
         tree$nodes[[uca]] <- tree$nodes[[germid]]
     }
+    
+    # reset and re-order tree
+    attr(tree, "order") <- NULL
+    tree <- ape::ladderize(tree)
+    
     # sanity check tree length, divergence, and internal node distances
     nlength <- sum(tree$edge.length)
     ndiv <- ape::cophenetic.phylo(tree)["Germline",]
@@ -1787,7 +1824,11 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
             x$id
         }}))
     trees$node.label <- nodelabs[(length(ttips)+1):length(nsequences)]
-
+    
+    # reset and re-order tree
+    attr(trees, "order") <- NULL
+    trees <- ape::ladderize(trees)
+    
     if(check){
         if(tips){
             warning("Cannot check nodes while collapsing tips (tips=TRUE)")
@@ -2430,7 +2471,7 @@ consensus_tree <- function(trees){
 # @param quiet           amount of rubbish to print to console
 # @param rep             current bootstrap replicate (experimental)
 # @return              Returns a list of trees.
-makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id, quiet=0, rep=1, ...){
+makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id, quiet=0, rep=1, by_codon = TRUE, ...){
   if(quiet > 0){
     print(paste0("Making trees for rep ", rep))
   }
@@ -2438,7 +2479,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   data_tmp <- list()
   for(i in 1:length(data)){
     data_tmp[[i]] <- bootstrapClones(data[[i]], reps = 1, 
-                                 partition = boot_part)[[1]]
+                                 partition = boot_part, by_codon = by_codon)[[1]]
   }
   reps <- as.list(1:length(data_tmp))
   if(is.null(seq)){
@@ -2527,6 +2568,8 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 #' @param rep             current bootstrap replicate (experimental)
 #' @param seq           column name containing sequence information
 #' @param boot_part     is  "locus" bootstrap columns for each locus separately
+#' @param by_codon      a logical if the user wants to bootstrap by codon or by 
+#'                      nucleotide. Default (codon based bootstrapping) is TRUE.
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
@@ -2535,7 +2578,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 getBootstraps <- function(clones, bootstraps,
                           nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
                           exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
-                          boot_part="locus", ...){
+                          boot_part="locus", by_codon = TRUE, ...){
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
@@ -2672,7 +2715,7 @@ getBootstraps <- function(clones, bootstraps,
   }
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
-      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none'), error=function(e)e), mc.cores=nproc), recursive = FALSE)
+      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), error=function(e)e), mc.cores=nproc), recursive = FALSE)
   
   if(quiet > 3){
     b_name <- paste0("bootstrap_trees_", build, ".rds")
@@ -2711,7 +2754,6 @@ getBootstraps <- function(clones, bootstraps,
                    "bootstrapping due to ", unique(wow), "."))
   }
   clones <- dplyr::filter(clones, !(!!rlang::sym("clone_id") %in% unique(errors)))
-  rm(errors, messages, idx, wow, tree_message, tree_error, sub_clone)
   if(!bootstrap_nodes){
     return(clones)
   }
