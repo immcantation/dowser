@@ -256,15 +256,17 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     x <- x + theme(legend.position="right",
                     legend.box.margin=margin(0, -10, 0, 0))+
                     guides(color=guide_legend(title="State"))
-                    if(common_scale){
-                        x <- x + xlim(0, max_div*1.05)
-                    }
                     if(tiptype == "character"){
                         x <- x + scale_color_manual(values=cols)
                     }else{
                         x <- x + scale_color_distiller(limits=cols,
                             palette=tip_palette)
                     }})
+        }
+        if(common_scale){
+             ps  <- lapply(ps,function(x){
+                x <- x + xlim(0, max_div*1.05)
+            })
         }
         return(ps)
     }

@@ -1259,7 +1259,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 
     # reset and re-order tree
     attr(tree, "order") <- NULL
-    tree <- ape::ladderize(tree)
+    tree <- ape::ladderize(tree, right=FALSE)
 
     # sanity check tree length, divergence, and internal node distances
     nlength <- sum(tree$edge.length)
@@ -1769,7 +1769,7 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 
     # reset and re-order tree
     attr(trees, "order") <- NULL
-    trees <- ape::ladderize(trees)
+    trees <- ape::ladderize(trees, right=FALSE)
 
     if(check){
         if(tips){
