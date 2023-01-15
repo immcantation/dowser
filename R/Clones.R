@@ -656,6 +656,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     data[[clone]] <- paste0(data[[clone]],"_",data[[subclone]])
   }else if(!split_light && chain=="HL"){
+    #since we're not splitting the light chains, can only include the biggest subclone
+    #for tree building
     data <- dplyr::filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
                              !!rlang::sym(subclone) > 1))
   }

@@ -239,6 +239,10 @@ bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE
     }
     if(clone@phylo_seq == "sequence"){
       ## add check step where you translate it and search for \\*
+      #KBH this check needs to be done for all sequence types, currently only done on heavy chains.
+      #Also it's not actually checking the sequence after bootstrapping - clone_copy@data$sequence doesn't
+      #get the bootstraped sequences until immediately after this block
+      #should also only be run if bootstrapping by codon
       check <- grepl("\\*", alakazam::translateDNA(clone_copy@data$sequence))
       if(TRUE %in% check){
         trues <- c()
@@ -846,8 +850,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
     pml <- phangorn::pml(ape::unroot(treeNJ),data=data)
     fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
-                                        optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
-                                                                                                          maxit=10, trace=0)), error=function(e)e)
+                optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                maxit=10, trace=0)), error=function(e)e)
     #print("primary fit completed")
     #print("checking for errors")
     if("error" %in% class(fit)){
@@ -878,6 +882,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     ASR <- list()
     for(i in 1:max(tree$edge)){
       #print(paste0("Starting ASR ", i, " of ", max(tree$edge)))
+      #KBH does this need to be kept in - was it meant for general use
+      #or just debugging a specific issue?
       bob <- tryCatch(subset(seqs_ml, i), error=function(e)e)
       if(inherits(bob, "error")){
         saveRDS(fit, "fit.rds")
@@ -2390,7 +2396,10 @@ getSubTaxa = function(node, tree){
 splits_func <- function(input_tree, bootstrap_number){
   tree <- input_tree[[bootstrap_number]] 
   # testing this
-  splits <- data.frame(found=I(lapply((length(tree$tip.label) + 1):(length(tree$tip.label) + tree$Nnode), function(x)getSubTaxa(x, tree))))
+  # KBH need to verify that Nnode is always correct. May be safer to use n_distinct(tree$edge[,1])
+  splits <- data.frame(found=I(lapply((
+    length(tree$tip.label) + 1):(length(tree$tip.label) + tree$Nnode),
+   function(x)getSubTaxa(x, tree))))
   #splits <- data.frame(found=I(lapply(1:length(tree$nodes), function(x)getSubTaxa(x, tree))))
   #splits <- data.frame(found=I(splits[-c(1:(ape::Ntip(tree))),]))
   splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) + tree$Nnode)
@@ -2475,6 +2484,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   if(quiet > 0){
     print(paste0("Making trees for rep ", rep))
   }
+  #KBH in future iterations we'll want to make the boostrapping optional, but it's okay for now
   data <- clones$data
   data_tmp <- list()
   for(i in 1:length(data)){
@@ -2641,6 +2651,7 @@ getBootstraps <- function(clones, bootstraps,
     stop("A tree column created by using getTrees() is required for 
            bootstrap_nodes=TRUE")
   }
+  #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
   # check to make sure that getTrees used the same build as here
   if(build == "pratchet"){
     if(!grepl("prachet", clones$trees[[1]]$tree_method)){
@@ -2715,7 +2726,8 @@ getBootstraps <- function(clones, bootstraps,
   }
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
-      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), error=function(e)e), mc.cores=nproc), recursive = FALSE)
+      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
+    error=function(e)e), mc.cores=nproc), recursive = FALSE)
   
   if(quiet > 3){
     b_name <- paste0("bootstrap_trees_", build, ".rds")
