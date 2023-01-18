@@ -878,8 +878,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
     pml <- phangorn::pml(ape::unroot(treeNJ),data=data)
     fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
-                                        optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
-                                                                                                          maxit=10, trace=0)), error=function(e)e)
+                optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                maxit=10, trace=0)), error=function(e)e)
     #print("primary fit completed")
     #print("checking for errors")
     if("error" %in% class(fit)){
@@ -2667,6 +2667,7 @@ getBootstraps <- function(clones, bootstraps,
     stop("A tree column created by using getTrees() is required for 
            bootstrap_nodes=TRUE")
   }
+  #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
   # check to make sure that getTrees used the same build as here
   #KBH
   build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
@@ -2680,7 +2681,8 @@ getBootstraps <- function(clones, bootstraps,
   }
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
-      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), error=function(e)e), mc.cores=nproc), recursive = FALSE)
+      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
+    error=function(e)e), mc.cores=nproc), recursive = FALSE)
   
   if(quiet > 3){
     b_name <- paste0("bootstrap_trees_", build, ".rds")
