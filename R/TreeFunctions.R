@@ -238,32 +238,64 @@ bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE
       }
     }
     if(clone@phylo_seq == "sequence"){
-      ## add check step where you translate it and search for \\*
-      check <- grepl("\\*", alakazam::translateDNA(clone_copy@data$sequence))
-      if(TRUE %in% check){
-        trues <- c()
-        for(i in 1:length(check)){
-          if(check[i] == TRUE){
-            trues <- append(trues, clone_copy@data$sequence_id[i])
-          }
-        }
-        stop(paste0("Stop codon(s) have been found in sequence(s) ", trues, " of clone ", clone_copy@clone))
-      }
+      #KBH this check needs to be done for all sequence types, currently only done on heavy chains.
+      #Also it's not actually checking the sequence after bootstrapping - clone_copy@data$sequence doesn't
+      #get the bootstraped sequences until immediately after this block
+      #should also only be run if bootstrapping by codon
       clone_copy@data$sequence <- unlist(lapply(sarray,
                                                 function(x)paste(x[sindex],collapse="")))
       clone_copy@germline <- paste(garray[sindex],collapse="")
-    }else if(clone@phylo_seq == "hlsequence"){
-            clone_copy@data$hlsequence <- unlist(lapply(sarray,
-                function(x)paste(x[sindex],collapse="")))
-            clone_copy@hlgermline <- paste(garray[sindex],collapse="")
-        }else if(clone@phylo_seq == "lsequence"){
-            clone_copy@data$lsequence <- unlist(lapply(sarray,
-                function(x)paste(x[sindex],collapse="")))
-            clone_copy@lgermline <- paste(garray[sindex],collapse="")
-        }else{
-            stop(paste("phylo_seq",clone@phylo_seq,"not recognized"))
+      if(by_codon == TRUE){
+        ## add check step where you translate it and search for \\*
+        check <- grepl("\\*", alakazam::translateDNA(clone_copy@data$sequence))
+        if(TRUE %in% check){
+          trues <- c()
+          for(i in 1:length(check)){
+            if(check[i] == TRUE){
+              trues <- append(trues, clone_copy@data$sequence_id[i])
+            }
+          }
+          stop(paste0("Stop codon(s) have been found in sequence(s) ", trues, " of clone ", clone_copy@clone))
         }
-        bootstraps[[i]] <- clone_copy
+      }
+    }else if(clone@phylo_seq == "hlsequence"){
+        clone_copy@data$hlsequence <- unlist(lapply(sarray,
+            function(x)paste(x[sindex],collapse="")))
+        clone_copy@hlgermline <- paste(garray[sindex],collapse="")
+        if(by_codon == TRUE){
+          ## add check step where you translate it and search for \\*
+          check <- grepl("\\*", alakazam::translateDNA(clone_copy@data$hlsequence))
+          if(TRUE %in% check){
+            trues <- c()
+            for(i in 1:length(check)){
+              if(check[i] == TRUE){
+                trues <- append(trues, clone_copy@data$sequence_id[i])
+              }
+            }
+            stop(paste0("Stop codon(s) have been found in sequence(s) ", trues, " of clone ", clone_copy@clone))
+          }
+        }
+    }else if(clone@phylo_seq == "lsequence"){
+        clone_copy@data$lsequence <- unlist(lapply(sarray,
+            function(x)paste(x[sindex],collapse="")))
+        clone_copy@lgermline <- paste(garray[sindex],collapse="")
+        if(by_codon == TRUE){
+          ## add check step where you translate it and search for \\*
+          check <- grepl("\\*", alakazam::translateDNA(clone_copy@data$lsequence))
+          if(TRUE %in% check){
+            trues <- c()
+            for(i in 1:length(check)){
+              if(check[i] == TRUE){
+                trues <- append(trues, clone_copy@data$sequence_id[i])
+              }
+            }
+            stop(paste0("Stop codon(s) have been found in sequence(s) ", trues, " of clone ", clone_copy@clone))
+          }
+        }
+    }else{
+        stop(paste("phylo_seq",clone@phylo_seq,"not recognized"))
+    }
+    bootstraps[[i]] <- clone_copy
     }
     bootstraps
 }
@@ -877,14 +909,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
                                        type="marginal",return="prob")
     ASR <- list()
     for(i in 1:max(tree$edge)){
-      #print(paste0("Starting ASR ", i, " of ", max(tree$edge)))
-      bob <- tryCatch(subset(seqs_ml, i), error=function(e)e)
-      if(inherits(bob, "error")){
-        saveRDS(fit, "fit.rds")
-        saveRDS(tree, "tree_bad.rds")
-        saveRDS(seqs_ml, "seqs_ml.rds")
-        stop("you done broke it")
-      }
+      # KBH
       patterns <- t(subset(seqs_ml, i)[[1]])
       pat <- patterns[,attr(seqs_ml,"index")]
       if(asr == "seq"){
@@ -2389,11 +2414,11 @@ getSubTaxa = function(node, tree){
 # bootstrapped sequences
 splits_func <- function(input_tree, bootstrap_number){
   tree <- input_tree[[bootstrap_number]] 
-  # testing this
-  splits <- data.frame(found=I(lapply((length(tree$tip.label) + 1):(length(tree$tip.label) + tree$Nnode), function(x)getSubTaxa(x, tree))))
-  #splits <- data.frame(found=I(lapply(1:length(tree$nodes), function(x)getSubTaxa(x, tree))))
-  #splits <- data.frame(found=I(splits[-c(1:(ape::Ntip(tree))),]))
-  splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) + tree$Nnode)
+  # KBH need to verify that Nnode is always correct. May be safer to use n_distinct(tree$edge[,1])
+  splits <- data.frame(found=I(lapply((
+    length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1])),
+    function(x)getSubTaxa(x, tree))))
+  splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1]))
   # find the difference between tip labels and the tips in 'found'
   full_tips <- tree$tip.label 
   absent <- (lapply(1:length(splits$found), function(x)dplyr::setdiff(full_tips, splits$found[[x]])))
@@ -2475,6 +2500,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   if(quiet > 0){
     print(paste0("Making trees for rep ", rep))
   }
+  #KBH in future iterations we'll want to make the boostrapping optional, but it's okay for now
   data <- clones$data
   data_tmp <- list()
   for(i in 1:length(data)){
@@ -2642,76 +2668,15 @@ getBootstraps <- function(clones, bootstraps,
            bootstrap_nodes=TRUE")
   }
   # check to make sure that getTrees used the same build as here
-  if(build == "pratchet"){
-    if(!grepl("prachet", clones$trees[[1]]$tree_method)){
-      if(grepl("pml", clones$trees[[1]]$tree_method)){
-        build_used <- "pml"
-      } else if(grepl("dnaml", clones$trees[[1]]$tree_method)){
-        build_used <- "dnaml"
-      } else if(grepl("dnapars", clones$trees[[1]]$tree_method)){
-        build_used <- "dnapars"
-      } else if(grepl("igphyml", clones$trees[[1]]$tree_method)){
-        build_used <- "igphyml"
-      }
-      stop(paste0("Trees and bootstrapped trees need to be made the same way. Use the same build option in getTrees as getBootstraps.
-           getBoostraps is trying to use a pratchet build, but getTrees used ", build_used, " to build trees."))
-    }
-  } else if(build == "pml"){
-    if(!grepl("pml", clones$trees[[1]]$tree_method)){
-      if(grepl("prachet", clones$trees[[1]]$tree_method)){
-        build_used <- "pratchet"
-      } else if(grepl("dnaml", clones$trees[[1]]$tree_method)){
-        build_used <- "dnaml"
-      } else if(grepl("dnapars", clones$trees[[1]]$tree_method)){
-        build_used <- "dnapars"
-      } else if(grepl("igphyml", clones$trees[[1]]$tree_method)){
-        build_used <- "igphyml"
-      }
-      stop(paste0("Trees and bootstrapped trees need to be made the same way. Use the same build option in getTrees as getBootstraps.
-           getBoostraps is trying to use a pml build, but getTrees used ", build_used, " to build trees."))
-    }
-  } else if (build == "dnaml"){
-    if(!grepl("dnaml", clones$trees[[1]]$tree_method)){
-      if(grepl("prachet", clones$trees[[1]]$tree_method)){
-        build_used <- "pratchet"
-      } else if(grepl("pml", clones$trees[[1]]$tree_method)){
-        build_used <- "pml"
-      } else if(grepl("dnapars", clones$trees[[1]]$tree_method)){
-        build_used <- "dnapars"
-      } else if(grepl("igphyml", clones$trees[[1]]$tree_method)){
-        build_used <- "igphyml"
-      }
-      stop(paste0("Trees and bootstrapped trees need to be made the same way. Use the same build option in getTrees as getBootstraps.
-           getBoostraps is trying to use a dnaml build, but getTrees used ", build_used, " to build trees."))
-    }
-  } else if(build == "dnapars"){
-    if(!grepl("dnapars", clones$trees[[1]]$tree_method)){
-      if(grepl("prachet", clones$trees[[1]]$tree_method)){
-        build_used <- "pratchet"
-      } else if(grepl("dnaml", clones$trees[[1]]$tree_method)){
-        build_used <- "dnaml"
-      } else if(grepl("pml", clones$trees[[1]]$tree_method)){
-        build_used <- "pml"
-      } else if(grepl("igphyml", clones$trees[[1]]$tree_method)){
-        build_used <- "igphyml"
-      }
-      stop(paste0("Trees and bootstrapped trees need to be made the same way. Use the same build option in getTrees as getBootstraps.
-           getBoostraps is trying to use a dnapars build, but getTrees used ", build_used, " to build trees."))
-    }
-  } else if(build == "igphyml"){
-    if(!grepl("igphyml", clones$trees[[1]]$tree_method)){
-      if(grepl("prachet", clones$trees[[1]]$tree_method)){
-        build_used <- "pratchet"
-      } else if(grepl("dnaml", clones$trees[[1]]$tree_method)){
-        build_used <- "dnaml"
-      } else if(grepl("pml", clones$trees[[1]]$tree_method)){
-        build_used <- "pml"
-      } else if(grepl("dnapars", clones$trees[[1]]$tree_method)){
-        build_used <- "dnapars"
-      }
-      stop(paste0("Trees and bootstrapped trees need to be made the same way. Use the same build option in getTrees as getBootstraps.
-           getBoostraps is trying to use a igphyml build, but getTrees used ", build_used, " to build trees."))
-    }
+  #KBH
+  build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
+  build_used <- gsub("phylip::", "", clones$trees[[1]]$tree_method)
+  if(grepl("igphyml", build_used)){
+    build_used <- "igphyml"
+  }
+  if(build != build_used){
+    stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
+           getBoostraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
   }
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
