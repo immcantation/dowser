@@ -20,6 +20,7 @@ getBootstraps(
   rep = NULL,
   seq = NULL,
   boot_part = "locus",
+  by_codon = TRUE,
   ...
 )
 }
@@ -53,6 +54,9 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{seq}{column name containing sequence information}
 
 \item{boot_part}{is  "locus" bootstrap columns for each locus separately}
+
+\item{by_codon}{a logical if the user wants to bootstrap by codon or by 
+nucleotide. Default (codon based bootstrapping) is TRUE.}
 
 \item{...}{additional arguments to be passed to tree building program}
 }

@@ -2683,13 +2683,6 @@ getBootstraps <- function(clones, bootstraps,
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
       exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
     error=function(e)e), mc.cores=nproc), recursive = FALSE)
-  
-  if(quiet > 3){
-    b_name <- paste0("bootstrap_trees_", build, ".rds")
-    saveRDS(bootstrap_trees, b_name)
-    saveRDS(clones, "clones.rds")
-    rm(b_name)
-  }
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
