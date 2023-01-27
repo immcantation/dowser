@@ -7,7 +7,7 @@
 getSeq(data, node, tree = NULL, clone = NULL, gaps = TRUE)
 }
 \arguments{
-\item{data}{a tibble of \code{airrClone} objects, the output of 
+\item{data}{a tibble of \code{airrClone} objects, the output of
 \link{getTrees}}
 
 \item{node}{numeric node in tree (see details)}

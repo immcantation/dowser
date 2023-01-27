@@ -2,7 +2,7 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{rerootTree}
 \alias{rerootTree}
-\title{Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
+\title{Reroot phylogenetic tree to have its germline sequence at a zero-length branch
 to a node which is the direct ancestor of the tree's UCA. Assigns \code{uca}
 to be the ancestral node to the tree's germline sequence, as \code{germid} as
 the tree's germline sequence ID.}
@@ -22,7 +22,7 @@ rerootTree(tree, germline, min = 0.001, verbose = 1)
 \code{phylo} object rooted at the specified germline
 }
 \description{
-Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
+Reroot phylogenetic tree to have its germline sequence at a zero-length branch
 to a node which is the direct ancestor of the tree's UCA. Assigns \code{uca}
 to be the ancestral node to the tree's germline sequence, as \code{germid} as
 the tree's germline sequence ID.

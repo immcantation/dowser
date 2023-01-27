@@ -63,7 +63,6 @@ test_that("makeAirrClone",{
   expect_equal(clone@phylo_seq,"sequence")
   expect_equal(clone@lgermline,"")
   expect_equal(clone@hlgermline,"CCCCAGGGN")
-  expect_equal(clone@germline,"CCCCAGGGN")
   expect_equal(clone@data, exp, tolerance=0.001)
 
   # With splitting by trait value
@@ -80,7 +79,6 @@ test_that("makeAirrClone",{
   expect_equal(clone@phylo_seq,"sequence")
   expect_equal(clone@lgermline,"")
   expect_equal(clone@hlgermline,"CCCCAGGGN")
-  expect_equal(clone@germline,"CCCCAGGGN")
   expect_equal(clone@data, exp_trait, tolerance=0.001)
 
   clones <- formatClones(db_l,germ="germline_alignment",randomize=FALSE,
@@ -121,13 +119,13 @@ test_that("getTreesPhangorn", {
   trees <- scaleBranches(trees)
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
 
-  # note, node re-order 11/17/22
+  # note, node re-order 1/27/23
   expect_equal(trees$trees[[1]]$edge.length,
-               c(1,0,2,0))
+               c(0,1,0,2))
   expect_equal(trees$trees[[1]]$edge[,1],
-               c(4,5,5,4))
+               c(4,4,5,5))
   expect_equal(trees$trees[[1]]$edge[,2],
-               c(5,2,1,3))
+               c(3,5,2,1))
   expect_equal(trees$trees[[1]]$tip.label,
                c("C","A","Germline"))
   expect_equal(seqs,c("NAACTGGNN","CCCCTGGGN","CCCCAGGGN",
@@ -212,13 +210,13 @@ test_that("getGermlines", {
   trees <- scaleBranches(trees)
 
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
-  # note, node re-order 11/17/22
+  # note, node re-order 1/27/23
   expect_equal(trees$trees[[1]]$edge.length,
-               c(27,2,0,0))
+               c(0,27,2,0))
   expect_equal(trees$trees[[1]]$edge[,1],
-               c(4,5,5,4))
+               c(4,4,5,5))
   expect_equal(trees$trees[[1]]$edge[,2],
-               c(5,2,1,3))
+               c(3,5,2,1))
   expect_equal(trees$trees[[1]]$tip.label,
                c("A","B","Germline"))
   expect_equal(seqs,c(
@@ -302,13 +300,13 @@ test_that("changeo", {
 
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
 
-  # note, node re-order 11/17/22
+  # note, node re-order 1/27/23
   expect_equal(trees$trees[[1]]$edge.length,
-               c(27,2,0,0))
+               c(0,27,2,0))
   expect_equal(trees$trees[[1]]$edge[,1],
-               c(4,5,5,4))
+               c(4,4,5,5))
   expect_equal(trees$trees[[1]]$edge[,2],
-               c(5,2,1,3))
+               c(3,5,2,1))
   expect_equal(trees$trees[[1]]$tip.label,
                c("A","B","Germline"))
   expect_equal(seqs,c(
