@@ -142,7 +142,9 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    tipsize      size of tip shape objects
 #' @param    scale        width of branch length scale bar
 #' @param    node_palette color palette for nodes
-#' @param    tip_palette  color palette for tips
+#' @param    tip_palette  color palette for tips. Can supply a named vector
+#'                        for all tip states, or a palette named passed to
+#'                        ggplot2::scale_color_brewer 
 #' @param    common_scale strecth plots so branches are on same scale?
 #'                        determined by sequence with highest divergence
 #' @param    layout       rectangular or circular tree layout?
@@ -254,15 +256,17 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     x <- x + theme(legend.position="right",
                     legend.box.margin=margin(0, -10, 0, 0))+
                     guides(color=guide_legend(title="State"))
-                    if(common_scale){
-                        x <- x + xlim(0, max_div*1.05)
-                    }
                     if(tiptype == "character"){
                         x <- x + scale_color_manual(values=cols)
                     }else{
                         x <- x + scale_color_distiller(limits=cols,
                             palette=tip_palette)
                     }})
+        }
+        if(common_scale){
+             ps  <- lapply(ps,function(x){
+                x <- x + xlim(0, max_div*1.05)
+            })
         }
         return(ps)
     }

@@ -12,8 +12,7 @@ Usage
 buildClonalGermline(
 receptors,
 references,
-organism = "human",
-locus = "IGH",
+chain = "IGH",
 use_regions = FALSE,
 vonly = FALSE,
 seq = "sequence_alignment",
@@ -37,11 +36,8 @@ receptors
 references
 :   Full list of reference segments, see [readIMGT](readIMGT.md)
 
-organism
-:   Species in `references` being analyzed
-
-locus
-:   locus in `references` being analyzed
+chain
+:   chain in `references` being analyzed
 
 use_regions
 :   Return string of VDJ regions? (optional)

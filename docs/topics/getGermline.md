@@ -30,8 +30,8 @@ receptor
 :   row from AIRR-table containing sequence of interest
 
 references
-:   list of reference segments. Must be specific to organism, 
-locus, and segment
+:   list of reference segments. Must be specific to
+locus and segment
 
 segment
 :   Gene segment to search. Must be V, D, or J.

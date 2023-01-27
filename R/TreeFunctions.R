@@ -1,7 +1,7 @@
 # Functions for performing discrete trait analysis on B cell lineage trees
 
 # Write a clone's sequence alignment to a fasta file
-# 
+#
 # \code{writeFasta} write clone sequences as a fasta file
 # @param    c            airrClone object
 # @param    fastafile    file to be exported
@@ -75,7 +75,7 @@ readFasta <- function(file){
 }
 
 #' Read in a parsimony model file
-#' 
+#'
 #' \code{readModelFile} Filler
 #' @param    file         parimony model file.
 #' @param    useambig     use ambiguous naming as specified in the file?
@@ -93,7 +93,7 @@ readModelFile <- function(file, useambig=FALSE){
     mend <- min(mend[which(mfile == "") > mstart])
     states <- mfile[(mstart+1):(mend-1)]
     names(states) <- states
-    
+
     if(useambig){
         stop("Ambiguous states not currently supported, please useambig=FALSE")
         astart <- which(mfile == "#AMBIGUOUS")
@@ -112,12 +112,12 @@ readModelFile <- function(file, useambig=FALSE){
 }
 
 #' Make a parsimony model file
-#' 
+#'
 #' \code{makeModelFile} Filler
 #' @param    file          model file name to write.
 #' @param    states        vector of states to include in model.
 #' @param    constraints   constraints to add to model.
-#' @param    exceptions    vector of comma-separated states that are 
+#' @param    exceptions    vector of comma-separated states that are
 #'                         exceptions to constraints
 #'
 #'
@@ -126,7 +126,7 @@ readModelFile <- function(file, useambig=FALSE){
 #' @details
 #' Currently the only option for \code{constraints} is "irrev", which
 #' forbids switches moving from left to right in the \code{states} vector.
-#'  
+#'
 #' @seealso \link{readModelFile}, \link{getTrees}, \link{findSwitches}
 #'
 #' @export
@@ -149,14 +149,14 @@ makeModelFile <- function(file, states, constraints=NULL, exceptions=NULL){
                             "from constraints"))
                         next
                     }
-                    write(paste(states[j], states[i], "1000"), 
+                    write(paste(states[j], states[i], "1000"),
                         file=file, append=TRUE)
                 }
             }
         }else{
             for(constraint in constraints){
                 cons <- strsplit(constraint,split=",")[[1]]
-                write(paste(cons[1], cons[2], "1000"), 
+                write(paste(cons[1], cons[2], "1000"),
                         file=file, append=TRUE)
             }
         }
@@ -171,7 +171,7 @@ makeModelFile <- function(file, states, constraints=NULL, exceptions=NULL){
 }
 
 # Read in a switches file from IgPhyML
-# 
+#
 # \code{readSwitches} Filler
 # @param    file          IgPhyML output file.
 #
@@ -183,13 +183,13 @@ readSwitches <- function(file){
 }
 
 # Make bootstrap replicate of clonal alignment
-# 
+#
 # \code{lones} Filler
 # @param    clone     \code{airrClone} object
 # @param    reps      Number of bootstrap replicates
 # @param    partition If "locus" Bootstrap heavy/lights separately
 #
-# @return   A list of \code{airrClone} objects with 
+# @return   A list of \code{airrClone} objects with
 # bootstrapped sequences
 bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE){
     if(clone@phylo_seq == "hlsequence"){
@@ -218,7 +218,7 @@ bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE
           codons=lapply(seq, function(x)c(locus[x],locus[x+1],locus[x+2]))
           codons = sample(codons, replace=TRUE)
           return(codons)}))
-        
+
       }else{
         seq = seq(1,length(index),by=3)
         codons=lapply(seq, function(x)c(index[x],index[x+1],index[x+2]))
@@ -301,7 +301,7 @@ bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE
 }
 
 #' Do IgPhyML maximum parsimony reconstruction
-#' 
+#'
 #' \code{reconIgPhyML} IgPhyML parsimony reconstruction function
 #' @param    file          IgPhyML lineage file (see writeLineageFile)
 #' @param    modelfile      File specifying parsimony model
@@ -315,7 +315,7 @@ bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE
 #' @param    rm_dir        remove temporary directory?
 #' @param    states        states in parsimony model
 #' @param    palette       palette for coloring tree (see getPallete)
-#' @param    resolve       level of polytomy resolution. 0=none, 
+#' @param    resolve       level of polytomy resolution. 0=none,
 #'                         1=maximum parsimony, 2=maximum ambiguity
 #' @param    rseed         random number seed if desired
 #' @param    force_resolve continue even if polytomy resolution fails?
@@ -324,12 +324,12 @@ bootstrapClones  <- function(clone, reps=100, partition="locus", by_codon = TRUE
 #' @return   Either a tibble of switch counts or a list
 #'           of trees with internal nodes predicted by parsimony.
 #' @export
-reconIgPhyML <- function(file, modelfile, id, 
+reconIgPhyML <- function(file, modelfile, id,
     igphyml="igphyml", mode="switches", type="recon",
-    nproc=1, quiet=0, rm_files=FALSE, rm_dir=NULL, 
+    nproc=1, quiet=0, rm_files=FALSE, rm_dir=NULL,
     states=NULL, palette=NULL, resolve=2, rseed=NULL,
     force_resolve=FALSE, ...){
-    
+
     #args <- list(...)
     igphyml <- path.expand(igphyml)
     if(file.access(igphyml, mode=1) == -1) {
@@ -441,7 +441,7 @@ reconIgPhyML <- function(file, modelfile, id,
 }
 
 #' Read in all trees from a lineages file
-#' 
+#'
 #' @param    file    IgPhyML lineage file
 #' @param    states  states in parsimony model
 #' @param    palette palette for coloring internal nodes
@@ -450,13 +450,13 @@ reconIgPhyML <- function(file, modelfile, id,
 #' @param    append  string appended to fasta files
 #' @param    format  format of input file with trees
 #' @param    type    Read in parsimony reconstructions or ancestral sequence
-#'                   reconstructions? "jointpars" reads in parsimony states, 
+#'                   reconstructions? "jointpars" reads in parsimony states,
 #'                   others read in sequences in internal nodes
 #'
 #' @return   A list of phylo objects from \code{file}.
 #' @export
 readLineages <- function(file, states=NULL, palette="Dark2",
-    run_id="", quiet=TRUE, append=NULL, format="nexus", 
+    run_id="", quiet=TRUE, append=NULL, format="nexus",
     type="jointpars"){
     trees <- list()
     t <- readLines(file)
@@ -503,7 +503,7 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 
 
 #' Write lineage file for IgPhyML use
-#' 
+#'
 #' @param    data      list of \code{airrClone} objects
 #' @param    trees     list of \code{phylo} objects corresponding to \code{data}
 #' @param    dir       directory to write file
@@ -515,7 +515,7 @@ readLineages <- function(file, states=NULL, palette="Dark2",
 #' @param    empty     output uninformative sequences?
 #' @return   Name of created lineage file.
 #' @export
-writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
+writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
     trait=NULL, empty=TRUE, partition="single", heavy="IGH"){
 
     file <- file.path(dir,paste0(id,"_lineages_pars.tsv"))
@@ -663,7 +663,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 }
 
 #' Wrapper for alakazam::buildPhylipLineage
-#' 
+#'
 #' @param    clone      \code{airrClone} object
 #' @param    exec       dnapars or dnaml executable
 #' @param    temp_path  path to temporary directory
@@ -695,11 +695,21 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
             clone@germline <- clone@lgermline
         }
     }
+    if(nrow(clone@data) < 2){
+        stop("Clone ",paste0(clone@clone," has only one sequence, skipping"))
+    }
     if(is.null(tree)){
-        tree <- tryCatch({
-            alakazam::buildPhylipLineage(clone,exec,rm_temp=rm_temp,branch_length="distance",
-                verbose=verbose>0,temp_path=temp_path,onetree=onetree)},
-            error=function(e){print(paste("buildPhylipLineage error:",e));stop()})
+        tree <- tryCatch(
+            alakazam::buildPhylipLineage(clone, exec, rm_temp=rm_temp,
+                branch_length="distance", verbose=verbose>0,
+                temp_path=temp_path,onetree=onetree),
+            error=function(e)e)
+        if(is.null(tree)){
+            stop(paste0("buildPhylipLineage failed for clone ",clone@clone))
+        }
+        if(inherits(tree, "error")){
+            stop(tree)
+        }
         tree <- alakazam::graphToPhylo(tree)
         tree <- rerootTree(tree, germline="Germline",verbose=0)
         tree <- ape::ladderize(tree,right=FALSE)
@@ -712,7 +722,7 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 }
 
 #' Wrapper for phangorn::pratchet
-#' 
+#'
 #' @param    clone           \code{airrClone} object
 #' @param    seq             sequece column in \code{airrClone} object
 #' @param    asr             return sequence or probability matrix?
@@ -725,7 +735,7 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 #' @return  \code{phylo} object created by phangorn::pratchet with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
-buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05, 
+buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
                           tree=NULL, asr_type="MPR", verbose=0, resolve_random=TRUE,
                           data_type="DNA"){
   seqs <- clone@data[[seq]]
@@ -775,7 +785,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
   tree$name <- clone@clone
   tree$seq <- seq
   if(asr != "none" && data_type=="DNA"){
-    seqs_pars <- phangorn::ancestral.pars(tree, data, 
+    seqs_pars <- phangorn::ancestral.pars(tree, data,
                                           type=asr_type, cost=NULL, return="prob")
     ASR <- list()
     for(i in 1:max(tree$edge)){
@@ -813,7 +823,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 
 
 #' Wrapper for phangorn::optim.pml
-#' 
+#'
 #' @param    clone      \code{airrClone} object
 #' @param    seq        sequece column in \code{airrClone} object
 #' @param    sub_model  substitution model to use
@@ -832,8 +842,8 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @return  \code{phylo} object created by phangorn::optim.pml with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
-buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
-                     asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, 
+buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq",
+                     asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE,
                      verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL){
   #output_name <- paste0("pml_output_rep_", rep, "_clone_", clone@clone, ".txt")
   #sink(file=output_name)
@@ -902,7 +912,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
   #print("adding name and seq")
   tree$name <- clone@clone
   tree$seq <- seq
-  
+
   if(asr != "none" && data_type=="DNA"){
     #print("ancestral pml started")
     seqs_ml <- phangorn::ancestral.pml(fit,
@@ -944,8 +954,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 }
 
 #' Wrapper to build IgPhyML trees and infer intermediate nodes
-#' 
-#' @param    clone      \code{airrClone} object
+#'
+#' @param    clone      list of \code{airrClone} objects
 #' @param    igphyml    igphyml executable
 #' @param    trees      list of tree topologies if desired
 #' @param    nproc      number of cores for parallelization
@@ -977,8 +987,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @return  \code{phylo} object created by igphyml with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
-buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
-    id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
+buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
+    id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL,
     partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
     omega="e", optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", asrc=0.95,
     splitfreqs=FALSE, ...){
@@ -994,10 +1004,19 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     na_regions <- unlist(lapply(clone, function(x)sum(is.na(x@region)) > 0))
     if(sum(na_regions) > 0){
         exclude_clones <- unlist(lapply(clone[na_regions], function(x)x@clone))
-        stop(paste("NA regions found in clones",paste(exclude_clones, collapse=","), 
+        stop(paste("NA regions found in clones",paste(exclude_clones, collapse=","),
             "remove before continuing"))
     }
-
+    seqs <- unlist(lapply(clone, function(x)nrow(x@data)))
+    if(sum(seqs < 2) > 0){
+        warning("Discarding ",paste0(sum(seqs < 2), " clones with only one sequence. ",
+            "Consider running formatClones with dup_singles=TRUE to duplicate these ",
+            "sequences if they're important to include."))
+        clone <- clone[seqs > 1]
+    }
+    if(length(clone) == 0){
+        stop("No clones for tree building!")
+    }
     os <- strsplit(omega,split=",")[[1]]
     file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
             partition=partition, ...)
@@ -1117,7 +1136,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     for(i in 1:nrow(params)){
         clone_id <- params[i,]$clone
         trees[[i]]$name <- clone_id
-        trees[[i]]$tip.label[which(trees[[i]]$tip.label 
+        trees[[i]]$tip.label[which(trees[[i]]$tip.label
             == paste0(clone_id,"_GERM"))] <- "Germline"
         trees[[i]]$tree_method <- paste("igphyml::gy94,hlp19")
         trees[[i]]$edge_type <- "genetic_distance_codon"
@@ -1195,17 +1214,17 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     return(trees)
 }
 
-#' Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
+#' Reroot phylogenetic tree to have its germline sequence at a zero-length branch
 #' to a node which is the direct ancestor of the tree's UCA. Assigns \code{uca}
 #' to be the ancestral node to the tree's germline sequence, as \code{germid} as
-#' the tree's germline sequence ID. 
+#' the tree's germline sequence ID.
 #'
 #' @param   tree      An ape \code{phylo} object
 #' @param   germline  ID of the tree's predicted germline sequence
 #' @param   min       Maximum allowed branch length from germline to root
 #' @param   verbose    amount of rubbish to print
 #' @return  \code{phylo} object rooted at the specified germline
-#' 
+#'
 #' @export
 rerootTree <- function(tree, germline, min=0.001, verbose=1){
     ntip <- length(tree$tip.label)
@@ -1248,7 +1267,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
         tree$edge.length <- tree$edge.length[!rindex]
         tree$edge.length[length(tree$edge.length)+1] <- sumedge
         tree$Nnode <- tree$Nnode - 1
-        if(parent != uca){ 
+        if(parent != uca){
             #if new parent doesn't have correct uca number, swap it
             #uca node should have been the node that was cut out
             #if not the parent
@@ -1277,23 +1296,23 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 
     edge <- tree$edge
     germid <- which(tree$tip.label == germline)
-    
+
     max <- max(edge)
     nnode <- max+1 #new node number
     uca <- ntip+1 #uca needs to be first internal node
-    
+
     # replace current uca (hereafter mrca) with new node number in edge list
     edge[edge[,1]==uca,1] <- nnode
     edge[edge[,2]==uca,2] <- nnode
-    
+
     # make MRCA connect to new UCA node instead of germline
     edge[edge[,2] == germid,2] <- uca
 
     #add 0 length edge from UCA to germline
-    edge <- rbind(edge,c(uca,germid)) 
+    edge <- rbind(edge,c(uca,germid))
     tree$edge.length[length(tree$edge.length)+1] <- 0
 
-    # recursive function to swap nodes while 
+    # recursive function to swap nodes while
     # preserving internal node ids
     # this is what actually reroots the trees
     swap <- function(tnode, edge, checked){
@@ -1319,7 +1338,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
         }
         return(edge)
     }
-    
+
     #place new UCA node at root of tree
     edge <- swap(uca, edge, checked=c(1:ntip))
 
@@ -1333,11 +1352,11 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
         tree$nodes[[nnode]] <- tree$nodes[[uca]]
         tree$nodes[[uca]] <- tree$nodes[[germid]]
     }
-    
+
     # reset and re-order tree
     attr(tree, "order") <- NULL
-    tree <- ape::ladderize(tree)
-    
+    tree <- ape::ladderize(tree, right=FALSE)
+
     # sanity check tree length, divergence, and internal node distances
     nlength <- sum(tree$edge.length)
     ndiv <- ape::cophenetic.phylo(tree)["Germline",]
@@ -1365,17 +1384,17 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 
 #' Estimate lineage tree topologies, branch lengths,
 #' and internal node states if desired
-#' 
+#'
 #' \code{getTrees} Tree building function.
-#' @param    clones     a tibble of \code{airrClone} objects, the output of 
+#' @param    clones     a tibble of \code{airrClone} objects, the output of
 #'                      \link{formatClones}
-#' @param    trait      trait to use for parsimony models (required if 
+#' @param    trait      trait to use for parsimony models (required if
 #'                      \code{igphyml} specified)
-#' @param    build      program to use for tree building (pratchet, pml, 
+#' @param    build      program to use for tree building (pratchet, pml,
 #'                      dnapars, dnaml, igphyml)
 #' @param    exec       location of desired phylogenetic executable
-#' @param    igphyml    optional location of igphyml executible for parsimony 
-#' @param    id         unique identifer for this analysis (required if 
+#' @param    igphyml    optional location of igphyml executible for parsimony
+#' @param    id         unique identifer for this analysis (required if
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param    dir        directory where temporary files will be placed.
 #' @param    modelfile  file specifying parsimony model to use
@@ -1387,27 +1406,27 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' @param    seq        column name containing sequence information
 #' @param    collapse   Collapse internal nodes with identical sequences?
 #' @param    ...        Additional arguments passed to tree building programs
-#' 
+#'
 #' @return   A list of \code{phylo} objects in the same order as \code{data}.
 #'
 #' @details
-#' Estimates phylogenetic tree topologies and branch lengths for a list of 
-#' \code{airrClone} objects. By default, it will use phangnorn::pratchet to 
-#' estimate maximum parsimony tree topologies, and ape::acctran to estimate 
-#' branch lengths. If \code{igpyhml} is specified, internal node \code{trait} 
-#' values will be predicted by maximum parsimony. In this case, \code{dir} will 
-#' need to be specified as a temporary directory to place all the intermediate 
-#' files (will be created if not available). Further, \code{id} will need to 
-#' specified to serve as a unique identifier for the temporary files. This 
+#' Estimates phylogenetic tree topologies and branch lengths for a list of
+#' \code{airrClone} objects. By default, it will use phangnorn::pratchet to
+#' estimate maximum parsimony tree topologies, and ape::acctran to estimate
+#' branch lengths. If \code{igpyhml} is specified, internal node \code{trait}
+#' values will be predicted by maximum parsimony. In this case, \code{dir} will
+#' need to be specified as a temporary directory to place all the intermediate
+#' files (will be created if not available). Further, \code{id} will need to
+#' specified to serve as a unique identifier for the temporary files. This
 #' should be chosen to ensure that multiple \code{getTrees} calls using the same
-#' \code{dir} do not overwrite each others files. 
-#' 
-#' \code{modelfile} is written automatically if not specified, but doesn't 
+#' \code{dir} do not overwrite each others files.
+#'
+#' \code{modelfile} is written automatically if not specified, but doesn't
 #' include any constraints. Intermediate files are deleted by default. This can
 #' be toggled using (\code{rm_files}).
 #'
 #' For examples and vignettes, see https://dowser.readthedocs.io
-#'  
+#'
 #' @seealso \link{formatClones}, \link{findSwitches}, \link{buildPhylo},
 #' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
 #' @examples
@@ -1418,24 +1437,24 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #'
 #' \dontrun{
 #' data(ExampleClones)
-#' 
+#'
 #' trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
 #'          id="temp",dir="temp", trait="sample_id")
 #' plotTrees(trees)[[1]]
 #' }
 #' @export
-getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL, 
+getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                      modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
                      fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
                      seq=NULL, collapse=FALSE, ...){
-  
+
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
   if(!is.null(dir)){
     dir <- path.expand(dir)
   }
-  
+
   data <- clones$data
   if(!inherits(data, "list")){
     data <- list(data)
@@ -1516,7 +1535,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
         for(id in datat@data$sequence_id){
           trait_temp <- filter(datat@data,
                                !!rlang::sym("sequence_id")==id)[[trait]]
-          tree$tip.label[tree$tip.label == id] <- 
+          tree$tip.label[tree$tip.label == id] <-
             paste0(id,"_",trait_temp)
         }
         tree})
@@ -1537,7 +1556,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       }
     }
   }
-  
+
   if(!inherits(data, "list")){
     data <- list(data)
   }
@@ -1550,7 +1569,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   if(rm_temp){
     rm_dir=file.path(dir,paste0(id,"_recon_trees"))
   }
-  
+
   reps <- as.list(1:length(data))
   if(is.null(seq)){
     seqs <- unlist(lapply(data,function(x)x@phylo_seq))
@@ -1575,14 +1594,13 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       tryCatch(buildPML(data[[x]],seq=seqs[x],
                         tree=trees[[x]],...),error=function(e)e),
       mc.cores=nproc)
-    # removed the '...' from tree=trees[[x]],... so it would produce trees
   }else if(build=="igphyml"){
     if(rm_temp){
       rm_dir <- file.path(dir,id)
     }else{
       rm_dir <- NULL
     }
-    trees <- 
+    trees <-
       tryCatch(buildIgphyml(data,
                             igphyml=exec,
                             temp_path=file.path(dir,id),
@@ -1596,8 +1614,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else{
     stop("build specification",build,"not recognized")
   }
-  
-  # save points for data have been saved as the following 
+
+  # save points for data have been saved as the following
   # trees -> trees_save
   # data -> data_save
   # clones -> clones_save
@@ -1618,7 +1636,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   if(length(trees) == 0){
     stop("No trees left!")
   }
-  
+
   # make sure trees, data, and clone objects are in same order
   tree_names <- unlist(lapply(trees, function(x)x$name))
   data_names <- unlist(lapply(data, function(x)x@clone))
@@ -1626,20 +1644,20 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   data <- data[m]
   m <- match(tree_names, clones$clone_id)
   clones <- clones[m,]
-  
+
   if(build == "igphyml"){
     clones$parameters <- lapply(trees,function(x)x$parameters)
   }
-  
+
   if(!is.null(igphyml)){
     file <- writeLineageFile(data=data, trees=trees, dir=dir,
                              id=id, trait=trait, rep="trees")
-    
-    mtrees <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
+
+    mtrees <- reconIgPhyML(file, modelfile, igphyml=igphyml,
                            mode="trees", id=NULL, quiet=quiet, nproc=nproc,
-                           rm_files=rm_temp, rm_dir=rm_dir, states=states, 
+                           rm_files=rm_temp, rm_dir=rm_dir, states=states,
                            palette=palette, ...)
-    
+
     # remove trait value from tips
     mtrees <- lapply(mtrees,function(x){
       ids <- strsplit(x$tip.label,split="_")
@@ -1648,7 +1666,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       x$tip.label[x$tip.label == x$name] <- "Germline"
       x
     })
-    
+
   }else{
     mtrees <- trees
   }
@@ -1663,30 +1681,30 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   if(collapse){
     clones <- collapseNodes(clones)
   }
-  if(sum(clones$clone_id != 
+  if(sum(clones$clone_id !=
          unlist(lapply(trees,function(x)x$name))) > 0){
     stop("Tree column names don't match clone IDs")
   }
-  
+
   clones
 }
 
 
 
 #' Scale branch lengths to represent either mutations or mutations per site.
-#' 
+#'
 #' \code{scaleBranches} Branch length scaling function.
 #' @param    clones      a tibble of \code{airrClone} and \code{phylo} objects,
 #'                      the output of \link{getTrees}.
-#' @param    edge_type  Either \code{genetic_distance} (mutations per site) or 
+#' @param    edge_type  Either \code{genetic_distance} (mutations per site) or
 #'                      \code{mutations}
-#' 
-#' @return   A tibble with \code{phylo} objects that have had branch lengths 
+#'
+#' @return   A tibble with \code{phylo} objects that have had branch lengths
 #'           rescaled as specified.
 #'
 #' @details
 #' Uses clones$trees[[1]]$edge_type to determine how branches are currently scaled.
-#'  
+#'
 #' @seealso \link{getTrees}
 #' @export
 scaleBranches <- function(clones, edge_type="mutations"){
@@ -1713,21 +1731,21 @@ scaleBranches <- function(clones, edge_type="mutations"){
         }}))
 
     trees <- lapply(1:length(clones$trees),function(x){
-        if(clones$trees[[x]]$edge_type == "mutations" && 
+        if(clones$trees[[x]]$edge_type == "mutations" &&
             edge_type == "genetic_distance"){
-            clones$trees[[x]]$edge.length <- 
+            clones$trees[[x]]$edge.length <-
                 clones$trees[[x]]$edge.length/lengths[x]
             clones$trees[[x]]$edge_type <- "genetic_distance"
             clones$trees[[x]]
         }else if(clones$trees[[x]]$edge_type == "genetic_distance" &&
             edge_type == "mutations"){
-            clones$trees[[x]]$edge.length <- 
+            clones$trees[[x]]$edge.length <-
                 clones$trees[[x]]$edge.length*lengths[x]
             clones$trees[[x]]$edge_type <- "mutations"
             clones$trees[[x]]
         }else if(clones$trees[[x]]$edge_type == "genetic_distance_codon" &&
             edge_type == "mutations"){
-            clones$trees[[x]]$edge.length <- 
+            clones$trees[[x]]$edge.length <-
                 clones$trees[[x]]$edge.length*lengths[x]/3
             clones$trees[[x]]$edge_type <- "mutations"
             clones$trees[[x]]
@@ -1735,24 +1753,24 @@ scaleBranches <- function(clones, edge_type="mutations"){
             warning("edge conversion type not yet supported")
             clones$trees[[x]]
         }})
-            
+
     clones$trees <- trees
     clones
 }
 
 #' Collapse internal nodes with the same predicted sequence
-#' 
+#'
 #' \code{collapseNodes} Node collapsing function.
 #' @param    trees    a tibble of \code{airrClone} objects, the output of \link{getTrees}
-#' @param    tips     collapse tips to internal nodes? (experimental)  
+#' @param    tips     collapse tips to internal nodes? (experimental)
 #' @param    check    check that collapsed nodes are consistent with original tree
-#' 
+#'
 #' @return   A tibble with \code{phylo} objects that have had internal nodes collapsed.
 #'
 #' @details
 #' Use plotTrees(trees)[[1]] + geom_label(aes(label=node)) + geom_tippoint() to show
 #' node labels, and getSeq to return internal node sequences
-#'  
+#'
 #' @seealso \link{getTrees}
 #' @export
 collapseNodes <- function(trees, tips=FALSE, check=TRUE){
@@ -1849,11 +1867,11 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
             x$id
         }}))
     trees$node.label <- nodelabs[(length(ttips)+1):length(nsequences)]
-    
+
     # reset and re-order tree
     attr(trees, "order") <- NULL
-    trees <- ape::ladderize(trees)
-    
+    trees <- ape::ladderize(trees, right=FALSE)
+
     if(check){
         if(tips){
             warning("Cannot check nodes while collapsing tips (tips=TRUE)")
@@ -1876,9 +1894,9 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 }
 
 #' Return IMGT gapped sequence of specified tree node
-#' 
+#'
 #' \code{getNodeSeq} Sequence retrieval function.
-#' @param    data    a tibble of \code{airrClone} objects, the output of 
+#' @param    data    a tibble of \code{airrClone} objects, the output of
 #'                   \link{getTrees}
 #' @param    node    numeric node in tree (see details)
 #' @param    tree    a \code{phylo} tree object containing \code{node}
@@ -1890,7 +1908,7 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 #' @details
 #' Use plotTrees(trees)[[1]] + geom_label(aes(label=node))+geom_tippoint() to show
 #' node labels, and getNodeSeq to return internal node sequences
-#'  
+#'
 #' @seealso \link{getTrees}
 #' @export
 getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
@@ -1926,9 +1944,9 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
 }
 
 #' Deprecated! Use getNodeSeq
-#' 
+#'
 #' \code{getSeq} Sequence retrieval function.
-#' @param    data    a tibble of \code{airrClone} objects, the output of 
+#' @param    data    a tibble of \code{airrClone} objects, the output of
 #'                   \link{getTrees}
 #' @param    node    numeric node in tree (see details)
 #' @param    tree    a \code{phylo} tree object containing \code{node}
@@ -1978,11 +1996,11 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
         }
 
         ntips <- nrow(cdata)
-        
+
         # randomly select one sequence of each type
         saved <- unlist(lapply(states, function(x)
             sample(cdata[cdata[[trait]] == x,]$sequence_id,size=1)))
-        
+
         # if too many tips, downsample
         if(ntips/(length(states)-1) > tip_switch){
             target <- tip_switch*(length(states)-1)
@@ -1998,7 +2016,6 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
             # if tree provided, drop selected tips
             if(!is.null(tree)){
                 od <- getDivergence(tree)
-                otree <- tree
                 tree <- ape::drop.tip(tree, tip=rm)
                 nd <- getDivergence(tree)
                 maxdiff <- max(nd - od[names(nd)])
@@ -2012,7 +2029,7 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
                 }
                 if(sum(!cdata$sequence_id %in% tree$tip.label) == 0 &
                     sum(!tree$tip.label %in% c(cdata$sequence_id, "Germline"))){
-                        stop(paste("clone",clone@clone," tree downsampling failed!"))       
+                        stop(paste("clone",clone@clone," tree downsampling failed!"))
                 }
             }
         }
@@ -2024,18 +2041,18 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
     results
 }
 
-#' Create a bootstrap distribution for clone sequence alignments, and estimate 
+#' Create a bootstrap distribution for clone sequence alignments, and estimate
 #' trees for each bootstrap replicate.
-#' 
+#'
 #' \code{findSwitches} Phylogenetic bootstrap function.
-#' @param clones         tibble \code{airrClone} objects, the output of 
+#' @param clones         tibble \code{airrClone} objects, the output of
 #'                      \link{formatClones}
 #' @param permutations    number of bootstrap replicates to perform
 #' @param trait         trait to use for parsimony models
-#' @param igphyml       location of igphyml executible 
+#' @param igphyml       location of igphyml executible
 #' @param build         program to use for tree building (phangorn, dnapars)
 #' @param exec          location of desired phylogenetic executable
-#' @param id            unique identifer for this analysis (required if 
+#' @param id            unique identifer for this analysis (required if
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
@@ -2046,7 +2063,7 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' @param quiet           amount of rubbish to print to console
 #' @param rm_temp       remove temporary files (default=TRUE)
 #' @param palette       a named vector specifying colors for each state
-#' @param resolve       how should polytomies be resolved? 
+#' @param resolve       how should polytomies be resolved?
 #'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
 #'                       3=max ambiguity
 #' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
@@ -2062,26 +2079,29 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
 #'
 #' @details
-#' Tree building details are the same as \link{getTrees}. 
-#' If \code{keeptrees=TRUE} (default) the returned object will contain a list 
-#' named "trees" which contains a list of estimated tree objects for each 
-#' bootstrap replicate. The object is structured like: 
-#' trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified 
-#' (as well as \code{trait}), the returned object 
-#' will contain a \code{tibble} named "switches" containing switch count 
-#' information. This object can be passed to \link{testSP} and other functions 
-#' to perform parsimony based trait value tests. 
-#'  
-#' @seealso Uses output from \link{formatClones} with similar arguments to 
+#' Tree building details are the same as \link{getTrees}.
+#' If \code{keeptrees=TRUE} (default) the returned object will contain a list
+#' named "trees" which contains a list of estimated tree objects for each
+#' bootstrap replicate. The object is structured like:
+#' trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified
+#' (as well as \code{trait}), the returned object
+#' will contain a \code{tibble} named "switches" containing switch count
+#' information. This object can be passed to \link{testSP} and other functions
+#' to perform parsimony based trait value tests.
+#'
+#' Trait values cannot contain values N, UCA, or NTIP. These are reserved for
+#' use by test statistic functions.
+#'
+#' @seealso Uses output from \link{formatClones} with similar arguments to
 #' \link{getTrees}. Output can be visualized with \link{plotTrees}, and tested
 #' with \link{testPS}, \link{testSC}, and \link{testSP}.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data(ExampleAirr)
 #' ExampleAirr$sample_id <- sample(ExampleAirr$sample_id)
 #' clones <- formatClones(ExampleAirr, trait="sample_id")
-#' 
+#'
 #' igphyml <- "~/apps/igphyml/src/igphyml"
 #' btrees <- findSwitches(clones[1:2,], permutations=10, nproc=1,
 #'    igphyml=igphyml, trait="sample_id")
@@ -2089,9 +2109,9 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #' testPS(btrees$switches)
 #' }
 #' @export
-findSwitches <- function(clones, permutations, trait, igphyml, 
-    fixtrees=FALSE, downsample=TRUE, tip_switch=20, nproc=1, 
-    dir=NULL, id=NULL, modelfile=NULL, build="pratchet", exec=NULL, 
+findSwitches <- function(clones, permutations, trait, igphyml,
+    fixtrees=FALSE, downsample=TRUE, tip_switch=20, nproc=1,
+    dir=NULL, id=NULL, modelfile=NULL, build="pratchet", exec=NULL,
     quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
     keeptrees=FALSE, lfile=NULL, seq=NULL,
     boot_part="locus", force_resolve=FALSE, ...){
@@ -2167,8 +2187,15 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         }
         # remove problematic characters from trait values
         data <- lapply(data,function(x){
-            x@data[[trait]] <- gsub(":|;|,|=| ","-",x@data[[trait]])
+            x@data[[trait]] <- gsub(":|;|,|=| |_","-",x@data[[trait]])
             x})
+
+        traits <- unique(unlist(lapply(data, function(x)unique(x@data[[trait]]))))
+        if("N" %in% traits || "NTIP" %in% traits || "UCA" %in% traits){
+            stop(paste("Forbidden trait values (e.g. N, NTIP, UCA) detected.",
+                "Please remove or change, then re-run formatClones."))
+        }
+
         if(is.null(modelfile)){
             states <- unique(unlist(lapply(data,function(x)x@data[,trait])))
             modelfile <- makeModelFile(states,file=file.path(dir,paste0(id,"_modelfile.txt")))
@@ -2189,7 +2216,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
                     stop(paste("Tips",tips[!tips %in% da@data$sequence_id],
                         "not found in clone object",da@clone))
                 }
-                tr$tip.label[tr$tip.label != "Germline"] <- 
+                tr$tip.label[tr$tip.label != "Germline"] <-
                     paste0(tips, "_", da@data[[trait]][m])
                 trees[[i]] <- tr
             }
@@ -2207,15 +2234,22 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     if(is.null(rep)){
         reps <- as.list(1:permutations)
         l <- parallel::mclapply(reps,function(x)
-            findSwitches(clones ,rep=x, 
-            trait=trait, modelfile=modelfile, build=build, 
-            exec=exec, igphyml=igphyml, 
+            tryCatch(findSwitches(clones ,rep=x,
+            trait=trait, modelfile=modelfile, build=build,
+            exec=exec, igphyml=igphyml,
             id=id, dir=dir, permutations=permutations,
             nproc=1, rm_temp=rm_temp, quiet=quiet,
             fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
             lfile=lfile, seq=seq, downsample=downsample, tip_switch=tip_switch,
             boot_part=boot_part, force_resolve=force_resolve, ...),
-            mc.cores=nproc)
+            error=function(e)e),mc.cores=nproc)
+        errors <- unlist(lapply(l, function(x) inherits(x, "error")))
+        messages <- l[errors]
+        if(sum(errors) > 0){
+            me <- lapply(messages, function(x)warning(x$message))
+            stop(paste("findSwitches failed for",sum(errors),
+                "repetitions (see warnings, more info if nproc=1)"))
+        }
         results <- list()
         results$switches <- NULL
         results$trees <- NULL
@@ -2237,7 +2271,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         if(downsample){
             if(quiet > 3){print("downsampling clones")}
             rarefied <- lapply(1:length(data), function(x)
-                downsampleClone(clone=data[[x]], 
+                downsampleClone(clone=data[[x]],
                 tree=trees[[x]], trait=trait,
                 tip_switch=tip_switch))
             data <- lapply(rarefied, function(x)x$clone)
@@ -2250,9 +2284,9 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             }
         }
         if(!fixtrees){
-          temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data, 
+          temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data,
             function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
-          clones_with_trees <- getBootstraps(clones = temp_clones, permutations = 1, nproc = nproc, 
+          clones_with_trees <- getBootstraps(clones = temp_clones, permutations = 1, nproc = nproc,
                                              dir = dir, id = id, build = build, exec = exec,
                                              quiet = quiet, rm_temp = rm_temp, seq = seq,
                                              boot_part = boot_part, ...)
@@ -2265,27 +2299,27 @@ findSwitches <- function(clones, permutations, trait, igphyml,
         if(sum(!match) > 0){
             stop("Clone and tree names not in proper order!")
         }
-        
+
         results <- list()
         if(!is.null(igphyml)){
-            if(is.null(lfile)){    
+            if(is.null(lfile)){
                 file <- writeLineageFile(data=data, trees=trees, dir=dir,
                     id=id, trait=trait, rep=rep)
             }else{
                 file <- lfile
             }
             rseed <- floor(stats::runif(1,0,10^7))+rep
-            switches <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
-                mode="switches", type="recon", id=rep, 
+            switches <- reconIgPhyML(file, modelfile, igphyml=igphyml,
+                mode="switches", type="recon", id=rep,
                 quiet=quiet, rm_files=FALSE, rm_dir=NULL, nproc=nproc,
                 resolve=resolve, rseed=rseed, force_resolve=force_resolve)
-            permuted <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
-                mode="switches", type="permute", id=rep, 
+            permuted <- reconIgPhyML(file, modelfile, igphyml=igphyml,
+                mode="switches", type="permute", id=rep,
                 quiet=quiet, rm_files=FALSE, rm_dir=NULL, nproc=nproc,
                 resolve=resolve, rseed=rseed, force_resolve=force_resolve)
             if(!rm_temp){rm_dir=NULL}
-            permuteAll <- reconIgPhyML(file, modelfile, igphyml=igphyml, 
-                mode="switches", type="permuteAll", id=rep, 
+            permuteAll <- reconIgPhyML(file, modelfile, igphyml=igphyml,
+                mode="switches", type="permuteAll", id=rep,
                 quiet=quiet, rm_files=rm_temp, rm_dir=rm_dir, nproc=nproc,
                 resolve=resolve, rseed=rseed, force_resolve=force_resolve)
             switches <- rbind(switches,permuted)
@@ -2298,7 +2332,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             clone_index <- unlist(lapply(data,function(x)x@clone))
             switches$CLONE <- clone_index[switches$CLONE+1]
             results$switches <- switches
-            
+
             # remove trait value from tips
             trees <- lapply(trees,function(x){
             ids <- strsplit(x$tip.label,split="_")
@@ -2316,17 +2350,17 @@ findSwitches <- function(clones, permutations, trait, igphyml,
 }
 
 #' Deprecated! Please use findSwitches instead.
-#' 
+#'
 #' \code{bootstrapTrees} Phylogenetic bootstrap function.
-#' @param clones         tibble \code{airrClone} objects, the output of 
+#' @param clones         tibble \code{airrClone} objects, the output of
 #'                      \link{formatClones}
 #' @param bootstraps    number of bootstrap replicates to perform
-#' @param trait            trait to use for parsimony models (required if 
+#' @param trait            trait to use for parsimony models (required if
 #'                      \code{igphyml} specified)
 #' @param build           program to use for tree building (phangorn, dnapars)
 #' @param exec           location of desired phylogenetic executable
 #' @param igphyml        location of igphyml executible if trait models desired
-#' @param id            unique identifer for this analysis (required if 
+#' @param id            unique identifer for this analysis (required if
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
@@ -2337,7 +2371,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
 #' @param quiet           amount of rubbish to print to console
 #' @param rm_temp       remove temporary files (default=TRUE)
 #' @param palette        a named vector specifying colors for each state
-#' @param resolve        how should polytomies be resolved? 
+#' @param resolve        how should polytomies be resolved?
 #'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
 #'                       3=max ambiguity
 #' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
@@ -2351,19 +2385,19 @@ findSwitches <- function(clones, permutations, trait, igphyml,
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   A list of trees and/or switch counts for each bootstrap replicate.
-#'  
+#'
 #' @export
-bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL, 
-    id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL, 
+bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
+    id=NULL, modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
     fixtrees=FALSE,    quiet=0, rm_temp=TRUE, palette=NULL, resolve=2, rep=NULL,
     keeptrees=TRUE, lfile=NULL, seq=NULL, downsample=FALSE, tip_switch=20,
     boot_part="locus", force_resolve=FALSE,...){
 
     warning("boostrapTrees is depracated. Use findSwitches instead.")
 
-    s = findSwitches(clones ,rep=rep, 
-            trait=trait, modelfile=modelfile, build=build, 
-            exec=exec, igphyml=igphyml, 
+    s = findSwitches(clones ,rep=rep,
+            trait=trait, modelfile=modelfile, build=build,
+            exec=exec, igphyml=igphyml,
             id=id, dir=dir, permutations=bootstraps,
             nproc=1, rm_temp=rm_temp, quiet=quiet,
             fixtrees=fixtrees, resolve=resolve, keeptrees=keeptrees,
@@ -2374,7 +2408,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 
 
 #' Get the tip labels as part of a clade defined by an internal node
-#' 
+#'
 #' \code{getSubTaxa} Gets the tip labels from a clade
 #' @param  node    node number that defines the target clade
 #' @param  tree    \code{phylo} object
@@ -2385,7 +2419,7 @@ bootstrapTrees <- function(clones, bootstraps, nproc=1, trait=NULL, dir=NULL,
 #' data(BiopsyTrees)
 #' tree <- BiopsyTrees$trees[[8]]
 #' all_subtrees <- lapply(1:length(tree$nodes), function(x)getSubTaxa(x, tree))
-#' 
+#'
 #' @export
 getSubTaxa = function(node, tree){
     if(node > length(tree$tip.label) + tree$Nnode){
@@ -2405,22 +2439,22 @@ getSubTaxa = function(node, tree){
 # KEN: Try to keep lines to 80 characters or less, which is here -------------->|
 
 # Turn your tree data into a nodes based dataframe
-# 
+#
 # \code{lones} Filler
 # @param    input_tree     \code{phylo} object
-# @param    bootstrap_number      Which bootstrap replicate to use. With only one tree, this has to be one. 
+# @param    bootstrap_number      Which bootstrap replicate to use. With only one tree, this has to be one.
 #
 # @return   A dataframe that lists out the value of found or absent tips for each node within a tree. This is done for each tree inputted.
 # bootstrapped sequences
 splits_func <- function(input_tree, bootstrap_number){
-  tree <- input_tree[[bootstrap_number]] 
+  tree <- input_tree[[bootstrap_number]]
   # KBH need to verify that Nnode is always correct. May be safer to use n_distinct(tree$edge[,1])
   splits <- data.frame(found=I(lapply((
     length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1])),
     function(x)getSubTaxa(x, tree))))
   splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1]))
   # find the difference between tip labels and the tips in 'found'
-  full_tips <- tree$tip.label 
+  full_tips <- tree$tip.label
   absent <- (lapply(1:length(splits$found), function(x)dplyr::setdiff(full_tips, splits$found[[x]])))
   splits <- cbind(splits, data.frame(absent=I(absent)))
   splits$tree_num <- bootstrap_number
@@ -2429,23 +2463,23 @@ splits_func <- function(input_tree, bootstrap_number){
   return(splits)
 }
 
-# Match the tips found in the various nodes of two different trees. 
-# 
+# Match the tips found in the various nodes of two different trees.
+#
 # \code{lones} Filler
-# @param    tree_comp_df     The tree the bootstrap tree nodes should be 
-#                            compared to. This needs to already be a dataframe 
+# @param    tree_comp_df     The tree the bootstrap tree nodes should be
+#                            compared to. This needs to already be a dataframe
 #                            made from splits_func.
-# @param    bootstrap_df     The dataframe made by the splits_func that has the 
+# @param    bootstrap_df     The dataframe made by the splits_func that has the
 #                            found and absent tips in the bootstrap trees.
 # @param    nproc            The number of processors to be used
 #
-# @return   Returns a vector with the number of matches. 
+# @return   Returns a vector with the number of matches.
 matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
   #print("matching")
   match_vector <- c()
   match_vector = parallel::mclapply(unique(tree_comp_df$node), function(node){
     #print(node)
-    # KEN: There must be a more efficient way of doing this but I can't think of 
+    # KEN: There must be a more efficient way of doing this but I can't think of
     # one right now
     sub_full_tree_df <- tree_comp_df[tree_comp_df$node==node,]
     matches = unlist(lapply(1:length(bootstrap_df$tree_num), function(x){
@@ -2465,11 +2499,11 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
 
 # KEN: Output very suspicious, this may be one we need to do ourselves..
 # Build a bootstrap consensus tree using list of bootstrapped trees
-# 
+#
 # \code{lones} Filler
 # @param    trees     List of trees to use for tree building
 #
-# @return   Returns a consensus tree. 
+# @return   Returns a consensus tree.
 consensus_tree <- function(trees){
   consensus <- ape::consensus(trees, check.labels=TRUE)
   consensus$edge.length <- rep(1, nrow(consensus$edge))
@@ -2479,7 +2513,7 @@ consensus_tree <- function(trees){
 
 
 # Build some trees based on the clones object's $data and other parameters.
-# This results in a list of trees. 
+# This results in a list of trees.
 #
 # \code{lones} Filler
 # @param data          an AIRRE clone's data object (e.g. clones$data)
@@ -2491,7 +2525,7 @@ consensus_tree <- function(trees){
 #                      if \code{igphyml} or \code{dnapars} specified)
 # @param rm_temp       remove temporary files (default=TRUE)
 # @param rm_dir        remove temporary directory (default=TRUE)
-# @param id            unique identifier for this analysis (required if 
+# @param id            unique identifier for this analysis (required if
 #                      \code{igphyml} or \code{dnapars} specified)
 # @param quiet           amount of rubbish to print to console
 # @param rep             current bootstrap replicate (experimental)
@@ -2504,7 +2538,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   data <- clones$data
   data_tmp <- list()
   for(i in 1:length(data)){
-    data_tmp[[i]] <- bootstrapClones(data[[i]], reps = 1, 
+    data_tmp[[i]] <- bootstrapClones(data[[i]], reps = 1,
                                  partition = boot_part, by_codon = by_codon)[[1]]
   }
   reps <- as.list(1:length(data_tmp))
@@ -2529,7 +2563,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
     print(rep)
     trees <- lapply(reps,function(x)tryCatch(buildPML(data_tmp[[x]],seq=seqs[x],
                                              quiet=quiet, rep=rep,...), error=function(e)e))
-    
+
     trees <- list(trees)
     if(quiet > 0){
       print("Trees made")
@@ -2540,8 +2574,8 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
     }else{
       rm_dir <- NULL
     }
-    trees <- 
-      tryCatch(buildIgphyml(data_tmp, 
+    trees <-
+      tryCatch(buildIgphyml(data_tmp,
                    igphyml = exec,
                    temp_path = file.path(dir,paste0(id,rep)),
                    rm_files=rm_temp,
@@ -2551,12 +2585,12 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
     if(inherits(trees, "error")){
       stop(trees)
     }
-    
+
   }else{
     stop("build specification ",build," not recognized")
   }
-  
-  # catch any tree inference errors 
+
+  # catch any tree inference errors
   if(build != "igphyml"){
     errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
     messages <- trees[errors]
@@ -2572,12 +2606,12 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 }
 
 
-#' Creates a bootstrap distribution for clone sequence alignments, and returns  
-#' estimated trees for each bootstrap replicate as a nested list as a new input 
+#' Creates a bootstrap distribution for clone sequence alignments, and returns
+#' estimated trees for each bootstrap replicate as a nested list as a new input
 #' tibble column.
-#' 
+#'
 #' \code{getBootstraps} Phylogenetic bootstrap function.
-#' @param clones         tibble \code{airrClone} objects, the output of 
+#' @param clones         tibble \code{airrClone} objects, the output of
 #'                      \link{formatClones}
 #' @param bootstraps    number of bootstrap replicates to perform
 #' @param nproc            number of cores to parallelize computations
@@ -2585,7 +2619,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 #'                        column (required) should report their bootstrap value
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
-#' @param id            unique identifer for this analysis (required if 
+#' @param id            unique identifer for this analysis (required if
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param build           program to use for tree building (phangorn, dnapars, igphyml)
 #' @param exec           location of desired phylogenetic executable
@@ -2594,15 +2628,15 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 #' @param rep             current bootstrap replicate (experimental)
 #' @param seq           column name containing sequence information
 #' @param boot_part     is  "locus" bootstrap columns for each locus separately
-#' @param by_codon      a logical if the user wants to bootstrap by codon or by 
+#' @param by_codon      a logical if the user wants to bootstrap by codon or by
 #'                      nucleotide. Default (codon based bootstrapping) is TRUE.
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
-#'  
+#'
 #' @export
 getBootstraps <- function(clones, bootstraps,
-                          nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
+                          nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet",
                           exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", by_codon = TRUE, ...){
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
@@ -2614,7 +2648,7 @@ getBootstraps <- function(clones, bootstraps,
   if(!is.null(dir)){
     dir <- path.expand(dir)
   }
-  
+
   data <- clones$data
   if(is.null(id)){
     id <- "sample"
@@ -2664,7 +2698,7 @@ getBootstraps <- function(clones, bootstraps,
     }
   }
   if(!"trees" %in% colnames(clones)){
-    stop("A tree column created by using getTrees() is required for 
+    stop("A tree column created by using getTrees() is required for
            bootstrap_nodes=TRUE")
   }
   #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
@@ -2681,7 +2715,7 @@ getBootstraps <- function(clones, bootstraps,
   }
   bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
     tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
-      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
+      exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon),
     error=function(e)e), mc.cores=nproc), recursive = FALSE)
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
@@ -2705,7 +2739,7 @@ getBootstraps <- function(clones, bootstraps,
     errors <- append(errors, tree_error)
     messages <- append(messages, tree_message)
   }
-  
+
   for(clone in unique(errors)){
     idx <- which(errors == clone)
     wow <- messages[idx]
@@ -2728,7 +2762,7 @@ getBootstraps <- function(clones, bootstraps,
       bootstraps_df <- do.call(rbind, bootstraps_df)
       matches_df <- matching_function_parallel(tree_comp_df, bootstraps_df, nproc)
       for(node in unique(matches_df$nodes)){
-        clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- 
+        clones$trees[[clone]]$nodes[[node]]$bootstrap_value <-
           dplyr::filter(matches_df, !!rlang::sym("nodes") == node)$matches
       }
       if(quiet >0){
@@ -2738,4 +2772,3 @@ getBootstraps <- function(clones, bootstraps,
   }
   return(clones)
 }
-

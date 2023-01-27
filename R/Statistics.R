@@ -48,6 +48,9 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
         dplyr::filter(!!rlang::sym("TO") != "N" & 
             !!rlang::sym("TO") != !!rlang::sym("FROM") &
              !!rlang::sym("FROM") != "UCA")
+    if(nrow(switches) == 0){
+        stop("No switches left after filtering!")
+    }
     if(!bylineage){
         reps <- switches  %>%
             dplyr::group_by(!!rlang::sym("REP"), !!rlang::sym("TYPE")) %>% 
@@ -203,12 +206,6 @@ testSP <- function(switches, permuteAll=FALSE,
         permute <- dplyr::quo(!!rlang::sym("PERMUTEALL"))
     }
 
-    tips <- dplyr::filter(switches, !!rlang::sym("TO")=="NTIP" &
-        !!rlang::sym("TYPE")=="RECON")
-
-    # germline doesn't count in downsampling algorithm
-    tips$SWITCHES <- tips$SWITCHES - 1
-
     switches <- switches %>% 
         dplyr::filter(!!rlang::sym("TO") != !!rlang::sym("FROM") & 
             !!rlang::sym("FROM") != "UCA")
@@ -222,17 +219,33 @@ testSP <- function(switches, permuteAll=FALSE,
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
     }
 
-    counts <- testPS(switches, bylineage=TRUE)$means
-    m <- match(counts$CLONE, tips$CLONE)
-    counts$tips <- tips[m,]$SWITCHES
-    counts$ratio <- counts$tips/counts$RECON
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != "N")
 
-    excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tip_switch)$CLONE
-    if(length(excluded) > 0 & exclude){
-        warning(paste("Excluding clone(s)",paste(excluded,collapse=",")
-            ,"due to high tip/switch ratio"))
+    if(nrow(switches) == 0){
+        stop("No switches left after filtering!")
+    }
 
-        switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% excluded))
+    if(exclude){
+        # separate tips
+        tips <- dplyr::filter(switches, !!rlang::sym("TO")=="NTIP" &
+            !!rlang::sym("TYPE")=="RECON")
+    
+        # germline doesn't count in downsampling algorithm
+        tips$SWITCHES <- tips$SWITCHES - 1
+    
+        counts <- testPS(switches, bylineage=TRUE)$means
+        m <- match(counts$CLONE, tips$CLONE)
+        counts$tips <- tips[m,]$SWITCHES
+        counts$ratio <- counts$tips/counts$RECON
+    
+        excluded <- dplyr::filter(counts, !!rlang::sym("ratio") > tip_switch)$CLONE
+        if(length(excluded) > 0){
+            warning(paste("Excluding clone(s)",paste(excluded,collapse=",")
+                ,"due to high tip/switch ratio"))
+    
+            switches <- dplyr::filter(switches,!(!!rlang::sym("CLONE") %in% excluded))
+        }
     }
 
     if(!bylineage){
@@ -276,6 +289,13 @@ testSP <- function(switches, permuteAll=FALSE,
         remove <- to_type[to_type %in% from_type]
         reps <- reps[!reps$FROM %in% remove &
             !reps$TO %in% remove, ]
+    }
+
+    if(sum(is.na(reps$DELTA)) > 0){
+        na_reps <- unique(reps[is.na(reps$DELTA),]$REP)
+        warning(paste0("NA delta values in ",
+            length(na_reps)," replicates, discarding"))
+        reps <- dplyr::filter(reps, !(!!rlang::sym("REP") %in% na_reps))
     }
 
     if(!bylineage){
@@ -430,6 +450,13 @@ testSC <- function(switches,dropzeroes=TRUE,
     if(!is.null(to)){
         to <-dplyr::enquo(to)
         switches <- dplyr::filter(switches, !!rlang::sym("TO") == !!to)
+    }
+
+    switches <- switches %>% 
+        dplyr::filter(!!rlang::sym("TO") != "N")
+
+    if(nrow(switches) == 0){
+        stop("No switches left after filtering!")
     }
 
     if(!bylineage){

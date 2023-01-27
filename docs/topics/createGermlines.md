@@ -12,8 +12,7 @@ Usage
 createGermlines(
 data,
 references,
-organism = "human",
-locus = "IGH",
+locus = "locus",
 nproc = 1,
 seq = "sequence_alignment",
 v_call = "v_call",
@@ -49,11 +48,8 @@ data
 references
 :   Full list of reference segments, see [readIMGT](readIMGT.md)
 
-organism
-:   Species in `references` being analyzed
-
 locus
-:   locus in `references` being analyzed
+:   Name of the locus column in the input data
 
 nproc
 :   Number of cores to use
@@ -169,7 +165,7 @@ imgt <- readIMGT(vdj_dir)
 db <- createGermlines(ExampleAirr[1,], imgt)
 ```
 
-*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-13*01 is not in the provided germline database.
+*Warning*:locus column not found, attempting to extract locus from V call*Warning*:Loci found: IGH*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-13*01 is not in the provided germline database.*Warning*:Removing 1 failed clonal germlines. Clones: 3128
 
 See also
 -------------------

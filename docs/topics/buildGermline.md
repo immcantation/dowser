@@ -40,8 +40,7 @@ receptor
 :   row from AIRR-table containing sequence of interest
 
 references
-:   list of reference segments. Must be specific to organism 
-and locus
+:   list of reference segments. Must be specific to locus
 
 seq
 :   Column name for sequence alignment

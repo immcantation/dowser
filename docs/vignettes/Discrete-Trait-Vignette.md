@@ -11,12 +11,12 @@ There are two main statistics implemented by Dowser to characterize the distribu
 
 The significance of each of these statistics is estimated using a permutation test, which randomizes trait values at the tree's tips.
 
-[Full published deatils on these methods is available here](https://doi.org/10.1101/2020.05.30.124446)
+[Full published deatils on these methods is available here](https://doi.org/10.1371/journal.pcbi.1009885)
 
 
 ## Caveats and interpretting results
 
-Before using these tests, it's important to understand how the test works and what potential biases can affect the results. [These tests are detailed in full here](https://doi.org/10.1101/2020.05.30.124446).These tests summarize the distribution of trait values along trees. They don't directly test for cellular migration and differentiation. As such, it's important to understand potential caveats and explore alternative explanations.
+Before using these tests, it's important to understand how the test works and what potential biases can affect the results. [These tests are detailed in full here](https://doi.org/10.1371/journal.pcbi.1009885).These tests summarize the distribution of trait values along trees. They don't directly test for cellular migration and differentiation. As such, it's important to understand potential caveats and explore alternative explanations.
 
 **What does a significant SP test mean?** A significant SP test from tissue A to tissue B indicates that there is a greater proportion of switches from A to B along the trees than expected by random tip/trait relationships. This can be due to B cells preferentially migrating from tissue A to B, but there are other possibilities.
 

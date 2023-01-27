@@ -102,7 +102,10 @@ trees[[<replicate>]][[<tree index>]]. If \code{igphyml} is specified
 (as well as \code{trait}), the returned object 
 will contain a \code{tibble} named "switches" containing switch count 
 information. This object can be passed to \link{testSP} and other functions 
-to perform parsimony based trait value tests.
+to perform parsimony based trait value tests. 
+
+Trait values cannot contain values N, UCA, or NTIP. These are reserved for 
+use by test statistic functions.
 }
 \examples{
 \dontrun{

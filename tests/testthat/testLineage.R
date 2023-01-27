@@ -23,14 +23,14 @@ test_that("makeAirrClone",{
                      cell_id =1,
                      locus=c("IGK", "IGK", "IGK", "IGK"),
                      stringsAsFactors=FALSE)
-  
+
   exp <- data.frame("sequence_id"=c("C", "A"),
                     "sequence"=c("NAACTGGNN", "CCCCTGGGN"),
                     "lsequence"=c("", ""),
                     "hlsequence"=c("NAACTGGNN", "CCCCTGGGN"),
                     "collapse_count"=c(1, 2),
                     stringsAsFactors=FALSE)
-  
+
   exp_trait <- data.frame("sequence_id"=c("D", "A", "C"),
                           "sequence"=c("NNNCTGNNN","CCCCTGGGN", "NAACTGGNN"),
                           "isotype"=c("IgA","IgG","IgM"),
@@ -38,7 +38,7 @@ test_that("makeAirrClone",{
                           "hlsequence"=c("NNNCTGNNN","CCCCTGGGN", "NAACTGGNN"),
                           "collapse_count"=c(1, 2, 1),
                           stringsAsFactors=FALSE)
-  
+
   exp_l <- data.frame("sequence_id"=c("C", "A"),
                       "sequence"=c("NAACTGGNN", "CCCCTGGGN"),
                       "junction_length"=2,
@@ -48,12 +48,12 @@ test_that("makeAirrClone",{
                       "locus" = "IGK",
                       "collapse_count"=c(1, 2),
                       stringsAsFactors=FALSE)
-  
+
   # Without splitting by trait value
   clones <- formatClones(db,germ="germline_alignment",randomize=FALSE,
                          use_regions=FALSE)
   clone <- clones$data[[1]]
-  
+
   expect_equal(clone@clone, "1")
   expect_equal(clone@germline, "CCCCAGGGN")
   expect_equal(clone@v_gene, "IGKV1-39")
@@ -65,12 +65,12 @@ test_that("makeAirrClone",{
   expect_equal(clone@hlgermline,"CCCCAGGGN")
   expect_equal(clone@germline,"CCCCAGGGN")
   expect_equal(clone@data, exp, tolerance=0.001)
-  
+
   # With splitting by trait value
   clones <- formatClones(db,germ="germline_alignment",randomize=FALSE,
                          trait="isotype",add_count=TRUE,use_regions=FALSE)
   clone <- clones$data[[1]]
-  
+
   expect_equal(clone@clone, "1")
   expect_equal(clone@germline, "CCCCAGGGN")
   expect_equal(clone@v_gene, "IGKV1-39")
@@ -82,11 +82,11 @@ test_that("makeAirrClone",{
   expect_equal(clone@hlgermline,"CCCCAGGGN")
   expect_equal(clone@germline,"CCCCAGGGN")
   expect_equal(clone@data, exp_trait, tolerance=0.001)
-  
+
   clones <- formatClones(db_l,germ="germline_alignment",randomize=FALSE,
                          use_regions=FALSE, chain="L", seq = "sequence_alignment")
   clone <- clones$data[[1]]
-  
+
   expect_equal(clone@clone, "1")
   expect_equal(clone@germline, "")
   expect_equal(clone@lgermline, "CCCCAGGGN")
@@ -112,15 +112,15 @@ test_that("getTreesPhangorn", {
                    clone_id=1,
                    isotype=c("IgG", "IgG", "IgM", "IgA"),
                    stringsAsFactors=FALSE)
-  
+
   clones <- formatClones(db,germ="germline_alignment",
                          randomize=FALSE, use_regions=FALSE)
-  
+
   # build parsimony tree with phangorn
   trees <- getTrees(clones, resolve_random=FALSE)
   trees <- scaleBranches(trees)
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
-  
+
   # note, node re-order 11/17/22
   expect_equal(trees$trees[[1]]$edge.length,
                c(1,0,2,0))
@@ -160,8 +160,8 @@ test_that("getGermlines", {
                    subject_id=c(1,1,2,2,2),
                    locus="IGH",
                    stringsAsFactors=FALSE)
-  
-  
+
+
   references <- list()
   references <- list()
   references$IGH <- list()
@@ -175,15 +175,15 @@ test_that("getGermlines", {
   # reconstruct germline
   dbg <- createGermlines(db,references,fields="subject_id")
   exp <- db
-  
+
   exp$sequence_alignment=c(
     "CAGGTGCAGCTGGTGGAGTCTGGCGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCGGCGTCTGGATTCACCTTC............AGTCATTATGACATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGTCATTTATTCGGCGTGAT......GGAGTTGATATATTCTTTGCAAATTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACCCTATTTCTGCAAATGAACAGCCTAAGAACTGCGGACACGGCTCTCTATTACTGTGCGAAAGATGTGGGGTCTTGGGCTTTTGGTCTTTATGGCCAGGGGACAATGGTCACCGTCTCTT",
     "AAGATGCAGCTGGTGGAGTCTGGCGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCGGCGTCTGGATTCACCTTC............AGTCATTATGACATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGTCATTTATTCGGCGTGAT......GGAGTTGATATATTCTTTGCAAATTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACCCTATTTCTGCAAATGAACAGCCTAAGAACTGCGGACACGGCTCTCTATTACTGTGCGAAAGATGTGGGGTCTTGGGCTTTTGGTCTTTATGGCCAGGGGACAATGGTCACCGTCTCNN",
     "CCGGTGCAGCTGGTGGAGTCTGGCGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCGGCGTCTGGATTCACCTTC............AGTCATTATGACATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGTCATTTATTCGGCGTGAT......GGAGTTGATATATTCTTTGCAAATTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACCCTATTTCTGCAAATGAACAGCCTAAGAACTGCGGACACGGCTCTCTATTACTGTGCGAAAGATGTGGGGTCTTGGGCAAAACGTCTTTATGGCCAGGGGACAATGGTCAGGGTCTCTT",
     "CTGGTGCAGCTGGTGGAGTCTGGCGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCGGCGTCTGGATTCACCTTC............AGTCATTATGACATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGTCATTTATTCGGCGTGAT......GGAGTTGATATATTCTTTGCAAATTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACCCTATTTCTGCAAATGAACAGCCTAAGAACTGCGGACACGGCTCTCTATTACTGTGCGAAAGATGTGGGGTCTTGGGCAAAACGTCTTTATGGCCAGGGGACAATGGTCAGGGTCTCTT",
     "CGGGTGCAGCTGGTGGAGTCTGGCGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCGGCGTCTGGATTCACCTTC............AGTCATTATGACATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGTCATTTATTCGGCGTGAT......GGAGTTGATATATTCTTTGCAAATTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACCCTATTTCTGCAAATGAACAGCCTAAGAACTGCGGACACGGCTCTCTATTACTGTGCGAAAGATGTGGGGTCTTGGGCAAAACGTCTTTATGGCCAGGGGACAATGGTCAGGGTCTCTT")
-  
-  
+
+
   exp$v_germline_length <- 320
   exp$d_germline_length <- 6
   exp$j_germline_length <- 28
@@ -200,17 +200,17 @@ test_that("getGermlines", {
     "CCGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNGGCCAAGGGACAATGGTCAGGGTCTCTT",
     "CTGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNGGCCAAGGGACAATGGTCAGGGTCTCTT",
     "CGGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNGGCCAAGGGACAATGGTCAGGGTCTCTT")
-  
+
   #  Temporary 'fix' (basically ignore the test that is WIP)
   dbg <- dbg[1:2,]
   exp <- exp[1:2,]
-  
+
   expect_equal(dbg, exp)
   # build parsimony tree with phangorn
   clones <- formatClones(dbg,randomize=FALSE)
   trees <- getTrees(clones, resolve_random=FALSE)
   trees <- scaleBranches(trees)
-  
+
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
   # note, node re-order 11/17/22
   expect_equal(trees$trees[[1]]$edge.length,
@@ -256,7 +256,7 @@ test_that("changeo", {
                    CLONE=1,
                    LOCUS="IGH",
                    stringsAsFactors=FALSE)
-  
+
   references <- list()
   references <- list()
   references$IGH <- list()
@@ -266,7 +266,7 @@ test_that("changeo", {
   references$IGH$V[["IGHV0-0*02"]] <- "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGA"
   references$IGH$D[["IGHD0-0*01"]] <- "GTATTACGATTTTTGGAGTGGTTATTATACC"
   references$IGH$J[["IGHJ0*01"]] <- "TGATGCTTTTGATGTCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAG"
-  
+
   # reconstruct germline
   dbg <- createGermlines(db,references,
                          seq="SEQUENCE_IMGT", clone="CLONE", id="SEQUENCE_ID",
@@ -275,7 +275,7 @@ test_that("changeo", {
                          v_germ_start="V_GERM_START_IMGT",v_germ_end="V_GERM_END_IMGT",
                          d_germ_start="D_GERM_START",d_germ_end="D_GERM_END",
                          j_germ_start="J_GERM_START",j_germ_end="J_GERM_END",locus="LOCUS")
-  
+
   exp <- db
   exp$SEQUENCE_IMGT=c(
     "CAGGTGCAGCTGGTGGAGTCTGGCGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCGGCGTCTGGATTCACCTTC............AGTCATTATGACATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGTCATTTATTCGGCGTGAT......GGAGTTGATATATTCTTTGCAAATTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACCCTATTTCTGCAAATGAACAGCCTAAGAACTGCGGACACGGCTCTCTATTACTGTGCGAAAGATGTGGGGTCTTGGGCTTTTGGTCTTTATGGCCAGGGGACAATGGTCACCGTCTCTT",
@@ -289,9 +289,9 @@ test_that("changeo", {
   exp$germline_alignment_d_mask <- c(
     "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNGGCCAAGGGACAATGGTCACCGTCTCTT",
     "CAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCGTGGTCCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCGTCTGGATTCACCTTC............AGTAGCTATGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTGGCATTTATACGGTATGAT......GGAAGTAATAAATACTATGCAGACTCCGTGAAG...GGCCGATTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCTGAGGACACGGCTGTGTATTACTGTGCGAAAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNGGCCAAGGGACAATGGTCACCGTCTCTT")
-  
+
   expect_equal(dbg, exp)
-  
+
   # build parsimony tree with phangorn
   clones <- formatClones(dbg,randomize=FALSE,
                          id="SEQUENCE_ID", clone="CLONE", seq="SEQUENCE_IMGT",
@@ -299,9 +299,9 @@ test_that("changeo", {
                          junc_len="JUNCTION_LENGTH")
   trees <- getTrees(clones, resolve_random=FALSE)
   trees <- scaleBranches(trees)
-  
+
   seqs <- unlist(lapply(trees$trees[[1]]$nodes,function(x)x$sequence))
-  
+
   # note, node re-order 11/17/22
   expect_equal(trees$trees[[1]]$edge.length,
                c(27,2,0,0))
