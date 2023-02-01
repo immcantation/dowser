@@ -970,6 +970,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    optimize   optimize HLP rates (r), lengths (l), topology (t)
 #' @param    motifs     motifs to consider (see IgPhyML docs)
 #' @param    hotness    hotness parameters to estimate (see IgPhyML docs)
+#' @param    rates      rate string for each omega (experimental)
 #' @param    asrc       Intermediate sequence cutoff probability
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    ...        Additional arguments (not currently used)
@@ -990,8 +991,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
                          partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
-                         omega="e", optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", asrc=0.95,
-                         splitfreqs=FALSE, ...){
+                         omega="e", optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
+                         rates=NULL, asrc=0.95, splitfreqs=FALSE, ...){
   
   warning("Dowser igphyml doesn't mask split codons!")
   
@@ -1071,10 +1072,15 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }else{
     splitf = ""
   }
+  if(!is.null(rates)){
+    ratestring = paste0("--rates ",rates)
+  }else{
+    ratestring = ""
+  }
   command <- paste("--repfile",gyrep,
                    "--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
                    "--hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
-                   splitf,rseed,log)
+                   ratestring,splitf,rseed,log)
   params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
   if(quiet > 2){
     print(paste(params,collapse=" "))
@@ -2441,9 +2447,9 @@ splits_func <- function(input_tree, bootstrap_number){
   tree <- input_tree[[bootstrap_number]] 
   # KBH need to verify that Nnode is always correct. May be safer to use n_distinct(tree$edge[,1])
   splits <- data.frame(found=I(lapply((
-    length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1])),
+    length(tree$tip.label) + 1):(length(tree$tip.label) +  dplyr::n_distinct(tree$edge[,1])),
     function(x)getSubTaxa(x, tree))))
-  splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1]))
+  splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) +  dplyr::n_distinct(tree$edge[,1]))
   # find the difference between tip labels and the tips in 'found'
   full_tips <- tree$tip.label 
   absent <- (lapply(1:length(splits$found), function(x)dplyr::setdiff(full_tips, splits$found[[x]])))

@@ -20,6 +20,7 @@ buildIgphyml(
   optimize = "lr",
   motifs = "FCH",
   hotness = "e,e,e,e,e,e",
+  rates = NULL,
   asrc = 0.95,
   splitfreqs = FALSE,
   ...
@@ -55,6 +56,8 @@ buildIgphyml(
 \item{motifs}{motifs to consider (see IgPhyML docs)}
 
 \item{hotness}{hotness parameters to estimate (see IgPhyML docs)}
+
+\item{rates}{rate string for each omega (experimental)}
 
 \item{asrc}{Intermediate sequence cutoff probability}
 
