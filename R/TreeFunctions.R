@@ -2441,9 +2441,9 @@ splits_func <- function(input_tree, bootstrap_number){
   tree <- input_tree[[bootstrap_number]] 
   # KBH need to verify that Nnode is always correct. May be safer to use n_distinct(tree$edge[,1])
   splits <- data.frame(found=I(lapply((
-    length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1])),
+    length(tree$tip.label) + 1):(length(tree$tip.label) +  dplyr::n_distinct(tree$edge[,1])),
     function(x)getSubTaxa(x, tree))))
-  splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) +  n_distinct(tree$edge[,1]))
+  splits$node <- (length(tree$tip.label) + 1):(length(tree$tip.label) +  dplyr::n_distinct(tree$edge[,1]))
   # find the difference between tip labels and the tips in 'found'
   full_tips <- tree$tip.label 
   absent <- (lapply(1:length(splits$found), function(x)dplyr::setdiff(full_tips, splits$found[[x]])))
