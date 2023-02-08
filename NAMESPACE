@@ -3,6 +3,7 @@
 export(bootstrapTrees)
 export(buildIgphyml)
 export(buildPML)
+export(buildPMLPart)
 export(buildPhylo)
 export(buildPratchet)
 export(collapseNodes)

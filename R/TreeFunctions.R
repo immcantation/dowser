@@ -1052,17 +1052,22 @@ buildPMLPart <- function(clone, seq="hlsequence", sub_model="GTR", gamma=FALSE, 
       treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random) # the the NJ tree
       treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
       heavy_pml <- phangorn::pml(ape::unroot(treeNJ),data=heavy_partition) # find the likelihood of the tree given the sequence data
+      heavy_fit <- tryCatch(phangorn::optim.pml(heavy_pml, model=sub_model, optNni=optNni, optQ=optQ,
+                                          optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                                                                                                            maxit=10, trace=0)), error=function(e)e)
       
       dm  <- phangorn::dist.ml(light_partition)# find the distances
       treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random) # the the NJ tree
       treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
       light_pml <- phangorn::pml(ape::unroot(treeNJ),data=light_partition) # find the likelihood of the tree given the sequence data
+      light_fit <- tryCatch(phangorn::optim.pml(light_pml, model=sub_model, optNni=optNni, optQ=optQ,
+                                          optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                                                                                                            maxit=10, trace=0)), error=function(e)e)
       
-      partitioned_data <- tryCatch(pmlPart(nni ~ edge, object = list(heavy_pml, light_pml), model = sub_model,
-                                           optGamma=gamma, optNni=optNni, optQ=optQ, rearrangement="NNI",
+      partitioned_data <- tryCatch(phangorn::pmlPart(nni + Q + bf + edge + inv + shape ~ rate, object = list(heavy_fit, light_fit), model = sub_model,
                                            control=phangorn::pml.control(epsilon=1e-08,maxit=10, trace=0)), error=function(e)e)
       # RF distance check 
-      tree_check <- RF.dist(partitioned_data$fits[[1]]$tree, partitioned_data$fits[[2]]$tree)
+      tree_check <- phangorn::RF.dist(partitioned_data$fits[[1]]$tree, partitioned_data$fits[[2]]$tree)
       if(tree_check > 0){
         stop("Partitioning failed. The tree topologies were not identical between partitions.")
       }
@@ -1071,15 +1076,21 @@ buildPMLPart <- function(clone, seq="hlsequence", sub_model="GTR", gamma=FALSE, 
       treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random) 
       treeNJ$edge.length[treeNJ$edge.length < 0] <- 0
       heavy_pml <- phangorn::pml(ape::unroot(treeNJ),data=heavy_partition)
-      partitioned_data <- tryCatch(pmlPart(nni ~ edge, object = heavy_pml, model = sub_model,
+      heavy_fit <- tryCatch(phangorn::optim.pml(heavy_pml, model=sub_model, optNni=optNni, optQ=optQ,
+                                                optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                                                                                                                  maxit=10, trace=0)), error=function(e)e)
+      partitioned_data <- tryCatch(phangorn::pmlPart(nni + Q + bf + edge + inv + shape ~ rate, object = heavy_fit, model = sub_model,
                                            control=phangorn::pml.control(epsilon=1e-08,maxit=10, trace=0)), error=function(e)e)
     } else if(seq == "lsequence"){
       dm  <- phangorn::dist.ml(light_partition)
       treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random) 
       treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 
       light_pml <- phangorn::pml(ape::unroot(treeNJ),data=light_partition) 
+      light_fit <- tryCatch(phangorn::optim.pml(light_pml, model=sub_model, optNni=optNni, optQ=optQ,
+                                                optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                                                                                                                  maxit=10, trace=0)), error=function(e)e)
       
-      partitioned_data <- tryCatch(pmlPart(nni ~ edge, object = light_pml, model = sub_model,
+      partitioned_data <- tryCatch(phangorn::pmlPart(nni + Q + bf + edge + inv + shape ~ rate, object = light_fit, model = sub_model,
                                            control=phangorn::pml.control(epsilon=1e-08,maxit=10, trace=0)), error=function(e)e)
     }
     
@@ -1574,7 +1585,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #'                      \link{formatClones}
 #' @param    trait      trait to use for parsimony models (required if
 #'                      \code{igphyml} specified)
-#' @param    build      program to use for tree building (pratchet, pml,
+#' @param    build      program to use for tree building (pratchet, pml, pmlPart,
 #'                      dnapars, dnaml, igphyml)
 #' @param    exec       location of desired phylogenetic executable
 #' @param    igphyml    optional location of igphyml executible for parsimony
@@ -1632,7 +1643,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                      fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
                      seq=NULL, collapse=FALSE, ...){
 
-  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml", "pmlPart"))){
     stop("exec must be specified for this build option")
   }
   if(!is.null(dir)){
@@ -1776,6 +1787,11 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else if(build=="pml"){
     trees <- parallel::mclapply(reps,function(x)
       tryCatch(buildPML(data[[x]],seq=seqs[x],
+                        tree=trees[[x]],...),error=function(e)e),
+      mc.cores=nproc)
+  } else if(build=="pmlPart"){
+    trees <- parallel::mclapply(reps,function(x)
+      tryCatch(buildPMLPart(data[[x]],seq=seqs[x],
                         tree=trees[[x]],...),error=function(e)e),
       mc.cores=nproc)
   }else if(build=="igphyml"){
@@ -2301,7 +2317,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
                          keeptrees=FALSE, lfile=NULL, seq=NULL,
                          boot_part="locus", force_resolve=FALSE, ...){
   
-  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml", "pmlPart"))){
     stop("exec must be specified for this build option")
   }
   if(file.access(igphyml, mode=1) == -1) {
@@ -2469,8 +2485,9 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     }
     if(!fixtrees){
       temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data, 
-                                                                       function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
-      clones_with_trees <- getBootstraps(clones = temp_clones, permutations = 1, nproc = nproc, 
+                            function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
+      temp_clones <- getTrees(clones = temp_clones, build = build, nproc = nproc)
+      clones_with_trees <- getBootstraps(clones = temp_clones, bootstraps = 1, nproc = nproc, 
                                          dir = dir, id = id, build = build, exec = exec,
                                          quiet = quiet, rm_temp = rm_temp, seq = seq,
                                          boot_part = boot_part, ...)
@@ -2744,15 +2761,17 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
                           seq=seqs[x]), error=function(e)e))
     trees <- list(trees)
   }else if(build=="pml"){
-    print(rep)
     trees <- lapply(reps,function(x)tryCatch(buildPML(data_tmp[[x]],seq=seqs[x],
                                                       quiet=quiet, rep=rep,...), error=function(e)e))
     
     trees <- list(trees)
-    if(quiet > 0){
-      print("Trees made")
-    }
-  }else if(build=="igphyml"){
+  } else if(build=="pmlPart"){
+    trees <- lapply(reps,function(x)tryCatch(buildPMLPart(data_tmp[[x]],seq=seqs[x],
+                                                      quiet=quiet, rep=rep,...), error=function(e)e))
+    
+    trees <- list(trees)
+  }
+  else if(build=="igphyml"){
     if(rm_temp){
       rm_dir <- file.path(dir,paste0(id,rep))
     }else{
@@ -2823,7 +2842,7 @@ getBootstraps <- function(clones, bootstraps,
                           nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
                           exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", by_codon = TRUE, ...){
-  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml", "pmlPart"))){
     stop("exec must be specified for this build option")
   }
   if(build=="igphyml" && file.access(exec, mode=1) == -1) {
@@ -2889,18 +2908,31 @@ getBootstraps <- function(clones, bootstraps,
   # check to make sure that getTrees used the same build as here
   #KBH
   build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
-  build_used <- gsub("phylip::", "", clones$trees[[1]]$tree_method)
+  build_used <- gsub("phylip::", "", build_used)
+  build_used <- gsub("\\:.*", "", build_used)
+  build_used <- gsub("optim.", "", build_used)
   if(grepl("igphyml", build_used)){
     build_used <- "igphyml"
+  }
+  if(build_used == "prachet"){
+    build_used <- "pratchet"
   }
   if(build != build_used){
     stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
            getBoostraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
   }
-  bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
-    tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
-                       exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
-             error=function(e)e), mc.cores=nproc), recursive = FALSE)
+  if(build != "igphyml"){
+    bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
+      tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
+                         exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
+               error=function(e)e), mc.cores=nproc), recursive = FALSE)
+  }else if(build == "igphyml"){
+    bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
+      tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
+                         exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, by_codon = by_codon), 
+               error=function(e)e), mc.cores=nproc), recursive = FALSE)
+  }
+
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
   for(i in 1:length(clones$clone_id)){
     clones$bootstrap_trees[[i]] <- lapply(bootstrap_trees, function(x)x[[i]])
