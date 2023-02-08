@@ -2703,7 +2703,7 @@ getBootstraps <- function(clones, bootstraps,
   # check to make sure that getTrees used the same build as here
   #KBH
   build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
-  build_used <- gsub("phylip::", "", clones$trees[[1]]$tree_method)
+  build_used <- gsub("phylip::", "", build_used)
   build_used <- gsub("\\:.*", "", build_used)
   build_used <- gsub("optim.", "", build_used)
   if(grepl("igphyml", build_used)){
