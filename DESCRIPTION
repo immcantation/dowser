@@ -56,7 +56,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Collate: 
     'Data.R'
     'Dowser.R'
