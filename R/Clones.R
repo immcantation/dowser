@@ -153,7 +153,7 @@ makeAirrClone <-
         }
       }
     } else if(chain=="L"){
-      check <- alakazam::checkColumns(data locus)
+      check <- alakazam::checkColumns(data, locus)
       if (check != TRUE) { stop(check) }
       
       # Ensure cell and loci columns are not duplicated
