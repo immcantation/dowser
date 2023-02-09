@@ -1,4 +1,4 @@
-**rerootTree** - *Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
+**rerootTree** - *Reroot phylogenetic tree to have its germline sequence at a zero-length branch
 to a node which is the direct ancestor of the tree's UCA. Assigns `uca`
 to be the ancestral node to the tree's germline sequence, as `germid` as
 the tree's germline sequence ID.*
@@ -6,7 +6,7 @@ the tree's germline sequence ID.*
 Description
 --------------------
 
-Reroot phylogenetic tree to have its germline sequence at a zero-length branch 
+Reroot phylogenetic tree to have its germline sequence at a zero-length branch
 to a node which is the direct ancestor of the tree's UCA. Assigns `uca`
 to be the ancestral node to the tree's germline sequence, as `germid` as
 the tree's germline sequence ID.

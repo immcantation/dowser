@@ -6,7 +6,7 @@
 #' from AIRR data, based heavily on alakazam::ChangeoClone. 
 #' 
 #' @slot     data        data.frame containing sequences and annotations. Contains the
-#'                       columns \code{SEQUENCE_ID} and \code{SEQUENCE}, as well as any additional 
+#'                       columns \code{sequence_id} and \code{sequence}, as well as any additional 
 #'                       sequence-specific annotation columns
 #' @slot     clone       string defining the clone identifier
 #' @slot     germline    string containing the heavy chain germline sequence for the clone

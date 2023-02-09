@@ -25,6 +25,7 @@ omega = "e",
 optimize = "lr",
 motifs = "FCH",
 hotness = "e,e,e,e,e,e",
+rates = NULL,
 asrc = 0.95,
 splitfreqs = FALSE,
 ...
@@ -78,6 +79,9 @@ motifs
 
 hotness
 :   hotness parameters to estimate (see IgPhyML docs)
+
+rates
+:   rate string for each omega (experimental)
 
 asrc
 :   Intermediate sequence cutoff probability
