@@ -2486,11 +2486,11 @@ findSwitches <- function(clones, permutations, trait, igphyml,
     if(!fixtrees){
       temp_clones <- dplyr::tibble(data=data, clone_id = unlist(lapply(data, 
                             function(x)x@clone)), seqs = unlist(lapply(data,function(x)nrow(x@data))))
-      temp_clones <- getTrees(clones = temp_clones, build = build, nproc = nproc)
+      #temp_clones <- getTrees(clones = temp_clones, build = build, nproc = nproc)
       clones_with_trees <- getBootstraps(clones = temp_clones, bootstraps = 1, nproc = nproc, 
                                          dir = dir, id = id, build = build, exec = exec,
                                          quiet = quiet, rm_temp = rm_temp, seq = seq,
-                                         boot_part = boot_part, ...)
+                                         boot_part = boot_part, bootstrap_nodes = FALSE, ...)
       trees <- lapply(clones_with_trees$bootstrap_trees, function(x)x[[1]])
     }
     
@@ -2900,27 +2900,30 @@ getBootstraps <- function(clones, bootstraps,
       }
     }
   }
+  if(bootstrap_nodes){
   if(!"trees" %in% colnames(clones)){
     stop("A tree column created by using getTrees() is required for 
            bootstrap_nodes=TRUE")
   }
-  #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
-  # check to make sure that getTrees used the same build as here
-  #KBH
-  build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
-  build_used <- gsub("phylip::", "", build_used)
-  build_used <- gsub("\\:.*", "", build_used)
-  build_used <- gsub("optim.", "", build_used)
-  if(grepl("igphyml", build_used)){
-    build_used <- "igphyml"
-  }
-  if(build_used == "prachet"){
-    build_used <- "pratchet"
-  }
-  if(build != build_used){
-    stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
+    #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
+    # check to make sure that getTrees used the same build as here
+    #KBH
+    build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
+    build_used <- gsub("phylip::", "", build_used)
+    build_used <- gsub("\\:.*", "", build_used)
+    build_used <- gsub("optim.", "", build_used)
+    if(grepl("igphyml", build_used)){
+      build_used <- "igphyml"
+    }
+    if(build_used == "prachet"){
+      build_used <- "pratchet"
+    }
+    if(build != build_used){
+      stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
            getBoostraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
+    }
   }
+
   if(build != "igphyml"){
     bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
       tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
