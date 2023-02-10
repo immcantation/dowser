@@ -42,10 +42,9 @@ test_that("makeAirrClone",{
   exp_l <- data.frame("sequence_id"=c("C", "A"),
                       "sequence"=c("NAACTGGNN", "CCCCTGGGN"),
                       "junction_length"=2,
-                      "cell_id"=1,
+                      "locus" = "IGK",
                       "lsequence"=c("NAACTGGNN", "CCCCTGGGN"),
                       "hlsequence"=c("NAACTGGNN", "CCCCTGGGN"),
-                      "locus" = "IGK",
                       "collapse_count"=c(1, 2),
                       stringsAsFactors=FALSE)
 
