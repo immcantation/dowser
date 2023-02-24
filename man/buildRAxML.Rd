@@ -20,6 +20,7 @@ buildRAxML(
   partition = NULL,
   rep = 1,
   dir = NULL,
+  id = NULL,
   ...
 )
 }
@@ -55,6 +56,8 @@ alignment partitions for multiple models of substitution}
 \item{rep}{Which repetition of the tree building is currently being run. Mainly for getBootstraps.}
 
 \item{dir}{Where the output files are to be made.}
+
+\item{id}{The id for making a temporary directory if one is not specified}
 
 \item{...}{Additional arguments (not currently used)}
 }
