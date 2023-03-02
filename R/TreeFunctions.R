@@ -1410,46 +1410,44 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 }
 
 
-#' Wrapper to build RAxML trees and infer intermediate nodes
+#' Wrapper to build RAxML-ng trees and infer intermediate nodes
 #' 
 #' @param    clone      list of \code{airrClone} objects
 #' @param    seq        the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"
 #' @param    exec       RAxML executable
-#' @param    submodel   the model of binary (morphological), nucleotide, multi-state, or amino acid substitution 
-#' Typical models are "GTRGAMMA", "GTRCAT", "GTRCATI", "ASC_GRTCAT", "ASC_GTRGAMMA", and "GTRGRAMMAI"
+#' @param    model      The DNA model to be used. GTR is the default.
+#' @param    partition  A logical vector that indicates if you want to partition the data based on the heavy and light chains.
 #' @param    rseed      The random seed used for the parsimony inferences. This allos you to reproduce your results.
-#' @param    n_searches specifies the number of alternative runs on distinct starting trees. 
 #' @param    name       specifies the name of the output file
-#' @param    starting_tree specifies a user starting tree file name in Newick format
+#' @param    brln       A parameter that determines how branches are reported when partitioning. Options include scaled (default), 
+#'                      unlinked, and linked
+#' @param    starting_tree specifies a user starting tree file name and path in Newick format
 #' @param    from_getTrees A logical that indicates if the desired starting tree is from getTrees and not a newick file
 #' @param    rm_files   remove temporary files?
-#' @param    nproc      specifies the number of cores you want to run
 #' @param    asr        computes the marginal ancestral states of a tree
-#' @param    partition  specifies the file name of the assignment of models to 
-#'  alignment partitions for multiple models of substitution
 #' @param    rep        Which repetition of the tree building is currently being run. Mainly for getBootstraps. 
 #' @param    dir        Where the output files are to be made. 
-#' @param    id         The id for making a temporary directory if one is not specified 
 #' @param    ...        Additional arguments (not currently used)
 #'
 #'
-#' @return  \code{phylo} object created by RAxML with nodes attribute
+#' @return  \code{phylo} object created by RAxML-ng with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
-buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rseed = 28, n_searches = 1,
-                       name = "run", starting_tree = NULL, from_getTrees = FALSE, rm_files = TRUE, nproc = 1, 
-                       asr = TRUE, partition = NULL, rep = 1, dir = NULL, id = NULL, ...){
+buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = FALSE, 
+                       rseed = 28, name = "run", brln = "scaled", starting_tree = NULL, 
+                       from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, ...){
   # add in option that lets the RAxML threading exec work -- would be here and downstream
   exec <- path.expand(exec)
   if(file.access(exec, mode=1) == -1) {
     stop("The file ", exec, " cannot be executed.")
   }
-  version_test <- grepl("raxmlHPC-PTHREADS", exec)
+  version_test <- grepl("PTHREADS", exec)
   if(version_test){
     stop("Dowser currently only supports the raxmlHPC based options. Please reinitate the function using the 'raxmlHPC' based executable.")
   }
-  if(is.null(id)){
-    id <- "sample"
+  version_test <- grepl("-ng", exec)
+  if(!version_test){
+    stop("Please use raxml-ng, not an older version of RAxML.")
   }
   if(!is.null(dir)){
     dir <- path.expand(dir)
@@ -1457,44 +1455,24 @@ buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rse
       dir.create(dir)
     }
   }else{
-    dir <- alakazam::makeTempDir(id)
+    dir <- alakazam::makeTempDir(name)
   }
-  
-  # this is still needed for the asr -- not the first tree reconstruction
+  clone_seqids <- clone@data$sequence_id
+  clone_seqids[length(clone_seqids)+1] <- "Germline"
   if(seq == "hlsequence"){
-    g <- strsplit(clone@hlgermline[1],split="")[[1]]
+    clone_seqs <- clone@data$hlsequence
+    g <- clone@hlgermline
   }else if(seq == "sequence"){
-    g <- strsplit(clone@germline[1],split="")[[1]]
+    clone_seqs <- clone@data$sequence
+    g <- clone@germline
   }else if(seq == "lsequence"){
-    g <- strsplit(clone@lgermline[1],split="")[[1]]
+    clone_seqs <- clone@data$lsequence
+    g <- clone@lgermline
   }else{
     stop(paste(seq, "not a recognized sequence type"))
   }
-  sk <- strsplit(clone@data[[seq]],split="")
-  sites <- seq(1,length(g),by=1)
-  ns <- c()
-  for(i in sites){ #for each codon site, tally number of NNN codons
-    l <- unlist(lapply(sk,function(x) x[i]=="N"))
-    ns <- c(ns,rep(sum(l),length=1))
-  }
-  positions <- which(ns == length(clone@data$sequence_id))
-  informative <- ns != length(sk)
-  l <- lapply(sk,function(x) x=paste(x[informative],collapse=""))
-  gm <- paste(g[informative],collapse="")
-
-  if(seq == "hlsequence"){
-    clone@hlgermline=gm
-  }else if(seq == "sequence"){
-    clone@germline=gm
-  }else if(seq == "lsequence"){
-    clone@lgermline=gm
-  }
-
-  clone_seqids <- clone@data$sequence_id
-  clone_seqids[length(clone_seqids)+1] <- "Germline"
-  clone_seqs <- unlist(l)
-  clone_seqs[length(clone_seqs)+1] <- gm
-
+  clone_seqs[length(clone_seqs)+1] <- g
+  
   # check to make sure that the adjusted sequences are the same length
   nchar_seqs <- nchar(clone_seqs)
   if(nrow(data.frame(table(nchar_seqs))) > 1){
@@ -1503,39 +1481,47 @@ buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rse
   if(length(clone_seqids) != length(clone_seqs)){
     stop("The number of sequences does not match the number of sequence ids.")
   }
-
   # a just in case check 
   if(!is.numeric(rseed)){
     stop("The random seed needs to be a numeric value")
   }
-
+  
   name <- paste0(name, "_", clone@clone, "_", rep)
   # create the data file for raxml
-  fileConn<-file(file.path(dir, paste0("RAxML_input_data_", name, ".phy")))
+  fileConn<-file(file.path(dir, paste0(name, "_input_data.phy")))
   writeLines(c(paste0(as.character(length(clone_seqs)), " ", 
                       as.character(nchar(clone_seqs[1])))), fileConn)
   for(i in 1:length(clone_seqs)){
-    write(paste0(clone_seqids[i], "    ", clone_seqs[i]), file=file.path(dir, paste0("RAxML_input_data_", name, ".phy")), 
+    write(paste0(clone_seqids[i], "    ", clone_seqs[i]), file=file.path(dir, paste0(name, "_input_data.phy")), 
           append = TRUE)
   }
   closeAllConnections()
-  input_data <- file.path(dir, paste0("RAxML_input_data_", name, ".phy"))
+  input_data <- file.path(dir, paste0(name, "_input_data.phy"))
   
   # make the command 
-  command <- paste("-m", submodel, "-p", rseed, "-s", 
-                   input_data, "-N", n_searches, "-n", name, "-w", dir, "--no-seq-check")
+  command <- paste("--model", model, "--seed", rseed, "-msa", 
+                   input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
+                   "--force msa")
   if(!is.null(starting_tree)){
     if(from_getTrees){
-      ape::write.tree(starting_tree, file.path(dir, paste0("RAxML_og_starting_tree.tree")))
-      starting_tree <- ape::read.tree(file.path(dir, paste0("RAxML_og_starting_tree.tree")))
+      ape::write.tree(starting_tree, file.path(dir, paste0(name, "_og_starting_tree.tree")))
+      starting_tree <- ape::read.tree(file.path(dir, paste0(name, "_og_starting_tree.tree")))
     }
-    command <- paste(command, "-t", starting_tree)
-  }
-  if(nproc > 1){
-    paste(command, "-T", nproc)
+    command <- paste(command, "--tree", starting_tree)
   }
   if(!is.null(partition)){
-    command <- paste(command, "-q", partition)
+    heavy_index <- clone@locus == "IGH"
+    end_heavy <- paste(strsplit(clone_seqs,split="")[[1]][heavy_index], collapse = "")
+    fileConn<-file(file.path(dir, paste0(name, "_partition.txt")))
+    write(paste0(model, ", p1 = 1-", nchar(end_heavy)), file=file.path(dir, paste0(name, "_partition.txt")), 
+          append = TRUE)
+    write(paste0(model, ", p2 = ", nchar(end_heavy)+1, "-", nchar(clone_seqs[1])), 
+          file=file.path(dir, paste0(name, "_partition.txt")), 
+          append = TRUE)
+    closeAllConnections()
+    old_command <- strsplit(command, "--seed")[[1]][2]
+    new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
+    command <- paste0(new_model, old_command, " --brlen ", brln)
   }
   
   params <- list(exec, command, stdout=TRUE, stderr=TRUE)
@@ -1549,28 +1535,21 @@ buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rse
     return(w)
   })
   
-  # make sure it worked
-  if(nrow(table(grepl("simpleWarning", status))) > 1){
-    stop(paste(status, "\n", "RAxML failed. Please check your working directory for exisiting files with the same name and your input parameters."))
-  }
-  
   # check if there is a reduced file -- if so the file creation step failed
-  if(file.exists(file.path(dir,paste0("RAxML_input_data_", name, ".phy.reduced")))){
+  if(file.exists(file.path(dir,paste0(name, "_input_data.phy.reduced")))){
     stop("Preprocessing broke. Not all noninformative sites by RAxML's definition were removed.")
   }
   if(asr){
-    tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0("RAxML_bestTree.", name)))), "Germline", verbose = 0)
-    starting_tree <- file.path(dir, paste0("RAxML_rerooted_", name, ".tree"))
+    tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
+    starting_tree <- file.path(dir, paste0(name, "_rerooted.tree"))
     ape::write.tree(tree, starting_tree)
-    input_data <- file.path(dir,paste0("RAxML_input_data_", name, ".phy"))
-    command <- paste("-m", submodel, "-p", rseed, "-s", 
-                     input_data, "-N", n_searches, "-n", paste0(name, "_asr"),
-                     "-f A", "-t", starting_tree, "-w", dir, "--no-seq-check")
-    if(nproc > 1){
-      command <- paste(command, "-T", nproc)
-    }
-    if(!is.null(partition)){
-      command <- paste(command, "-q", partition)
+    command <- paste("--model", model, "--seed", rseed, "-msa", 
+                     input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
+                     "--force msa --tree", starting_tree, "--ancestral")
+    if(partition){
+      old_command <- strsplit(command, "--seed")[[1]][2]
+      new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
+      command <- paste0(new_model, old_command, " --brlen ", brln)
     }
     
     params <- list(exec, command, stdout=TRUE, stderr=TRUE)
@@ -1581,18 +1560,28 @@ buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rse
       print(paste("RAxML warnings, trying again: ",w));
       return(w)
     })
-    # make sure it worked
-    if(nrow(table(grepl("simpleWarning", status))) > 1){
-      stop(paste(status, "\n", "RAxML failed. Please check your working directory for exisiting files with the same name and your input parameters."))
-    }
     
     # check that topology is the same
-    asr_tree <- ape::read.tree(file.path(dir, paste0("RAxML_nodeLabelledRootedTree.", name, "_asr")))
+    asr_tree <- ape::read.tree(file.path(dir, paste0(name, "_asr.raxml.ancestralTree")))
     difference_check <- phangorn::RF.dist(asr_tree, tree)
     if(difference_check > 0){
       stop("ASR failed. Retry")
     }
     
+    # use the asr_tree from here on out
+    tree <- asr_tree
+    #update the tree
+    results <- list()
+    results$clone <- clone@clone
+    results$nseq <- length(clone@data[[seq]]) # make this data[[seq]]
+    results$nsite <- nchar(clone@data[[seq]][1]) # $data[[seq]][1]
+    results$tree_length <- sum(tree$edge.length) # test -> tree
+    bestmodel <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
+    likelihood <- readLines(file.path(dir, paste0(name, "_asr.raxml.log")))
+    results$likelihood <- as.numeric(strsplit(likelihood[grep("final logLikelihood:", likelihood)],
+                                              "final logLikelihood: ")[[1]][2])
+    results$model <- bestmodel
+    tree$parameters <- results
     # get the ASR for the nodes
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
@@ -1611,56 +1600,57 @@ buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rse
        sum(!names(tipseqs) %in% tree$tip.label) != 0){
       stop(paste("Tip sequences do not match in clone",clone))
     }
-    
-    ASR <- readLines(file.path(dir, paste0("RAxML_marginalAncestralStates.", name, "_asr")))
-    ASR_df <- c()
-    for(i in 1:length(ASR)){
-      split <- strsplit(ASR[i], " ")
-      to_bind <- data.frame(node=split[[1]][1], sequence=split[[1]][2])
-      ASR_df <- rbind(ASR_df, to_bind)
+    ASR <- readLines(file.path(dir, paste0(name, "_asr.raxml.ancestralStates")))
+    for(i in 1:length(tree$node.label)){
+      asr_seq <- strsplit(ASR[i], "\t")[[1]][2]
+      binding_spot <- as.numeric(strsplit(tree$node.label[i], "Node")[[1]][2])
+      tree$nodes[binding_spot]$sequence <- asr_seq
     }
-    # adjust the node to not just say root but the actual number
-    ASR_df$node[ASR_df$node == "ROOT"] <- max(as.numeric(dplyr::filter(ASR_df, !!rlang::sym("node") != "ROOT")$node)) + 1
-    ASR_df$node <- as.numeric(ASR_df$node)
-    # put the correct sequences into the $nodes and put Ns back into ASR sequences
-    for(i in 1:nnodes){
-      if(i <= length(tree$tip.label)){
-        tree$nodes[i]$sequence <- tipseqs[tree$tip.label[i]]
-      }
-      sub_asr <- getSubTaxa(i, asr_tree)
-      best_mrca <- ape::getMRCA(phy = tree, tip=sub_asr)
-      if(!is.null(best_mrca)){
-        asr_sequence <- ASR_df$sequence[ASR_df$node == i]
-        if(length(positions) > 0){
-          updated_asr_sequence <- c()
-          for(j in 1:length(positions)){
-            if(is.null(updated_asr_sequence)){
-              front <- substr(asr_sequence, 1, positions[j]-1)
-              end <- substr(asr_sequence, positions[j], nchar(asr_sequence))
-              updated_asr_sequence <- paste0(front, "N", end)
-            } else if(!is.null(updated_asr_sequence)){
-              front <- substr(updated_asr_sequence, 1, positions[j]-1)
-              end <- substr(updated_asr_sequence, positions[j], nchar(updated_asr_sequence))
-              updated_asr_sequence <- paste0(front, "N", end)
-            }
-            tree$nodes[best_mrca]$sequence <- updated_asr_sequence
-          }
-        } else{
-          tree$nodes[best_mrca]$sequence <- ASR_df$sequence[ASR_df$node == best_mrca]
+    for(i in 1:length(tree$tip.label)){
+      tip <- tree$tip.label[i]
+      if(tip != "Germline"){
+        seq_num <- which(clone@data$sequence_id == tip)
+        if(seq == "hlsequence"){
+          tree$nodes[length(tree$node.label) + i]$sequence <- clone@data$hlsequence[seq_num]
+        } else if(seq == "sequence"){
+          tree$nodes[length(tree$node.label) + i]$sequence <- clone@data$sequence[seq_num]
+        }else{
+          tree$nodes[length(tree$node.label) + i]$sequence <- clone@data$lsequence[seq_num]
+        }
+      }else{
+        if(seq == "hlsequence"){
+          tree$nodes[length(tree$node.label) + i]$sequence <- clone@hlgermline
+        } else if(seq == "sequence"){
+          tree$nodes[length(tree$node.label) + i]$sequence <- clone@germline
+        }else{
+          tree$nodes[length(tree$node.label) + i]$sequence <- clone@lgermline
         }
       }
     }
+    tree <- rerootTree(tree, "Germline", verbose=0)
   }else {
-    tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0("RAxML_bestTree.", name)))), "Germline", verbose = 0)
+    tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
+    tree$germid <- paste0(clone@clone, "_GERM")
+    results <- list()
+    results$clone <- clone@clone
+    results$nseq <- length(clone@data[[seq]]) 
+    results$nsite <- nchar(clone@data[[seq]][1])
+    results$tree_length <- sum(tree$edge.length) 
+    bestmodel <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
+    likelihood <- readLines(file.path(dir, paste0(name, ".raxml.log")))
+    results$likelihood <- as.numeric(strsplit(likelihood[grep("Final LogLikelihood:", likelihood)],
+                                              "Final LogLikelihood: ")[[1]][2])
+    results$model <- bestmodel
+    tree$parameters <- results
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
-    tipseqs <- clone@data[[clone@phylo_seq]]
+    tipseqs <- clone@data[[seq]]
     names(tipseqs) <- clone@data$sequence_id
-    if(clone@phylo_seq == "sequence"){
+    if(seq == "sequence"){
       tipseqs <- c(tipseqs,"Germline"=clone@germline)
-    }else if(clone@phylo_seq == "lsequence"){
+    }else if(seq == "lsequence"){
       tipseqs <- c(tipseqs,"Germline"=clone@lgermline)
-    }else if(clone@phylo_seq == "hlsequence"){
+    }else if(seq == "hlsequence"){
       tipseqs <- c(tipseqs,"Germline"=clone@hlgermline)
     }else{
       stop(paste("phylo_seq not recognized",clone))
@@ -1677,31 +1667,16 @@ buildRAxML <- function(clone, seq = "sequence", exec, submodel = 'GTRGAMMA', rse
   }
   tree$name <- clone@clone
   tree$seq <- clone@phylo_seq
-  tree$tree_method <- paste0("RAxML::", submodel)
+  tree_method <- readLines(file.path(dir, paste0(name, ".raxml.log")))
+  tree$tree_method <- strsplit(tree_method[grep("Model: ", tree_method)],
+                               "Model: ")[[1]][2]
   tree$edge_type <- "genetic_distance"
   closeAllConnections()
   if(rm_files){
-    # can be like 
-    # unlink(file.path(dir, "RAxML*)) -- but it deletes everything that starts with RAxML -- but can be dangerous check with Ken
-    two_remove <- c(input_data, file.path(dir, paste0("RAxML_bestTree.", name)), file.path(dir, paste0("RAxML_info.", name)),
-                    file.path(dir, paste0("RAxML_log.", name)), file.path(dir, paste0("/RAxML_parsimonyTree.", name)), 
-                    file.path(dir, paste0("RAxML_result.", name)))
-    if(asr){
-      two_remove <- append(two_remove, c(file.path(dir, paste0("RAxML_marginalAncestralProbabilities.",name,"_asr")), 
-                                         file.path(dir, paste0("RAxML_nodeLabelledRootedTree.",name,"_asr")),
-                                         file.path(dir, paste0("RAxML_marginalAncestralStates.",name,"_asr")),
-                                         starting_tree,
-                                         file.path(dir, paste0("RAxML_info.",name,"_asr"))))
-    }
-    if(from_getTrees){
-      two_remove <- append(two_remove, c(paste0(path,"/og_starting_tree.tree")))
-    }
-    file.remove(two_remove)
+    unlink(file.path(dir, paste0(name,"*")))
   }
   return(tree)
 }
-
-
 
 
 #' Reroot phylogenetic tree to have its germline sequence at a zero-length branch
