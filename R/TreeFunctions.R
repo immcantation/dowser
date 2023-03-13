@@ -1433,7 +1433,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @return  \code{phylo} object created by RAxML-ng with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
-buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = FALSE, 
+buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = NULL, 
                        rseed = 28, name = "run", brln = "scaled", starting_tree = NULL, 
                        from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, ...){
   # add in option that lets the RAxML threading exec work -- would be here and downstream
@@ -1539,6 +1539,31 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   if(file.exists(file.path(dir,paste0(name, "_input_data.phy.reduced")))){
     stop("Preprocessing broke. Not all noninformative sites by RAxML's definition were removed.")
   }
+  
+  ### CGJ 3/13/23
+  # rescale the branches if partitioning is done
+  if(!is.null(partition)){
+    tree <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestTree")))
+    if(brln == "scaled"){
+      model_file <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
+      scaler <- strsplit(model_file, "BU")
+      scaler_heavy <- scaler[[1]][2]
+      scaler_heavy <- strsplit(scaler_heavy, ",")[[1]][1]
+      scaler_heavy <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_heavy)))
+      scaler_light <- scaler[[2]][2]
+      scaler_light <- strsplit(scaler_light, ",")[[1]][1]
+      scaler_light <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_light)))
+      heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
+      light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
+      tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
+                             (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
+      ape::write.tree(tree, file.path(dir, paste0(name, ".raxml.bestTree")))
+    }else{
+      # unlinked 
+      # linked
+      print("in progress")
+    }
+  }
   if(asr){
     tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
     starting_tree <- file.path(dir, paste0(name, "_rerooted.tree"))
@@ -1546,7 +1571,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     command <- paste("--model", model, "--seed", rseed, "-msa", 
                      input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
                      "--force msa --tree", starting_tree, "--ancestral")
-    if(partition){
+    if(!is.null(partition)){
       old_command <- strsplit(command, "--seed")[[1]][2]
       new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
       command <- paste0(new_model, old_command, " --brlen ", brln)
@@ -1570,12 +1595,42 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     
     # use the asr_tree from here on out
     tree <- asr_tree
+    ### CGJ 3/13/23
+    # rescale the branches if partitioning is done
+    if(!is.null(partition)){
+      if(brln == "scaled"){
+        model_file <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
+        scaler <- strsplit(model_file, "BU")
+        scaler_heavy <- scaler[[1]][2]
+        scaler_heavy <- strsplit(scaler_heavy, ",")[[1]][1]
+        scaler_heavy <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_heavy)))
+        scaler_light <- scaler[[2]][2]
+        scaler_light <- strsplit(scaler_light, ",")[[1]][1]
+        scaler_light <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_light)))
+        heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
+        light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
+        tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
+                               (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
+      }else{
+        # unlinked 
+        # linked
+        print("in progress")
+      }
+    }
     #update the tree
     results <- list()
     results$clone <- clone@clone
     results$nseq <- length(clone@data[[seq]]) # make this data[[seq]]
     results$nsite <- nchar(clone@data[[seq]][1]) # $data[[seq]][1]
     results$tree_length <- sum(tree$edge.length) # test -> tree
+    if(brln == "unlinked"){
+      p_trees <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestPartitionTrees")))
+      p1 <- sum(p_trees[[1]]$edge.length)
+      p2 <- sum(p_trees[[2]]$edge.length)
+      tree_length <- c(paste("ASR Tree:", results$tree_length), paste("Heavy Chain Tree:", p1),
+                       paste("Light Chain Tree:", p2))
+      results$tree_length <- tree_length
+    }
     bestmodel <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
     likelihood <- readLines(file.path(dir, paste0(name, "_asr.raxml.log")))
     results$likelihood <- as.numeric(strsplit(likelihood[grep("final logLikelihood:", likelihood)],
@@ -1600,30 +1655,51 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
        sum(!names(tipseqs) %in% tree$tip.label) != 0){
       stop(paste("Tip sequences do not match in clone",clone))
     }
-    ASR <- readLines(file.path(dir, paste0(name, "_asr.raxml.ancestralStates")))
-    for(i in 1:length(tree$node.label)){
-      asr_seq <- strsplit(ASR[i], "\t")[[1]][2]
-      binding_spot <- as.numeric(strsplit(tree$node.label[i], "Node")[[1]][2])
-      tree$nodes[binding_spot]$sequence <- asr_seq
+    # add in the ASR sequences 
+    # get the tree
+    written_tree <- readLines(file.path(dir, paste0(name, "_asr.raxml.ancestralTree")))
+    # split the tree by node input to get the order for internal nodes
+    node_order <- strsplit(written_tree, "Node")
+    full_order <- c()
+    for(i in 2:length(node_order[[1]])){
+      tobind <- gsub("\\:.*", "", node_order[[1]][i])
+      tobind <- gsub("\\;", "", tobind)
+      full_order <- append(full_order, tobind)
     }
+    asr_seqs <- readLines(file.path(dir, paste0(name, "_asr.raxml.ancestralStates")))
+    asr_order <- strsplit(asr_seqs, "Node")
+    full_asr <- c()
+    for(i in 1:length(asr_order)){
+      tobind <- gsub("\\:.*", "", asr_order[[i]][2])
+      num_asr <- strsplit(tobind, "\t")
+      num_asr <- data.frame(node_num = num_asr[[1]][1], asr_seq = num_asr[[1]][2])
+      full_asr <- rbind(full_asr, num_asr)
+    }
+    # add the ASR seq by whichever node is called in the tree
+    for(i in 1:length(full_order)){
+      node_num <- full_order[i]
+      asr_seq <- full_asr$asr_seq[full_asr$node_num == node_num]
+      tree$nodes[[(ape::Ntip(tree)+i)]]$sequence <- asr_seq
+    }
+    
     for(i in 1:length(tree$tip.label)){
       tip <- tree$tip.label[i]
       if(tip != "Germline"){
         seq_num <- which(clone@data$sequence_id == tip)
         if(seq == "hlsequence"){
-          tree$nodes[length(tree$node.label) + i]$sequence <- clone@data$hlsequence[seq_num]
+          tree$nodes[i]$sequence <- clone@data$hlsequence[seq_num]
         } else if(seq == "sequence"){
-          tree$nodes[length(tree$node.label) + i]$sequence <- clone@data$sequence[seq_num]
+          tree$nodes[i]$sequence <- clone@data$sequence[seq_num]
         }else{
-          tree$nodes[length(tree$node.label) + i]$sequence <- clone@data$lsequence[seq_num]
+          tree$nodes[i]$sequence <- clone@data$lsequence[seq_num]
         }
       }else{
         if(seq == "hlsequence"){
-          tree$nodes[length(tree$node.label) + i]$sequence <- clone@hlgermline
+          tree$nodes[i]$sequence <- clone@hlgermline
         } else if(seq == "sequence"){
-          tree$nodes[length(tree$node.label) + i]$sequence <- clone@germline
+          tree$nodes[i]$sequence <- clone@germline
         }else{
-          tree$nodes[length(tree$node.label) + i]$sequence <- clone@lgermline
+          tree$nodes[i]$sequence <- clone@lgermline
         }
       }
     }
@@ -1636,6 +1712,35 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     results$nseq <- length(clone@data[[seq]]) 
     results$nsite <- nchar(clone@data[[seq]][1])
     results$tree_length <- sum(tree$edge.length) 
+    if(brln == "unlinked"){
+      p_trees <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestPartitionTrees")))
+      p1 <- sum(p_trees[[1]]$edge.length)
+      p2 <- sum(p_trees[[2]]$edge.length)
+      tree_length <- c(paste("Best Tree:", results$tree_length), paste("Heavy Chain Tree:", p1),
+                       paste("Light Chain Tree:", p2))
+      results$tree_length <- tree_length
+      for(i in 1:length(tree$tip.label)){
+        tip <- tree$tip.label[i]
+        if(tip != "Germline"){
+          seq_num <- which(clone@data$sequence_id == tip)
+          if(seq == "hlsequence"){
+            tree$nodes[i]$sequence <- clone@data$hlsequence[seq_num]
+          } else if(seq == "sequence"){
+            tree$nodes[i]$sequence <- clone@data$sequence[seq_num]
+          }else{
+            tree$nodes[i]$sequence <- clone@data$lsequence[seq_num]
+          }
+        }else{
+          if(seq == "hlsequence"){
+            tree$nodes[i]$sequence <- clone@hlgermline
+          } else if(seq == "sequence"){
+            tree$nodes[i]$sequence <- clone@germline
+          }else{
+            tree$nodes[i]$sequence <- clone@lgermline
+          }
+        }
+      }
+    }
     bestmodel <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
     likelihood <- readLines(file.path(dir, paste0(name, ".raxml.log")))
     results$likelihood <- as.numeric(strsplit(likelihood[grep("Final LogLikelihood:", likelihood)],
@@ -1668,8 +1773,8 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   tree$name <- clone@clone
   tree$seq <- clone@phylo_seq
   tree_method <- readLines(file.path(dir, paste0(name, ".raxml.log")))
-  tree$tree_method <- strsplit(tree_method[grep("Model: ", tree_method)],
-                               "Model: ")[[1]][2]
+  tree$tree_method <- paste0("RAxML:", strsplit(tree_method[grep("Model: ", tree_method)],
+                               "Model: ")[[1]][2])
   tree$edge_type <- "genetic_distance"
   closeAllConnections()
   if(rm_files){
@@ -2076,8 +2181,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                             temp_path=file.path(dir,id),
                             rm_files=rm_temp,
                             rm_dir=rm_dir,
-                            trees=trees,nproc=nproc,id=id,
-                            ...),error=function(e)e)
+                            trees=trees,nproc=nproc,id=id),error=function(e)e)
     if(inherits(trees, "error")){
       stop(trees)
     }
@@ -2087,9 +2191,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                           seq=seqs[x],
                           exec = exec,
                           rm_files = rm_temp,
-                          id=id, 
                           dir=dir,
-                          tree=trees[[x]]),error=function(e)e),
+                          tree=trees[[x]],...),error=function(e)e),
       mc.cores=nproc)
   } else{
     stop("build specification",build,"not recognized")
@@ -2125,7 +2228,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   m <- match(tree_names, clones$clone_id)
   clones <- clones[m,]
 
-  if(build == "igphyml"){
+  if(build == "igphyml" | build == "raxml"){
     clones$parameters <- lapply(trees,function(x)x$parameters)
   }
 
@@ -3066,7 +3169,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
                                                         rm_files = rm_temp,
                                                         rep = rep,
                                                         dir = dir,
-                                                        from_getTrees=from_getTrees),error=function(e)e))
+                                                        from_getTrees=from_getTrees,...),error=function(e)e))
   } else if(build=="igphyml"){
     if(rm_temp){
       rm_dir <- file.path(dir,paste0(id,rep))

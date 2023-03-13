@@ -2,25 +2,23 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{buildRAxML}
 \alias{buildRAxML}
-\title{Wrapper to build RAxML trees and infer intermediate nodes}
+\title{Wrapper to build RAxML-ng trees and infer intermediate nodes}
 \usage{
 buildRAxML(
   clone,
   seq = "sequence",
   exec,
-  submodel = "GTRGAMMA",
+  model = "GTR",
+  partition = NULL,
   rseed = 28,
-  n_searches = 1,
   name = "run",
+  brln = "scaled",
   starting_tree = NULL,
   from_getTrees = FALSE,
   rm_files = TRUE,
-  nproc = 1,
   asr = TRUE,
-  partition = NULL,
   rep = 1,
   dir = NULL,
-  id = NULL,
   ...
 )
 }
@@ -31,40 +29,35 @@ buildRAxML(
 
 \item{exec}{RAxML executable}
 
-\item{submodel}{the model of binary (morphological), nucleotide, multi-state, or amino acid substitution 
-Typical models are "GTRGAMMA", "GTRCAT", "GTRCATI", "ASC_GRTCAT", "ASC_GTRGAMMA", and "GTRGRAMMAI"}
+\item{model}{The DNA model to be used. GTR is the default.}
+
+\item{partition}{A logical vector that indicates if you want to partition the data based on the heavy and light chains.}
 
 \item{rseed}{The random seed used for the parsimony inferences. This allos you to reproduce your results.}
 
-\item{n_searches}{specifies the number of alternative runs on distinct starting trees.}
-
 \item{name}{specifies the name of the output file}
 
-\item{starting_tree}{specifies a user starting tree file name in Newick format}
+\item{brln}{A parameter that determines how branches are reported when partitioning. Options include scaled (default), 
+unlinked, and linked}
+
+\item{starting_tree}{specifies a user starting tree file name and path in Newick format}
 
 \item{from_getTrees}{A logical that indicates if the desired starting tree is from getTrees and not a newick file}
 
 \item{rm_files}{remove temporary files?}
 
-\item{nproc}{specifies the number of cores you want to run}
-
 \item{asr}{computes the marginal ancestral states of a tree}
-
-\item{partition}{specifies the file name of the assignment of models to 
-alignment partitions for multiple models of substitution}
 
 \item{rep}{Which repetition of the tree building is currently being run. Mainly for getBootstraps.}
 
 \item{dir}{Where the output files are to be made.}
 
-\item{id}{The id for making a temporary directory if one is not specified}
-
 \item{...}{Additional arguments (not currently used)}
 }
 \value{
-\code{phylo} object created by RAxML with nodes attribute
+\code{phylo} object created by RAxML-ng with nodes attribute
          containing reconstructed sequences.
 }
 \description{
-Wrapper to build RAxML trees and infer intermediate nodes
+Wrapper to build RAxML-ng trees and infer intermediate nodes
 }
