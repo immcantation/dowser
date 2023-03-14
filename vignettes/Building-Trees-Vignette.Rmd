@@ -25,6 +25,7 @@ fontsize: 11pt
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Build Lineage Trees}
+  %\VignetteEncoding{UTF-8}  
   %\usepackage[utf8]{inputenc}
 ---
 

@@ -1346,6 +1346,22 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                                  trees[[i]]$edge[,2])))){
       stop(paste("Internal node count error, clone ",clone_id))
     }
+
+    if("rate_light_mle" %in% names(params)){
+      #re-scale branches if separate rate estimated
+      clone_index <- which(sapply(clone, function(x)x@clone == clone_id))
+      if(length(clone_index) != 1){
+        stop(paste0("Clone index error: ",clone_id))
+      }
+      clone_obj <- clone[[clone_index]]
+      lrate <- params[i,]$rate_light_mle
+      heavy_sites <- sum(clone_obj@locus == "IGH")/3
+      light_sites <- sum(clone_obj@locus != "IGH")/3
+      l <- trees[[i]]$edge.length
+      trees[[i]]$edge.length <- (l*heavy_sites + l*lrate*light_sites)/
+      (heavy_sites + light_sites)
+    }
+
     trees[[i]]$nodes <- rep(list(sequence=NULL),times=nnodes)
     # blank node should be MRCA, and all labels should be in ASR file
     labs <- trees[[i]]$node.label
@@ -1385,6 +1401,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       trees[[i]]$nodes[[x]]
     })
   }
+
   
   if(rm_files){
     lines <- readLines(file)
@@ -3303,6 +3320,7 @@ getBootstraps <- function(clones, bootstraps,
   if(!"trees" %in% colnames(clones)){
     stop("A tree column created by using getTrees() is required for 
            bootstrap_nodes=TRUE")
+    }
   }
     #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
     # check to make sure that getTrees used the same build as here

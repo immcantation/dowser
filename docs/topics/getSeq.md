@@ -16,7 +16,7 @@ Arguments
 -------------------
 
 data
-:   a tibble of `airrClone` objects, the output of 
+:   a tibble of `airrClone` objects, the output of
 [getTrees](getTrees.md)
 
 node

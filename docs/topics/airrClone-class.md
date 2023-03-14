@@ -18,7 +18,7 @@ Slots
 
 `data`
 :   data.frame containing sequences and annotations. Contains the
-columns `SEQUENCE_ID` and `SEQUENCE`, as well as any additional 
+columns `sequence_id` and `sequence`, as well as any additional 
 sequence-specific annotation columns
 
 `clone`

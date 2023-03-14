@@ -34,15 +34,15 @@ Arguments
 -------------------
 
 clones
-:   a tibble of `airrClone` objects, the output of 
+:   a tibble of `airrClone` objects, the output of
 [formatClones](formatClones.md)
 
 trait
-:   trait to use for parsimony models (required if 
+:   trait to use for parsimony models (required if
 `igphyml` specified)
 
 id
-:   unique identifer for this analysis (required if 
+:   unique identifer for this analysis (required if
 `igphyml` or `dnapars` specified)
 
 dir
@@ -52,7 +52,7 @@ modelfile
 :   file specifying parsimony model to use
 
 build
-:   program to use for tree building (pratchet, pml, 
+:   program to use for tree building (pratchet, pml,
 dnapars, dnaml, igphyml)
 
 exec
@@ -97,18 +97,18 @@ A list of `phylo` objects in the same order as `data`.
 Details
 -------------------
 
-Estimates phylogenetic tree topologies and branch lengths for a list of 
-`airrClone` objects. By default, it will use phangnorn::pratchet to 
-estimate maximum parsimony tree topologies, and ape::acctran to estimate 
-branch lengths. If `igpyhml` is specified, internal node `trait` 
-values will be predicted by maximum parsimony. In this case, `dir` will 
-need to be specified as a temporary directory to place all the intermediate 
-files (will be created if not available). Further, `id` will need to 
-specified to serve as a unique identifier for the temporary files. This 
+Estimates phylogenetic tree topologies and branch lengths for a list of
+`airrClone` objects. By default, it will use phangnorn::pratchet to
+estimate maximum parsimony tree topologies, and ape::acctran to estimate
+branch lengths. If `igpyhml` is specified, internal node `trait`
+values will be predicted by maximum parsimony. In this case, `dir` will
+need to be specified as a temporary directory to place all the intermediate
+files (will be created if not available). Further, `id` will need to
+specified to serve as a unique identifier for the temporary files. This
 should be chosen to ensure that multiple `getTrees` calls using the same
-`dir` do not overwrite each others files. 
+`dir` do not overwrite each others files.
 
-`modelfile` is written automatically if not specified, but doesn't 
+`modelfile` is written automatically if not specified, but doesn't
 include any constraints. Intermediate files are deleted by default. This can
 be toggled using (`rm_files`).
 

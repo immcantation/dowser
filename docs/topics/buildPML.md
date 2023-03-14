@@ -20,7 +20,10 @@ tree = NULL,
 data_type = "DNA",
 optNni = TRUE,
 optQ = TRUE,
-verbose = FALSE
+verbose = FALSE,
+resolve_random = TRUE,
+quiet = 0,
+rep = NULL
 )
 ```
 
@@ -59,6 +62,15 @@ optQ
 
 verbose
 :   Print error messages as they happen?
+
+resolve_random
+:   randomly resolve polytomies?
+
+quiet
+:   amount of rubbish to print to console
+
+rep
+:   current bootstrap replicate (experimental)
 
 
 

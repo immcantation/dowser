@@ -13,7 +13,7 @@ from AIRR data, based heavily on alakazam::ChangeoClone.
 
 \describe{
 \item{\code{data}}{data.frame containing sequences and annotations. Contains the
-columns \code{SEQUENCE_ID} and \code{SEQUENCE}, as well as any additional 
+columns \code{sequence_id} and \code{sequence}, as well as any additional 
 sequence-specific annotation columns}
 
 \item{\code{clone}}{string defining the clone identifier}

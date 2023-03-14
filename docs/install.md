@@ -17,7 +17,7 @@ install.packages("dowser")
 Downloaded source builds from Bitbucket may be installed in the usual way:
 
 ```R
-install.packages("dowser_x.y.z.tar.gz", repos=NULL, type="source")
+install.packages("dowser_x.y.z.tar.gz", repos = NULL, type = "source")
 ```
 
 If you have any trouble installing the package, it may be due to the Bioconductor 
