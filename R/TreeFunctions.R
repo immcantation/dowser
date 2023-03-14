@@ -3342,7 +3342,6 @@ getBootstraps <- function(clones, bootstraps,
       stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
            getBoostraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
     }
-  }
   # CGJ 2/20/23
   if(starting_tree){
     if("trees" %in% colnames(clones)){
