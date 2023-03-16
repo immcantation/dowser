@@ -548,7 +548,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
       stop(paste("phylo_seq not recognized",c@clone))
     }
     
-    if(partition != "single"){
+    if(!partition %in% c("single","hl")){
       acceptable <- c("fwr1","fwr2","fwr3","fwr4","cdr1","cdr2","cdr3")
       unacceptable <- unlist(lapply(data, function(x)sum(!x@region %in% acceptable) > 0))
       exclude_clones <- unlist(lapply(data[unacceptable], function(x)x@clone))
@@ -1820,7 +1820,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
     stop(paste(germline,"not found in tip labels!"))
   }
   olength <- sum(tree$edge.length)
-  odiv <- ape::cophenetic.phylo(tree)["Germline",]
+  odiv <- ape::cophenetic.phylo(tree)[germline,]
   if(ape::is.rooted(tree)){
     if(verbose > 0){
       print("unrooting tree!")
@@ -1946,7 +1946,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
   
   # sanity check tree length, divergence, and internal node distances
   nlength <- sum(tree$edge.length)
-  ndiv <- ape::cophenetic.phylo(tree)["Germline",]
+  ndiv <- ape::cophenetic.phylo(tree)[germline,]
   if(abs(nlength - olength) > 0.001){
     stop(paste("Error in rerooting tree",tree$name,
                "tree length not consistent"))
@@ -2198,7 +2198,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                             temp_path=file.path(dir,id),
                             rm_files=rm_temp,
                             rm_dir=rm_dir,
-                            trees=trees,nproc=nproc,id=id),error=function(e)e)
+                            trees=trees,nproc=nproc,id=id,...),error=function(e)e)
     if(inherits(trees, "error")){
       stop(trees)
     }
@@ -3199,7 +3199,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
                             temp_path = file.path(dir,paste0(id,rep)),
                             rm_files=rm_temp,
                             rm_dir = rm_dir,
-                            id=id), error=function(e)e)
+                            id=id, ...), error=function(e)e)
     trees <- list(trees)
     if(inherits(trees, "error")){
       stop(trees)
