@@ -1575,10 +1575,23 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
       tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
                              (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
       ape::write.tree(tree, file.path(dir, paste0(name, ".raxml.bestTree")))
-    }else{
-      # unlinked 
-      # linked
-      print("in progress")
+    }else if(brln == "unlinked"){
+      # read in the data 
+      unlinked_trees <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestPartitionTrees")))
+      check_partitions <- phangorn::RF.dist(unlinked_trees[[1]], unlinked_trees[[2]])
+      check_best <- phangorn::RF.dist(unlinked_trees[[1]], tree)
+      if(sum(check_partitions, check_best) == 0){
+        # do the edge calc
+        heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
+        light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
+        new_value <- ((heavy_sites*unlinked_trees[[1]]$edge.length) + 
+                        (light_sites*unlinked_trees[[2]]$edge.length))/
+          sum(heavy_sites, light_sites)
+        tree$edge.length <- new_value
+      } else{
+        stop("A more complicated approach is needed")
+      }
+      ape::write.tree(tree, file.path(dir, paste0(name, ".raxml.bestTree")))
     }
   }
   if(asr){
@@ -1628,10 +1641,23 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
         light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
         tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
                                (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
-      }else{
-        # unlinked 
-        # linked
-        print("in progress")
+      }else if(brln == "unlinked"){
+        print("got to the right part")
+        unlinked_trees <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestPartitionTrees")))
+        check_partitions <- phangorn::RF.dist(unlinked_trees[[1]], unlinked_trees[[2]])
+        check_best <- phangorn::RF.dist(unlinked_trees[[1]], tree)
+        if(sum(check_partitions, check_best) == 0){
+          # do the edge calc
+          heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
+          light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
+          new_value <- ((heavy_sites*unlinked_trees[[1]]$edge.length) + 
+                          (light_sites*unlinked_trees[[2]]$edge.length))/
+            sum(heavy_sites, light_sites)
+          tree$edge.length <- new_value
+        } else{
+          stop("A more complicated approach is needed")
+        }
+        #ape::write.tree(tree, file.path(dir, paste0(name, ".raxml.bestTree")))
       }
     }
     #update the tree
@@ -1729,6 +1755,8 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     results$nseq <- length(clone@data[[seq]]) 
     results$nsite <- nchar(clone@data[[seq]][1])
     results$tree_length <- sum(tree$edge.length) 
+    nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
+    tree$nodes <- rep(list(sequence=NULL),times=nnodes)
     if(brln == "unlinked"){
       p_trees <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestPartitionTrees")))
       p1 <- sum(p_trees[[1]]$edge.length)
@@ -1764,8 +1792,6 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
                                               "Final LogLikelihood: ")[[1]][2])
     results$model <- bestmodel
     tree$parameters <- results
-    nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
-    tree$nodes <- rep(list(sequence=NULL),times=nnodes)
     tipseqs <- clone@data[[seq]]
     names(tipseqs) <- clone@data$sequence_id
     if(seq == "sequence"){
@@ -2198,7 +2224,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                             temp_path=file.path(dir,id),
                             rm_files=rm_temp,
                             rm_dir=rm_dir,
-                            trees=trees,nproc=nproc,id=id),error=function(e)e)
+                            trees=trees,nproc=nproc,id=id,
+                            ...),error=function(e)e)
     if(inherits(trees, "error")){
       stop(trees)
     }
