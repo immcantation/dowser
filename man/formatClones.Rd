@@ -43,6 +43,8 @@ entries in this column should be identical.}
 
 \item{locus}{name of the column containing locus information}
 
+\item{filterStop}{only use sequences that do not contain an in-frame stop codon}
+
 \item{minseq}{minimum numbner of sequences per clone}
 
 \item{split_light}{split or lump subclones? See \code{getSubclones}.}

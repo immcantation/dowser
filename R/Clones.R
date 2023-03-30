@@ -538,6 +538,7 @@ cleanAlignment <- function(clone){
 #'                        See \link{makeAirrClone} for required columns and their defaults
 #' @param    split_light  split or lump subclones? See \code{getSubclones}.
 #' @param    minseq       minimum numbner of sequences per clone
+#' @param    filterStop   only use sequences that do not contain an in-frame stop codon
 #' @param    majoronly    only return largest subclone and sequences without light chains
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
