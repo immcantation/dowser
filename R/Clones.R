@@ -567,16 +567,30 @@ cleanAlignment <- function(clone){
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
-                         subclone="subclone_id",
-                         nproc=1, chain="H", heavy="IGH", cell="cell_id", 
-                         locus="locus", minseq=2, split_light=FALSE, majoronly=FALSE,
-                         columns=NULL, ...) {
+                         subclone="subclone_id", nproc=1, chain="H", heavy="IGH", 
+                         cell="cell_id", locus="locus", filterStop=TRUE, minseq=2,
+                         split_light=FALSE, majoronly=FALSE, columns=NULL, ...) {
   
   if(majoronly){
     if(!subclone %in% names(data)){
       stop("Need subclone designation if majoronly=TRUE")
     }
     data <- dplyr::filter(data, !!rlang::sym(subclone) <= 1)
+  }
+  if(filterStop){
+    full_nrow <- nrow(data)
+    data <- parallel::mclapply(1:nrow(data), function(x){
+      sub_seq <- alakazam::translateDNA(data$sequence_alignment[x])
+      if(!grepl("\\*", sub_seq)){
+        data[x,] 
+      }
+    }, mc.cores = nproc)
+    data <- do.call(rbind, data)
+    if(nrow(data) != full_nrow){
+      n_removed <- full_nrow - nrow(data)
+      warning(paste0("There was ", n_removed, " sequence(s) with an inframe stop codon",
+      " and were removed. If you want to keep these sequences use the option filerStop=FALSE."))
+    }
   }
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
     if(!is.null(heavy)){
