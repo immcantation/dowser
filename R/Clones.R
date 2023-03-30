@@ -581,14 +581,15 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     full_nrow <- nrow(data)
     data <- parallel::mclapply(1:nrow(data), function(x){
       sub_seq <- alakazam::translateDNA(data$sequence_alignment[x])
-      if(grepl("\\*", sub_seq)){
-        data <- data[-x,]
+      if(!grepl("\\*", sub_seq)){
+        data[x,] 
       }
-    }, mc.cores = 15)
+    }, mc.cores = nproc)
     data <- do.call(rbind, data)
     if(nrow(data) != full_nrow){
       n_removed <- full_nrow - nrow(data)
-      warning(paste("There was", n_removed, "sequence(s) with an inframe stop codon and were removed. If you want to keep these sequences use the option filerStop=FALSE."))
+      warning(paste0("There was ", n_removed, " sequence(s) with an inframe stop codon",
+                     " and were removed. If you want to keep these sequences use the option filerStop=FALSE."))
     }
   }
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences

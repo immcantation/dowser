@@ -14,6 +14,7 @@ formatClones(
   heavy = "IGH",
   cell = "cell_id",
   locus = "locus",
+  filterStop = TRUE,
   minseq = 2,
   split_light = FALSE,
   majoronly = FALSE,
