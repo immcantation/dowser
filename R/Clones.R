@@ -537,7 +537,7 @@ cleanAlignment <- function(clone){
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone.
 #'                        See \link{makeAirrClone} for required columns and their defaults
 #' @param    split_light  split or lump subclones? See \code{getSubclones}.
-#' @param   filterStop    only use sequences that do not contain an in-frame stop codon
+#' @param    filterStop   only use sequences that do not contain an in-frame stop codon
 #' @param    minseq       minimum numbner of sequences per clone
 #' @param    majoronly    only return largest subclone and sequences without light chains
 #' @param    clone        name of the column containing the identifier for the clone. All 
