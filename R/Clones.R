@@ -581,7 +581,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
   if(filterStop){
     full_nrow <- nrow(data)
     data <- parallel::mclapply(1:nrow(data), function(x){
-      sub_seq <- alakazam::translateDNA(data$sequence_alignment[x])
+      sub_seq <- alakazam::translateDNA(data$[[seq]][x])
       if(!grepl("\\*", sub_seq)){
         data[x,] 
       }
