@@ -900,11 +900,13 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
       return(fit)
     }
     #print("unrooting tree")
-    #tree <- ape::unroot(ape::multi2di(fit$tree)) #CGJ 4/4/23
+    #tree <- ape::unroot(ape::multi2di(fit$tree)) #CGJ 4/5/23
+    # this assumes we can change tree object without affecting ASR
+    fit$tree <- ape::unroot(ape::multi2di(fit$tree))
     tree <- fit$tree
     # test if the tree is binary 
     if(!ape::is.binary(tree)){
-      warning(paste("Tree may not be full resolved at", clone@clone))
+      stop(paste("Tree may not be full resolved at", clone@clone))
     }
     #print("adding tree method and edge type")
     tree$tree_method <- paste("phangorn::optim.pml::",sub_model)
