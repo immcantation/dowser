@@ -1813,7 +1813,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #'                      \link{formatClones}
 #' @param    trait      trait to use for parsimony models (required if
 #'                      \code{igphyml} specified)
-#' @param    build      program to use for tree building (pratchet, pml, pmlPart,
+#' @param    build      program to use for tree building (pratchet, pml,
 #'                      dnapars, dnaml, igphyml)
 #' @param    exec       location of desired phylogenetic executable
 #' @param    igphyml    optional location of igphyml executible for parsimony
@@ -1871,7 +1871,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                      fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
                      seq=NULL, collapse=FALSE, ...){
 
-  if(is.null(exec) && (!build %in% c("pratchet", "pml", "pmlPart"))){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
   if(!is.null(dir)){
@@ -2015,11 +2015,6 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else if(build=="pml"){
     trees <- parallel::mclapply(reps,function(x)
       tryCatch(buildPML(data[[x]],seq=seqs[x],
-                        tree=trees[[x]],...),error=function(e)e),
-      mc.cores=nproc)
-  } else if(build=="pmlPart"){
-    trees <- parallel::mclapply(reps,function(x)
-      tryCatch(buildPMLPart(data[[x]],seq=seqs[x],
                         tree=trees[[x]],...),error=function(e)e),
       mc.cores=nproc)
   } else if(build=="igphyml"){
@@ -2553,7 +2548,7 @@ findSwitches <- function(clones, permutations, trait, igphyml,
                          keeptrees=FALSE, lfile=NULL, seq=NULL,
                          boot_part="locus", force_resolve=FALSE, ...){
   
-  if(is.null(exec) && (!build %in% c("pratchet", "pml", "pmlPart"))){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
   if(file.access(igphyml, mode=1) == -1) {
@@ -3009,11 +3004,6 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
                                                       quiet=quiet, rep=rep,...), error=function(e)e))
     
     trees <- list(trees)
-  } else if(build=="pmlPart"){
-    trees <- lapply(reps,function(x)tryCatch(buildPMLPart(data_tmp[[x]],seq=seqs[x],
-                                                      quiet=quiet, rep=rep,...), error=function(e)e))
-    
-    trees <- list(trees)
   } else if(build=="raxml"){ # CGJ 2/20/23
     trees <- lapply(reps,function(x)tryCatch(buildRAxML(data[[x]],
                                                         seq=seqs[x],
@@ -3094,7 +3084,7 @@ getBootstraps <- function(clones, bootstraps,
                           nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
                           exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", by_codon = TRUE, starting_tree=FALSE, ...){
-  if(is.null(exec) && (!build %in% c("pratchet", "pml", "pmlPart"))){
+  if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
   if(build=="igphyml" && file.access(exec, mode=1) == -1) {
