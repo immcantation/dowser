@@ -2978,6 +2978,11 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
     data_tmp[[i]] <- bootstrapClones(data[[i]], reps = 1, 
                                      partition = boot_part, by_codon = by_codon)[[1]]
   }
+  # randomize the data_tmp file -- shuffle the rows CGJ 4/13/23
+  for(i in 1:length(data_tmp)){
+    data_tmp[[i]]@data <- data_tmp[[i]]@data[sample(1:nrow(data_tmp[[i]]@data), replace = FALSE),]
+  }
+  
   reps <- as.list(1:length(data_tmp))
   if(is.null(seq)){
     seqs <- unlist(lapply(data_tmp,function(x)x@phylo_seq))
