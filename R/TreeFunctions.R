@@ -2045,7 +2045,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                           tree=trees[[x]],...),error=function(e)e),
       mc.cores=nproc)
   } else{
-    stop("build specification",build,"not recognized")
+    stop("build specification ", build, " not recognized")
   }
 
   # save points for data have been saved as the following
