@@ -2,23 +2,23 @@ Package: dowser
 Type: Package
 Version: 1.1.1
 Date: 2022-12-12
-Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"), 
+Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"),
                     email="kenneth.hoehn@yale.edu"),
-             person("Susanna", "Marquez", role=c("ctb"), 
+             person("Susanna", "Marquez", role=c("ctb"),
                     email="susanna.marquez@yale.edu"),
-             person("Jason", "Vander Heiden", role=c("ctb"), 
-                    email="jason.vanderheiden@gmail.com"), 
-             person("Steven", "Kleinstein", role=c("aut", "cph"), 
+             person("Jason", "Vander Heiden", role=c("ctb"),
+                    email="jason.vanderheiden@gmail.com"),
+             person("Steven", "Kleinstein", role=c("aut", "cph"),
                     email="steven.kleinstein@yale.edu"))
 Title: B Cell Receptor Phylogenetics Toolkit
-Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenetic trees. 
+Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenetic trees.
     Provides methods to 1) reconstruct unmutated ancestral sequences,
     2) build B cell phylogenetic trees using multiple methods,
     3) visualize trees with metadata at the tips,
     4) reconstruct intermediate sequences,
     5) detect biased ancestor-descendant relationships among metadata types
     Workflow examples available at documentation site (see URL).
-    Citations: 
+    Citations:
     Hoehn et al (2022) <doi:10.1371/journal.pcbi.1009885>,
     Hoehn et al (2021) <doi:10.1101/2021.01.06.425648>.
 License: AGPL-3
@@ -57,7 +57,7 @@ Suggests:
     rmarkdown,
     testthat
 RoxygenNote: 7.2.3
-Collate: 
+Collate:
     'Data.R'
     'Dowser.R'
     'Clones.R'
@@ -66,3 +66,4 @@ Collate:
     'Germlines.R'
     'Statistics.R'
     'TreeFunctions.R'
+    'zzz.R'

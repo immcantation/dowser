@@ -537,6 +537,7 @@ cleanAlignment <- function(clone){
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone.
 #'                        See \link{makeAirrClone} for required columns and their defaults
 #' @param    split_light  split or lump subclones? See \code{getSubclones}.
+#' @param    filterStop   only use sequences that do not contain an in-frame stop codon
 #' @param    minseq       minimum numbner of sequences per clone
 #' @param    filterStop   only use sequences that do not contain an in-frame stop codon
 #' @param    majoronly    only return largest subclone and sequences without light chains
@@ -568,7 +569,7 @@ cleanAlignment <- function(clone){
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
-                         subclone="subclone_id", nproc=1, chain="H", heavy="IGH",
+                         subclone="subclone_id", nproc=1, chain="H", heavy="IGH", 
                          cell="cell_id", locus="locus", filterStop=TRUE, minseq=2,
                          split_light=FALSE, majoronly=FALSE, columns=NULL, ...) {
   
@@ -590,7 +591,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(nrow(data) != full_nrow){
       n_removed <- full_nrow - nrow(data)
       warning(paste0("There was ", n_removed, " sequence(s) with an inframe stop codon",
-                     " and were removed. If you want to keep these sequences use the option filerStop=FALSE."))
+      " and were removed. If you want to keep these sequences use the option filerStop=FALSE."))
     }
   }
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
@@ -1172,7 +1173,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
                   collapse=",")
         }
       }
-      ld <- bind_rows(ld,include)
+      ld <- dplyr::bind_rows(ld,include)
       ltemp <- dplyr::filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
       lclone <- lclone + 1
     }
