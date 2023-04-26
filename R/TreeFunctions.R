@@ -2973,16 +2973,15 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   }
   #KBH in future iterations we'll want to make the boostrapping optional, but it's okay for now
   data <- clones$data
+  # randomize the data_tmp file -- shuffle the rows CGJ 4/13/23
+  for(i in 1:length(data_tmp)){
+    data_tmp[[i]]@data <- data_tmp[[i]]@data[sample(1:nrow(data_tmp[[i]]@data), replace = FALSE),]
+  }
   data_tmp <- list()
   for(i in 1:length(data)){
     data_tmp[[i]] <- bootstrapClones(data[[i]], reps = 1, 
                                      partition = boot_part, by_codon = by_codon)[[1]]
   }
-  # randomize the data_tmp file -- shuffle the rows CGJ 4/13/23
-  for(i in 1:length(data_tmp)){
-    data_tmp[[i]]@data <- data_tmp[[i]]@data[sample(1:nrow(data_tmp[[i]]@data), replace = FALSE),]
-  }
-  
   reps <- as.list(1:length(data_tmp))
   if(is.null(seq)){
     seqs <- unlist(lapply(data_tmp,function(x)x@phylo_seq))
@@ -3012,13 +3011,14 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
     
     trees <- list(trees)
   } else if(build=="raxml"){ # CGJ 2/20/23
-    trees <- lapply(reps,function(x)tryCatch(buildRAxML(data[[x]],
+    trees <- lapply(reps,function(x)tryCatch(buildRAxML(data_tmp[[x]],
                                                         seq=seqs[x],
                                                         exec = exec,
                                                         trees = starting_tree[[x]],
                                                         rm_files = rm_temp,
                                                         rep = rep,
                                                         dir = dir,
+                                                        rseed = x,
                                                         from_getTrees=from_getTrees,...),error=function(e)e))
   } else if(build=="igphyml"){
     if(rm_temp){
@@ -3188,12 +3188,14 @@ getBootstraps <- function(clones, bootstraps,
   if(build != "igphyml" | build != "raxml"){
     bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
       tryCatch(makeTrees(clones=clones, seq=seq, build=build, boot_part=boot_part,
-                         exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, asr = 'none', by_codon = by_codon), 
+                         exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, 
+                         rep=x, by_codon = by_codon), 
                error=function(e)e), mc.cores=nproc), recursive = FALSE)
   }else if(build == "igphyml" | build == "raxml"){
     bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
       tryCatch(makeTrees(clones=clones, seq=seq[x], build=build, boot_part=boot_part,
-                         exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, rep=x, by_codon = by_codon, starting_tree = starting_tree), 
+                         exec=exec, dir=dir, rm_temp=rm_temp, id=id, quiet=quiet, 
+                         rep=x, by_codon = by_codon, starting_tree = starting_tree), 
                error=function(e)e), mc.cores=nproc), recursive = FALSE)
   }
   clones$bootstrap_trees <- lapply(1:nrow(clones), function(x)list())
@@ -3253,15 +3255,13 @@ getBootstraps <- function(clones, bootstraps,
       bootstraps_df <- lapply(1:bootstraps, function(x)splits_func(b_trees,x))
       bootstraps_df <- do.call(rbind, bootstraps_df)
       matches_df <- matching_function_parallel(tree_comp_df, bootstraps_df, nproc)
-      for(node in unique(matches_df$nodes)){
-        if(quiet >0){
-          print(node)
+      for(node in 1:max(matches_df$nodes)){
+        if(node %in% setdiff(clones$trees[[clone]]$edge[,2], clones$trees[[clone]]$edge[,1])){
+          clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- NA
+        } else{
+          clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- 
+            dplyr::filter(matches_df, !!rlang::sym("nodes") == node)$matches
         }
-        if(typeof(clones$trees[[clone]]$nodes[[node]]) != "list"){
-          clones$trees[[clone]]$nodes[[node]] <- list(clones$trees[[clone]]$nodes[[node]])
-        }
-        clones$trees[[clone]]$nodes[[node]]$bootstrap_value <- 
-          dplyr::filter(matches_df, !!rlang::sym("nodes") == node)$matches
       }
       if(quiet >0){
         print(paste0("Clone ", clones$clone_id[clone], " bootstrapping completed"))
