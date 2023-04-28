@@ -22,6 +22,7 @@ getBootstraps(
   boot_part = "locus",
   by_codon = TRUE,
   starting_tree = FALSE,
+  switches = FALSE,
   ...
 )
 }
@@ -59,7 +60,9 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{by_codon}{a logical if the user wants to bootstrap by codon or by 
 nucleotide. Default (codon based bootstrapping) is TRUE.}
 
-\item{starting_tree}{An indicator to use the exisiting trees column as the starting trees for RAxML}
+\item{starting_tree}{An indicator to use the existing trees column as the starting trees for RAxML}
+
+\item{switches}{a logical indicator to allow findSwitches to do permutations.}
 
 \item{...}{additional arguments to be passed to tree building program}
 }

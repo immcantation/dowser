@@ -2723,7 +2723,8 @@ findSwitches <- function(clones, permutations, trait, igphyml,
       clones_with_trees <- getBootstraps(clones = temp_clones, bootstraps = 1, nproc = nproc, 
                                          dir = dir, id = id, build = build, exec = exec,
                                          quiet = quiet, rm_temp = rm_temp, seq = seq,
-                                         boot_part = boot_part, bootstrap_nodes = FALSE, ...)
+                                         boot_part = boot_part, bootstrap_nodes = FALSE,
+                                         switches = TRUE, ...)
       trees <- lapply(clones_with_trees$bootstrap_trees, function(x)x[[1]])
     }
     
@@ -2974,8 +2975,8 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   #KBH in future iterations we'll want to make the boostrapping optional, but it's okay for now
   data <- clones$data
   # randomize the data_tmp file -- shuffle the rows CGJ 4/13/23
-  for(i in 1:length(data_tmp)){
-    data_tmp[[i]]@data <- data_tmp[[i]]@data[sample(1:nrow(data_tmp[[i]]@data), replace = FALSE),]
+  for(i in 1:length(data)){
+    data[[i]]@data <- data[[i]]@data[sample(1:nrow(data[[i]]@data), replace = FALSE),]
   }
   data_tmp <- list()
   for(i in 1:length(data)){
@@ -2995,7 +2996,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   }
   if(build=="pratchet"){
     trees <- lapply(reps,function(x)
-      tryCatch(buildPratchet(data_tmp[[x]],seq=seqs[x]),error=function(e)e))
+      tryCatch(buildPratchet(data_tmp[[x]],seq=seqs[x],...),error=function(e)e))
     trees <- list(trees)
   } else if(build=="dnapars" || build=="dnaml"){
     trees <- lapply(reps,function(x)
@@ -3003,7 +3004,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
                           exec=exec,
                           temp_path = file.path(dir,paste0(id,"_", rep, "_trees_",x)),
                           rm_temp = rm_temp,
-                          seq=seqs[x]), error=function(e)e))
+                          seq=seqs[x], ...), error=function(e)e))
     trees <- list(trees)
   }else if(build=="pml"){
     trees <- lapply(reps,function(x)tryCatch(buildPML(data_tmp[[x]],seq=seqs[x],
@@ -3081,7 +3082,8 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 #' @param boot_part     is  "locus" bootstrap columns for each locus separately
 #' @param by_codon      a logical if the user wants to bootstrap by codon or by 
 #'                      nucleotide. Default (codon based bootstrapping) is TRUE.
-#' @param starting_tree An indicator to use the exisiting trees column as the starting trees for RAxML
+#' @param starting_tree An indicator to use the existing trees column as the starting trees for RAxML
+#' @param switches   a logical indicator to allow findSwitches to do permutations. 
 #' @param ...        additional arguments to be passed to tree building program
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
@@ -3090,7 +3092,8 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 getBootstraps <- function(clones, bootstraps,
                           nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
                           exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
-                          boot_part="locus", by_codon = TRUE, starting_tree=FALSE, ...){
+                          boot_part="locus", by_codon = TRUE, starting_tree=FALSE,
+                          switches=FALSE,...){
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
@@ -3149,12 +3152,13 @@ getBootstraps <- function(clones, bootstraps,
       }
     }
   }
-  if(bootstrap_nodes){
-  if(!"trees" %in% colnames(clones)){
-    stop("A tree column created by using getTrees() is required for 
+  if(!switches){
+    if(bootstrap_nodes){
+      if(!"trees" %in% colnames(clones)){
+        stop("A tree column created by using getTrees() is required for 
            bootstrap_nodes=TRUE")
+      }
     }
-  }
     #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
     # check to make sure that getTrees used the same build as here
     #KBH
@@ -3175,15 +3179,16 @@ getBootstraps <- function(clones, bootstraps,
       stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
            getBoostraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
     }
-  # CGJ 2/20/23
-  if(starting_tree){
-    if("trees" %in% colnames(clones)){
-      starting_tree <- clones$trees
+    # CGJ 2/20/23
+    if(starting_tree){
+      if("trees" %in% colnames(clones)){
+        starting_tree <- clones$trees
+      } else{
+        stop("starting_trees cannot be set as TRUE without an already made trees column. Use getTrees() to get the trees column. ")
+      }
     } else{
-      stop("starting_trees cannot be set as TRUE without an already made trees column. Use getTrees() to get the trees column. ")
+      starting_tree <- NULL
     }
-  } else{
-    starting_tree <- NULL
   }
   if(build != "igphyml" | build != "raxml"){
     bootstrap_trees <- unlist(parallel::mclapply(1:bootstraps, function(x)
