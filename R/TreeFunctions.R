@@ -3020,7 +3020,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
                                                         rep = rep,
                                                         dir = dir,
                                                         rseed = x,
-                                                        from_getTrees=from_getTrees),error=function(e)e))
+                                                        from_getTrees=from_getTrees,...),error=function(e)e))
   } else if(build=="igphyml"){
     if(rm_temp){
       rm_dir <- file.path(dir,paste0(id,rep))
