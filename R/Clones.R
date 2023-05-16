@@ -591,7 +591,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(nrow(data) != full_nrow){
       n_removed <- full_nrow - nrow(data)
       warning(paste0("There was ", n_removed, " sequence(s) with an inframe stop codon",
-      " and were removed. If you want to keep these sequences use the option filerStop=FALSE."))
+      " and were removed. If you want to keep these sequences use the option filterStop=FALSE."))
     }
   }
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
