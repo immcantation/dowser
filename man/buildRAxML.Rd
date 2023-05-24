@@ -9,7 +9,7 @@ buildRAxML(
   seq = "sequence",
   exec,
   model = "GTR",
-  partition = NULL,
+  partition = FALSE,
   rseed = 28,
   name = "run",
   brln = "scaled",
@@ -33,7 +33,7 @@ buildRAxML(
 
 \item{partition}{A logical vector that indicates if you want to partition the data based on the heavy and light chains.}
 
-\item{rseed}{The random seed used for the parsimony inferences. This allos you to reproduce your results.}
+\item{rseed}{The random seed used for the parsimony inferences. This allows you to reproduce your results.}
 
 \item{name}{specifies the name of the output file}
 

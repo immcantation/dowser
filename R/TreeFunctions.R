@@ -1246,7 +1246,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @param    exec       RAxML executable
 #' @param    model      The DNA model to be used. GTR is the default.
 #' @param    partition  A logical vector that indicates if you want to partition the data based on the heavy and light chains.
-#' @param    rseed      The random seed used for the parsimony inferences. This allos you to reproduce your results.
+#' @param    rseed      The random seed used for the parsimony inferences. This allows you to reproduce your results.
 #' @param    name       specifies the name of the output file
 #' @param    brln       A parameter that determines how branches are reported when partitioning. Options include scaled (default), 
 #'                      unlinked, and linked
@@ -1262,7 +1262,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @return  \code{phylo} object created by RAxML-ng with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
-buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = NULL, 
+buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = FALSE, 
                        rseed = 28, name = "run", brln = "scaled", starting_tree = NULL, 
                        from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, ...){
   # add in option that lets the RAxML threading exec work -- would be here and downstream
@@ -1338,7 +1338,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     }
     command <- paste(command, "--tree", starting_tree)
   }
-  if(!is.null(partition)){
+  if(partition){
     heavy_index <- clone@locus == "IGH"
     end_heavy <- paste(strsplit(clone_seqs,split="")[[1]][heavy_index], collapse = "")
     fileConn<-file(file.path(dir, paste0(name, "_partition.txt")))
@@ -1371,7 +1371,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   
   ### CGJ 3/13/23
   # rescale the branches if partitioning is done
-  if(!is.null(partition)){
+  if(partition){
     tree <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestTree")))
     if(brln == "scaled"){
       model_file <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
@@ -1384,8 +1384,8 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
       scaler_light <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_light)))
       heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
       light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
-      tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
-                             (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
+      # tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
+      #                        (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
       ape::write.tree(tree, file.path(dir, paste0(name, ".raxml.bestTree")))
     }else if(brln == "unlinked"){
       # read in the data 
@@ -1413,7 +1413,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     command <- paste("--model", model, "--seed", rseed, "-msa", 
                      input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
                      "--force msa --tree", starting_tree, "--ancestral")
-    if(!is.null(partition)){
+    if(partition){
       old_command <- strsplit(command, "--seed")[[1]][2]
       new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
       command <- paste0(new_model, old_command, " --brlen ", brln)
@@ -1439,7 +1439,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     tree <- asr_tree
     ### CGJ 3/13/23
     # rescale the branches if partitioning is done
-    if(!is.null(partition)){
+    if(partition){
       if(brln == "scaled"){
         model_file <- readLines(file.path(dir, paste0(name, ".raxml.bestModel")))
         scaler <- strsplit(model_file, "BU")
@@ -1451,10 +1451,9 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
         scaler_light <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_light)))
         heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
         light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
-        tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
-                               (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
+        #tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
+        #                       (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
       }else if(brln == "unlinked"){
-        print("got to the right part")
         unlinked_trees <- ape::read.tree(file.path(dir, paste0(name, ".raxml.bestPartitionTrees")))
         check_partitions <- phangorn::RF.dist(unlinked_trees[[1]], unlinked_trees[[2]])
         check_best <- phangorn::RF.dist(unlinked_trees[[1]], tree)
@@ -1465,7 +1464,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
           new_value <- ((heavy_sites*unlinked_trees[[1]]$edge.length) + 
                           (light_sites*unlinked_trees[[2]]$edge.length))/
             sum(heavy_sites, light_sites)
-          tree$edge.length <- new_value
+         # tree$edge.length <- new_value
         } else{
           stop("A more complicated approach is needed")
         }
