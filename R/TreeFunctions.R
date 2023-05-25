@@ -980,7 +980,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    optimize   optimize HLP rates (r), lengths (l), topology (t)
 #' @param    motifs     motifs to consider (see IgPhyML docs)
 #' @param    hotness    hotness parameters to estimate (see IgPhyML docs)
-#' @param    rates      rate string for each omega (experimental)
+#' @param    rates      comma delimited list showing which omega-defined partitions
+#'                      get a separate rate (e.g. omega=e,e rates=0,1).
 #' @param    asrc       Intermediate sequence cutoff probability
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    ...        Additional arguments (not currently used)
@@ -1160,18 +1161,19 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     }
 
     if("rate_light_mle" %in% names(params)){
-      #re-scale branches if separate rate estimated
-      clone_index <- which(sapply(clone, function(x)x@clone == clone_id))
-      if(length(clone_index) != 1){
-        stop(paste0("Clone index error: ",clone_id))
-      }
-      clone_obj <- clone[[clone_index]]
-      lrate <- params[i,]$rate_light_mle
-      heavy_sites <- sum(clone_obj@locus == "IGH")/3
-      light_sites <- sum(clone_obj@locus != "IGH")/3
-      l <- trees[[i]]$edge.length
-      trees[[i]]$edge.length <- (l*heavy_sites + l*lrate*light_sites)/
-      (heavy_sites + light_sites)
+#      #re-scale branches if separate rate estimated
+#      clone_index <- which(sapply(clone, function(x)x@clone == clone_id))
+#      if(length(clone_index) != 1){
+#        stop(paste0("Clone index error: ",clone_id))
+#      }
+#      clone_obj <- clone[[clone_index]]
+#      lrate <- params[i,]$rate_light_mle
+#      hrate <- params[i,]$rate_heavy_mle
+#      heavy_sites <- sum(clone_obj@locus == "IGH")/3
+#      light_sites <- sum(clone_obj@locus != "IGH")/3
+#      l <- trees[[i]]$edge.length
+#      trees[[i]]$edge.length <- (l*hrate*heavy_sites + l*lrate*light_sites)/
+#      (heavy_sites + light_sites)
     }
 
     trees[[i]]$nodes <- rep(list(sequence=NULL),times=nnodes)
@@ -1384,8 +1386,8 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
       scaler_light <- as.numeric(gsub("\\{", "", gsub("\\}", "", scaler_light)))
       heavy_sites <- as.numeric(table(clone@locus == "IGH")[[1]])
       light_sites <- as.numeric(table(clone@locus != "IGH")[[1]])
-      # tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
-      #                        (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
+     # tree$edge.length <- ((tree$edge.length*scaler_heavy*heavy_sites) + 
+     #                        (tree$edge.length*scaler_light*light_sites))/(heavy_sites + light_sites)
       ape::write.tree(tree, file.path(dir, paste0(name, ".raxml.bestTree")))
     }else if(brln == "unlinked"){
       # read in the data 
