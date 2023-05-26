@@ -57,7 +57,8 @@ buildIgphyml(
 
 \item{hotness}{hotness parameters to estimate (see IgPhyML docs)}
 
-\item{rates}{rate string for each omega (experimental)}
+\item{rates}{comma delimited list showing which omega-defined partitions
+get a separate rate (e.g. omega=e,e rates=0,1).}
 
 \item{asrc}{Intermediate sequence cutoff probability}
 
