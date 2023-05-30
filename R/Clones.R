@@ -551,7 +551,47 @@ cleanAlignment <- function(clone){
 #' @param    locus        name of the column containing locus information
 #' @param    nproc        number of cores to parallelize formating over.
 #' @param    columns      additional data columns to include in output
-#' @param    ...          additional arguments to pass to makeAirrClone                        
+#' @param    id           name of the column containing sequence identifiers.
+#' @param    seq          name of the column containing observed DNA sequences. All 
+#'                        sequences in this column must be multiple aligned.
+#' @param    germ         name of the column containing germline DNA sequences. All entries 
+#'                        in this column should be identical for any given clone, and they
+#'                        must be multiple aligned with the data in the \code{seq} column.
+#' @param    v_call        name of the column containing V-segment allele assignments. All 
+#'                        entries in this column should be identical to the gene level.
+#' @param    j_call        name of the column containing J-segment allele assignments. All 
+#'                        entries in this column should be identical to the gene level.
+#' @param    junc_len     name of the column containing the length of the junction as a 
+#'                        numeric value. All entries in this column should be identical 
+#'                        for any given clone.
+#' @param    mask_char    character to use for masking and padding.
+#' @param    max_mask     maximum number of characters to mask at the leading and trailing
+#'                        sequence ends. If \code{NULL} then the upper masking bound will 
+#'                        be automatically determined from the maximum number of observed 
+#'                        leading or trailing Ns amongst all sequences. If set to \code{0} 
+#'                        (default) then masking will not be performed.
+#' @param    pad_end      if \code{TRUE} pad the end of each sequence with \code{mask_char}
+#'                        to make every sequence the same length.
+#' @param    text_fields  text annotation columns to retain and merge during duplicate removal.
+#' @param    num_fields   numeric annotation columns to retain and sum during duplicate removal.
+#' @param    seq_fields   sequence annotation columns to retain and collapse during duplicate 
+#'                        removal. Note, this is distinct from the \code{seq} and \code{germ} 
+#'                        arguments, which contain the primary sequence data for the clone
+#'                        and should not be repeated in this argument.
+#' @param    add_count    if \code{TRUE} add an additional annotation column called 
+#'                        \code{COLLAPSE_COUNT} during duplicate removal that indicates the 
+#'                        number of sequences that were collapsed.
+#' @param    verbose      passed on to \code{collapseDuplicates}. If \code{TRUE}, report the 
+#'                        numbers of input, discarded and output sequences; otherwise, process
+#'                        sequences silently.                        
+#' @param    collapse     collapse identical sequences?
+#' @param    traits       column ids to keep distinct during sequence collapse 
+#' @param    chain        if HL, include light chain information if available.
+#' @param    heavy        name of heavy chain locus (default = "IGH")
+#' @param    mod3         pad sequences to length mutliple three?
+#' @param    randomize    randomize sequence order? Important if using PHYLIP
+#' @param    use_regions   assign CDR/FWR regions?
+#' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?                     
 #'
 #' @return   A tibble of \link{airrClone} objects containing modified clones.
 #'
@@ -569,9 +609,14 @@ cleanAlignment <- function(clone){
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
-                         subclone="subclone_id", nproc=1, chain="H", heavy="IGH", 
-                         cell="cell_id", locus="locus", filterStop=TRUE, minseq=2,
-                         split_light=FALSE, majoronly=FALSE, columns=NULL, ...) {
+    subclone="subclone_id", id="sequence_id", 
+    germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
+    junc_len="junction_length", mask_char="N",
+    max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
+    add_count=TRUE, verbose=FALSE, collapse=TRUE,
+    cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
+    use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
+    filterStop=TRUE, minseq=2, split_light=FALSE, majoronly=FALSE, columns=NULL){
   
   if(majoronly){
     if(!subclone %in% names(data)){
@@ -663,8 +708,13 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
   
   clones <- data %>%
     dplyr::group_by(!!rlang::sym(clone)) %>%
-    dplyr::do(data=makeAirrClone(.data, seq=seq,
-                                 clone=clone, chain=chain, heavy=heavy, cell=cell, ...))
+    dplyr::do(data=makeAirrClone(.data, seq=seq, germ=germ, id=id,
+      v_call=v_call, j_call=j_call, junc_len=junc_len, mask_char=mask_char,
+      max_mask=max_mask, pad_end=pad_end, text_fields=text_fields, num_fields=num_fields,
+      seq_fields=seq_fields, add_count=add_count, verbose=verbose, collapse=collapse,
+      heavy=heavy, cell=cell, locus=locus, traits=traits, mod3=mod3, randomize=randomize,
+      use_regions=use_regions, dup_singles=dup_singles,
+      clone=clone, chain=chain))
   
   # remove NULL clone objects
   exclude_clones <- unlist(lapply(clones$data,function(x)is.null(x)))
