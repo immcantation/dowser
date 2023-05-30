@@ -8,7 +8,6 @@ pipelines:
           - sed -i '/test/ d' .Rbuildignore
           - Rscript -e "install.packages('BiocManager')"
           - Rscript -e "BiocManager::install('ggtree')"
-          - Rscript -e 'remotes::install("phangorn")'
           - Rscript tests/setup/install_dep.R
           - R CMD build .
           - R CMD check *.tar.gz --as-cran --run-donttest --timings
