@@ -5,7 +5,7 @@
 ####
 # Add here Biocondutor dependencies that 
 # are not installed in the immcantation/test container
-bioconductor_deps <- c("ComplexHeatmap")
+bioconductor_deps <- NULL
 ####
 
 library(devtools)
