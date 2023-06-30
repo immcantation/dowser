@@ -2,76 +2,100 @@
 
 # Install dependencies from CRAN or Bitbucket as needed.
 
-# Imports
+####
+# Add here Biocondutor dependencies that 
+# are not installed in the immcantation/test container
+bioconductor_deps <- c("ComplexHeatmap")
+####
+
 library(devtools)
 library(versions)
+# All immcantation R packages
+immcantation_packages <- c("alakazam", "shazam", "tigger", "scoper", "dowser", "enchantr")
 
-# Function to install packages
-installDep <- function(this_pack_v, dep_pack_name, dep_pack_v) {
-    required_version <- gsub(".*\\([^0-9.]*(.*)\\)$", "\\1", dep_pack_v)
-    devel <- length(grep("\\.999$", required_version)) > 0
+# Function to install dependencies
+installDep <- function(pkg, devel_mode, immcantation=immcantation_packages, 
+                       repos="http://lib.stat.cmu.edu/R/CRAN/") {
     
-    get_cran_versions <- function (pkg) {
-        
-        current_url <- sprintf("%s/src/contrib",versions:::latest.MRAN())
-        lines <- versions:::url.lines(current_url)
-        lines <- lines[grep("^<a href=\"*", lines)]
-        tarballs <- gsub(".*href=\"([^\"]+)\".*", "\\1", lines)
-        dates <- gsub(".*  ([0-9]+-[a-zA-Z]+-[0-9]+) .*", "\\1", lines)
-        dates <- as.Date(dates, format = "%d-%b-%Y")
-        idx <- grep(sprintf("^%s_.*.tar.gz$", pkg), tarballs)
-        # Keep all versions
-        if (length(idx) < 1) {
-            warning(sprintf("The current version and publication date of %s could not\n                     be detected", 
-                            pkg))
-            versions <- dates <- NA
-        } else if (length(idx) > 0) {
-            versions <- tarballs[idx]
-            versions <- gsub(sprintf("^%s_", pkg), "", versions)
-            versions <- numeric_version(gsub(".tar.gz$", "", versions))
-            dates <- dates[idx]
-        } 
-        
-        ret <- list()
-        ret[[pkg]] <- data.frame(
-                version = versions, 
-                date = as.character(dates), 
-                stringsAsFactors = FALSE)
-        ret
+    # Required version 
+    pkg_name <- strsplit(pkg," ")[[1]][1]
+    pkg_version <- gsub(".*\\([^0-9.]*(.*)\\)$", "\\1", pkg)
+    pkg_logic <- gsub("(.*)( *)\\(([><=]*)[^0-9.]*(.*)\\)$", "\\3", pkg)
+    if (pkg_version == pkg_name ) { 
+        pkg_version <- NULL
+        pkg_logic <- ">="
     }
     
-    cran_versions <- get_cran_versions(dep_pack_name)
-    cran_versions <- cran_versions[[dep_pack_name]]$version
+    is_immcantation <- pkg_name %in% immcantation
     
-    this_pack_devel <- length(grep("\\.999$", this_pack_v)) > 0
-    in_cran <- numeric_version(required_version) %in% cran_versions
+    message("Package requested: ", pkg)
+    message("devel_mode: ", devel_mode)
+    message("is_immcantation: ", is_immcantation)
     
-    if (!this_pack_devel & !devel & in_cran) {
-        tryCatch({ devtools::install_version(dep_pack_name, required_version, repos="http://lib.stat.cmu.edu/R/CRAN/") },
-                 error=function(e) { 
-                     cat(e, "\n")
-                     message("Installing from Bitbucket...\n ")
-                     install_bitbucket(paste0("kleinstein/", dep_pack_name, "@master"))
-                 })
-    } else {
-        if (!in_cran & !devel) { 
-            warning(paste0(required_version," not found in CRAN.")) 
+    # Installed packages
+    is_installed <- F
+    installed_version <- NA
+    installed_packages <- installed.packages()
+    installed_pkg <-  installed_packages[installed_packages[,"Package"]==pkg_name,,drop=F]
+    
+    if (nrow(installed_pkg) > 0 ) {
+        # Check version of installed package
+        tmp_pkg_version <- pkg_version
+        if (is.null(pkg_version)) {
+            tmp_pkg_version <- "0.0.0"
         }
-        message(paste0(dep_pack_name, " ", required_version,": installing most recent version from Bitbucket.")) 
-        install_bitbucket(paste0("kleinstein/", dep_pack_name, "@master"), upgrade = "never")
+        installed_version <- numeric_version(installed_pkg[,"Version"])
+        is_installed <- eval(parse(text=paste0("numeric_version('",installed_version,"') ",
+                                               pkg_logic,
+                                               " numeric_version('",tmp_pkg_version,"')")))
+    }
+    
+    if (!is_immcantation | !devel_mode) {
+        if (is_installed) {
+            message(pkg, " is available.")
+        } else {
+            # Install from CRAN
+            tryCatch({ devtools::install_version(pkg_name, pkg_version, repos="http://lib.stat.cmu.edu/R/CRAN/") },
+                     error=function(e) { 
+                         # This is needed if there is an Immcantation release package that is not 
+                         # available from CRAN
+                         cat(e, "\n")
+                         message("Installing ",pkg," from Bitbucket...\n ")
+                         install_bitbucket(paste0("kleinstein/", pkg_name, "@",pkg_version))
+                     })
+        }
+    } else {
+        message(paste0(pkg,": installing most recent version from Bitbucket @master.")) 
+        install_bitbucket(paste0("kleinstein/", pkg_name, "@master"), upgrade = "never")
     }
 }
 
+# Parse this package version in DESCRIPTION
+this_pkg_version <- read.dcf("DESCRIPTION", fields="Version")
+this_pkg_version <- gsub(".*\\([^0-9.]*(.*)\\)$", "\\1", this_pkg_version)
+
+# If the package is using the devel version number (ends in .999)
+# always install devel versions of immcantation packages
+devel_mode <- grepl("\\.999$", this_pkg_version)
+
 # Parse Imports field in DESCRIPTION
-pkg_version <- read.dcf("DESCRIPTION", fields="Version")
 d <- read.dcf("DESCRIPTION", fields="Imports")
 d <- sub("^\\n", "", d)
 imports <- strsplit(d, ",\n")[[1]]
 
+# Install immcantation packages first
+immcantation <- unlist(sapply(immcantation_packages, grep, imports))
+imports <- imports[unique(c(immcantation, 1:length(imports)))]
+# Skip bioconductor packages
+imports <- imports[!imports %in% bioconductor_deps]
+
+
 # Install
-idx <- sapply(c("shazam", "alakazam"), grep, imports)
-for (i in 1:length(idx)) {
-    this_package_name <-  names(idx)[[i]]
-    this_package_version <-  imports[idx[[i]]]
-    installDep(pkg_version, this_package_name, this_package_version)
+for (i in 1:length(imports)) {
+    this_import <- imports[i]
+    installDep(this_import, devel_mode)
+}
+
+if (!is.null(bioconductor_deps)) {
+    BiocManager::install(bioconductor_deps)
 }
