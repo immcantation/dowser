@@ -536,15 +536,15 @@ cleanAlignment <- function(clone){
 #' 
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone.
 #'                        See \link{makeAirrClone} for required columns and their defaults
-#' @param    split_light  split or lump subclones? See \code{getSubclones}.
+#' @param    split_light  split or lump subgroups? See \code{resolveLightChains}.
 #' @param    filterStop   only use sequences that do not contain an in-frame stop codon
-#' @param    minseq       minimum numbner of sequences per clone
+#' @param    minseq       minimum number of sequences per clone
 #' @param    filterStop   only use sequences that do not contain an in-frame stop codon
-#' @param    majoronly    only return largest subclone and sequences without light chains
+#' @param    majoronly    only return largest subgroup and sequences without light chains
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
 #' @param    seq          sequence alignment column name.
-#' @param    subclone     name of the column containing the identifier for the subclone.
+#' @param    subgroup     name of the column containing the identifier for the subgroup.
 #' @param    chain        if HL, include light chain information if available.
 #' @param    heavy        name of heavy chain locus (default = "IGH")
 #' @param    cell         name of the column containing cell assignment information
@@ -609,7 +609,7 @@ cleanAlignment <- function(clone){
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
-    subclone="subclone_id", id="sequence_id", 
+    subgroup="clone_subgroup", id="sequence_id", 
     germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
     junc_len="junction_length", mask_char="N",
     max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
@@ -619,10 +619,10 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     filterStop=TRUE, minseq=2, split_light=FALSE, majoronly=FALSE, columns=NULL){
   
   if(majoronly){
-    if(!subclone %in% names(data)){
-      stop("Need subclone designation if majoronly=TRUE")
+    if(!subgroup %in% names(data)){
+      stop("Need subgroup designation if majoronly=TRUE")
     }
-    data <- dplyr::filter(data, !!rlang::sym(subclone) <= 1)
+    data <- dplyr::filter(data, !!rlang::sym(subgroup) <= 1)
   }
   if(filterStop){
     full_nrow <- nrow(data)
@@ -647,8 +647,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
   }
   if(chain == "HL"){
-    if(!subclone %in% names(data)){
-      stop("Need subclone designation for heavy+light chain clones")
+    if(!subgroup %in% names(data)){
+      stop("Need subgroup designation for heavy+light chain clones")
     }
     if(!locus %in% names(data)){
       stop("Need locus designation for heavy+light chain clones")
@@ -672,21 +672,21 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       }
     }
   }
-  #edit based on subclone options
+  #edit based on subgroup options
   if(split_light){
-    if(!subclone %in% names(data)){
-      stop("Need subclone designation for heavy+light chain clones")
+    if(!subgroup %in% names(data)){
+      stop("Need subgroup designation for heavy+light chain clones")
     }
-    if(sum(data[[subclone]] == 0) > 0){
-      warning("Assigning subclone 0 (missing light chain) to subclone 1")
-      data[data[[subclone]] == 0,][[subclone]] <- 1
+    if(sum(data[[subgroup]] == 0) > 0){
+      warning("Assigning subgroup 0 (missing light chain) to subgroup 1")
+      data[data[[subgroup]] == 0,][[subgroup]] <- 1
     }
-    data[[clone]] <- paste0(data[[clone]],"_",data[[subclone]])
+    data[[clone]] <- paste0(data[[clone]],"_",data[[subgroup]])
   }else if(!split_light && chain=="HL"){
-    #since we're not splitting the light chains, can only include the biggest subclone
+    #since we're not splitting the light chains, can only include the biggest subgroup
     #for tree building
     data <- dplyr::filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
-                                    !!rlang::sym(subclone) > 1))
+                                    !!rlang::sym(subgroup) > 1))
   }
   if(!is.null(columns)){
     if(sum(!columns %in% names(data)) != 0){
@@ -1098,9 +1098,9 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 }
 
 
-#' Define subclones based on light chain rearrangements
+#' Define subgroups based on light chain rearrangements
 #' 
-#' \code{getSubclones} plots a tree or group of trees
+#' \code{resolveLightChains} plots a tree or group of trees
 #' @param    heavy        a tibble containing heavy chain sequences with clone_id
 #' @param    light        a tibble containing light chain sequences
 #' @param    nproc        number of cores for parallelization
@@ -1139,12 +1139,12 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 # TODO: Make v_alt_cell not be NA by default
 # TODO: light chains also require clone_id? Currently cell_id might not be unique
 #' @export
-getSubclones <- function(heavy, light, nproc=1, minseq=1,
-                         id="sequence_id", seq="sequence_alignment", 
-                         clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
-                         junc_len="junction_length", nolight="missing"){
+resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
+                                   id="sequence_id", seq="sequence_alignment",
+                                   clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
+                                   junc_len="junction_length", nolight="missing"){
   
-  subclone <- "subclone_id"
+  subgroup <- "clone_subgroup"
   scount <- table(heavy[[clone]])
   big <- names(scount)[scount >= minseq]
   heavy <- dplyr::filter(heavy,(!!rlang::sym(clone) %in% big))
@@ -1164,27 +1164,29 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
   
   heavy$vj_gene <- nolight
   heavy$vj_alt_cell <- nolight
-  heavy$subclone_id <- 0
+  heavy$clone_subgroup <- 0
   light$vj_gene <- nolight
   light$vj_alt_cell <- nolight
-  light$subclone_id <- 0
+  light$clone_subgroup <- 0
   light[[clone]] <- -1
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
     hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
     ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
-    hd <- dplyr::filter(hd,(!!rlang::sym(cell) %in% ld[[!!cell]]))
+    hd_sc <- dplyr::filter(hd,(!is.na(!!rlang::sym(cell))))
+    hd_bulk <- dplyr::filter(hd, (is.na(!!rlang::sym(cell))))
+    #hd_bulk <- dplyr::filter(hd_bulk, seq_type != "10x")
     # hr <- filter(hd,!(!!rlang::sym(cell) %in% ld[[!!cell]]))
     if(nrow(ld) == 0){
       return(hd)
     }
-    ltemp <- ld
+    ltemp <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
     ltemp$clone_id <- -1
     ld <- dplyr::tibble()
     lclone <- 1
     while(nrow(ltemp) > 0){
       lvs <- strsplit(ltemp[[v_call]],split=",")
       ljs <- strsplit(ltemp[[j_call]],split=",")
-      combos <- 
+      combos <-
         lapply(1:length(lvs),function(w)
           unlist(lapply(lvs[[w]],function(x)
             lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
@@ -1194,7 +1196,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
       lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
       max <- names(lcounts)[which.max(lcounts)]
       cvs <- unlist(lapply(combos,function(x)max %in% x))
-      ltemp[cvs,][[subclone]] <- lclone
+      ltemp[cvs,][[subgroup]] <- lclone
       ltemp[cvs,]$vj_gene <- max
       
       # if a cell has the same combo for two rearrangements, only pick one
@@ -1203,7 +1205,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
       mcells <- names(cell_counts)[cell_counts > 1]
       for(cellname in mcells){
         ttemp <- dplyr::filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
-        ttemp$str_counts <- 
+        ttemp$str_counts <-
           stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
         # keep version with most non-N characters
         keepseq <- ttemp[[id]][which.max(ttemp$str_counts)]
@@ -1217,7 +1219,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
       mcells <- unique(include[[cell]])
       for(cellname in mcells){
         if(cellname %in% leave[[cell]]){
-          include[include[[cell]] == cellname,]$vj_alt_cell <- 
+          include[include[[cell]] == cellname,]$vj_alt_cell <-
             paste(paste0(leave[leave[[cell]] == cellname,][[v_call]],":",
                          leave[leave[[cell]] == cellname,][[j_call]]),
                   collapse=",")
@@ -1228,20 +1230,77 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
       lclone <- lclone + 1
     }
     ld[[clone]] <- cloneid
-    for(cellname in unique(hd[[cell]])){
+    for(cellname in unique(hd_sc[[cell]])){
       #hclone <- hd[hd[[cell]] == cell,][[clone]]
       if(cellname %in% ld[[cell]]){
-        lclone <- ld[ld[[cell]] == cellname,][[subclone]]
-        ld[ld[[cell]] == cellname,][[subclone]] <- lclone
-        hd[hd[[cell]] == cellname,][[subclone]] <- lclone
-        hd[hd[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
-        hd[hd[[cell]] == cellname,]$vj_alt_cell <- 
+        lclone <- ld[ld[[cell]] == cellname,][[subgroup]]
+        ld[ld[[cell]] == cellname,][[subgroup]] <- lclone
+        hd_sc[hd_sc[[cell]] == cellname,][[subgroup]] <- lclone
+        hd_sc[hd_sc[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
+        hd_sc[hd_sc[[cell]] == cellname,]$vj_alt_cell <-
           ld[ld[[cell]] == cellname,]$vj_alt_cell
       }
     }
-    comb <- dplyr::bind_rows(hd,ld)
-    comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subclone]])
+    # now get the subgroup_id for the bulk data
+    comb <- dplyr::bind_rows(hd_sc,ld)
+    comb$clone_subgroup <- as.integer(comb$clone_subgroup)
+    hd_bulk$clone_subgroup <- 1
+    if(nrow(ld) != 0 & nrow(hd_bulk) != 0){
+      for(seq in 1:nrow(hd_bulk)){
+        rating <- c()
+        unpaired_heavy <- unlist(str_split(as.character(hd_bulk$sequence_alignment[seq]), ""))
+        for(i in 1:nrow(hd_sc)){
+          paired_heavy <- unlist(str_split(as.character(hd_sc$sequence_alignment[i]), ""))
+          rating <- append(rating, sum(unpaired_heavy != paired_heavy))
+        }
+        proper_subgroup <- which(rating == min(rating))
+        if(length(proper_subgroup) > 1){
+          subgroups <- c()
+          for(number in unique(proper_subgroup)){
+            subgroups <- append(subgroups, hd_sc$clone_subgroup[number])
+          }
+          if(length(unique(subgroups)) > 1){
+            sizes <- c()
+            for(uniq_subgroups in subgroups){
+              nrows <- nrow(hd_sc[hd_sc$clone_subgroup == uniq_subgroups,])
+              sizes <- append(sizes, nrows)
+            }
+            if(sum(sizes == max(sizes)) == 1){
+              proper_subgroup_value <- subgroups[which(sizes == max(sizes))]
+            } else if(sum(sizes == max(sizes)) != 1){
+              potential_subgroups <- subgroups[which(sizes == max(sizes))]
+              proper_subgroup_value <- min(potential_subgroups)
+            }
+          } else{
+            proper_subgroup_value <- hd_sc$clone_subgroup[proper_subgroup[1]]
+          }
+        } else{
+          proper_subgroup_value <- hd_sc$clone_subgroup[proper_subgroup]
+        }
+        hd_bulk$clone_subgroup[seq] <- proper_subgroup_value
+      }
+    } 
+    comb <- dplyr::bind_rows(comb, hd_bulk)
+    comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subgroup]])
     comb$vj_cell <- paste(comb$vj_gene,comb$vj_alt_cell,sep=",")
+    
+    # order check 
+    size <- c()
+    subgroups <- c()
+    for(subgroup in sort(unique(comb$clone_subgroup))){
+      size <- append(size, nrow(comb[comb$clone_subgroup == subgroup,]))
+      subgroups <- append(subgroups, subgroup)
+    }
+    if(!all(diff(size) <= 0)){
+      ordered_size <- sort(size, decreasing = T)
+      subgroup_number <- 1
+      for(new_order in 1:ordered_size){
+        idx <- which(size == new_order)
+        current_subgroup <- which(subgroups == idx)
+        comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
+        subgroup_number <- subgroup_number + 1
+      }
+    }
     comb
   },mc.cores=nproc)
   paired <- dplyr::bind_rows(paired)
