@@ -1281,9 +1281,9 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
     if(nrow(ld) != 0 & nrow(hd_bulk) != 0){
       for(seq in 1:nrow(hd_bulk)){
         rating <- c()
-        unpaired_heavy <- unlist(str_split(as.character(hd_bulk$sequence_alignment[seq]), ""))
+        unpaired_heavy <- unlist(stringr::str_split(as.character(hd_bulk$sequence_alignment[seq]), ""))
         for(i in 1:nrow(hd_sc)){
-          paired_heavy <- unlist(str_split(as.character(hd_sc$sequence_alignment[i]), ""))
+          paired_heavy <- unlist(stringr::str_split(as.character(hd_sc$sequence_alignment[i]), ""))
           rating <- append(rating, sum(unpaired_heavy != paired_heavy))
         }
         proper_subgroup <- which(rating == min(rating))
