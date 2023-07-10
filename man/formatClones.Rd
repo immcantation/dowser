@@ -8,7 +8,7 @@ formatClones(
   data,
   seq = "sequence_alignment",
   clone = "clone_id",
-  subclone = "subclone_id",
+  subgroup = "clone_subgroup",
   id = "sequence_id",
   germ = "germline_alignment_d_mask",
   v_call = "v_call",
@@ -50,7 +50,7 @@ sequences in this column must be multiple aligned.}
 \item{clone}{name of the column containing the identifier for the clone. All 
 entries in this column should be identical.}
 
-\item{subclone}{name of the column containing the identifier for the subclone.}
+\item{subgroup}{name of the column containing the identifier for the subgroup.}
 
 \item{id}{name of the column containing sequence identifiers.}
 
@@ -120,11 +120,11 @@ sequences silently.}
 
 \item{filterStop}{only use sequences that do not contain an in-frame stop codon}
 
-\item{minseq}{minimum numbner of sequences per clone}
+\item{minseq}{minimum number of sequences per clone}
 
-\item{split_light}{split or lump subclones? See \code{getSubclones}.}
+\item{split_light}{split or lump subgroups? See \code{resolveLightChains}.}
 
-\item{majoronly}{only return largest subclone and sequences without light chains}
+\item{majoronly}{only return largest subgroup and sequences without light chains}
 
 \item{columns}{additional data columns to include in output}
 }
