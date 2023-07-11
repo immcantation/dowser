@@ -1205,10 +1205,9 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
     hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
     ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
-    hd_sc <- dplyr::filter(hd,(!is.na(!!rlang::sym(cell))))
-    hd_bulk <- dplyr::filter(hd, (is.na(!!rlang::sym(cell))))
-    #hd_bulk <- dplyr::filter(hd_bulk, seq_type != "10x")
-    # hr <- filter(hd,!(!!rlang::sym(cell) %in% ld[[!!cell]]))
+    ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
+    hd_sc <- hd[hd$cell_id %in% ld$cell_id,]
+    hd_bulk <- hd[!hd$cell_id %in% ld$cell_id,]
     if(nrow(ld) == 0){
       return(hd)
     }
@@ -1279,11 +1278,11 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
     comb$clone_subgroup <- as.integer(comb$clone_subgroup)
     hd_bulk$clone_subgroup <- 1
     if(nrow(ld) != 0 & nrow(hd_bulk) != 0){
-      for(seq in 1:nrow(hd_bulk)){
+      for(sequence in 1:nrow(hd_bulk)){
         rating <- c()
-        unpaired_heavy <- unlist(stringr::str_split(as.character(hd_bulk$sequence_alignment[seq]), ""))
+        unpaired_heavy <- unlist(stringr::str_split(as.character(hd_bulk[[seq]][sequence]), ""))
         for(i in 1:nrow(hd_sc)){
-          paired_heavy <- unlist(stringr::str_split(as.character(hd_sc$sequence_alignment[i]), ""))
+          paired_heavy <- unlist(stringr::str_split(as.character(hd_sc[[seq]][i]), ""))
           rating <- append(rating, sum(unpaired_heavy != paired_heavy))
         }
         proper_subgroup <- which(rating == min(rating))
@@ -1310,7 +1309,7 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
         } else{
           proper_subgroup_value <- hd_sc$clone_subgroup[proper_subgroup]
         }
-        hd_bulk$clone_subgroup[seq] <- proper_subgroup_value
+        hd_bulk$clone_subgroup[sequence] <- proper_subgroup_value
       }
     } 
     comb <- dplyr::bind_rows(comb, hd_bulk)
@@ -1327,11 +1326,19 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
     if(!all(diff(size) <= 0)){
       ordered_size <- sort(size, decreasing = T)
       subgroup_number <- 1
-      for(new_order in 1:ordered_size){
+      for(new_order in ordered_size){
         idx <- which(size == new_order)
-        current_subgroup <- which(subgroups == idx)
-        comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
-        subgroup_number <- subgroup_number + 1
+        if(length(idx) > 1){
+          for(subgroup_idx in 1:length(idx)){
+            current_subgroup <- which(subgroups == idx[subgroup_idx])
+            comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
+            subgroup_number <- subgroup_number + 1
+          }
+        } else {
+          current_subgroup <- which(subgroups == idx)
+          comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
+          subgroup_number <- subgroup_number + 1
+        }
       }
     }
     comb
