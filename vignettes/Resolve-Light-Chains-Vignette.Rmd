@@ -44,21 +44,18 @@ The output of this function is a tibble in which each row is a different sequenc
 
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
-library(alakazam)
+library(dplyr)
 
 # load example tsv data
-data <- readChangeoDb(file.path("..", "setup", "db_test.tsv"))
+data("ExampleMixedDb")
 
-# set the clone id 
-data$clone_id <- data$expected_clone_id_split_light_T
-
-# seperate the data by heavy and light chains 
-heavy <- filter(data, locus == "IGH")
-light <- filter(data, locus != "IGH")
+# separate the data by heavy and light chains 
+heavy <- filter(ExampleMixedDb, locus == "IGH")
+light <- filter(ExampleMixedDb, locus != "IGH")
 
 
 # find the clone subgroups 
-df <- resolveLightChains(heavy, light, seq = "junction")
+df <- resolveLightChains(heavy, light)
 
 print(df$clone_subgroup)
 ```

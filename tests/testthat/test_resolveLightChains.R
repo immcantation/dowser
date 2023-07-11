@@ -1,11 +1,10 @@
 # Load test dataset
-library(alakazam)
-#load(file.path("test", "setup", "db_test.tsv"), envir=e1)
-data <- readChangeoDb(file.path("..", "setup", "db_test.tsv"))
+library(dplyr)
 
-data$clone_id <- data$expected_clone_id_split_light_T
-heavy <- filter(data, locus == "IGH")
-light <- filter(data, locus != "IGH")
+data("ExampleMixedDb")
+
+heavy <- filter(ExampleMixedDb, locus == "IGH")
+light <- filter(ExampleMixedDb, locus != "IGH")
 
 # run resolveLightChains
 data <- resolveLightChains(heavy, light, seq = "junction")

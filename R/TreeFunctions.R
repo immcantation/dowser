@@ -3368,228 +3368,228 @@ calcRF <- function(tree_1, tree_2){
 #' object using \link{formatClones}
 #'  
 #' @export
-getTreeSimulation <- function(clones, naive_heavy_chain, naive_light_chain = NULL, 
-                              targetingModel = "HH_S5F", lc_targetingModel = "HKL_S5F",
-                              nproc = 1, mutational_rate = 2, cell_id = "cell_id", 
-                              sequence_alignment= "sequence_alignment", clone_id = "clone_id",
-                              sequence_id = "sequence_id", dir = NULL, id=NULL){
-  if(!"trees" %in% colnames(clones)){
-    stop("A tree column created by using getTrees() is required")
-  }
-  n_sites <- c()
-  for(i in 1:nrow(clones)){
-    tobind <-   nchar(clones$data[[i]]@data$hlsequence[1])
-    n_sites <- append(n_sites, tobind)
-  }
-  
-  original_trees <- clones$trees
-  for(i in 1:length(original_trees)){
-    original_trees[[i]]$edge.length <- original_trees[[i]]$edge.length/n_sites[i]
-  }
-  
-  graphs = list()
-  for (i in 1:length(original_trees)){
-    tree <- original_trees[[i]]
-    tree$edge.length = tree$edge.length
-    graphs[[i]] <- phyloToGraph(tree) 
-  }
-  
-  if(!is.null(naive_light_chains)){
-    graphs_half = list()
-    for (i in 1:length(original_trees)){
-      tree <- original_trees[[i]]
-      tree$edge.length = tree$edge.length/mutational_rate
-      graphs_half[[i]] <- phyloToGraph(tree) 
-    }
-  }
-  
-  graphs[sapply(graphs, is.null)] <- NULL
-  
-  if(!is.null(naive_light_chains)){
-    naive_cell_id_set <- naive_light_chain[[cell_id]][naive_light_chain[[cell_id]] %in% naive_heavy_chain[[cell_id]]]
-    naive_cell_id_set <- unique(naive_cell_id_set)
-  }else{
-    naive_cell_id_set <- unique(naive_heavy_chain[[cell_id]])
-  }
-  
-  frankenstein_heavy_db <- do.call(rbind, parallel::mclapply(1:length(graphs), function(ii){
-    phylo_tree = graphs[[ii]]
-    
-    find_starter <- igraph::as_data_frame(phylo_tree) 
-    find_starter <- find_starter$to[nrow(find_starter)]
-    find_starter <- gsub("\\|.*", "", find_starter)
-    temp_seq_h = naive_heavy_chain[naive_heavy_chain[[sequence_id]] == find_starter,][1,] 
-    
-    if(targetingModel == "HH_S5F"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HH_S5F)
-    } else if(targetingModel == "HH_S1F"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HH_S1F)
-    } else if(targetingModel == "HKL_S1F"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HH_S1F)
-    } else if(targetingModel == "HKL_S5F"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HKL_S5F)
-    } else if(targetingModel == "MK_RS1NF"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = MK_RS1NF)
-    } else if(targetingModel == "MK_RS5NF"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = MK_RS5NF)
-    } else if(targetingModel == "U5N"){
-      temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = U5N)
-    } else{
-      stop("Invalid targetingModel")
-    }
-    
-    temp <- c()
-    for (ind in 1:length(temp_sim_tree_h$sequence)){
-      if (nchar(temp_sim_tree_h$name[ind]) > 6){ 
-        temp_heavy_row = temp_seq_h[rep(1,1), ] 
-        temp_seq_align = temp_heavy_row[[sequence_alignment]]
-        temp_heavy_row$sequence_alignment = temp_sim_tree_h$sequence[ind]     
-        temp_heavy_row$germline_alignment = temp_seq_align                    
-        temp_heavy_row$sequence_id = temp_sim_tree_h$name[ind]               
-        temp_heavy_row$clone_id = ii              
-        tmp_str = sapply(strsplit(temp_sim_tree_h$name[ind], "-"), "[", 1)
-        tmp_cell_id = paste(tmp_str, temp_heavy_row[[clone_id]], sep="-")
-        temp_heavy_row$cell_id = tmp_cell_id                                  
-        temp <- rbind(temp, temp_heavy_row) 
-      }
-    }
-    return(temp)
-  }, mc.cores = nproc))
-  
-  frankenstein_light_db <- do.call(rbind, parallel::mclapply(1:length(graphs_half), function(ii){
-    phylo_tree = graphs[[ii]]
-    half_tree = graphs_half[[ii]]
-    
-    find_starter <- igraph::as_data_frame(phylo_tree) 
-    find_starter <- find_starter$to[nrow(find_starter)]
-    find_starter <- gsub("\\|.*", "", find_starter)
-    temp_seq_h = naive_heavy_chain[naive_heavy_chain[[sequence_id]] == find_starter,][1,] 
-    temp_seq_l = naive_light_chain[naive_light_chain[[cell_id]] == temp_seq_h[[cell_id]],][1,]
-    
-    if(lc_targetingModel == "HH_S5F"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HH_S5F)
-    } else if(lc_targetingModel == "HH_S1F"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HH_S1F)
-    } else if(lc_targetingModel == "HKL_S1F"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HH_S1F)
-    } else if(lc_targetingModel == "HKL_S5F"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HKL_S5F)
-    } else if(lc_targetingModel == "MK_RS1NF"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = MK_RS1NF)
-    } else if(lc_targetingModel == "MK_RS5NF"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = MK_RS5NF)
-    } else if(lc_targetingModel == "U5N"){
-      temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = U5N)
-    } else{
-      stop("Invalid targetingModel")
-    }
-    
-    temp <- c()
-    for (ind in 1:length(temp_sim_tree_l$sequence)){
-      if (nchar(temp_sim_tree_l$name[ind]) > 6){ 
-        temp_light_row = temp_seq_l[rep(1,1), ] 
-        temp_seq_align = temp_light_row[[sequence_alignment]]
-        temp_light_row$sequence_alignment = temp_sim_tree_l$sequence[ind]     
-        temp_light_row$germline_alignment = temp_seq_align                  
-        temp_light_row$sequence_id = temp_sim_tree_l$name[ind]  
-        temp_light_row$clone_id = ii                                            
-        temp <- rbind(temp, temp_light_row) 
-      }
-    }
-    return(temp)
-  }, mc.cores = nproc))
-  
-  if(!is.null(naive_light_chain)){
-    frankenstein_light_db$cell_id <- frankenstein_heavy_db$cell_id
-  }
-  
-  
-  frankenstein_heavy_db$sequence_id <- paste0(frankenstein_heavy_db[[sequence_id]], "_", frankenstein_heavy_db[[clone_id]])
-  frankenstein_heavy_db$cell_id <- frankenstein_heavy_db[[sequence_id]]
-  if(!is.null(naive_light_chain)){
-    frankenstein_light_db$sequence_id <- paste0(frankenstein_light_db[[sequence_id]], "_", frankenstein_light_db[[clone_id]])
-    frankenstein_light_db$cell_id <- frankenstein_light_db[[sequence_id]]
-  }
-  
-  if(!is.null(naive_light_chain)){
-    comb <- getSubclones(frankenstein_heavy_db, frankenstein_light_db, cell="cell_id", nproc=nproc)
-  } else{
-    comb <- frankenstein_heavy_db
-  }
-  
-  
-  return(comb)
-}
-
-
-# A Dowser friendly version of Shazam's shmulate tree
-#
-# \code{lones} Filler
-# @param sequence          What sequence to use as a starting point for simulation.
-#   A string defining the MRCA sequence to seed mutations from.
-# @param graph             \link{igraph} object defining hte seed lineage tree, with vertex annotations, 
-#   whose edges are to be recreated. 
-# @param tragetingModel   5-mer TargetingModel object to be used for computing probabilities of mutations 
-#   at each position. Defaults to HH_S5F.
-# @param field  annotation to use for both unweighted path length exclusion and consideration as the MRCA node. 
-#   If NULL do not exclude any nodes.
-# @param exclude vector of annotation values in field to exclude from potential MRCA set. 
-#   If NULL do not exclude any nodes. Has no effect if field=NULL.
-# @param junctionWeight fraction of the nucleotide sequence that is within the junction region. When specified 
-#   this adds a proportional number of mutations to the immediate offspring nodes of the MRCA. 
-#   Requires a value between 0 and 1. If NULL then edge weights are unmodified from the input graph.
-# @param start Initial position in sequence where mutations can be introduced. Default: 1
-# @param end Last position in sequence where mutations can be introduced. Default: last position (sequence length).
-simulateTree = function (sequence, graph, targetingModel = HH_S5F, field = NULL, 
-                            exclude = NULL, junctionWeight = NULL, start = 1, end = nchar(sequence)) 
-{
-  if (!is(targetingModel, "TargetingModel")) {
-    stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
-  }
-  adj <- as_adjacency_matrix(graph, sparse = FALSE)
-  weight <- as_adjacency_matrix(graph, attr = "weight", sparse = FALSE)
-  skip_names <- c()
-  if (!is.null(field)) {
-    g <- vertex_attr(graph, name = field)
-    g_names <- vertex_attr(graph, name = "name")
-    skip_names <- g_names[g %in% exclude]
-  }
-  n_informative <- lengths(regmatches(sequence, gregexpr("[ACTG]", sequence)))
-  sim_tree <- data.frame(matrix(NA, ncol = 4, nrow = length(V(graph)), 
-                                dimnames = list(NULL, c("name", "sequence", "distance", "n_informative"))))
-  sim_tree$name <- vertex_attr(graph, name = "name")
-  sim_tree$n_informative <- n_informative
-  parent_nodes = "Germline"
-  nchild <- sum(adj[parent_nodes, ] > 0)
-  sim_tree$sequence[which(sim_tree$name == parent_nodes)] <- sequence
-  sim_tree$distance[which(sim_tree$name == parent_nodes)] <- 0
-  if (!is.null(junctionWeight)) {
-    weight[parent_nodes, ] <- round(weight[parent_nodes, ] * (1 + 
-                                                                junctionWeight))
-  }
-  while (nchild > 0) {
-    new_parents <- c()
-    for (p in parent_nodes) {
-      children <- colnames(adj)[adj[p, ] > 0]
-      for (ch in children) {
-        new_parents <- union(new_parents, ch)
-        new_weight <- rpois(1, (weight[p, ch])*n_informative) 
-        seq =  sim_tree$sequence[sim_tree$name == p]
-        for(mutations in 1:new_weight){
-          seq <- shmulateSeq(sequence = seq,
-                             numMutations = 1, targetingModel = targetingModel,
-                             start = start, end = end)
-        }
-        chRowIdx = which(sim_tree$name == ch)
-        sim_tree$sequence[chRowIdx] <- seq
-        sim_tree$distance[chRowIdx] <- new_weight
-      }
-    }
-    parent_nodes <- new_parents
-    nchild <- sum(adj[parent_nodes, ] > 0)
-  }
-  sim_tree <- sim_tree[!(sim_tree$name %in% skip_names), ]
-  sim_tree <- sim_tree[!is.na(sim_tree$sequence), ]
-  rownames(sim_tree) <- NULL
-  return(sim_tree)
-}
+# getTreeSimulation <- function(clones, naive_heavy_chain, naive_light_chain = NULL, 
+#                               targetingModel = "HH_S5F", lc_targetingModel = "HKL_S5F",
+#                               nproc = 1, mutational_rate = 2, cell_id = "cell_id", 
+#                               sequence_alignment= "sequence_alignment", clone_id = "clone_id",
+#                               sequence_id = "sequence_id", dir = NULL, id=NULL){
+#   if(!"trees" %in% colnames(clones)){
+#     stop("A tree column created by using getTrees() is required")
+#   }
+#   n_sites <- c()
+#   for(i in 1:nrow(clones)){
+#     tobind <-   nchar(clones$data[[i]]@data$hlsequence[1])
+#     n_sites <- append(n_sites, tobind)
+#   }
+#   
+#   original_trees <- clones$trees
+#   for(i in 1:length(original_trees)){
+#     original_trees[[i]]$edge.length <- original_trees[[i]]$edge.length/n_sites[i]
+#   }
+#   
+#   graphs = list()
+#   for (i in 1:length(original_trees)){
+#     tree <- original_trees[[i]]
+#     tree$edge.length = tree$edge.length
+#     graphs[[i]] <- phyloToGraph(tree) 
+#   }
+#   
+#   if(!is.null(naive_light_chains)){
+#     graphs_half = list()
+#     for (i in 1:length(original_trees)){
+#       tree <- original_trees[[i]]
+#       tree$edge.length = tree$edge.length/mutational_rate
+#       graphs_half[[i]] <- phyloToGraph(tree) 
+#     }
+#   }
+#   
+#   graphs[sapply(graphs, is.null)] <- NULL
+#   
+#   if(!is.null(naive_light_chains)){
+#     naive_cell_id_set <- naive_light_chain[[cell_id]][naive_light_chain[[cell_id]] %in% naive_heavy_chain[[cell_id]]]
+#     naive_cell_id_set <- unique(naive_cell_id_set)
+#   }else{
+#     naive_cell_id_set <- unique(naive_heavy_chain[[cell_id]])
+#   }
+#   
+#   frankenstein_heavy_db <- do.call(rbind, parallel::mclapply(1:length(graphs), function(ii){
+#     phylo_tree = graphs[[ii]]
+#     
+#     find_starter <- igraph::as_data_frame(phylo_tree) 
+#     find_starter <- find_starter$to[nrow(find_starter)]
+#     find_starter <- gsub("\\|.*", "", find_starter)
+#     temp_seq_h = naive_heavy_chain[naive_heavy_chain[[sequence_id]] == find_starter,][1,] 
+#     
+#     if(targetingModel == "HH_S5F"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HH_S5F)
+#     } else if(targetingModel == "HH_S1F"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HH_S1F)
+#     } else if(targetingModel == "HKL_S1F"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HH_S1F)
+#     } else if(targetingModel == "HKL_S5F"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = HKL_S5F)
+#     } else if(targetingModel == "MK_RS1NF"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = MK_RS1NF)
+#     } else if(targetingModel == "MK_RS5NF"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = MK_RS5NF)
+#     } else if(targetingModel == "U5N"){
+#       temp_sim_tree_h = simulateTree(temp_seq_h[[sequence_alignment]], phylo_tree, targetingModel = U5N)
+#     } else{
+#       stop("Invalid targetingModel")
+#     }
+#     
+#     temp <- c()
+#     for (ind in 1:length(temp_sim_tree_h$sequence)){
+#       if (nchar(temp_sim_tree_h$name[ind]) > 6){ 
+#         temp_heavy_row = temp_seq_h[rep(1,1), ] 
+#         temp_seq_align = temp_heavy_row[[sequence_alignment]]
+#         temp_heavy_row$sequence_alignment = temp_sim_tree_h$sequence[ind]     
+#         temp_heavy_row$germline_alignment = temp_seq_align                    
+#         temp_heavy_row$sequence_id = temp_sim_tree_h$name[ind]               
+#         temp_heavy_row$clone_id = ii              
+#         tmp_str = sapply(strsplit(temp_sim_tree_h$name[ind], "-"), "[", 1)
+#         tmp_cell_id = paste(tmp_str, temp_heavy_row[[clone_id]], sep="-")
+#         temp_heavy_row$cell_id = tmp_cell_id                                  
+#         temp <- rbind(temp, temp_heavy_row) 
+#       }
+#     }
+#     return(temp)
+#   }, mc.cores = nproc))
+#   
+#   frankenstein_light_db <- do.call(rbind, parallel::mclapply(1:length(graphs_half), function(ii){
+#     phylo_tree = graphs[[ii]]
+#     half_tree = graphs_half[[ii]]
+#     
+#     find_starter <- igraph::as_data_frame(phylo_tree) 
+#     find_starter <- find_starter$to[nrow(find_starter)]
+#     find_starter <- gsub("\\|.*", "", find_starter)
+#     temp_seq_h = naive_heavy_chain[naive_heavy_chain[[sequence_id]] == find_starter,][1,] 
+#     temp_seq_l = naive_light_chain[naive_light_chain[[cell_id]] == temp_seq_h[[cell_id]],][1,]
+#     
+#     if(lc_targetingModel == "HH_S5F"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HH_S5F)
+#     } else if(lc_targetingModel == "HH_S1F"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HH_S1F)
+#     } else if(lc_targetingModel == "HKL_S1F"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HH_S1F)
+#     } else if(lc_targetingModel == "HKL_S5F"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = HKL_S5F)
+#     } else if(lc_targetingModel == "MK_RS1NF"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = MK_RS1NF)
+#     } else if(lc_targetingModel == "MK_RS5NF"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = MK_RS5NF)
+#     } else if(lc_targetingModel == "U5N"){
+#       temp_sim_tree_l = simulateTree(temp_seq_l[[sequence_alignment]], half_tree, targetingModel = U5N)
+#     } else{
+#       stop("Invalid targetingModel")
+#     }
+#     
+#     temp <- c()
+#     for (ind in 1:length(temp_sim_tree_l$sequence)){
+#       if (nchar(temp_sim_tree_l$name[ind]) > 6){ 
+#         temp_light_row = temp_seq_l[rep(1,1), ] 
+#         temp_seq_align = temp_light_row[[sequence_alignment]]
+#         temp_light_row$sequence_alignment = temp_sim_tree_l$sequence[ind]     
+#         temp_light_row$germline_alignment = temp_seq_align                  
+#         temp_light_row$sequence_id = temp_sim_tree_l$name[ind]  
+#         temp_light_row$clone_id = ii                                            
+#         temp <- rbind(temp, temp_light_row) 
+#       }
+#     }
+#     return(temp)
+#   }, mc.cores = nproc))
+#   
+#   if(!is.null(naive_light_chain)){
+#     frankenstein_light_db$cell_id <- frankenstein_heavy_db$cell_id
+#   }
+#   
+#   
+#   frankenstein_heavy_db$sequence_id <- paste0(frankenstein_heavy_db[[sequence_id]], "_", frankenstein_heavy_db[[clone_id]])
+#   frankenstein_heavy_db$cell_id <- frankenstein_heavy_db[[sequence_id]]
+#   if(!is.null(naive_light_chain)){
+#     frankenstein_light_db$sequence_id <- paste0(frankenstein_light_db[[sequence_id]], "_", frankenstein_light_db[[clone_id]])
+#     frankenstein_light_db$cell_id <- frankenstein_light_db[[sequence_id]]
+#   }
+#   
+#   if(!is.null(naive_light_chain)){
+#     comb <- getSubclones(frankenstein_heavy_db, frankenstein_light_db, cell="cell_id", nproc=nproc)
+#   } else{
+#     comb <- frankenstein_heavy_db
+#   }
+#   
+#   
+#   return(comb)
+# }
+# 
+# 
+# # A Dowser friendly version of Shazam's shmulate tree
+# #
+# # \code{lones} Filler
+# # @param sequence          What sequence to use as a starting point for simulation.
+# #   A string defining the MRCA sequence to seed mutations from.
+# # @param graph             \link{igraph} object defining hte seed lineage tree, with vertex annotations, 
+# #   whose edges are to be recreated. 
+# # @param tragetingModel   5-mer TargetingModel object to be used for computing probabilities of mutations 
+# #   at each position. Defaults to HH_S5F.
+# # @param field  annotation to use for both unweighted path length exclusion and consideration as the MRCA node. 
+# #   If NULL do not exclude any nodes.
+# # @param exclude vector of annotation values in field to exclude from potential MRCA set. 
+# #   If NULL do not exclude any nodes. Has no effect if field=NULL.
+# # @param junctionWeight fraction of the nucleotide sequence that is within the junction region. When specified 
+# #   this adds a proportional number of mutations to the immediate offspring nodes of the MRCA. 
+# #   Requires a value between 0 and 1. If NULL then edge weights are unmodified from the input graph.
+# # @param start Initial position in sequence where mutations can be introduced. Default: 1
+# # @param end Last position in sequence where mutations can be introduced. Default: last position (sequence length).
+# simulateTree = function (sequence, graph, targetingModel = HH_S5F, field = NULL, 
+#                             exclude = NULL, junctionWeight = NULL, start = 1, end = nchar(sequence)) 
+# {
+#   if (!is(targetingModel, "TargetingModel")) {
+#     stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
+#   }
+#   adj <- as_adjacency_matrix(graph, sparse = FALSE)
+#   weight <- as_adjacency_matrix(graph, attr = "weight", sparse = FALSE)
+#   skip_names <- c()
+#   if (!is.null(field)) {
+#     g <- vertex_attr(graph, name = field)
+#     g_names <- vertex_attr(graph, name = "name")
+#     skip_names <- g_names[g %in% exclude]
+#   }
+#   n_informative <- lengths(regmatches(sequence, gregexpr("[ACTG]", sequence)))
+#   sim_tree <- data.frame(matrix(NA, ncol = 4, nrow = length(V(graph)), 
+#                                 dimnames = list(NULL, c("name", "sequence", "distance", "n_informative"))))
+#   sim_tree$name <- vertex_attr(graph, name = "name")
+#   sim_tree$n_informative <- n_informative
+#   parent_nodes = "Germline"
+#   nchild <- sum(adj[parent_nodes, ] > 0)
+#   sim_tree$sequence[which(sim_tree$name == parent_nodes)] <- sequence
+#   sim_tree$distance[which(sim_tree$name == parent_nodes)] <- 0
+#   if (!is.null(junctionWeight)) {
+#     weight[parent_nodes, ] <- round(weight[parent_nodes, ] * (1 + 
+#                                                                 junctionWeight))
+#   }
+#   while (nchild > 0) {
+#     new_parents <- c()
+#     for (p in parent_nodes) {
+#       children <- colnames(adj)[adj[p, ] > 0]
+#       for (ch in children) {
+#         new_parents <- union(new_parents, ch)
+#         new_weight <- rpois(1, (weight[p, ch])*n_informative) 
+#         seq =  sim_tree$sequence[sim_tree$name == p]
+#         for(mutations in 1:new_weight){
+#           seq <- shmulateSeq(sequence = seq,
+#                              numMutations = 1, targetingModel = targetingModel,
+#                              start = start, end = end)
+#         }
+#         chRowIdx = which(sim_tree$name == ch)
+#         sim_tree$sequence[chRowIdx] <- seq
+#         sim_tree$distance[chRowIdx] <- new_weight
+#       }
+#     }
+#     parent_nodes <- new_parents
+#     nchild <- sum(adj[parent_nodes, ] > 0)
+#   }
+#   sim_tree <- sim_tree[!(sim_tree$name %in% skip_names), ]
+#   sim_tree <- sim_tree[!is.na(sim_tree$sequence), ]
+#   rownames(sim_tree) <- NULL
+#   return(sim_tree)
+# }
