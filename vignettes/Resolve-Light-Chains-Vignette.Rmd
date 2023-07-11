@@ -1,0 +1,64 @@
+---
+title: 'Resolve Light Chains'
+author: "Cole G. Jensen"
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Resolve Light Chains}
+  %\VignetteEncoding{UTF-8}  
+  %\usepackage[utf8]{inputenc}
+---
+
+With the advances in sequencing, single cell datasets can now track which light chain associates with which heavy chain. To best incorporate the paired data into use in BCR phylogenetics, Dowser offers a way to identify clone_subgroups. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
+
+## Resolve Light Chains 
+
+To resolve the light chains within a clone, use the resolveLightChains function. This function will:
+
+1. Pair heavy and light chains together by their cell_id.
+2. Idenfity clone_subgroups for each of these pairs. 
+3. Assign nonpaired heavy chains a clone_subgroup to the most similiar paired heavy chain within the same clone.
+4. Combine the heavy and light chain datasets into one dataset. 
+
+The output of this function is a tibble in which each row is a different sequence, with all of the perviously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone. `vj_clone` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
+
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
+library(dowser)
+library(alakazam)
+
+# load example tsv data
+data <- readChangeoDb(file.path("..", "setup", "db_test.tsv"))
+
+# set the clone id 
+data$clone_id <- data$expected_clone_id_split_light_T
+
+# seperate the data by heavy and light chains 
+heavy <- filter(data, locus == "IGH")
+light <- filter(data, locus != "IGH")
+
+
+# find the clone subgroups 
+df <- resolveLightChains(heavy, light, seq = "junction")
+
+print(df$clone_subgroup)
+```
