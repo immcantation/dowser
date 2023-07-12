@@ -150,4 +150,24 @@
 "TimeTrees"
 
 
+#' Example Change-O database
+#'
+#' A small example database originally created for the Immcantation package 'scoper.
+#'
+#' @format   A data.frame with the following Change-O style columns:
+#'   \itemize{
+#'     \item  \code{sequence_id}:           Sequence identifier
+#'     \item  \code{subject_id}:            Subject identifier.
+#'     \item  \code{v_call}:                V region allele assignments.
+#'     \item  \code{j_call}:                J region allele assignments.
+#'     \item  \code{sequence_alignment}:    Sequence alignment.
+#'     \item \code{locus}:                  Locus identifier. 
+#'     \item \code{cell_id}:                Cell identifier 
+#'     \item  \code{junction_length}:       Length of the junction region in nucleotides.
+#'     \item  \code{clone_id}:              Change-O assignment clonal group identifier.
+#'     \item \code{expected_clone_subgroup}: The expected clone subgroup. Used for unit testing. 
+#' }
+"ExampleMixedDb"
+
+
 NULL
