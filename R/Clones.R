@@ -1127,17 +1127,19 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
                                id="sequence_id", seq="sequence_alignment",
                                clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
                                junc_len="junction_length", nolight="missing"){
-  print("This function has been depreciated. Please use resolveLightChains")
+  stop("This function has been depreciated. Please use resolveLightChains.")
 }
 
 
 #' Define subgroups based on light chain rearrangements
 #' 
-#' \code{resolveLightChains} plots a tree or group of trees
-#' @param    heavy        a tibble containing heavy chain sequences with clone_id
-#' @param    light        a tibble containing light chain sequences
+#' \code{resolveLightChains} resolve light chain V and J subgroups within a clone
+#' @param    data         a tibble containing heavy and light chain sequences with clone_id
 #' @param    nproc        number of cores for parallelization
 #' @param    minseq       minimum number of sequences per clone
+#' @param    locus        name of column containing locus values
+#' @param    heavy        value of heavy chains in locus column. All other values will be 
+#'                        treated as light chains
 #' @param    id           name of the column containing sequence identifiers.
 #' @param    seq          name of the column containing observed DNA sequences. All 
 #'                        sequences in this column must be multiple aligned.
@@ -1153,8 +1155,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #'                        for any given clone.
 #' @param    nolight      string to use to indicate a missing light chain
 #'
-#' @return   a tibble containing 
-# TODO: describe returned object
+#' @return   a tibble containing the same data as inputting, but with the column clone_subgroup
+#' added. This column contains subgroups within clones that contain distinct light chain
+#' V and J genes, with at most one light chain per cell.
 #' @details
 #' 1. Make temporary array containing light chain clones
 #' 2. Enumerate all possible V and J combinations
@@ -1166,18 +1169,30 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' If there is more than rearrangement with the same V/J
 #' in the same cell, pick the one with the highest non-ambiguous
 #' characters. 
-# TODO: Junction length?
-# TODO: Option to just store all VJ pairs for a cell in the heavy, remove light seqs
-# TODO: Option to split VJ parititions into separate clones
-# TODO: Make v_alt_cell not be NA by default
-# TODO: light chains also require clone_id? Currently cell_id might not be unique
+# TODO: Group by junction length as well?
+# TODO: add "fields" option consistent with other functions
 #' @export
-resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
+resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
                                    id="sequence_id", seq="sequence_alignment",
                                    clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
                                    junc_len="junction_length", nolight="missing"){
   
   subgroup <- "clone_subgroup"
+
+  # TODO it's not great for heavy to be two different things, so we might
+  # change it to heavy_value in this function and formatClones
+  light <- data[data[[locus]] != heavy,]
+  heavy <- data[data[[locus]] == heavy,]
+
+  if(nrow(heavy) == 0){
+    stop("No heavy chains found in data")
+  }
+  if(nrow(light) == 0){
+    warning("No light chains found in data! Assigning all sequences to subgroup 1.")
+    data[[subgroup]] = 1
+    return(data)
+  }
+
   scount <- table(heavy[[clone]])
   big <- names(scount)[scount >= minseq]
   heavy <- dplyr::filter(heavy,(!!rlang::sym(clone) %in% big))
@@ -1195,43 +1210,58 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
                 " cells with multiple heavy chains found. Remove before proceeeding"))
   }
   
+  # filter out light chains with missing cell IDs
+  missing_cell <- light[is.na(light[[cell]]),]
+  if(nrow(missing_cell) > 0){
+    warning(paste("removing",nrow(missing_cell),"light chains with missing cell IDs."))
+    light <- light[!is.na(light[[cell]]),]
+  }
+
   heavy$vj_gene <- nolight
-  heavy$vj_alt_cell <- nolight
+  heavy$vj_alt_cell <- NA # set these to NA, since they're pretty rare
   heavy$clone_subgroup <- 0
   light$vj_gene <- nolight
-  light$vj_alt_cell <- nolight
+  light$vj_alt_cell <- NA
   light$clone_subgroup <- 0
   light[[clone]] <- -1
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
+    # Get heavy chains within a clone, and corresponding light chains
+    # separate heavy chains with (sc) and without (bulk) paired light chains
     hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
     ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
     ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
-    hd_sc <- hd[hd$cell_id %in% ld$cell_id,]
-    hd_bulk <- hd[!hd$cell_id %in% ld$cell_id,]
+    hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
+    hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){
       return(hd)
     }
     ltemp <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
-    ltemp$clone_id <- -1
+    ltemp[[clone]] <- -1
     ld <- dplyr::tibble()
     lclone <- 1
     while(nrow(ltemp) > 0){
+      #expand ambiguous V/J calls
       lvs <- strsplit(ltemp[[v_call]],split=",")
       ljs <- strsplit(ltemp[[j_call]],split=",")
+      # get all combinations of V/J calls for each light chain
       combos <-
         lapply(1:length(lvs),function(w)
           unlist(lapply(lvs[[w]],function(x)
             lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
+
+      # get unique combinations per cell
       cells <- unique(ltemp[[cell]])
       cellcombos <- lapply(cells,function(x)
         unique(unlist(combos[ltemp[[cell]] == x])))
-      lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
+      #lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
+      lcounts <- table(unlist(cellcombos,function(x)x))
       max <- names(lcounts)[which.max(lcounts)]
       cvs <- unlist(lapply(combos,function(x)max %in% x))
       ltemp[cvs,][[subgroup]] <- lclone
       ltemp[cvs,]$vj_gene <- max
       
       # if a cell has the same combo for two rearrangements, only pick one
+      # with the most ACTG characters
       rmseqs <- c()
       cell_counts <- table(ltemp[cvs,][[cell]])
       mcells <- names(cell_counts)[cell_counts > 1]
@@ -1266,14 +1296,14 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
       #hclone <- hd[hd[[cell]] == cell,][[clone]]
       if(cellname %in% ld[[cell]]){
         lclone <- ld[ld[[cell]] == cellname,][[subgroup]]
-        ld[ld[[cell]] == cellname,][[subgroup]] <- lclone
+        #ld[ld[[cell]] == cellname,][[subgroup]] <- lclone
         hd_sc[hd_sc[[cell]] == cellname,][[subgroup]] <- lclone
         hd_sc[hd_sc[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
         hd_sc[hd_sc[[cell]] == cellname,]$vj_alt_cell <-
           ld[ld[[cell]] == cellname,]$vj_alt_cell
       }
     }
-    # now get the subgroup_id for the bulk data
+    # now get the subgroup_id for the heavy chains lacking paired light chains
     comb <- dplyr::bind_rows(hd_sc,ld)
     comb$clone_subgroup <- as.integer(comb$clone_subgroup)
     hd_bulk$clone_subgroup <- 1
@@ -1285,6 +1315,14 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
           paired_heavy <- unlist(stringr::str_split(as.character(hd_sc[[seq]][i]), ""))
           rating <- append(rating, sum(unpaired_heavy != paired_heavy))
         }
+        # TODO should probably change to use seqDist
+        # seqDist doesn't count ambiguous nucleotides or gaps as differences
+        # use for consistency with other methods
+        # rating <- sapply(hd_sc[[seq]], function(x)
+        #  alakazam::seqDist(x, hd_bulk[[seq]][sequence]))
+
+        # TODO: I think the below loop works, but let's walk through 
+        # the logic of it before the release.
         proper_subgroup <- which(rating == min(rating))
         if(length(proper_subgroup) > 1){
           subgroups <- c()
@@ -1314,8 +1352,20 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
     } 
     comb <- dplyr::bind_rows(comb, hd_bulk)
     comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subgroup]])
-    comb$vj_cell <- paste(comb$vj_gene,comb$vj_alt_cell,sep=",")
+    comb$vj_cell <- sapply(1:nrow(comb), function(x){
+      if(!is.na(comb$vj_alt_cell[x])){
+        paste(comb$vj_gene[x],comb$vj_alt_cell[x],sep=",")        
+      }else{
+        comb$vj_gene[x]
+      }
+    })
+
+    if(sum(comb[[subgroup]] == 0) > 0){
+      stop(paste("Some sequences in clone",cloneid,
+        "not assigned to a subgroup. Somethign went wrong"))
+    }
     
+    # TODO let's walk through this block too, got kind of confused with the indexing
     # order check 
     size <- c()
     subgroups <- c()
@@ -1331,6 +1381,7 @@ resolveLightChains <- function(heavy, light, nproc=1, minseq=1,
         if(length(idx) > 1){
           for(subgroup_idx in 1:length(idx)){
             current_subgroup <- which(subgroups == idx[subgroup_idx])
+            # should this be current_subgroup <- subgroups[which(subgroups == idx[subgroup_idx])]
             comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
             subgroup_number <- subgroup_number + 1
           }

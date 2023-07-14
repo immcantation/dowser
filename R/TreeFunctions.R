@@ -3288,7 +3288,7 @@ getBootstraps <- function(clones, bootstraps,
 calcRF <- function(tree_1, tree_2){
   tip_amount_check <- length(tree_1$tip.label) == length(tree_2$tip.label)
   if(!tip_amount_check){
-    stop("trees do not have the same amount of tips")
+    stop("trees do not have the same number of tips")
   }
   tip_check <- dplyr::setdiff(tree_1$tip.label, tree_2$tip.label)
   if(!identical(tip_check, character(0))){
@@ -3301,6 +3301,9 @@ calcRF <- function(tree_1, tree_2){
     tree_1_sub <- tree_1_df$found[[i]]
     mismatch_vector <- c()
     for(j in 1:nrow(tree_2_df)){
+      # TODO: setdiff(A,B) will only check whether elements in A are in B, not B in A
+      # should probably use symdiff(A,B) or setequal(A,B).
+      # same with other functions using setdiff.
       mismatches_1 <- dplyr::setdiff(tree_2_df$found[[j]], tree_1_sub)
       mismatches_2 <- dplyr::setdiff(tree_1_sub, tree_2_df$found[[j]])
       if(identical(mismatches_1, character(0)) & identical(mismatches_2, character(0))){

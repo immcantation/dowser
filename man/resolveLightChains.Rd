@@ -5,10 +5,11 @@
 \title{Define subgroups based on light chain rearrangements}
 \usage{
 resolveLightChains(
-  heavy,
-  light,
+  data,
   nproc = 1,
   minseq = 1,
+  locus = "locus",
+  heavy = "IGH",
   id = "sequence_id",
   seq = "sequence_alignment",
   clone = "clone_id",
@@ -20,13 +21,16 @@ resolveLightChains(
 )
 }
 \arguments{
-\item{heavy}{a tibble containing heavy chain sequences with clone_id}
-
-\item{light}{a tibble containing light chain sequences}
+\item{data}{a tibble containing heavy and light chain sequences with clone_id}
 
 \item{nproc}{number of cores for parallelization}
 
 \item{minseq}{minimum number of sequences per clone}
+
+\item{locus}{name of column containing locus values}
+
+\item{heavy}{value of heavy chains in locus column. All other values will be 
+treated as light chains}
 
 \item{id}{name of the column containing sequence identifiers.}
 
@@ -51,10 +55,12 @@ for any given clone.}
 \item{nolight}{string to use to indicate a missing light chain}
 }
 \value{
-a tibble containing
+a tibble containing the same data as inputting, but with the column clone_subgroup
+added. This column contains subgroups within clones that contain distinct light chain
+V and J genes, with at most one light chain per cell.
 }
 \description{
-\code{resolveLightChains} plots a tree or group of trees
+\code{resolveLightChains} resolve light chain V and J subgroups within a clone
 }
 \details{
 1. Make temporary array containing light chain clones

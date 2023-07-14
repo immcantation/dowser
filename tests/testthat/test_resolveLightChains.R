@@ -5,11 +5,11 @@ library(dplyr)
 
 data("ExampleMixedDb")
 
-heavy <- filter(ExampleMixedDb, locus == "IGH")
-light <- filter(ExampleMixedDb, locus != "IGH")
+#heavy <- filter(ExampleMixedDb, locus == "IGH")
+#light <- filter(ExampleMixedDb, locus != "IGH")
 
 # run resolveLightChains
-data <- resolveLightChains(heavy, light)
+data <- resolveLightChains(ExampleMixedDb)
 
 expect_equal("seq09" %in% data$sequence_id, FALSE)
 expect_equal("seq18" %in% data$sequence_id, FALSE)

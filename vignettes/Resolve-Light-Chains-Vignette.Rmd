@@ -49,13 +49,8 @@ library(dplyr)
 # load example tsv data
 data("ExampleMixedDb")
 
-# separate the data by heavy and light chains 
-heavy <- filter(ExampleMixedDb, locus == "IGH")
-light <- filter(ExampleMixedDb, locus != "IGH")
-
-
 # find the clone subgroups 
-df <- resolveLightChains(heavy, light)
+df <- resolveLightChains(ExampleMixedDb)
 
 print(df$clone_subgroup)
 ```
