@@ -961,3 +961,72 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
     }
     clones
 }
+
+#' Finds the Robinson-Fould's Distance between phylogenies. 
+#' 
+#' \code{calcRF} Calculates the RF distance between two phylogenetic trees with the same tips and tip labels.
+#' @param tree_1         A \code{phylo} object
+#' @param tree_2         A \code{phylo} object
+#'
+#' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
+#'  
+#' @export
+calcRF <- function(tree_1, tree_2){
+  tip_amount_check <- length(tree_1$tip.label) == length(tree_2$tip.label)
+  if(!tip_amount_check){
+    stop("trees do not have the same number of tips")
+  }
+  tip_check <- dplyr::setdiff(tree_1$tip.label, tree_2$tip.label)
+  if(!identical(tip_check, character(0))){
+    stop("tree tip labels are not identical")
+  }
+  tree_1_df <- splits_func(list(tree_1),1)
+  tree_2_df <- splits_func(list(tree_2), 1)
+  total_mismatches <- c()
+  for(i in 1:nrow(tree_1_df)){
+    tree_1_sub <- tree_1_df$found[[i]]
+    mismatch_vector <- c()
+    for(j in 1:nrow(tree_2_df)){
+      # TODO: setdiff(A,B) will only check whether elements in A are in B, not B in A
+      # should probably use symdiff(A,B) or setequal(A,B).
+      # same with other functions using setdiff.
+      mismatches_1 <- dplyr::setdiff(tree_2_df$found[[j]], tree_1_sub)
+      mismatches_2 <- dplyr::setdiff(tree_1_sub, tree_2_df$found[[j]])
+      if(identical(mismatches_1, character(0)) & identical(mismatches_2, character(0))){
+        mismatch_vector <- append(mismatch_vector, "match")      
+      } else{
+        mismatch_vector <- append(mismatch_vector, "mismatch")
+      }
+    }
+    if("match" %in% mismatch_vector){
+      tobind <- 0
+    } else{
+      tobind <- 1
+    }
+    total_mismatches <- append(total_mismatches, tobind)
+  }
+  total_mismatches <- sum(total_mismatches)
+  clone_mismatches <- c()
+  for(i in 1:nrow(tree_2_df)){
+    tree_2_sub <- tree_2_df$found[[i]]
+    mismatch_vector <- c()
+    for(j in 1:nrow(tree_1_df)){
+      mismatches_1 <- setdiff(tree_1_df$found[[j]], tree_2_sub)
+      mismatches_2 <- setdiff(tree_2_sub, tree_1_df$found[[j]])
+      if(identical(mismatches_1, character(0)) & identical(mismatches_2, character(0))){
+        mismatch_vector <- append(mismatch_vector, "match")      
+      } else{
+        mismatch_vector <- append(mismatch_vector, "mismatch")
+      }
+    }
+    if("match" %in% mismatch_vector){
+      tobind <- 0
+    } else{
+      tobind <- 1
+    }
+    clone_mismatches <- append(clone_mismatches, tobind)
+  }
+  clone_mismatches <- sum(clone_mismatches)
+  all_mismatches <- total_mismatches + clone_mismatches
+  return(all_mismatches)
+}

@@ -1219,10 +1219,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
 
   heavy$vj_gene <- nolight
   heavy$vj_alt_cell <- NA # set these to NA, since they're pretty rare
-  heavy$clone_subgroup <- 0
+  heavy$clone_subgroup <- 1
   light$vj_gene <- nolight
   light$vj_alt_cell <- NA
-  light$clone_subgroup <- 0
+  light$clone_subgroup <- 1
   light[[clone]] <- -1
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
     # Get heavy chains within a clone, and corresponding light chains
@@ -1233,6 +1233,14 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){
+      hd$vj_clone <- paste0(hd[[clone]],"_",hd[[subgroup]])
+      hd$vj_cell <- sapply(1:nrow(hd), function(x){
+        if(!is.na(hd$vj_alt_cell[x])){
+          paste(hd$vj_gene[x],hd$vj_alt_cell[x],sep=",")        
+        }else{
+          hd$vj_gene[x]
+        }
+      })
       return(hd)
     }
     ltemp <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
@@ -1293,10 +1301,8 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     }
     ld[[clone]] <- cloneid
     for(cellname in unique(hd_sc[[cell]])){
-      #hclone <- hd[hd[[cell]] == cell,][[clone]]
       if(cellname %in% ld[[cell]]){
         lclone <- ld[ld[[cell]] == cellname,][[subgroup]]
-        #ld[ld[[cell]] == cellname,][[subgroup]] <- lclone
         hd_sc[hd_sc[[cell]] == cellname,][[subgroup]] <- lclone
         hd_sc[hd_sc[[cell]] == cellname,]$vj_gene <- ld[ld[[cell]] == cellname,]$vj_gene
         hd_sc[hd_sc[[cell]] == cellname,]$vj_alt_cell <-
@@ -1306,23 +1312,11 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     # now get the subgroup_id for the heavy chains lacking paired light chains
     comb <- dplyr::bind_rows(hd_sc,ld)
     comb$clone_subgroup <- as.integer(comb$clone_subgroup)
-    hd_bulk$clone_subgroup <- 1
     if(nrow(ld) != 0 & nrow(hd_bulk) != 0){
       for(sequence in 1:nrow(hd_bulk)){
-        rating <- c()
-        unpaired_heavy <- unlist(stringr::str_split(as.character(hd_bulk[[seq]][sequence]), ""))
-        for(i in 1:nrow(hd_sc)){
-          paired_heavy <- unlist(stringr::str_split(as.character(hd_sc[[seq]][i]), ""))
-          rating <- append(rating, sum(unpaired_heavy != paired_heavy))
-        }
-        # TODO should probably change to use seqDist
-        # seqDist doesn't count ambiguous nucleotides or gaps as differences
-        # use for consistency with other methods
-        # rating <- sapply(hd_sc[[seq]], function(x)
-        #  alakazam::seqDist(x, hd_bulk[[seq]][sequence]))
-
-        # TODO: I think the below loop works, but let's walk through 
-        # the logic of it before the release.
+        rating <- sapply(hd_sc[[seq]], function(x)
+          alakazam::seqDist(x, hd_bulk[[seq]][sequence]))
+        rating <- as.numeric(rating)
         proper_subgroup <- which(rating == min(rating))
         if(length(proper_subgroup) > 1){
           subgroups <- c()
@@ -1359,38 +1353,22 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         comb$vj_gene[x]
       }
     })
-
-    if(sum(comb[[subgroup]] == 0) > 0){
-      stop(paste("Some sequences in clone",cloneid,
-        "not assigned to a subgroup. Somethign went wrong"))
-    }
     
-    # TODO let's walk through this block too, got kind of confused with the indexing
-    # order check 
     size <- c()
-    subgroups <- c()
     for(subgroup in sort(unique(comb$clone_subgroup))){
       size <- append(size, nrow(comb[comb$clone_subgroup == subgroup,]))
-      subgroups <- append(subgroups, subgroup)
     }
     if(!all(diff(size) <= 0)){
-      ordered_size <- sort(size, decreasing = T)
-      subgroup_number <- 1
-      for(new_order in ordered_size){
-        idx <- which(size == new_order)
-        if(length(idx) > 1){
-          for(subgroup_idx in 1:length(idx)){
-            current_subgroup <- which(subgroups == idx[subgroup_idx])
-            # should this be current_subgroup <- subgroups[which(subgroups == idx[subgroup_idx])]
-            comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
-            subgroup_number <- subgroup_number + 1
-          }
-        } else {
-          current_subgroup <- which(subgroups == idx)
-          comb$clone_subgroup[comb$clone_subgroup == current_subgroup] <- subgroup_number
-          subgroup_number <- subgroup_number + 1
-        }
+      order_check <- data.frame(table(comb$clone_subgroup))
+      colnames(order_check) <- c("clone_subgroup", "size")
+      order_check <- order_check[order(-order_check$size),]
+      order_check$proper_subgroup <- 1:nrow(order_check)
+      comb$new_subgroup <- NA
+      for(i in unique(comb$clone_subgroup)){
+        comb$new_subgroup[comb$clone_subgroup == i] <- order_check$proper_subgroup[order_check$clone_subgroup == i]
       }
+      comb <- subset(comb, select=-c(clone_subgroup))
+      names(comb)[names(comb) == "new_subgroup"] <- "clone_subgroup"
     }
     comb
   },mc.cores=nproc)
