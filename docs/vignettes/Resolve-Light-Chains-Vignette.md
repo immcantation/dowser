@@ -1,0 +1,49 @@
+# Resolve Light Chains
+
+With the advances in sequencing, single cell datasets can now track which light chain associates with which heavy chain. To best incorporate the paired data into use in BCR phylogenetics, Dowser offers a way to identify clone_subgroups. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
+
+## Resolve light chains 
+
+To resolve the light chains within a clone, use the resolveLightChains function. This function will:
+
+1. Pair heavy and light chains together by their cell_id and identify which `clone_subgroup` each pair belongs to. 
+2. Assign heavy chains without an associating light chain a clone_subgroup to the most similar paired heavy chain within the same clone.
+
+The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone. `vj_clone` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
+
+
+```r
+library(dowser)
+# load example tsv data
+data("ExampleMixedDb")
+
+# find the clone subgroups 
+ExampleMixedDb <- resolveLightChains(ExampleMixedDb)
+print(ExampleMixedDb$clone_subgroup)
+```
+
+## Format clones
+
+With the `clone_subgroup` now calculated, the data can now be formatted into a data table of AIRR clone objects. This is done using formatClones and specifying the `chain` variable to be "HL". For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
+
+
+```r
+# since the example data has a "bulk" heavy chain sequence, the missing cell_id will need to be replaced
+ExampleMixedDb$cell_id[16] <- "bulk"
+# for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similiar. 
+clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = F)
+print(clones)
+```
+## Building trees 
+
+Trees can now be built with any of the methods that dowser supports. The broad categories are maximum parsimony, maximum likelihood, and partitioned maximum liklihood. For specifics on each of the different methods, see the [Building Trees Vignette](Building-Trees-Vignette.md).
+
+
+```r
+# this is build with the default tree building method in dowser
+# phangorn's pratchet method
+clones <- getTrees(clones, nproc = 1)
+
+print(clones)
+```
+
