@@ -1179,8 +1179,6 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
   
   subgroup <- "clone_subgroup"
 
-  # TODO it's not great for heavy to be two different things, so we might
-  # change it to heavy_value in this function and formatClones
   light <- data[data[[locus]] != heavy,]
   heavy <- data[data[[locus]] == heavy,]
 
@@ -1362,14 +1360,14 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     }
     if(!all(diff(size) <= 0)){
       order_check <- data.frame(table(comb[[subgroup]]))
-      colnames(order_check) <- c(!!rlang::sym(subgroup), "size")
+      colnames(order_check) <- c(subgroup, "size")
       order_check <- order_check[order(-order_check$size),]
       order_check$proper_subgroup <- 1:nrow(order_check)
       comb$new_subgroup <- NA
       for(i in unique(comb[[subgroup]])){
         comb$new_subgroup[comb[[subgroup]] == i] <- order_check$proper_subgroup[order_check[[subgroup]] == i]
       }
-      comb <- base::subset(comb, select=-c(!!rlang::sym(subgroup)))
+      comb <- comb[, -which(names(comb) == subgroup)]
       names(comb)[names(comb) == "new_subgroup"] <- subgroup
     }
     comb

@@ -1,12 +1,8 @@
 # Load test dataset
 #library(testthat)
 #library(dowser)
-library(dplyr)
 
 data("ExampleMixedDb")
-
-#heavy <- filter(ExampleMixedDb, locus == "IGH")
-#light <- filter(ExampleMixedDb, locus != "IGH")
 
 # run resolveLightChains
 data <- expect_warning(resolveLightChains(ExampleMixedDb))
