@@ -1,9 +1,9 @@
-**getSubclones** - *Define subclones based on light chain rearrangements*
+**getSubclones** - *#' Deprecated! Use resolveLightChains*
 
 Description
 --------------------
 
-`getSubclones` plots a tree or group of trees
+`getSubClones` plots a tree or group of trees
 
 
 Usage
@@ -77,21 +77,6 @@ Value
 -------------------
 
 a tibble containing
-
-
-Details
--------------------
-
-1. Make temporary array containing light chain clones
-2. Enumerate all possible V and J combinations
-3. Determine which combination is the most frequent
-4. Assign sequences with that combination to clone t
-5. Copy those sequences to return array
-6. Remove all cells with that combination from temp array
-7. Repeat 1-5 until temporary array zero.
-If there is more than rearrangement with the same V/J
-in the same cell, pick the one with the highest non-ambiguous
-characters.
 
 
 

@@ -18,17 +18,36 @@ formatClones(
 data,
 seq = "sequence_alignment",
 clone = "clone_id",
-subclone = "subclone_id",
+subgroup = "clone_subgroup",
+id = "sequence_id",
+germ = "germline_alignment_d_mask",
+v_call = "v_call",
+j_call = "j_call",
+junc_len = "junction_length",
+mask_char = "N",
+max_mask = 0,
+pad_end = TRUE,
+text_fields = NULL,
+num_fields = NULL,
+seq_fields = NULL,
+add_count = TRUE,
+verbose = FALSE,
+collapse = TRUE,
+cell = "cell_id",
+locus = "locus",
+traits = NULL,
+mod3 = TRUE,
+randomize = TRUE,
+use_regions = TRUE,
+dup_singles = FALSE,
 nproc = 1,
 chain = "H",
 heavy = "IGH",
-cell = "cell_id",
-locus = "locus",
+filterStop = TRUE,
 minseq = 2,
 split_light = FALSE,
 majoronly = FALSE,
-columns = NULL,
-...
+columns = NULL
 )
 ```
 
@@ -40,14 +59,96 @@ data
 See [makeAirrClone](makeAirrClone.md) for required columns and their defaults
 
 seq
-:   sequence alignment column name.
+:   name of the column containing observed DNA sequences. All 
+sequences in this column must be multiple aligned.
 
 clone
 :   name of the column containing the identifier for the clone. All 
 entries in this column should be identical.
 
-subclone
-:   name of the column containing the identifier for the subclone.
+subgroup
+:   name of the column containing the identifier for the subgroup.
+
+id
+:   name of the column containing sequence identifiers.
+
+germ
+:   name of the column containing germline DNA sequences. All entries 
+in this column should be identical for any given clone, and they
+must be multiple aligned with the data in the `seq` column.
+
+v_call
+:   name of the column containing V-segment allele assignments. All 
+entries in this column should be identical to the gene level.
+
+j_call
+:   name of the column containing J-segment allele assignments. All 
+entries in this column should be identical to the gene level.
+
+junc_len
+:   name of the column containing the length of the junction as a 
+numeric value. All entries in this column should be identical 
+for any given clone.
+
+mask_char
+:   character to use for masking and padding.
+
+max_mask
+:   maximum number of characters to mask at the leading and trailing
+sequence ends. If `NULL` then the upper masking bound will 
+be automatically determined from the maximum number of observed 
+leading or trailing Ns amongst all sequences. If set to `0` 
+(default) then masking will not be performed.
+
+pad_end
+:   if `TRUE` pad the end of each sequence with `mask_char`
+to make every sequence the same length.
+
+text_fields
+:   text annotation columns to retain and merge during duplicate removal.
+
+num_fields
+:   numeric annotation columns to retain and sum during duplicate removal.
+
+seq_fields
+:   sequence annotation columns to retain and collapse during duplicate 
+removal. Note, this is distinct from the `seq` and `germ` 
+arguments, which contain the primary sequence data for the clone
+and should not be repeated in this argument.
+
+add_count
+:   if `TRUE` add an additional annotation column called 
+`COLLAPSE_COUNT` during duplicate removal that indicates the 
+number of sequences that were collapsed.
+
+verbose
+:   passed on to `collapseDuplicates`. If `TRUE`, report the 
+numbers of input, discarded and output sequences; otherwise, process
+sequences silently.
+
+collapse
+:   collapse identical sequences?
+
+cell
+:   name of the column containing cell assignment information
+
+locus
+:   name of the column containing locus information
+
+traits
+:   column ids to keep distinct during sequence collapse
+
+mod3
+:   pad sequences to length mutliple three?
+
+randomize
+:   randomize sequence order? Important if using PHYLIP
+
+use_regions
+:   assign CDR/FWR regions?
+
+dup_singles
+:   Duplicate sequences in singleton clones to include them as trees?
 
 nproc
 :   number of cores to parallelize formating over.
@@ -58,26 +159,20 @@ chain
 heavy
 :   name of heavy chain locus (default = "IGH")
 
-cell
-:   name of the column containing cell assignment information
-
-locus
-:   name of the column containing locus information
+filterStop
+:   only use sequences that do not contain an in-frame stop codon
 
 minseq
-:   minimum numbner of sequences per clone
+:   minimum number of sequences per clone
 
 split_light
-:   split or lump subclones? See `getSubclones`.
+:   split or lump subgroups? See `resolveLightChains`.
 
 majoronly
-:   only return largest subclone and sequences without light chains
+:   only return largest subgroup and sequences without light chains
 
 columns
 :   additional data columns to include in output
-
-...
-:   additional arguments to pass to makeAirrClone
 
 
 

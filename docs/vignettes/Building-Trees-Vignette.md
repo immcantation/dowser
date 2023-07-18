@@ -104,7 +104,9 @@ A common way to build B cell lineage trees is the find the tree topology and bra
 
 Standard maximum likelihood trees can also be built with the `getTrees` function, which if specified the `optim.pml` function in the `phangorn` phylogenetics package.
 
-Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To do this, the `build` option needs to be set as `dnaml` and the path to the `dnaml` executable needs to be specified in the `exec` option.
+Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To do this, the `build` option needs to be set as `dnaml` and the path to the `dnaml` executable needs to be specified in the `exec` option. 
+
+Another maximum likelihood option that dowser supports is `raxml` which utilizes RAxML Next Generation. This option also needs a path to the `raxml` executable specified in the `exec` option. 
 
 
 ```r
@@ -133,7 +135,23 @@ clones
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
+Build trees using RAxML.
 
+[RAxML documentation/download site](https://github.com/amkozlov/raxml-ng)
+
+
+```r
+# Build trees using dnaml.
+# exec here is set to dnaml position in the Docker image.
+clones = getTrees(clones, build="raxml", exec="/usr/local/share/raxml-ng")
+
+clones
+# A tibble: 2 x 6
+#  clone_id data       locus  seqs subject_id trees  
+#     <dbl> <list>     <chr> <int> <chr>      <list> 
+#1     3170 <airrClon> N        13 Subject_1  <phylo>
+#2     3184 <airrClon> N        12 Subject_1  <phylo>
+```
 ## Build IgPhyML B cell trees
 
 B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, specify the build option appropriately and pass the location of the IgPhyML executable. The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML.
@@ -144,8 +162,8 @@ Note: This function is slower than other maximum likelihood and parsimony approa
 
 
 ```r
-# Build trees using dnapars.
-# exec here is set to dnapars position in the Docker image.
+# Build trees using IgPhyML
+# exec here is set to IgPhyML position in the Docker image.
 clones = getTrees(clones, build="igphyml", 
     exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
 
@@ -159,4 +177,39 @@ print(clones)
 
 clones$parameters[[1]]$omega_mle
 #[1] 0.5286
+```
+## Build partitioned trees
+
+Single cell data can now provide data that has paired heavy and light chain BCR data. This allows some tree building programs to partition said data by the heavy chain information and the light chain information. Dowser support two maximum likelihood methods, IgPhyML and RAxML, that can utilize such data while making trees. 
+
+
+
+```r
+# Build partitioned trees using IgPhyML
+# exec here is set to IgPhyML position in the Docker image.
+clones = getTrees(clones, build="igphyml", 
+    exec="/usr/local/share/igphyml/src/igphyml", nproc=1, id="hl", omega="e,e", rates="1,e")
+
+print(clones)
+## A tibble: 2 x 7
+#  clone_id data       locus  seqs subject_id trees        parameters       
+#     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>     
+#1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
+#2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
+```
+
+Partitioned trees using RAxML instead
+
+```r
+# Build partitioned trees using RAxML
+# exec here is set to RAxML position in the Docker image.
+clones = getTrees(clones, build="raxml", 
+    exec="/usr/local/share/raxml-ng", nproc=1, partition=TRUE)
+
+print(clones)
+## A tibble: 2 x 7
+#  clone_id data       locus  seqs subject_id trees        parameters       
+#     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>     
+#1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
+#2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>i
 ```

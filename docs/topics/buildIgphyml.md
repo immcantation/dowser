@@ -81,7 +81,8 @@ hotness
 :   hotness parameters to estimate (see IgPhyML docs)
 
 rates
-:   rate string for each omega (experimental)
+:   comma delimited list showing which omega-defined partitions
+get a separate rate (e.g. omega=e,e rates=0,1).
 
 asrc
 :   Intermediate sequence cutoff probability
