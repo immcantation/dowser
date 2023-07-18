@@ -2910,10 +2910,8 @@ splits_func <- function(input_tree, bootstrap_number){
 #
 # @return   Returns a vector with the number of matches. 
 matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
-  #print("matching")
   match_vector <- c()
   match_vector = parallel::mclapply(unique(tree_comp_df$node), function(node){
-    #print(node)
     # KEN: There must be a more efficient way of doing this but I can't think of 
     # one right now
     sub_full_tree_df <- tree_comp_df[tree_comp_df$node==node,]
@@ -3093,7 +3091,7 @@ getBootstraps <- function(clones, bootstraps,
                           nproc=1, bootstrap_nodes=TRUE, dir=NULL, id=NULL, build="pratchet", 
                           exec=NULL, quiet=0, rm_temp=TRUE, rep=NULL, seq=NULL,
                           boot_part="locus", by_codon = TRUE, starting_tree=FALSE,
-                          switches=FALSE,...){
+                          switches=FALSE, ...){
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
   }
@@ -3155,13 +3153,10 @@ getBootstraps <- function(clones, bootstraps,
   if(!switches){
     if(bootstrap_nodes){
       if(!"trees" %in% colnames(clones)){
-        stop("A tree column created by using getTrees() is required for 
+        stop("A trees column created by using getTrees() is required if 
            bootstrap_nodes=TRUE")
       }
     }
-    #KBH there has to be a better way to do this. Copying and pasting code this many times makes it hard to maintain
-    # check to make sure that getTrees used the same build as here
-    #KBH
     build_used <- gsub("phangorn::", "", clones$trees[[1]]$tree_method)
     build_used <- gsub("phylip::", "", build_used)
     build_used <- gsub("\\:.*", "", build_used)
@@ -3177,7 +3172,7 @@ getBootstraps <- function(clones, bootstraps,
     }
     if(build != build_used){
       stop(paste0("Trees and bootstrapped trees need to be made using the same method. Use the same build option in getTrees as getBootstraps.
-           getBoostraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
+           getBootstraps is trying to use a ", build, " build, but getTrees used ", build_used, " to build trees."))
     }
     # CGJ 2/20/23
     if(starting_tree){

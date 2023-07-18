@@ -1282,7 +1282,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
         rmseqs <- c(rmseqs,rmtemp[[id]])
       }
-      include <- dplyr::filter(ltemp,cvs & !(!!rlang::sym(id) %in% rmseqs))
+      include <- dplyr::filter(ltemp, cvs & !(!!rlang::sym(id) %in% rmseqs))
       leave <- dplyr::filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
       
       # find other cells still in ltemp and add as vj_alt_cell

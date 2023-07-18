@@ -135,25 +135,26 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' Plot a tree with colored internal node labels using ggtree
 #' 
 #' \code{plotTrees} plots a tree or group of trees
-#' @param    trees        A tibble containing \code{phylo} and \code{airrClone}
-#'                        objects
-#' @param    nodes        color internal nodes if possible?
-#' @param    tips         color tips if possible?
-#' @param    tipsize      size of tip shape objects
-#' @param    scale        width of branch length scale bar
-#' @param    node_palette color palette for nodes
-#' @param    tip_palette  color palette for tips. Can supply a named vector
-#'                        for all tip states, or a palette named passed to
-#'                        ggplot2::scale_color_brewer 
-#' @param    common_scale strecth plots so branches are on same scale?
-#'                        determined by sequence with highest divergence
-#' @param    layout       rectangular or circular tree layout?
-#' @param    node_nums    plot internal node numbers?
-#' @param    tip_nums     plot tip numbers?
-#' @param    title        use clone id as title?
-#' @param    labelsize    text size
-#' @param    base         recursion base case (don't edit)
-#' @param    ambig        How to color ambiguous node reconstructions? (blend or grey)
+#' @param    trees              A tibble containing \code{phylo} and \code{airrClone}
+#'                              objects
+#' @param    nodes              color internal nodes if possible?
+#' @param    tips               color tips if possible?
+#' @param    tipsize            size of tip shape objects
+#' @param    scale              width of branch length scale bar
+#' @param    node_palette       color palette for nodes
+#' @param    tip_palette        color palette for tips. Can supply a named vector
+#'                              for all tip states, or a palette named passed to
+#'                              ggplot2::scale_color_brewer 
+#' @param    common_scale       strecth plots so branches are on same scale?
+#'                              determined by sequence with highest divergence
+#' @param    layout             rectangular or circular tree layout?
+#' @param    node_nums          plot internal node numbers?
+#' @param    tip_nums           plot tip numbers?
+#' @param    title              use clone id as title?
+#' @param    labelsize          text size
+#' @param    base               recursion base case (don't edit)
+#' @param    ambig              How to color ambiguous node reconstructions? (blend or grey)
+#' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -173,7 +174,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
     scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
-    labelsize=NULL, common_scale=FALSE, ambig="blend"){
+    labelsize=NULL, common_scale=FALSE, ambig="blend", bootstrap_scores=FALSE){
 
     tiptype = "character"
     if(!base){
@@ -250,7 +251,8 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         ps <- lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
-            tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig))
+            tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
+            bootstrap_scores=bootstrap_scores))
         if(!is.null(tips) || nodes){
             ps  <- lapply(ps,function(x){
                     x <- x + theme(legend.position="right",
@@ -274,6 +276,15 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     tree <- trees$trees[[1]]
     data <- trees$data[[1]]
     p <- ggtree::ggtree(tree,layout=layout)
+
+    #add bootstrap scores to ggplot object
+    if(bootstrap_scores){
+        scores <- unlist(lapply(tree$nodes, function(x)x$bootstrap_value))
+        if(is.null(scores)){
+            stop(paste("No bootstrap scores found in tree",tree$name))
+        }
+        p$data$bootstrap_score = scores[p$data$node]
+    }
     if(!is.null(data)){
         if(!is(data,"list")){
             data <- list(data)
@@ -324,6 +335,17 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     }
     if(title){
         p <- p + ggtitle(data@clone)
+    }
+    if(bootstrap_scores){
+        if(is.null(labelsize)){
+            p <- p + ggtree::geom_label(data=p$data[!p$data$isTip,],
+                aes(label=!!rlang::sym("bootstrap_score")),label.padding = unit(0.1, "lines"),
+                label.size=0.1)
+        }else{
+            p <- p + ggtree::geom_label(data=p$data[!p$data$isTip,],
+                aes(label=!!rlang::sym("bootstrap_score")),label.padding = unit(0.1, "lines"),
+                label.size=0.1,size=labelsize)
+        }
     }
     if(node_nums){
         if(is.null(labelsize)){
