@@ -29,6 +29,7 @@ nav:
     - 'Reconstruct clonal germlines': vignettes/Germlines-Vignette.md
     - 'Build lineage trees': vignettes/Building-Trees-Vignette.md
     - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
+    - 'Heavy+light chain tree building': vignettes/Resolve-Light-Chains-Vignette.md
     - 'Reconstruct intermediate sequences': vignettes/Sequences-Vignette.md
     - 'Detecting evolution over time': vignettes/Measurable-Evolution.md
     - 'Migration, differentiation, and isotype switching': vignettes/Discrete-Trait-Vignette.md
