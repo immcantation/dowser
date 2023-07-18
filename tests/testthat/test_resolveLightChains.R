@@ -9,7 +9,7 @@ data("ExampleMixedDb")
 #light <- filter(ExampleMixedDb, locus != "IGH")
 
 # run resolveLightChains
-data <- resolveLightChains(ExampleMixedDb)
+data <- expect_warning(resolveLightChains(ExampleMixedDb))
 
 expect_equal("seq09" %in% data$sequence_id, FALSE)
 expect_equal("seq18" %in% data$sequence_id, FALSE)

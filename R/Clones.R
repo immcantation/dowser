@@ -1219,10 +1219,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
 
   heavy$vj_gene <- nolight
   heavy$vj_alt_cell <- NA # set these to NA, since they're pretty rare
-  heavy$clone_subgroup <- 1
+  heavy[[subgroup]] <- 1
   light$vj_gene <- nolight
   light$vj_alt_cell <- NA
-  light$clone_subgroup <- 1
+  light[[subgroup]] <- 1
   light[[clone]] <- -1
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
     # Get heavy chains within a clone, and corresponding light chains
@@ -1311,7 +1311,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     }
     # now get the subgroup_id for the heavy chains lacking paired light chains
     comb <- dplyr::bind_rows(hd_sc,ld)
-    comb$clone_subgroup <- as.integer(comb$clone_subgroup)
+    comb[[subgroup]] <- as.integer(comb[[subgroup]])
     if(nrow(ld) != 0 & nrow(hd_bulk) != 0){
       for(sequence in 1:nrow(hd_bulk)){
         rating <- sapply(hd_sc[[seq]], function(x)
@@ -1321,12 +1321,12 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         if(length(proper_subgroup) > 1){
           subgroups <- c()
           for(number in unique(proper_subgroup)){
-            subgroups <- append(subgroups, hd_sc$clone_subgroup[number])
+            subgroups <- append(subgroups, hd_sc[[subgroup]][number])
           }
           if(length(unique(subgroups)) > 1){
             sizes <- c()
             for(uniq_subgroups in subgroups){
-              nrows <- nrow(hd_sc[hd_sc$clone_subgroup == uniq_subgroups,])
+              nrows <- nrow(hd_sc[hd_sc[[subgroup]] == uniq_subgroups,])
               sizes <- append(sizes, nrows)
             }
             if(sum(sizes == max(sizes)) == 1){
@@ -1336,15 +1336,17 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
               proper_subgroup_value <- min(potential_subgroups)
             }
           } else{
-            proper_subgroup_value <- hd_sc$clone_subgroup[proper_subgroup[1]]
+            proper_subgroup_value <- hd_sc[[subgroup]][proper_subgroup[1]]
           }
         } else{
-          proper_subgroup_value <- hd_sc$clone_subgroup[proper_subgroup]
+          proper_subgroup_value <- hd_sc[[subgroup]][proper_subgroup]
         }
-        hd_bulk$clone_subgroup[sequence] <- proper_subgroup_value
+        hd_bulk[[subgroup]][sequence] <- proper_subgroup_value
       }
     } 
-    comb <- dplyr::bind_rows(comb, hd_bulk)
+    if(nrow(hd_bulk) != 0){
+      comb <- dplyr::bind_rows(comb, hd_bulk)
+    }
     comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subgroup]])
     comb$vj_cell <- sapply(1:nrow(comb), function(x){
       if(!is.na(comb$vj_alt_cell[x])){
@@ -1355,20 +1357,20 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     })
     
     size <- c()
-    for(subgroup in sort(unique(comb$clone_subgroup))){
-      size <- append(size, nrow(comb[comb$clone_subgroup == subgroup,]))
+    for(subgroups in sort(unique(comb[[subgroup]]))){
+      size <- append(size, nrow(comb[comb[[subgroup]] == subgroups,]))
     }
     if(!all(diff(size) <= 0)){
-      order_check <- data.frame(table(comb$clone_subgroup))
-      colnames(order_check) <- c("clone_subgroup", "size")
+      order_check <- data.frame(table(comb[[subgroup]]))
+      colnames(order_check) <- c(!!rlang::sym(subgroup), "size")
       order_check <- order_check[order(-order_check$size),]
       order_check$proper_subgroup <- 1:nrow(order_check)
       comb$new_subgroup <- NA
-      for(i in unique(comb$clone_subgroup)){
-        comb$new_subgroup[comb$clone_subgroup == i] <- order_check$proper_subgroup[order_check$clone_subgroup == i]
+      for(i in unique(comb[[subgroup]])){
+        comb$new_subgroup[comb[[subgroup]] == i] <- order_check$proper_subgroup[order_check[[subgroup]] == i]
       }
-      comb <- subset(comb, select=-c(clone_subgroup))
-      names(comb)[names(comb) == "new_subgroup"] <- "clone_subgroup"
+      comb <- base::subset(comb, select=-c(!!rlang::sym(subgroup)))
+      names(comb)[names(comb) == "new_subgroup"] <- subgroup
     }
     comb
   },mc.cores=nproc)
