@@ -1,19 +1,20 @@
-**getSubclones** - *#' Deprecated! Use resolveLightChains*
+**resolveLightChains** - *Define subgroups based on light chain rearrangements*
 
 Description
 --------------------
 
-`getSubClones` plots a tree or group of trees
+`resolveLightChains` resolve light chain V and J subgroups within a clone
 
 
 Usage
 --------------------
 ```
-getSubclones(
-heavy,
-light,
+resolveLightChains(
+data,
 nproc = 1,
 minseq = 1,
+locus = "locus",
+heavy = "IGH",
 id = "sequence_id",
 seq = "sequence_alignment",
 clone = "clone_id",
@@ -28,17 +29,21 @@ nolight = "missing"
 Arguments
 -------------------
 
-heavy
-:   a tibble containing heavy chain sequences with clone_id
-
-light
-:   a tibble containing light chain sequences
+data
+:   a tibble containing heavy and light chain sequences with clone_id
 
 nproc
 :   number of cores for parallelization
 
 minseq
 :   minimum number of sequences per clone
+
+locus
+:   name of column containing locus values
+
+heavy
+:   value of heavy chains in locus column. All other values will be 
+treated as light chains
 
 id
 :   name of the column containing sequence identifiers.
@@ -76,7 +81,24 @@ nolight
 Value
 -------------------
 
-a tibble containing
+a tibble containing the same data as inputting, but with the column clone_subgroup
+added. This column contains subgroups within clones that contain distinct light chain
+V and J genes, with at most one light chain per cell.
+
+
+Details
+-------------------
+
+1. Make temporary array containing light chain clones
+2. Enumerate all possible V and J combinations
+3. Determine which combination is the most frequent
+4. Assign sequences with that combination to clone t
+5. Copy those sequences to return array
+6. Remove all cells with that combination from temp array
+7. Repeat 1-5 until temporary array zero.
+If there is more than rearrangement with the same V/J
+in the same cell, pick the one with the highest non-ambiguous
+characters.
 
 
 

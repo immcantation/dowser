@@ -24,7 +24,8 @@ tip_nums = FALSE,
 title = TRUE,
 labelsize = NULL,
 common_scale = FALSE,
-ambig = "blend"
+ambig = "blend",
+bootstrap_scores = FALSE
 )
 ```
 
@@ -79,6 +80,9 @@ determined by sequence with highest divergence
 
 ambig
 :   How to color ambiguous node reconstructions? (blend or grey)
+
+bootstrap_scores
+:   Show bootstrap scores for internal nodes? See getBootstraps.
 
 
 
