@@ -201,6 +201,11 @@ makeAirrClone <-
       }
       hc$lsequence <- ""
       hc$hlsequence <- ""
+      for(cell_name in 1:nrow(hc)){
+        if(is.na(hc$cell_id[cell_name])){
+          hc$cell_id[cell_name] <- "bulk"
+        }
+      }
       for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
         if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
           altseq <- paste(rep(mask_char,alt_length),collapse="")
@@ -211,6 +216,11 @@ makeAirrClone <-
         hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
         hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$hlsequence <- 
           paste0(hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,seq],altseq)
+      }
+      for(cell_name in 1:nrow(hc)){
+        if(hc$cell_id[cell_name] == "bulk"){
+          hc$cell_id[cell_name] <- NA
+        }
       }
       hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
       altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))

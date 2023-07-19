@@ -106,7 +106,7 @@ print(clones)
 ## # Build partitioned trees using IgPhyML.
 ## # exec here is set to IgPhyML. position in the Docker image.
 ## clones = getTrees(clones, build="igphyml", 
-##                  exec="/usr/local/share/igphyml/src/igphyml", nproc=1, id="hl", omega="e,e", rates="1,e")
+##                  exec="/usr/local/share/igphyml/src/igphyml", nproc=1, id="hl", omega="e,e", rates="0,1")
 ## 
 ## print(clones)
 ## ## A tibble: 2 x 7

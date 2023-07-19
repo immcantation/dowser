@@ -55,9 +55,7 @@ print(ExampleMixedDb$clone_subgroup)
 With the `clone_subgroup` now calculated, the data can now be formatted into a data table of AIRR clone objects. This is done using formatClones and specifying the `chain` variable to be "HL". For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
-# since the example data has a "bulk" heavy chain sequence, the missing cell_id will need to be replaced
-ExampleMixedDb$cell_id[16] <- "bulk"
-# for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similiar. 
+# for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similar. 
 clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = F)
 print(clones)
 ```
