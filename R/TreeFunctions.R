@@ -1006,7 +1006,6 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                          rates=NULL, asrc=0.95, splitfreqs=FALSE, ...){
   
   warning("Dowser igphyml doesn't mask split codons!")
-  
   partition <- match.arg(partition)
   
   valid_o <- c("r","lr","tlr")
@@ -1034,6 +1033,12 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(length(os) != 4 && (partition == "hlcf")){
     warning("Omega parameter incompatible with partition, setting to e,e,e,e")
     omega = "e,e,e,e"
+  }
+  if(length(os) != 1 && (partition == "single")){
+    stop("Specified partition model not compatible with multiple omegas or rates")
+  }
+  if(length(os) != length(strsplit(rates, ",")[[1]]) && !is.null(rates)){
+    stop("Number of rates needs to equal the number of omegas")
   }
   igphyml <- path.expand(igphyml)
   if(file.access(igphyml, mode=1) == -1) {

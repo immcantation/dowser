@@ -48,11 +48,14 @@ data("ExampleMixedDb")
 # find the clone subgroups 
 ExampleMixedDb <- resolveLightChains(ExampleMixedDb)
 print(ExampleMixedDb$clone_subgroup)
+
+# run createGermlines
+# ExampleMixedDb <- createGermlines(ExampleMixedDb, nproc = 1)
 ```
 
 ## Format clones
 
-With the `clone_subgroup` now calculated, the data can now be formatted into a data table of AIRR clone objects. This is done using formatClones and specifying the `chain` variable to be "HL". For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
+With the `clone_subgroup` now calculated, the data can now be formatted into a data table of AIRR clone objects. This is done using formatClones and specifying the `chain` variable to be "HL". This concatenates the paired heavy and light chains into a single sequence alignment. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similar. 
@@ -61,13 +64,16 @@ print(clones)
 ```
 ## Building trees 
 
-Trees can now be built with any of the methods that dowser supports. The broad categories are maximum parsimony, maximum likelihood, and partitioned maximum liklihood. For specifics on each of the different methods, see the [Building Trees Vignette](Building-Trees-Vignette.md).
+Trees can now be built with any of the methods that dowser supports. The broad categories are maximum parsimony, maximum likelihood, and partitioned maximum likelihood. However, the partitioned maximum likelihood models especially utilize paired heavy and light chain data. The maximum likelihood partition models will create separate scalars for heavy and light chain branch estimation, allowing for the most accurate branch length reconstitution. Here, branch lengths represent the number of mutations per site along both heavy and light chains. This is especially apparent when mixing bulk and single cell data. 
+
+For specifics on each of the different methods, including the specifics about the different partitions, see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
-# this is build with the default tree building method in dowser
-# phangorn's pratchet method
-clones <- getTrees(clones, nproc = 1)
+# Building maximum likelihood trees with multiple partitions using IgPhyML.
+# exec here is set to IgPhyML position in the Docker image.
+clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl"
+                   exec="/usr/local/share/igphyml/src/igphyml")
 
-print(clones)
+plot(clones$trees[[1]])
 ```
 

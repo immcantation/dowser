@@ -77,9 +77,9 @@ Maximum parsimony trees can be built with the `getTrees` function, which by defa
 
 The output is the same tibble as the input, but with a `trees` column containing an R `ape::phylo` object for each clone.
 
+Build trees using *phangorn's pratchet*. 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
-# Build trees using the pratchet maximum parsimony function in phangnorn
 clones = getTrees(clones, nproc=1)
 
 print(clones)
@@ -94,8 +94,8 @@ Maximum parsimony trees can also be built using the PHYLIP function `dnapars`. T
 
 [PHYLIP download site](https://evolution.genetics.washington.edu/phylip/getme-new1.html)
 
+Build trees using *dnapars*. 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
-# Build trees using dnapars.
 # exec here is set to dnapars position in the Docker image.
 clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars", nproc=1)
 
@@ -117,8 +117,9 @@ Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To
 
 Another maximum likelihood option that dowser supports is `raxml` which utilizes RAxML Next Generation. This option also needs a path to the `raxml` executable specified in the `exec` option. 
 
+Build trees using *phangorn's optim.pml*.
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
-# Build trees using the optim.pml maximum likelihood function in phangnorn
+
 clones = getTrees(clones, build="pml")
 
 print(clones)
@@ -128,10 +129,10 @@ print(clones)
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
-Build trees using dnaml instead, which like `dnapars` is also distributed as part of `PHYLIP`.
+Build trees using *dnaml* instead, which like `dnapars` is also distributed as part of `PHYLIP`.
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
-# Build trees using dnaml.
+
 # exec here is set to dnaml position in the Docker image.
 clones = getTrees(clones, build="dnaml", exec="/usr/local/bin/dnaml")
 
@@ -142,13 +143,13 @@ clones
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
-Build trees using RAxML.
+Build trees using *RAxML*.
 
 [RAxML documentation/download site](https://github.com/amkozlov/raxml-ng)
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
-# Build trees using dnaml.
-# exec here is set to dnaml position in the Docker image.
+
+# exec here is set to raxml position in the Docker image.
 clones = getTrees(clones, build="raxml", exec="/usr/local/share/raxml-ng")
 
 clones
@@ -168,7 +169,6 @@ Note: This function is slower than other maximum likelihood and parsimony approa
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
-# Build trees using IgPhyML
 # exec here is set to IgPhyML position in the Docker image.
 clones = getTrees(clones, build="igphyml", 
     exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
@@ -184,14 +184,36 @@ print(clones)
 clones$parameters[[1]]$omega_mle
 #[1] 0.5286
 ```
-## Build partitioned trees
+## Building maximum likelihood trees with multiple partitions
 
-Single cell data can now provide data that has paired heavy and light chain BCR data. This allows some tree building programs to partition said data by the heavy chain information and the light chain information. Dowser support two maximum likelihood methods, IgPhyML and RAxML, that can utilize such data while making trees. 
+Single cell data can now provide data that has paired heavy and light chain BCR data. Two of the tree building methods that dowser supports, IgPhyMl and RAxML, support multiple partition options. In both of these methods, a "scaled" model approach is used. This approach allows heavy and light chain branch lengths to differ by a scalar factor estimated by maximum likelihood. 
+
+IgPhyML current supports six different kinds of partitions. 
+1. `single`
+- This is how IgPhyML normally runs. This will not start multiple partitions and only use one omega. 
+2. `cf`
+- This will use two different omegas. One for all CDRs and one for all FWRs
+3. `hl`
+- This will use two different omegas. One for the heavy and one for the light chain. 
+4. `hlf`
+- This will use three different omegas. One for all CDRs, one for the heavy FWR, and one for the light FWR
+5. `hlc`
+- This will use three different omegas. One for all FWRs, one for the heavy CDR, and one for the light CDR
+6. `hlcf`
+- This will use four different omegas. One for each heavy/light CDR/FWR combination
 
 
+In addition to the partition variable, IgPhyML will also need an `omega` and `rates` parameter. The `omegas` parameter is a vector of 'e' equal to the number of omegas required for the partition. `rates` is a parameter that shows which omegas should be associated with a given rate. The rate parameter lists the heavy rates first, then the light chain rates. It also lists the FWR rates before the CDR rates. 
+
+For example, if you wanted different rates heavy and light chains with two omegas, the `omegas` parameter would be "e,e" and the `rates` parameter would be  "0,1". 
+
+But if you wanted four different omegas, but the wanted the light chain CDR and FWR to have the same rate and the heavy chain CDR and FWR to have a different rate the code would be `omegas`= "e,e,e,e", `rates`="0,0,1,1".
+
+However, if you wanted the CDRs to have the same rate and the FWRs to have a different rate the code would be `omegas`= "e,e,e,e", `rates`="0,1,0,1".
+
+Building maximum likelihood trees with multiple partitions using *IgPhyML*. 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
-# Build partitioned trees using IgPhyML
 # exec here is set to IgPhyML position in the Docker image.
 clones = getTrees(clones, build="igphyml", 
     exec="/usr/local/share/igphyml/src/igphyml", nproc=1, id="hl", omega="e,e", rates="0,1")
@@ -204,10 +226,9 @@ print(clones)
 #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
 ```
 
-Partitioned trees using RAxML instead
+Building maximum likelihood trees with multiple partitions using *RAxML* instead
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
-# Build partitioned trees using RAxML
 # exec here is set to RAxML position in the Docker image.
 clones = getTrees(clones, build="raxml", 
     exec="/usr/local/share/raxml-ng", nproc=1, partition=TRUE)
