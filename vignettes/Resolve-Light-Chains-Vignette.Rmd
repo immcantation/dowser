@@ -71,7 +71,7 @@ For specifics on each of the different methods, including the specifics about th
 ```{r, warning=FALSE, message=FALSE}
 # Building maximum likelihood trees with multiple partitions using IgPhyML.
 # exec here is set to IgPhyML position in the Docker image.
-clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl"
+clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl",
                    exec="/usr/local/share/igphyml/src/igphyml")
 
 plot(clones$trees[[1]])

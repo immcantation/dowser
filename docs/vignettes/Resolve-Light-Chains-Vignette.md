@@ -60,16 +60,21 @@ For specifics on each of the different methods, including the specifics about th
 ```r
 # Building maximum likelihood trees with multiple partitions using IgPhyML.
 # exec here is set to IgPhyML position in the Docker image.
-clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl"
+clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl",
                    exec="/usr/local/share/igphyml/src/igphyml")
+```
 
+```
+## Error in strsplit(rates, ","): non-character argument
+```
+
+```r
 plot(clones$trees[[1]])
 ```
 
 ```
-## Error: <text>:4:20: unexpected symbol
-## 3: clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl"
-## 4:                    exec
-##                       ^
+## Error in plot.window(...): need finite 'xlim' values
 ```
+
+![plot of chunk Resolve-Light-Chains-Vignette-3](figure/Resolve-Light-Chains-Vignette-3-1.png)
 
