@@ -40,7 +40,7 @@ To resolve the light chains within a clone, use the resolveLightChains function.
 
 The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone. `vj_clone` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
 
-```{r, eval=FALSE, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 library(dowser)
 # load example tsv data
 data("ExampleMixedDb")
@@ -57,7 +57,7 @@ print(ExampleMixedDb$clone_subgroup)
 
 With the `clone_subgroup` now calculated, the data can now be formatted into a data table of AIRR clone objects. This is done using formatClones and specifying the `chain` variable to be "HL". This concatenates the paired heavy and light chains into a single sequence alignment. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
-```{r, eval=FALSE, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 # for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similar. 
 clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = F)
 print(clones)
@@ -68,7 +68,7 @@ Trees can now be built with any of the methods that dowser supports. The broad c
 
 For specifics on each of the different methods, including the specifics about the different partitions, see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
-```{r, eval=FALSE, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 # Building maximum likelihood trees with multiple partitions using IgPhyML.
 # exec here is set to IgPhyML position in the Docker image.
 clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl"
