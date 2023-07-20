@@ -60,16 +60,16 @@ For specifics on each of the different methods, including the specifics about th
 ```r
 # Building maximum likelihood trees with multiple partitions using IgPhyML.
 # exec here is set to IgPhyML position in the Docker image.
-clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition="hl",
+clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", rates="0,1", partition="hl",
                    exec="/usr/local/share/igphyml/src/igphyml")
 ```
 
 ```
-## Error in strsplit(rates, ","): non-character argument
+## Error in buildIgphyml(data, igphyml = exec, temp_path = file.path(dir, : The file /usr/local/share/igphyml/src/igphyml cannot be executed.
 ```
 
 ```r
-plots = plotTrees(clones)
+tree = plotTrees(clones)
 ```
 
 ```
@@ -77,8 +77,10 @@ plots = plotTrees(clones)
 ```
 
 ```r
-plots[[1]]
+tree[[1]]
 ```
 
-![plot of chunk Resolve-Light-Chains-Vignette-3](figure/Resolve-Light-Chains-Vignette-3-1.png)
+```
+## Error in eval(expr, envir, enclos): object 'tree' not found
+```
 
