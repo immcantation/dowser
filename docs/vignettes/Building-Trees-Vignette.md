@@ -179,19 +179,20 @@ clones$parameters[[1]]$omega_mle
 
 Single cell data can now provide data that has paired heavy and light chain BCR data. Two of the tree building methods that dowser supports, IgPhyMl and RAxML, support multiple partition options. In both of these methods, a "scaled" model approach is used. This approach allows heavy and light chain branch lengths to differ by a scalar factor estimated by maximum likelihood. 
 
-IgPhyML current supports six different kinds of partitions. 
+IgPhyML current supports six different kinds of partitions:
+
 1. `single`
-- This is how IgPhyML normally runs. This will not start multiple partitions and only use one omega. 
+    * This is how IgPhyML normally runs. This will not start multiple partitions and only use one omega. 
 2. `cf`
-- This will use two different omegas. One for all CDRs and one for all FWRs
+    * This will use two different omegas. One for all CDRs and one for all FWRs
 3. `hl`
-- This will use two different omegas. One for the heavy and one for the light chain. 
+    * This will use two different omegas. One for the heavy and one for the light chain. 
 4. `hlf`
-- This will use three different omegas. One for all CDRs, one for the heavy FWR, and one for the light FWR
+    * This will use three different omegas. One for all CDRs, one for the heavy FWR, and one for the light FWR
 5. `hlc`
-- This will use three different omegas. One for all FWRs, one for the heavy CDR, and one for the light CDR
+    * This will use three different omegas. One for all FWRs, one for the heavy CDR, and one for the light CDR
 6. `hlcf`
-- This will use four different omegas. One for each heavy/light CDR/FWR combination
+    * This will use four different omegas. One for each heavy/light CDR/FWR combination
 
 In addition to the partition variable, IgPhyML will also need an `omega` and `rates` parameter. The `omegas` parameter is a vector of 'e' equal to the number of omegas required for the partition. `rates` is a parameter that shows which omegas should be associated with a given rate. The rate parameter lists the heavy rates first, then the light chain rates. It also lists the FWR rates before the CDR rates. 
 
