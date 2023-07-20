@@ -202,7 +202,6 @@ IgPhyML current supports six different kinds of partitions.
 6. `hlcf`
 - This will use four different omegas. One for each heavy/light CDR/FWR combination
 
-
 In addition to the partition variable, IgPhyML will also need an `omega` and `rates` parameter. The `omegas` parameter is a vector of 'e' equal to the number of omegas required for the partition. `rates` is a parameter that shows which omegas should be associated with a given rate. The rate parameter lists the heavy rates first, then the light chain rates. It also lists the FWR rates before the CDR rates. 
 
 For example, if you wanted different rates heavy and light chains with two omegas, the `omegas` parameter would be "e,e" and the `rates` parameter would be  "0,1". 
@@ -211,7 +210,7 @@ But if you wanted four different omegas, but the wanted the light chain CDR and 
 
 However, if you wanted the CDRs to have the same rate and the FWRs to have a different rate the code would be `omegas`= "e,e,e,e", `rates`="0,1,0,1".
 
-Building maximum likelihood trees with multiple partitions using *IgPhyML*. 
+Building maximum likelihood trees with multiple partitions using *IgPhyML*.
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
 # exec here is set to IgPhyML position in the Docker image.
@@ -226,7 +225,7 @@ print(clones)
 #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
 ```
 
-Building maximum likelihood trees with multiple partitions using *RAxML* instead
+Building maximum likelihood trees with multiple partitions using *RAxML* instead.
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
 # exec here is set to RAxML position in the Docker image.
