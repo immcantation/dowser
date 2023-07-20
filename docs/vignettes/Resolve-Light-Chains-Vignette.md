@@ -69,11 +69,15 @@ clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", partition=
 ```
 
 ```r
-plot(clones$trees[[1]])
+plots = plotTrees(clones)
 ```
 
 ```
-## Error in plot.window(...): need finite 'xlim' values
+## Error in plotTrees(trees[x, ], nodes = nodes, tips = tips, tipsize = tipsize, : clone not found in list of clone objects
+```
+
+```r
+plots[[1]]
 ```
 
 ![plot of chunk Resolve-Light-Chains-Vignette-3](figure/Resolve-Light-Chains-Vignette-3-1.png)
