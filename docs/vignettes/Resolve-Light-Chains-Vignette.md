@@ -62,7 +62,7 @@ clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", rates="0,1
 
 
 ```r
-plotTrees(clones)
+plotTrees(clones)[[1]]+geom_tiplab()
 ```
 
 ![plot of chunk Resolve-Light-Chains-Vignette-6](figure/Resolve-Light-Chains-Vignette-6-1.png)
