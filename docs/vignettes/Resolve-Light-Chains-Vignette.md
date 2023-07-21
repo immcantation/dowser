@@ -20,15 +20,10 @@ data("ExampleMixedDb")
 # find the clone subgroups 
 ExampleMixedDb <- resolveLightChains(ExampleMixedDb)
 print(ExampleMixedDb$clone_subgroup)
-```
+# [1] 1 1 2 1 1 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 1 1
 
-```
-##  [1] 1 1 2 1 1 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 1 1
-```
-
-```r
 # run createGermlines
-# ExampleMixedDb <- createGermlines(ExampleMixedDb, nproc = 1)
+ExampleMixedDb <- createGermlines(ExampleMixedDb, nproc = 1)
 ```
 
 ## Format clones
@@ -40,15 +35,12 @@ With the `clone_subgroup` now calculated, the data can now be formatted into a d
 # for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similar. 
 clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = F)
 print(clones)
-```
-
-```
-## # A tibble: 3 × 4
-##   clone_id data       locus    seqs
-##      <dbl> <list>     <chr>   <int>
-## 1        1 <airrClon> IGH,IGK    11
-## 2        2 <airrClon> IGH,IGK     2
-## 3        4 <airrClon> IGH,IGK     2
+## A tibble: 3 x 4
+#  clone_id     data       locus       seqs    
+#     <dbl>    <list>     <chr>       <int> 
+#1     1     <airrClon>   IGH,IGK       11 
+#2     2     <airrClon>   IGH,IGK        2 
+#3     4     <airrClon>   IGH,IGK        2 
 ```
 ## Building trees 
 
@@ -62,25 +54,6 @@ For specifics on each of the different methods, including the specifics about th
 # exec here is set to IgPhyML position in the Docker image.
 clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", rates="0,1", partition="hl",
                    exec="/usr/local/share/igphyml/src/igphyml")
-```
-
-```
-## Error in buildIgphyml(data, igphyml = exec, temp_path = file.path(dir, : The file /usr/local/share/igphyml/src/igphyml cannot be executed.
-```
-
-```r
-tree = plotTrees(clones)
-```
-
-```
-## Error in plotTrees(trees[x, ], nodes = nodes, tips = tips, tipsize = tipsize, : clone not found in list of clone objects
-```
-
-```r
-tree[[1]]
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'tree' not found
+plots(clones$trees[[1]])
 ```
 
