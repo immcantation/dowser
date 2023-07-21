@@ -141,7 +141,7 @@ Build trees using *RAxML*.
 
 ```r
 # exec here is set to raxml position in the Docker image.
-clones = getTrees(clones, build="raxml", exec="/usr/local/share/raxml-ng")
+clones = getTrees(clones, build="raxml", exec="/usr/local/bin/raxml-ng")
 
 clones
 # A tibble: 2 x 6
@@ -222,7 +222,7 @@ Building maximum likelihood trees with multiple partitions using *RAxML* instead
 ```r
 # exec here is set to RAxML position in the Docker image.
 clones = getTrees(clones, build="raxml", 
-    exec="/usr/local/share/raxml-ng", nproc=1, partition=TRUE)
+    exec="/usr/local/bin/raxml-ng", nproc=1, partition=TRUE)
 
 print(clones)
 ## A tibble: 2 x 7
