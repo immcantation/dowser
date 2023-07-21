@@ -86,7 +86,7 @@ clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", rates="0,1
 
 
 ``` {r, eval=FALSE, warning=FALSE, message=FALSE}
-plotTrees(clones)
+plotTrees(clones)[[1]]+geom_tiplab()
 ```
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
