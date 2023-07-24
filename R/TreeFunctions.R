@@ -1037,8 +1037,10 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(length(os) != 1 && (partition == "single")){
     stop("Specified partition model not compatible with multiple omegas or rates")
   }
-  if(length(os) != length(strsplit(rates, ",")[[1]]) && !is.null(rates)){
-    stop("Number of rates needs to equal the number of omegas")
+  if (!is.null(rates)) {
+    if (length(os) != length(strsplit(rates, ",")[[1]])) {
+      stop("Number of rates needs to equal the number of omegas")
+    }
   }
   igphyml <- path.expand(igphyml)
   if(file.access(igphyml, mode=1) == -1) {
