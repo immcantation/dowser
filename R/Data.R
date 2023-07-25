@@ -169,5 +169,20 @@
 #' }
 "ExampleMixedDb"
 
+#' Example Multiple Partition Trees
+#'
+#' A small example database originally created for the Immcantation package 'scoper.
+#'
+#' @format   A data.frame with the following Change-O style columns:
+#'   \itemize{
+#'     \item  \code{clone_id}:           Clonal cluster
+#'     \item  \code{data}:               List of airrClone objects
+#'     \item  \code{locus}:              Locus identifier.
+#'     \item  \code{seqs}:               Number of sequences
+#'     \item  \code{parameters}:         Parameters associated with "raxml_trees"
+#'     \item \code{trees}:               IgPhyML Tree
+#'     \item \code{raxml_trees}:         RAxML Tree
+#' }
+"hlClone"
 
 NULL
