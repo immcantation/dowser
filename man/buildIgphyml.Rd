@@ -16,7 +16,7 @@ buildIgphyml(
   rm_files = TRUE,
   rm_dir = NULL,
   partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
-  omega = "e",
+  omega = NULL,
   optimize = "lr",
   motifs = "FCH",
   hotness = "e,e,e,e,e,e",
@@ -74,13 +74,13 @@ get a separate rate (e.g. omega=e,e rates=0,1).}
 Wrapper to build IgPhyML trees and infer intermediate nodes
 }
 \details{
-Partition options:
+Partition options in rate order:
 \itemize{
   \item  \code{single}: 1 omega for whole sequence
   \item  \code{cf}: 2 omegas, 1 for all CDRs and 1 for all FWRs
   \item  \code{hl}: 2 omegas, 1 for heavy and 1 for light chain
-  \item  \code{hlf}: 3 omegas, 1 for all CDRs, 2 for heavy/light FWRs
-  \item  \code{hlc}: 3 omegas, 1 for all FWRs, 2 for heavy/light CDRs
-  \item  \code{hlcf}: 4 omegas, 1 for each heavy/light CDR/FWR combination
+  \item  \code{hlf}: 3 omegas, 1 for heavy FWR, 1 for all CDRs, and 1 for light FWRs
+  \item  \code{hlc}: 3 omegas, 1 for all FWRs, 1 for heavy CDRs, and 1 for light CDRs
+  \item  \code{hlcf}: 4 omegas, 1 for each heavy FWR, 1 for heavy CDR, 1 for light FWR, and 1 for light CDR
 }
 }

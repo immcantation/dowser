@@ -178,17 +178,16 @@ clones$parameters[[1]]$omega_mle
 ```
 ## Building maximum likelihood trees with multiple partitions
 
-Two of the tree building methods that dowser supports, IgPhyMl and RAxML, support models with multiple partitions. This allows different parameters to be estimated for different regions (partitions) of the sequence data. 
-Both of these methods support "scaled" branch lengths models. This approach allows different partitions to differ by a scalar factor estimated by maximum likelihood. This is recommended when analyzing single cell data paired heavy and light chains. IgPhyML also allows for separated values of omegas (dN/dS) to be estimated for different partitions. There are mnay possible models that can be specified, but the most common are detailed below. For full details on different possibilites, see the `buildIgphyml` documentation (all arguments can be passed through getTrees). 
+Two of the tree building methods that dowser supports, IgPhyML and RAxML, support models with multiple partitions. This allows different parameters to be estimated for different regions (partitions) of the sequence data. Both of these methods support "scaled" branch lengths models. This approach allows different partitions to differ by a scalar factor estimated by maximum likelihood. This is recommended when analyzing single cell data paired heavy and light chains. IgPhyML also allows for separated values of omegas (dN/dS) to be estimated for different partitions. There are many possible models that can be specified, but the most common are detailed below. For full details on different possibilities, see the `buildIgphyml` documentation (all arguments can be passed through getTrees). 
 
 Three of the most useful IgPhyML partition models and defaults are listed below:
 
 1. `single`
     * 1 partition for all sequence sites. 
 2. `cf`
-    * 2 partitions: 1 for all CDRs and 1 for all FWRs. By deault, a separte omega value is estimated for each. Both use the same branch lengths.
+    * 2 partitions: 1 for all CDRs and 1 for all FWRs. By default, a separate omega value is estimated for each. Both use the same branch lengths.
 3. `hl`
-    * 2 partitions: 1 for the heavy chains and 1 for the light chains. By defualt, a separate omega value is estimated for each, as well as a separate branch length scalar. This allows heavy and light chains to have proportionally longer or shorter branches. This is only possible if you have paired heavy and light chain sequences and run formatClones with chain="HL" (see [Heavy+light chain tree building vignette](Resolve-Light-Chains-Vignette.md).)
+    * 2 partitions: 1 for the heavy chains and 1 for the light chains. By default, a separate omega value is estimated for each, as well as a separate branch length scalar. This allows heavy and light chains to have proportionally longer or shorter branches. This is only possible if you have paired heavy and light chain sequences and run formatClones with chain="HL" (see [Heavy+light chain tree building vignette](Resolve-Light-Chains-Vignette.md).)
 
 
 Building maximum likelihood trees using the CDR/FWR partition model in *IgPhyML*.

@@ -986,14 +986,14 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    ...        Additional arguments (not currently used)
 #'
-#' @details Partition options:
+#' @details Partition options in rate order:
 #' \itemize{
 #'   \item  \code{single}: 1 omega for whole sequence
 #'   \item  \code{cf}: 2 omegas, 1 for all CDRs and 1 for all FWRs
 #'   \item  \code{hl}: 2 omegas, 1 for heavy and 1 for light chain
-#'   \item  \code{hlf}: 3 omegas, 1 for all CDRs, 2 for heavy/light FWRs
-#'   \item  \code{hlc}: 3 omegas, 1 for all FWRs, 2 for heavy/light CDRs
-#'   \item  \code{hlcf}: 4 omegas, 1 for each heavy/light CDR/FWR combination
+#'   \item  \code{hlf}: 3 omegas, 1 for heavy FWR, 1 for all CDRs, and 1 for light FWRs
+#'   \item  \code{hlc}: 3 omegas, 1 for all FWRs, 1 for heavy CDRs, and 1 for light CDRs
+#'   \item  \code{hlcf}: 4 omegas, 1 for each heavy FWR, 1 for heavy CDR, 1 for light FWR, and 1 for light CDR
 #' }
 #'
 #' @return  \code{phylo} object created by igphyml with nodes attribute
@@ -1002,7 +1002,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
                          partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
-                         omega="e", optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
+                         omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
                          rates=NULL, asrc=0.95, splitfreqs=FALSE, ...){
   
   warning("Dowser igphyml doesn't mask split codons!")
@@ -1025,6 +1025,9 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(length(os) != 2 && (partition == "cf" | partition == "hl")){
     warning("Omega parameter incompatible with partition, setting to e,e")
     omega = "e,e"
+    if(partition == "hl" && is.null(rates)){
+      rates = "0,1"
+    }
   }
   if(length(os) != 3 && (partition == "hlc" | partition == "hlf")){
     warning("Omega parameter incompatible with partition, setting to e,e,e")
@@ -1033,6 +1036,9 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(length(os) != 4 && (partition == "hlcf")){
     warning("Omega parameter incompatible with partition, setting to e,e,e,e")
     omega = "e,e,e,e"
+    if(is.null(rates)){
+      rates = "0,0,1,1"
+    }
   }
   if(length(os) != 1 && (partition == "single")){
     stop("Specified partition model not compatible with multiple omegas or rates")

@@ -21,7 +21,7 @@ quiet = 0,
 rm_files = TRUE,
 rm_dir = NULL,
 partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
-omega = "e",
+omega = NULL,
 optimize = "lr",
 motifs = "FCH",
 hotness = "e,e,e,e,e,e",
@@ -106,14 +106,14 @@ containing reconstructed sequences.
 Details
 -------------------
 
-Partition options:
+Partition options in rate order:
 
 + `single`: 1 omega for whole sequence
 + `cf`: 2 omegas, 1 for all CDRs and 1 for all FWRs
 + `hl`: 2 omegas, 1 for heavy and 1 for light chain
-+ `hlf`: 3 omegas, 1 for all CDRs, 2 for heavy/light FWRs
-+ `hlc`: 3 omegas, 1 for all FWRs, 2 for heavy/light CDRs
-+ `hlcf`: 4 omegas, 1 for each heavy/light CDR/FWR combination
++ `hlf`: 3 omegas, 1 for heavy FWR, 1 for all CDRs, and 1 for light FWRs
++ `hlc`: 3 omegas, 1 for all FWRs, 1 for heavy CDRs, and 1 for light CDRs
++ `hlcf`: 4 omegas, 1 for each heavy FWR, 1 for heavy CDR, 1 for light FWR, and 1 for light CDR
 
 
 

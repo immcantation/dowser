@@ -7,9 +7,9 @@ With the advances in sequencing, single cell datasets can now pair heavy and lig
 To resolve the light chains within a clone, use the resolveLightChains function. This function will:
 
 1. Pair heavy and light chains together by their cell_id and identify which `clone_subgroup` each pair belongs to. 
-2. Assign heavy chains without an associated light chain to the a subgroup containing the most similar paired heavy chain.
+2. Assign heavy chains without an associated light chain to the subgroup containing the most similar paired heavy chain.
 
-The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone, with 1 being the largest. `vj_clone` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
+The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone, with 1 being the largest. `clone_subgroup_id` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
 
 
 ```r
@@ -26,12 +26,12 @@ print(ExampleMixedDb$clone_subgroup)
 
 ```r
 # run createGermlines -- this has already been done on this data
-#ExampleMixedDb <- createGermlines(ExampleMixedDb, nproc = 1)
+#ExampleMixedDb <- createGermlines(ExampleMixedDb, clone = clone_subgroup_id, nproc = 1)
 ```
 
 ## Format clones
 
-The next step is to convert the data into airrClone objects that can be used for tree building. As with heavy chain sequences, this is done using the formatClones function. To build trees with paired heavy and light chains, specify the `chain` "HL". This will concatenate the paired heavy and light chains into a single sequence alignment. TO only use the heavy chain, simply leave chain = "H", the default. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
+The next step is to convert the data into airrClone objects that can be used for tree building. As with heavy chain sequences, this is done using the formatClones function. To build trees with paired heavy and light chains, specify `chain` = "HL". This will concatenate the paired heavy and light chains into a single sequence alignment. To only use the heavy chain, simply leave chain = "H", the default. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 
 ```r
@@ -55,7 +55,7 @@ For details on each of the different methods, including the specifics about diff
 ```r
 # Building maximum likelihood trees with multiple partitions using IgPhyML.
 # exec here is set to IgPhyML position in the Docker image.
-clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", rates="0,1", partition="hl",
+clones <- getTrees(clones[1,], build="igphyml", nproc=1, partition="hl",
                    exec="/usr/local/share/igphyml/src/igphyml")
 ```
 
@@ -94,6 +94,11 @@ print(clones)
 
 
 ```r
+plotTrees(clones)[[1]]+geom_tiplab()
+```
+
+
+```r
 library(dowser)
 library(ggtree)
 # Load data instead of running phylip
@@ -104,6 +109,4 @@ hlClone$trees <- hlClone$raxml_tree
 plotTrees(hlClone)[[1]]+geom_tiplab()
 ```
 
-```
-## Error in plotTrees(trees[x, ], nodes = nodes, tips = tips, tipsize = tipsize, : clone not found in list of clone objects
-```
+![plot of chunk Resolve-Light-Chains-Vignette-9](figure/Resolve-Light-Chains-Vignette-9-1.png)

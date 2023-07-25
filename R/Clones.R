@@ -649,10 +649,14 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       " and were removed. If you want to keep these sequences use the option filterStop=FALSE."))
     }
   }
+  # CGJ 7/25/23 changed ordering and moved away from dplyr filtering step 
+  # caused a segfault due to 'memory not mapped'
+  # base R's filtering doesn't do this. 
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
     if(!is.null(heavy)){
       if(locus %in% names(data)){
-        data <- dplyr::filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
+#        data <- dplyr::filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
+        data <- data[data[[locus]] == rlang::sym(heavy),]
       }
     }
   }
@@ -1241,7 +1245,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){
-      hd$vj_clone <- paste0(hd[[clone]],"_",hd[[subgroup]])
+      hd$clone_subgroup_id <- paste0(hd[[clone]],"_",hd[[subgroup]])
       hd$vj_cell <- sapply(1:nrow(hd), function(x){
         if(!is.na(hd$vj_alt_cell[x])){
           paste(hd$vj_gene[x],hd$vj_alt_cell[x],sep=",")        
@@ -1355,7 +1359,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     if(nrow(hd_bulk) != 0){
       comb <- dplyr::bind_rows(comb, hd_bulk)
     }
-    comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subgroup]])
+    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
     comb$vj_cell <- sapply(1:nrow(comb), function(x){
       if(!is.na(comb$vj_alt_cell[x])){
         paste(comb$vj_gene[x],comb$vj_alt_cell[x],sep=",")        
