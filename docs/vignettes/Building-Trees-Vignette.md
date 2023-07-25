@@ -67,7 +67,7 @@ Maximum parsimony trees can be built with the `getTrees` function, which by defa
 
 The output is the same tibble as the input, but with a `trees` column containing an R `ape::phylo` object for each clone.
 
-Build trees using *phangorn's pratchet*. 
+Build trees using *phangorn's pratchet*.
 
 ```r
 clones = getTrees(clones, nproc=1)
@@ -120,8 +120,8 @@ print(clones)
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
-Build trees using *dnaml* instead, which like `dnapars` is also distributed as part of `PHYLIP`.
 
+Build trees using *dnaml* instead, which like `dnapars` is also distributed as part of `PHYLIP`.
 
 ```r
 # exec here is set to dnaml position in the Docker image.
@@ -134,6 +134,7 @@ clones
 #1     3170 <airrClon> N        13 Subject_1  <phylo>
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
+
 Build trees using *RAxML*.
 
 [RAxML documentation/download site](https://github.com/amkozlov/raxml-ng)
@@ -177,37 +178,25 @@ clones$parameters[[1]]$omega_mle
 ```
 ## Building maximum likelihood trees with multiple partitions
 
-Single cell data can now provide data that has paired heavy and light chain BCR data. Two of the tree building methods that dowser supports, IgPhyMl and RAxML, support multiple partition options. In both of these methods, a "scaled" model approach is used. This approach allows heavy and light chain branch lengths to differ by a scalar factor estimated by maximum likelihood. 
+Two of the tree building methods that dowser supports, IgPhyMl and RAxML, support models with multiple partitions. This allows different parameters to be estimated for different regions (partitions) of the sequence data. 
+Both of these methods support "scaled" branch lengths models. This approach allows different partitions to differ by a scalar factor estimated by maximum likelihood. This is recommended when analyzing single cell data paired heavy and light chains. IgPhyML also allows for separated values of omegas (dN/dS) to be estimated for different partitions. There are mnay possible models that can be specified, but the most common are detailed below. For full details on different possibilites, see the `buildIgphyml` documentation (all arguments can be passed through getTrees). 
 
-IgPhyML current supports six different kinds of partitions:
+Three of the most useful IgPhyML partition models and defaults are listed below:
 
 1. `single`
-    * This is how IgPhyML normally runs. This will not start multiple partitions and only use one omega. 
+    * 1 partition for all sequence sites. 
 2. `cf`
-    * This will use two different omegas. One for all CDRs and one for all FWRs
+    * 2 partitions: 1 for all CDRs and 1 for all FWRs. By deault, a separte omega value is estimated for each. Both use the same branch lengths.
 3. `hl`
-    * This will use two different omegas. One for the heavy and one for the light chain. 
-4. `hlf`
-    * This will use three different omegas. One for all CDRs, one for the heavy FWR, and one for the light FWR
-5. `hlc`
-    * This will use three different omegas. One for all FWRs, one for the heavy CDR, and one for the light CDR
-6. `hlcf`
-    * This will use four different omegas. One for each heavy/light CDR/FWR combination
+    * 2 partitions: 1 for the heavy chains and 1 for the light chains. By defualt, a separate omega value is estimated for each, as well as a separate branch length scalar. This allows heavy and light chains to have proportionally longer or shorter branches. This is only possible if you have paired heavy and light chain sequences and run formatClones with chain="HL" (see [Heavy+light chain tree building vignette](Resolve-Light-Chains-Vignette.md).)
 
-In addition to the partition variable, IgPhyML will also need an `omega` and `rates` parameter. The `omegas` parameter is a vector of 'e' equal to the number of omegas required for the partition. `rates` is a parameter that shows which omegas should be associated with a given rate. The rate parameter lists the heavy rates first, then the light chain rates. It also lists the FWR rates before the CDR rates. 
 
-For example, if you wanted different rates heavy and light chains with two omegas, the `omegas` parameter would be "e,e" and the `rates` parameter would be  "0,1". 
-
-But if you wanted four different omegas, but the wanted the light chain CDR and FWR to have the same rate and the heavy chain CDR and FWR to have a different rate the code would be `omegas`= "e,e,e,e", `rates`="0,0,1,1".
-
-However, if you wanted the CDRs to have the same rate and the FWRs to have a different rate the code would be `omegas`= "e,e,e,e", `rates`="0,1,0,1".
-
-Building maximum likelihood trees with multiple partitions using *IgPhyML*.
+Building maximum likelihood trees using the CDR/FWR partition model in *IgPhyML*.
 
 ```r
 # exec here is set to IgPhyML position in the Docker image.
 clones = getTrees(clones, build="igphyml", 
-    exec="/usr/local/share/igphyml/src/igphyml", nproc=1, id="hl", omega="e,e", rates="0,1")
+    exec="/usr/local/share/igphyml/src/igphyml", nproc=1, partition="cf")
 
 print(clones)
 ## A tibble: 2 x 7
@@ -217,17 +206,3 @@ print(clones)
 #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
 ```
 
-Building maximum likelihood trees with multiple partitions using *RAxML* instead.
-
-```r
-# exec here is set to RAxML position in the Docker image.
-clones = getTrees(clones, build="raxml", 
-    exec="/usr/local/bin/raxml-ng", nproc=1, partition=TRUE)
-
-print(clones)
-## A tibble: 2 x 7
-#  clone_id data       locus  seqs subject_id trees        parameters       
-#     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>     
-#1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
-#2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>i
-```

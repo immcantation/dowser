@@ -29,16 +29,16 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-With the advances in sequencing, single cell datasets can now track which light chain associates with which heavy chain. To best incorporate the paired data into use in BCR phylogenetics, Dowser offers a way to identify clone_subgroups. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
+With the advances in sequencing, single cell datasets can now pair heavy and light chain sequences. To best incorporate the paired data into BCR phylogenetics, Dowser offers a way to identify clone_subgroups. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
 
 ## Resolve light chains 
 
 To resolve the light chains within a clone, use the resolveLightChains function. This function will:
 
 1. Pair heavy and light chains together by their cell_id and identify which `clone_subgroup` each pair belongs to. 
-2. Assign heavy chains without an associating light chain a clone_subgroup to the most similar paired heavy chain within the same clone.
+2. Assign heavy chains without an associated light chain to the a subgroup containing the most similar paired heavy chain.
 
-The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone. `vj_clone` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
+The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. The column `clone_subgroup` contains the subgroup assignment for that sequence within a given clone, with 1 being the largest. `vj_clone` combines the `clone_id` variable and the `clone_subgroup` variable by a "_". `vj_cell` combines the `vj_gene` and `vj_alt_cell` columns by a ",". 
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 library(dowser)
@@ -58,7 +58,7 @@ print(ExampleMixedDb$clone_subgroup)
 
 ## Format clones
 
-With the `clone_subgroup` now calculated, the data can now be formatted into a data table of AIRR clone objects. This is done using formatClones and specifying the `chain` variable to be "HL". This concatenates the paired heavy and light chains into a single sequence alignment. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
+The next step is to convert the data into airrClone objects that can be used for tree building. As with heavy chain sequences, this is done using the formatClones function. To build trees with paired heavy and light chains, specify the `chain` "HL". This will concatenate the paired heavy and light chains into a single sequence alignment. TO only use the heavy chain, simply leave chain = "H", the default. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # for paired data, ensure that the chain is HL. collapse = F here to get multiple clones due to the sequences being very similar. 
@@ -75,7 +75,7 @@ print(clones)
 
 Trees can now be built with any of the methods that dowser supports. The broad categories are maximum parsimony, maximum likelihood, and partitioned maximum likelihood. However, the partitioned maximum likelihood models especially utilize paired heavy and light chain data. The maximum likelihood partition models will create separate scalars for heavy and light chain branch estimation, allowing for the most accurate branch length reconstitution. Here, branch lengths represent the number of mutations per site along both heavy and light chains. This is especially apparent when mixing bulk and single cell data. 
 
-For specifics on each of the different methods, including the specifics about the different partitions, see the [Building Trees Vignette](Building-Trees-Vignette.md).
+For details on each of the different methods, including the specifics about different partition models, see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Building maximum likelihood trees with multiple partitions using IgPhyML.
@@ -89,7 +89,8 @@ clones <- getTrees(clones[1,], build="igphyml", nproc=1, omega="e,e", rates="0,1
 plotTrees(clones)[[1]]+geom_tiplab()
 ```
 
-```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
 library(ggtree)
 # Load data instead of running phylip
@@ -97,4 +98,28 @@ data(hlClone)
 plotTrees(hlClone)[[1]]+geom_tiplab()
 ```
 
+Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to partition = "hl" in IgPhyML. RAxML does not estimate omega values, so this parameter is not necessary. 
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
+# exec here is set to RAxML position in the Docker image.
+clones = getTrees(clones, build="raxml", 
+    exec="/usr/local/bin/raxml-ng", nproc=1, partition=TRUE)
+
+print(clones)
+## A tibble: 2 x 7
+#  clone_id data       locus  seqs subject_id trees        parameters       
+#     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>     
+#1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
+#2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>i
+```
+
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
+library(dowser)
+library(ggtree)
+# Load data instead of running phylip
+data(hlClone)
+# change the tree names
+hlClone$ig_tree <- hlClone$trees
+hlClone$trees <- hlClone$raxml_tree
+plotTrees(hlClone)[[1]]+geom_tiplab()
+```
