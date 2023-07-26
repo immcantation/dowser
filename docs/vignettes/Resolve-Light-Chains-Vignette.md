@@ -1,4 +1,4 @@
-# Resolve Light Chains
+# Building trees with paired heavy and light chain data
 
 With the advances in sequencing, single cell datasets can now pair heavy and light chain sequences. To best incorporate the paired data into BCR phylogenetics, Dowser offers a way to identify clone_subgroups. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
 

@@ -24,7 +24,7 @@ geometry: margin=1in
 fontsize: 11pt
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Resolve Light Chains}
+  %\VignetteIndexEntry{Building trees with paired heavy and light chain data}
   %\VignetteEncoding{UTF-8}  
   %\usepackage[utf8]{inputenc}
 ---
