@@ -1,5 +1,5 @@
 ---
-title: 'Resolve Light Chains'
+title: 'Building trees with paired heavy and light chain data'
 author: "Cole G. Jensen"
 date: '`r Sys.Date()`'
 output:
@@ -42,6 +42,7 @@ The output of this function is a tibble in which each row is a different sequenc
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 library(dowser)
+library(ggtree)
 # load example tsv data
 data("ExampleMixedDb")
 

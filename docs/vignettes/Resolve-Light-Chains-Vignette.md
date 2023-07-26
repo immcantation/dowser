@@ -14,6 +14,7 @@ The output of this function is a tibble in which each row is a different sequenc
 
 ```r
 library(dowser)
+library(ggtree)
 # load example tsv data
 data("ExampleMixedDb")
 
