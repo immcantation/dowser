@@ -1019,12 +1019,17 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                "remove before continuing"))
   }
   
-  os <- strsplit(omega,split=",")[[1]]
+  if(!is.null(omega)){
+    os <- strsplit(omega,split=",")[[1]]
+  } else {
+    os <- NULL
+  }
   file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
                            partition=partition, ...)
   if(length(os) != 2 && (partition == "cf" | partition == "hl")){
     warning("Omega parameter incompatible with partition, setting to e,e")
     omega = "e,e"
+    os <- strsplit(omega,split=",")[[1]]
     if(partition == "hl" && is.null(rates)){
       rates = "0,1"
     }
@@ -1032,16 +1037,21 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(length(os) != 3 && (partition == "hlc" | partition == "hlf")){
     warning("Omega parameter incompatible with partition, setting to e,e,e")
     omega = "e,e,e"
+    os <- strsplit(omega,split=",")[[1]]
   }
   if(length(os) != 4 && (partition == "hlcf")){
     warning("Omega parameter incompatible with partition, setting to e,e,e,e")
     omega = "e,e,e,e"
+    os <- strsplit(omega,split=",")[[1]]
     if(is.null(rates)){
       rates = "0,0,1,1"
     }
   }
   if(length(os) != 1 && (partition == "single")){
-    stop("Specified partition model not compatible with multiple omegas or rates")
+    warning("Omega parameter incompatible with partition, setting to e")
+    omega = "e"
+    os <- strsplit(omega,split=",")[[1]]
+    #stop("Specified partition model not compatible with multiple omegas or rates")
   }
   if (!is.null(rates)) {
     if (length(os) != length(strsplit(rates, ",")[[1]])) {
