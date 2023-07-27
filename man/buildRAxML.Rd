@@ -9,10 +9,9 @@ buildRAxML(
   seq = "sequence",
   exec,
   model = "GTR",
-  partition = FALSE,
+  partition = NULL,
   rseed = 28,
   name = "run",
-  brln = "scaled",
   starting_tree = NULL,
   from_getTrees = FALSE,
   rm_files = TRUE,
@@ -31,14 +30,12 @@ buildRAxML(
 
 \item{model}{The DNA model to be used. GTR is the default.}
 
-\item{partition}{A logical vector that indicates if you want to partition the data based on the heavy and light chains.}
+\item{partition}{A parameter that determines how branches are reported when partitioning. Options include NULL (default), 
+scaled, unlinked, and linked}
 
 \item{rseed}{The random seed used for the parsimony inferences. This allows you to reproduce your results.}
 
 \item{name}{specifies the name of the output file}
-
-\item{brln}{A parameter that determines how branches are reported when partitioning. Options include scaled (default), 
-unlinked, and linked}
 
 \item{starting_tree}{specifies a user starting tree file name and path in Newick format}
 
