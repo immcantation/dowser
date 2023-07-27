@@ -229,6 +229,6 @@
 #'     \item \code{igphyml_partitioned_trees}:      IgPhyML partitioned tree
 #'     \item \code{raxml_partitioned_trees}:        RAxML partitioned tree
 #' }
-"ExampleMixedDbClones"
+"ExampleMixedClones"
 
 NULL

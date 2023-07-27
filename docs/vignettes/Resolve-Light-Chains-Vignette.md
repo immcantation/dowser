@@ -78,19 +78,10 @@ library(ggtree)
 # Load data instead of running phylip
 data(ExampleMixedClones)
 ExampleMixedClones$trees <- ExampleMixedClones$igphyml_partitioned_trees
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'ExampleMixedClones' not found
-```
-
-```r
 plotTrees(ExampleMixedClones)[[1]]+geom_tiplab()
 ```
 
-```
-## Error in nrow(trees): object 'ExampleMixedClones' not found
-```
+![plot of chunk Resolve-Light-Chains-Vignette-6](figure/Resolve-Light-Chains-Vignette-6-1.png)
 
 Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to partition = "hl" in IgPhyML. RAxML does not estimate omega values, so this parameter is not necessary. 
 
@@ -110,16 +101,7 @@ plotTrees(clones)[[1]]+geom_tiplab()
 data(ExampleMixedClones)
 # change the tree names
 ExampleMixedClones$trees <- ExampleMixedClones$raxml_partitioned_trees
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'ExampleMixedClones' not found
-```
-
-```r
 plotTrees(ExampleMixedClones)[[1]]+geom_tiplab()
 ```
 
-```
-## Error in nrow(trees): object 'ExampleMixedClones' not found
-```
+![plot of chunk Resolve-Light-Chains-Vignette-9](figure/Resolve-Light-Chains-Vignette-9-1.png)
