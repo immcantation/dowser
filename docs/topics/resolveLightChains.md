@@ -98,7 +98,12 @@ Details
 7. Repeat 1-5 until temporary array zero.
 If there is more than rearrangement with the same V/J
 in the same cell, pick the one with the highest non-ambiguous
-characters.
+characters. 
+
+Outputs of the function are 
+1. clone_subgroup which identifies the light chain VJ rearrangement that sequence belongs to within it's clone
+2. clone_subgroup_id which combines the clone_id variable and the clone_subgroup variable by a "_". 
+3. vj_cell which combines the vj_gene and vj_alt_cell columns by a ",".
 
 
 

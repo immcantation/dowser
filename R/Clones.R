@@ -107,7 +107,7 @@ makeAirrClone <-
            add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
            cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
            use_regions=TRUE, dup_singles=FALSE){
-    
+
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
                                     unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
@@ -202,8 +202,8 @@ makeAirrClone <-
       hc$lsequence <- ""
       hc$hlsequence <- ""
       for(cell_name in 1:nrow(hc)){
-        if(is.na(hc$cell_id[cell_name])){
-          hc$cell_id[cell_name] <- "bulk"
+        if(is.na(hc[[cell]][cell_name])){
+          hc[[cell]][cell_name] <- "bulk"
         }
       }
       for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
@@ -218,8 +218,8 @@ makeAirrClone <-
           paste0(hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,seq],altseq)
       }
       for(cell_name in 1:nrow(hc)){
-        if(hc$cell_id[cell_name] == "bulk"){
-          hc$cell_id[cell_name] <- NA
+        if(hc[[cell]][cell_name] == "bulk"){
+          hc[[cell]][cell_name] <- NA
         }
       }
       hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
@@ -230,7 +230,7 @@ makeAirrClone <-
         stop(paste0("Germline sequences for clone ",
                     unique(dplyr::pull(data,clone)),
                     " are not identical. All predicted germline sequences ",
-                    "must be identical for each locus within a clone. Be sure to use the",
+                    "must be identical for each locus within a clone. Be sure to use the ",
                     "createGermlines function before formatClones or makeAirrClone."))
       }
       germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
@@ -649,10 +649,14 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       " and were removed. If you want to keep these sequences use the option filterStop=FALSE."))
     }
   }
+  # CGJ 7/25/23 changed ordering and moved away from dplyr filtering step 
+  # caused a segfault due to 'memory not mapped'
+  # base R's filtering doesn't do this. 
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
     if(!is.null(heavy)){
       if(locus %in% names(data)){
-        data <- dplyr::filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
+#        data <- dplyr::filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
+        data <- data[data[[locus]] == rlang::sym(heavy),]
       }
     }
   }
@@ -1179,6 +1183,11 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' If there is more than rearrangement with the same V/J
 #' in the same cell, pick the one with the highest non-ambiguous
 #' characters. 
+#' 
+#' Outputs of the function are 
+#' 1. clone_subgroup which identifies the light chain VJ rearrangement that sequence belongs to within it's clone
+#' 2. clone_subgroup_id which combines the clone_id variable and the clone_subgroup variable by a "_". 
+#' 3. vj_cell which combines the vj_gene and vj_alt_cell columns by a ",".
 # TODO: Group by junction length as well?
 # TODO: add "fields" option consistent with other functions
 #' @export
@@ -1241,7 +1250,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){
-      hd$vj_clone <- paste0(hd[[clone]],"_",hd[[subgroup]])
+      hd$clone_subgroup_id <- paste0(hd[[clone]],"_",hd[[subgroup]])
       hd$vj_cell <- sapply(1:nrow(hd), function(x){
         if(!is.na(hd$vj_alt_cell[x])){
           paste(hd$vj_gene[x],hd$vj_alt_cell[x],sep=",")        
@@ -1355,7 +1364,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     if(nrow(hd_bulk) != 0){
       comb <- dplyr::bind_rows(comb, hd_bulk)
     }
-    comb$vj_clone <- paste0(comb[[clone]],"_",comb[[subgroup]])
+    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
     comb$vj_cell <- sapply(1:nrow(comb), function(x){
       if(!is.na(comb$vj_alt_cell[x])){
         paste(comb$vj_gene[x],comb$vj_alt_cell[x],sep=",")        

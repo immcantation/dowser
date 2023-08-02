@@ -152,22 +152,83 @@
 
 #' Example Change-O database
 #'
-#' A small example database originally created for the Immcantation package 'scoper.
+#' A small example database subset from Turner, J. S. et al. Human germinal centres 
+#' engage memory and naive B cells after influenza vaccination. Nature 586, 127–132 (2020).
 #'
 #' @format   A data.frame with the following Change-O style columns:
 #'   \itemize{
 #'     \item  \code{sequence_id}:           Sequence identifier
-#'     \item  \code{subject_id}:            Subject identifier.
+#'     \item \code{sequence}:               B cell sequence
+#'     \item \code{productive}:             A logical indicating if the sequence is productive.
 #'     \item  \code{v_call}:                V region allele assignments.
+#'     \item \code{d_call}:                 D region allele assignments. 
 #'     \item  \code{j_call}:                J region allele assignments.
 #'     \item  \code{sequence_alignment}:    Sequence alignment.
+#'     \item \code{germline_alignment}:     Germline alignment without gaps. 
+#'     \item \code{junction}:               Junction
+#'     \item \code{juncation_aa}:           Junction aa
+#'     \item \code{vj_inframe}:             A logical to see if the vj genes are in frame
+#'     \item \code{stop_codon}:             A indicator if there is a stop codon within the alignment
 #'     \item \code{locus}:                  Locus identifier. 
-#'     \item \code{cell_id}:                Cell identifier 
+#'     \item \code{v_sequence_start}:       Where the V gene starts
+#'     \item \code{v_sequence_end}:         Where the V gene ends
+#'     \item \code{v_germline_start}:       Where the V germline starts
+#'     \item \code{v_germline_end}:         Where the V germline ends
+#'     \item \code{np1_length}:             Length of np1
+#'     \item \code{d_sequence_start}:       Where the D gene starts
+#'     \item \code{d_sequence_end}:         Where the D gene ends
+#'     \item \code{d_germline_start}:       Where the D germline starts
+#'     \item \code{d_germline_end}:         Where the D germline ends
+#'     \item \code{np2_length}:             Length of np2
+#'     \item \code{j_sequence_start}:       Where the J gene starts
+#'     \item \code{j_sequence_end}:         Where the J gene ends
+#'     \item \code{j_germline_start}:       Where the J germline starts
+#'     \item \code{j_germline_end}:         Where the J germline ends
 #'     \item  \code{junction_length}:       Length of the junction region in nucleotides.
+#'     \item \code{v_score}:                V score
+#'     \item \code{v_identity}:             Identity score of V
+#'     \item \code{v_support}:              V support
+#'     \item \code{d_score}:                D score
+#'     \item \code{d_identity}:             D identity 
+#'     \item \code{d_support}:              D support
+#'     \item \code{j_score}:                J score
+#'     \item \code{j_support}:              J support
+#'     \item \code{j_identity}:             J identity 
+#'     \item \code{cell_id}:                Cell identifier 
+#'     \item \code{consensus_count}:        Consensus count 
+#'     \item \code{indels}:                 Logical if indels are present 
+#'     \item \code{sequence_vdj}:           VDJ sequence
+#'     \item \code{v_germ_start_vdj}:       Where the V germline starts on the VDJ
+#'     \item \code{v_germ_end_vdj}:         Where the V germline ends on the VDJ
+#'     \item \code{subject}:                Subject identifier 
+#'     \item \code{timepoint}:              Day the sample was taken 
+#'     \item \code{cell_type}:              Type of cell 
+#'     \item \code{replicate}:              Replicate number 
 #'     \item  \code{clone_id}:              Change-O assignment clonal group identifier.
-#'     \item \code{expected_clone_subgroup}: The expected clone subgroup. Used for unit testing. 
+#'     \item \code{seq_type}:               Identifier of data type (10x)
+#'     \item \code{vj_gene}:                VJ gene
+#'     \item \code{vj_alt_gene}:            Alternative VJ gene
+#'     \item \code{v_germline_length}:      Length of the V germline segment
+#'     \item \code{d_germline_length}:      Length of the D germline segment 
+#'     \item \code{j_germline_lenght}:      Length of the J germline segment 
+#'     \item \code{germline_alignment_d_mask}:  Germline alignment with gaps
 #' }
 "ExampleMixedDb"
 
+#' Example Multiple Partition Trees
+#'
+#' A small example database subset from Turner, J. S. et al. Human germinal centres 
+#' engage memory and naive B cells after influenza vaccination. Nature 586, 127–132 (2020).
+#'
+#' @format   A data.frame with the following Change-O style columns:
+#'   \itemize{
+#'     \item  \code{clone_id}:           Clonal cluster
+#'     \item  \code{data}:               List of airrClone objects
+#'     \item  \code{locus}:              Locus identifier.
+#'     \item  \code{seqs}:               Number of sequences
+#'     \item \code{igphyml_partitioned_trees}:      IgPhyML partitioned tree
+#'     \item \code{raxml_partitioned_trees}:        RAxML partitioned tree
+#' }
+"ExampleMixedClones"
 
 NULL
