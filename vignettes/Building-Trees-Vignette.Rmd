@@ -43,7 +43,7 @@ Before trees can be built, data must be formatted into a data table of AIRR clon
 4. Include data columns specified by `num_fields` or `text_fields`.
 5. Remove uninformative sequence sites in which all sequences have `N` characters.
 
-The output of this function is a tibble in which each row is a clone, ordered by the number of sequences. The column `data` contains airrClone objects with the clonal sequence alignments. Other columns contain information about the clone, and can be specified using the `columns` argument.
+The output of this function is a tibble in which each row is a clone, ordered by the number of sequences. The column `data` contains airrClone objects with the clonal sequence alignments. By default, identical sequences will be collapsed into one sequence. This feature can be turned off by setting `collapse` to `FALSE`. Additionally, the `traits` argument can be used to specify other columns that should be considered when identifying identical sequences to collapse. Other columns contain information about the clone, and can be specified using the `columns` argument.
 
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
@@ -162,7 +162,7 @@ clones
 ```
 ## Build IgPhyML B cell trees
 
-B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, specify the build option appropriately and pass the location of the IgPhyML executable. The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML.
+B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, specify the build option appropriately and pass the location of the IgPhyML executable. The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML. Outside of Docker, IgPhyML is only supported for Linux and Mac OS.
 
 Note: This function is slower than other maximum likelihood and parsimony approaches.
 
@@ -199,7 +199,7 @@ Three of the most useful IgPhyML partition models and defaults are listed below:
     * 2 partitions: 1 for the heavy chains and 1 for the light chains. By default, a separate omega value is estimated for each, as well as a separate branch length scalar. This allows heavy and light chains to have proportionally longer or shorter branches. This is only possible if you have paired heavy and light chain sequences and run formatClones with chain="HL" (see [Heavy+light chain tree building vignette](Resolve-Light-Chains-Vignette.md).)
 
 
-Building maximum likelihood trees using the CDR/FWR partition model in *IgPhyML*.
+Building maximum likelihood trees with multiple partitions using the partition = `cf`  arugment in *IgPhyML*.
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 
 # exec here is set to IgPhyML position in the Docker image.

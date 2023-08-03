@@ -101,7 +101,7 @@ library(ggtree)
 # Load data instead of running phylip
 data(ExampleMixedClones)
 ExampleMixedClones$trees <- ExampleMixedClones$igphyml_partitioned_trees
-plotTrees(ExampleMixedClones)[[1]]+geom_tiplab()
+plotTrees(ExampleMixedClones)[[1]]+geom_tiplab() +xlim(0,0.35)
 ```
 
 Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to partition = "hl" in IgPhyML. RAxML does not estimate omega values, so this parameter is not necessary. 
@@ -116,9 +116,9 @@ clones = getTrees(clones, build="raxml",
 plotTrees(clones)[[1]]+geom_tiplab()
 ```
 
-```{r, eval=TRUE, warning=FALSE, message=FALSE}
+```{r, eval=TRUE, warning=FALSE, message=FALSE, out.width=1.5}
 data(ExampleMixedClones)
 # change the tree names
 ExampleMixedClones$trees <- ExampleMixedClones$raxml_partitioned_trees
-plotTrees(ExampleMixedClones)[[1]]+geom_tiplab()
+plotTrees(ExampleMixedClones)[[1]]+geom_tiplab() + xlim(0, 0.12)
 ```

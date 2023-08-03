@@ -130,7 +130,7 @@ plots[[1]]
 
 ## Using ggtree and ggplot functions
 
-The objects returned by `plotTrees` are`ggtree` and `ggplot` objects, and can be manipulated as such. For instance, we can add tip labels using the `geom_tiplab` function from `ggtree`, add vertical lines using the `geom_vline` function from `ggplot`, and edit the title using `ggtitle`. `xlim` can be used to add enough space to the plot for the sequence IDs.
+The objects returned by `plotTrees` are`ggtree` and `ggplot` objects, and can be manipulated as such. For instance, we can add tip labels using the `geom_tiplab` function (the sequence_id column is the default) from `ggtree`, add vertical lines using the `geom_vline` function from `ggplot`, and edit the title using `ggtitle`. `xlim` can be used to add enough space to the plot for the sequence IDs.
 
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(ggtree)
@@ -145,6 +145,22 @@ treeplot = plots[[1]] + geom_tiplab() +
 
 treeplot
 ```
+To change what is displayed on the tips with the `geom_tiplab` function, change the mapping. Additionally, the distance from the text from `geom_tiplab` can be spaced differently using the `offset` argument. 
+
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
+library(ggtree)
+
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
+
+#Plot the largest tree
+treeplot = plots[[1]] + geom_tiplab(aes(label=c_call), offset = 0.02) + 
+    geom_vline(xintercept=c(0.05,0.1,0.15,0.2,0.25),
+        linetype="dashed",color="grey") + xlim(0,0.3) +
+    ggtitle("Example B cell tree")
+
+treeplot
+```
+
 
 ## Saving trees to a file
 

@@ -78,7 +78,7 @@ library(ggtree)
 # Load data instead of running phylip
 data(ExampleMixedClones)
 ExampleMixedClones$trees <- ExampleMixedClones$igphyml_partitioned_trees
-plotTrees(ExampleMixedClones)[[1]]+geom_tiplab()
+plotTrees(ExampleMixedClones)[[1]]+geom_tiplab() +xlim(0,0.35)
 ```
 
 ![plot of chunk Resolve-Light-Chains-Vignette-6](figure/Resolve-Light-Chains-Vignette-6-1.png)
@@ -101,7 +101,10 @@ plotTrees(clones)[[1]]+geom_tiplab()
 data(ExampleMixedClones)
 # change the tree names
 ExampleMixedClones$trees <- ExampleMixedClones$raxml_partitioned_trees
-plotTrees(ExampleMixedClones)[[1]]+geom_tiplab()
+plotTrees(ExampleMixedClones)[[1]]+geom_tiplab() + xlim(0, 0.12)
 ```
 
-![plot of chunk Resolve-Light-Chains-Vignette-9](figure/Resolve-Light-Chains-Vignette-9-1.png)
+<div class="figure">
+<img src="figure/Resolve-Light-Chains-Vignette-9-1.png" alt="plot of chunk Resolve-Light-Chains-Vignette-9" width="1.5" />
+<p class="caption">plot of chunk Resolve-Light-Chains-Vignette-9</p>
+</div>
