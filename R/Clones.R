@@ -1268,11 +1268,13 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       #expand ambiguous V/J calls
       lvs <- strsplit(ltemp[[v_call]],split=",")
       ljs <- strsplit(ltemp[[j_call]],split=",")
+      jlens <- ltemp[[junc_len]]
       # get all combinations of V/J calls for each light chain
       combos <-
         lapply(1:length(lvs),function(w)
           unlist(lapply(lvs[[w]],function(x)
-            lapply(ljs[[w]],function(y)paste(x,y,sep=":")))))
+            unlist(lapply(ljs[[w]],function(y)
+              lapply(jlens[[w]], function(z)paste0(x,":",y,";",z)))))))
 
       # get unique combinations per cell
       cells <- unique(ltemp[[cell]])
@@ -1392,6 +1394,8 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     comb
   },mc.cores=nproc)
   paired <- dplyr::bind_rows(paired)
+  # remove the junction length from the vj_gene
+  paired$vj_gene <- gsub("\\;.", "", paired$vj_gene)
   return(paired)
 }
 
