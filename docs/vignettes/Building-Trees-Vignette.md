@@ -102,7 +102,7 @@ clones
 
 A common way to build B cell lineage trees is the find the tree topology and branch lengths that maximize the likelihood of the sequence data given a substitution model.
 
-Standard maximum likelihood trees can also be built with the `getTrees` function, which if specified the `optim.pml` function in the `phangorn` phylogenetics package.
+Standard maximum likelihood trees can also be built with the `getTrees` function, by specifying the build argument as `pml`, which runs the `optim.pml` function in the `phangorn` phylogenetics package.
 
 Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To do this, the `build` option needs to be set as `dnaml` and the path to the `dnaml` executable needs to be specified in the `exec` option. 
 

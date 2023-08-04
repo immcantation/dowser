@@ -1,6 +1,6 @@
 # Building trees with paired heavy and light chain data
 
-With the advances in sequencing, single cell datasets can now pair heavy and light chain sequences. However, b cells clones can have cells with distinct light chain rearrangements that don't descend for the same light chain VJ rearrangement, causing ambiguities in the light chain sequences. Dowser can identify these different light chain VJ rearrangements within a clone, assigning each different light chain VJ rearrangement a numerical value called a clone_subgroup. This resolves the ambiguities. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
+With the advances in sequencing, single cell datasets can now pair heavy and light chain sequences. However, B cells clones can have cells with distinct light chain rearrangements that don't descend from the same light chain VJ rearrangement, causing ambiguities in the light chain sequences. Dowser can identify these different light chain VJ rearrangements within a clone, assigning each different light chain VJ rearrangement a numerical value called a clone_subgroup. This resolves the ambiguities. This step is done before formatting clones and building trees and allows for accurate phylogenetic construction of BCRs with paired heavy and light chain data. 
 
 ## Resolve light chains 
 
@@ -29,7 +29,7 @@ print(ExampleMixedDb$clone_subgroup)
 # run createGermlines -- this will create new germline for each locus in each subgroup 
 # the directory for the references matches the location on docker
 references <- readIMGT("/usr/local/share/germlines/imgt/human/vdj")
-ExampleMixedDb <- createGermlines(ExampleMixedDb, clone = "clone_subgroup_id", nproc = 1)
+ExampleMixedDb <- createGermlines(ExampleMixedDb, references = references, clone = "clone_subgroup_id", nproc = 1)
 ```
 
 ## Format clones
@@ -39,9 +39,9 @@ The next step is to convert the data into airrClone objects that can be used for
 
 ```r
 clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = FALSE, 
-                       split_light = TRUE)
+                       split_light = TRUE, minseq = 3)
 print(clones)
-## A tibble: 4 x 4
+## A tibble: 5 x 4
 #   clone_id data       locus    seqs
 #   <chr>    <list>     <chr>   <int>
 # 10004_1  <airrClon> IGH,IGK     5
@@ -58,7 +58,7 @@ For details on each of the different methods, including the specifics about diff
 
 ```r
 # Building maximum likelihood trees with multiple partitions using IgPhyML where partitions 
-# seperate by heavy chain information and ligth chain information
+# separate by heavy chain information and light chain information
 # exec here is set to IgPhyML position in the Docker image.
 clones <- getTrees(clones, build="igphyml", nproc=1, partition="hl",
                    exec="/usr/local/share/igphyml/src/igphyml")
@@ -67,44 +67,23 @@ clones <- getTrees(clones, build="igphyml", nproc=1, partition="hl",
 
 
 ```r
-plotTrees(clones)[[1]]+geom_tiplab()
+plotTrees(clones)[[1]]+geom_tiplab()+xlim(0,0.35)
 ```
 
-
-
-```r
-library(dowser)
-library(ggtree)
-# Load data instead of running phylip
-data(ExampleMixedClones)
-ExampleMixedClones$trees <- ExampleMixedClones$igphyml_partitioned_trees
-plotTrees(ExampleMixedClones)[[1]]+geom_tiplab() +xlim(0,0.35)
-```
 
 ![plot of chunk Resolve-Light-Chains-Vignette-6](figure/Resolve-Light-Chains-Vignette-6-1.png)
 
 Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to partition = "hl" in IgPhyML. RAxML does not estimate omega values, so this parameter is not necessary. 
 
 ```r
-# exec here is set to RAxML position in the Docker image.
+# exec is set to RAxML position in the Docker image.
 clones = getTrees(clones, build="raxml", 
     exec="/usr/local/bin/raxml-ng", nproc=1, partition="scaled")
 ```
 
 
 ```r
-plotTrees(clones)[[1]]+geom_tiplab()
+plotTrees(clones)[[1]]+geom_tiplab()+xlim(0, 0.12)
 ```
 
-
-```r
-data(ExampleMixedClones)
-# change the tree names
-ExampleMixedClones$trees <- ExampleMixedClones$raxml_partitioned_trees
-plotTrees(ExampleMixedClones)[[1]]+geom_tiplab() + xlim(0, 0.12)
-```
-
-<div class="figure">
-<img src="figure/Resolve-Light-Chains-Vignette-9-1.png" alt="plot of chunk Resolve-Light-Chains-Vignette-9" width="1.5" />
-<p class="caption">plot of chunk Resolve-Light-Chains-Vignette-9</p>
-</div>
+![plot of chunk Resolve-Light-Chains-Vignette-9](figure/Resolve-Light-Chains-Vignette-9-1.png)

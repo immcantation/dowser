@@ -11,7 +11,7 @@ There are two main statistics implemented by Dowser to characterize the distribu
 
 The significance of each of these statistics is estimated using a permutation test, which randomizes trait values at the tree's tips.
 
-[Full published deatils on these methods is available here](https://doi.org/10.1371/journal.pcbi.1009885)
+[Full published details on these methods are available here](https://doi.org/10.1371/journal.pcbi.1009885)
 
 
 ## Caveats and interpretting results
