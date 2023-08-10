@@ -649,6 +649,44 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       " and were removed. If you want to keep these sequences use the option filterStop=FALSE."))
     }
   }
+  
+  # CGJ 8/10/23
+  # added factor check for trait and fields columns 
+  if(!is.null(traits) || !is.null(text_fields) || !is.null(num_fields) || !is.null(seq_fields)){
+    if(!is.null(traits)){
+      sub_data <- data[, traits]
+      check <- sapply(sub_data, is.factor)
+      if(TRUE %in% check){
+        factor_traits <- traits[check]
+        stop(paste("Traits cannot be factors. Some indicated trait variable(s):", factor_traits, "have been detected to be factors."))
+      }
+    }
+    if(!is.null(text_fields)){
+      sub_data <- data[, text_fields]
+      check <- sapply(sub_data, is.factor)
+      if(TRUE %in% check){
+        factor_text <- text_fields[check]
+        stop(paste("text_fields cannot be factors. Some indicated text_field variable(s):", factor_text, "have been detected to be factors."))
+      }
+    }
+    if(!is.null(num_fields)){
+      sub_data <- data[, num_fields]
+      check <- sapply(sub_data, is.factor)
+      if(TRUE %in% check){
+        factor_num <- num_fields[check]
+        stop(paste("num_fields cannot be factors. Some indicated num_fields variable(s):", factor_num, "have been detected to be factors."))
+      }
+    }
+    if(!is.null(seq_fields)){
+      sub_data <- data[, seq_fields]
+      check <- sapply(sub_data, is.factor)
+      if(TRUE %in% check){
+        factor_seq <- seq_fields[check]
+        stop(paste("seq_fields cannot be factors. Some indicated seq_fields variable(s):", factor_seq, "have been detected to be factors."))
+      }
+    }
+  }
+
   # CGJ 7/25/23 changed ordering and moved away from dplyr filtering step 
   # caused a segfault due to 'memory not mapped'
   # base R's filtering doesn't do this. 
