@@ -1,3 +1,6 @@
+[![](http://cranlogs.r-pkg.org/badges/grand-total/dowser)](https://www.r-pkg.org/pkg/dowser)
+[![](https://cranlogs.r-pkg.org/badges/dowser)](https://www.r-pkg.org/pkg/dowser)
+
 Dowser
 -------------------------------------------------------------------------------
 
