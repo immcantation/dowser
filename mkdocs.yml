@@ -6,6 +6,8 @@ theme:
   name: readthedocs
   navigation_depth: 2
   collapse_navigation: False
+  sticky_navigation: False
+  locale: en
   titles_only: False
   logo: img/rod_white_leaf_light_background.png
 markdown_extensions:
