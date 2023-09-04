@@ -1,3 +1,5 @@
+# [![](http://cranlogs.r-pkg.org/badges/grand-total/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://cranlogs.r-pkg.org/badges/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=plastic)](https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html)
+
 Dowser
 -------------------------------------------------------------------------------
 
@@ -29,14 +31,14 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 
 
 
-# Dependencies
+## Dependencies
 
 **Depends:** ggplot2  
 **Imports:** alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
 **Suggests:** knitr, rmarkdown, testthat
 
 
-# Authors
+## Authors
 
 [Kenneth Hoehn](mailto:kenneth.hoehn@yale.edu) (aut, cre)  
 [Cole Jensen](mailto:cole.jensen@yale.edu) (ctb)  
@@ -45,39 +47,37 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
 
 
-# Citing
-
+## Citing
 
 To cite the dowser package in publications, please use
 
-Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of
-migration, differentiation, and class switching in B cells.” _PLoS
-Computational Biology_. doi: 10.1371/journal.pcbi.1009885 (URL:
-https://doi.org/10.1371/journal.pcbi.1009885), <URL:
-https://doi.org/10.1371/journal.pcbi.1009885>.
+  Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of
+  migration, differentiation, and class switching in B cells.” _PLoS
+  Computational Biology_. doi:10.1371/journal.pcbi.1009885
+  <https://doi.org/10.1371/journal.pcbi.1009885>,
+  <https://doi.org/10.1371/journal.pcbi.1009885>.
 
 If you use the [correlationTest](vignettes/Measurable-Evolution.md)
 function for measurable evolution, please also cite
 
-Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein S
-(2021). “Human B cell lineages associated with germinal centers
-following influenza vaccination are measurably evolving.” _eLife_. doi:
-10.7554/eLife.70873 (URL: https://doi.org/10.7554/eLife.70873), <URL:
-https://elifesciences.org/articles/70873>.
+  Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein
+  S (2021). “Human B cell lineages associated with germinal centers
+  following influenza vaccination are measurably evolving.” _eLife_.
+  doi:10.7554/eLife.70873 <https://doi.org/10.7554/eLife.70873>,
+  <https://elifesciences.org/articles/70873>.
 
 If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for
 building trees please also cite
 
-Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S
-(2019). “Repertoire-wide phylogenetic models of B cell molecular
-evolution reveal evolutionary signatures of aging and vaccination.”
-_PNAS_. doi: 10.1073/pnas.1906020116 (URL:
-https://doi.org/10.1073/pnas.1906020116), <URL:
-https://doi.org/10.1073/pnas.1906020116>.
+  Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S
+  (2019). “Repertoire-wide phylogenetic models of B cell molecular
+  evolution reveal evolutionary signatures of aging and vaccination.”
+  _PNAS_. doi:10.1073/pnas.1906020116
+  <https://doi.org/10.1073/pnas.1906020116>,
+  <https://doi.org/10.1073/pnas.1906020116>.
 
 
 
-
-# License
+## License
 
 AGPL-3
