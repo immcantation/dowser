@@ -4,7 +4,7 @@ Before B cell lineage trees can be built, it is necessary to construct the unmut
 
 ## Identify clonal clusters
 
-Before doing anything in Dowser, it is necessary to identify clonal clusters among B cells. This is not handled in Dowser, but is handled in our related package, `Scoper`. More information about this can be found at the [Scoper documentation site](https://scoper.readthedocs.io).
+Before doing anything in Dowser, it is necessary to identify clonal clusters among B cells. This is not handled in Dowser, but is handled in our related package, `SCOPer`. More information about this can be found at the [SCOPer documentation site](https://scoper.readthedocs.io).
 
 ## Obtain IMGT-gapped sequences
 

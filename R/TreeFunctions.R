@@ -1392,6 +1392,10 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     return(w)
   })
   
+  if(length(status) == 0){
+    stop("RAxML was not run. Check input data.")
+  }
+  
   # check if there is a reduced file -- if so the file creation step failed
   if(file.exists(file.path(dir,paste0(name, "_input_data.phy.reduced")))){
     stop("Preprocessing broke. Not all noninformative sites by RAxML's definition were removed.")
@@ -2018,7 +2022,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     if(length(errorclones) > 0){
       warning(paste("Tree building failed for clones",
                     paste(errorclones,collapse=", ")))
-      me <- lapply(messages, function(x)warning(x$message))
+      warning(paste("Tree building errors are",
+                    paste(lapply(messages, function(x)warning(x$message)))))
     }
   }
   if(length(trees) == 0){
@@ -2404,7 +2409,8 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
       # if tree provided, drop selected tips
       if(!is.null(tree)){
         od <- getDivergence(tree)
-        otree <- tree
+        # CGJ 9/5/23 found via checkUsagePackage("dowser")
+        # otree <- tree
         tree <- ape::drop.tip(tree, tip=rm)
         nd <- getDivergence(tree)
         maxdiff <- max(nd - od[names(nd)])
@@ -2632,9 +2638,9 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             boot_part=boot_part, force_resolve=force_resolve, ...),
             error=function(e)e),mc.cores=nproc)
         errors <- unlist(lapply(l, function(x) inherits(x, "error")))
-        messages <- l[errors]
+        #messages <- l[errors]
         if(sum(errors) > 0){
-            me <- lapply(messages, function(x)warning(x$message))
+            #me <- lapply(messages, function(x)warning(x$message))
             stop(paste("findSwitches failed for",sum(errors),
                 "repetitions (see warnings, more info if nproc=1)"))
   }
@@ -2895,7 +2901,7 @@ matching_function_parallel <- function(tree_comp_df, bootstrap_df, nproc){
 consensus_tree <- function(trees){
   consensus <- ape::consensus(trees, check.labels=TRUE)
   consensus$edge.length <- rep(1, nrow(consensus$edge))
-  consenus <- rerootTree(consensus, germline="Germline", verbose=0)
+  consensus <- rerootTree(consensus, germline="Germline", verbose=0)
   return(consensus)
 }
 
@@ -2998,13 +3004,13 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   
   if(build != "igphyml"){
     errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
-    messages <- trees[errors]
+    #messages <- trees[errors]
     errorclones <- clones$clone_id[errors]
     trees <- trees[!errors]
     if(length(errorclones) > 0){
       warning(paste("Tree building failed for clones",
                     paste(errorclones,collapse=", ")))
-      me <- lapply(messages, function(x)warning(x$message))
+     # me <- lapply(messages, function(x)warning(x$message))
     }
   }
   return(trees)
@@ -3080,7 +3086,8 @@ getBootstraps <- function(clones, bootstraps,
     warning("Large dataset - best to set rm_temp=TRUE")
   }
   if(build == "igphyml"){
-    igphyml <- path.expand(exec)
+    # CGJ 9/5/23 checkUsagePackage("dowser") found it
+    # igphyml <- path.expand(exec)
     if(!is.null(dir)){
       if(!dir.exists(dir)){
         dir.create(dir)

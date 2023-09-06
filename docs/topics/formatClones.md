@@ -7,7 +7,7 @@ Description
 Change-O style columns as input and masks gap positions, masks ragged ends, 
 removes duplicates sequences, and merges annotations associated with duplicate
 sequences. If specified, it will un-merge duplicate sequences with different 
-values specified in the `trait` option. It returns a list of `airrClone`
+values specified in the `traits` option. It returns a list of `airrClone`
 objects ordered by number of sequences which serve as input for lineage reconstruction.
 
 
@@ -198,7 +198,7 @@ Examples
 data(ExampleAirr)
 # Select two clones, for demonstration purpose
 sel <- c("3170", "3184")
-clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
+clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
 ```
 
 

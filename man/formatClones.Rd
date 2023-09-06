@@ -136,7 +136,7 @@ A tibble of \link{airrClone} objects containing modified clones.
 Change-O style columns as input and masks gap positions, masks ragged ends, 
 removes duplicates sequences, and merges annotations associated with duplicate
 sequences. If specified, it will un-merge duplicate sequences with different 
-values specified in the \code{trait} option. It returns a list of \code{airrClone}
+values specified in the \code{traits} option. It returns a list of \code{airrClone}
 objects ordered by number of sequences which serve as input for lineage reconstruction.
 }
 \details{
@@ -147,7 +147,7 @@ This function is a wrapper for \link{makeAirrClone}. Also removes whitespace,
 data(ExampleAirr)
 # Select two clones, for demonstration purpose
 sel <- c("3170", "3184")
-clones <- formatClones(ExampleAirr[ExampleAirr$clone_id \%in\% sel,],trait="sample_id")
+clones <- formatClones(ExampleAirr[ExampleAirr$clone_id \%in\% sel,],traits="sample_id")
 }
 \seealso{
 Executes in order \link{makeAirrClone}. Returns a tibble of 

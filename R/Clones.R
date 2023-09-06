@@ -541,7 +541,7 @@ cleanAlignment <- function(clone){
 #' Change-O style columns as input and masks gap positions, masks ragged ends, 
 #' removes duplicates sequences, and merges annotations associated with duplicate
 #' sequences. If specified, it will un-merge duplicate sequences with different 
-#' values specified in the \code{trait} option. It returns a list of \code{airrClone}
+#' values specified in the \code{traits} option. It returns a list of \code{airrClone}
 #' objects ordered by number of sequences which serve as input for lineage reconstruction.
 #' 
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone.
@@ -616,7 +616,7 @@ cleanAlignment <- function(clone){
 #' data(ExampleAirr)
 #' # Select two clones, for demonstration purpose
 #' sel <- c("3170", "3184")
-#' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],trait="sample_id")
+#' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
 #' @export
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
     subgroup="clone_subgroup", id="sequence_id", 
