@@ -2022,8 +2022,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     if(length(errorclones) > 0){
       warning(paste("Tree building failed for clones",
                     paste(errorclones,collapse=", ")))
-      warning(paste("Tree building errors are",
-                    paste(lapply(messages, function(x)warning(x$message)))))
+      me <- lapply(messages, function(x)warning(x$message))
     }
   }
   if(length(trees) == 0){
@@ -2638,9 +2637,9 @@ findSwitches <- function(clones, permutations, trait, igphyml,
             boot_part=boot_part, force_resolve=force_resolve, ...),
             error=function(e)e),mc.cores=nproc)
         errors <- unlist(lapply(l, function(x) inherits(x, "error")))
-        #messages <- l[errors]
+        messages <- l[errors]
         if(sum(errors) > 0){
-            #me <- lapply(messages, function(x)warning(x$message))
+            me <- lapply(messages, function(x)warning(x$message))
             stop(paste("findSwitches failed for",sum(errors),
                 "repetitions (see warnings, more info if nproc=1)"))
   }
@@ -3004,13 +3003,13 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
   
   if(build != "igphyml"){
     errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
-    #messages <- trees[errors]
+    messages <- trees[errors]
     errorclones <- clones$clone_id[errors]
     trees <- trees[!errors]
     if(length(errorclones) > 0){
       warning(paste("Tree building failed for clones",
                     paste(errorclones,collapse=", ")))
-     # me <- lapply(messages, function(x)warning(x$message))
+      me <- lapply(messages, function(x)warning(x$message))
     }
   }
   return(trees)

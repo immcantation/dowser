@@ -40,7 +40,7 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 
 ## Authors
 
-[Kenneth Hoehn](mailto:kenneth.hoehn@yale.edu) (aut, cre)  
+[Kenneth Hoehn](mailto:kenneth.b.hoehn@dartmouth.edu) (aut, cre)  
 [Cole Jensen](mailto:cole.jensen@yale.edu) (ctb)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
