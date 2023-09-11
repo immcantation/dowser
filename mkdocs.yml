@@ -26,6 +26,7 @@ nav:
     - 'Download & Installation': install.md
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
+    - 'Related Projects': projects.md
   - 'Vignettes':
     - 'Quickstart': vignettes/Quickstart-Vignette.md
     - 'Reconstruct clonal germlines': vignettes/Germlines-Vignette.md
