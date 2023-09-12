@@ -1268,7 +1268,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' 
 #' @param    clone      list of \code{airrClone} objects
 #' @param    seq        the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"
-#' @param    exec       RAxML executable
+#' @param    exec       RAxML-ng executable
 #' @param    model      The DNA model to be used. GTR is the default.
 #' @param    partition  A parameter that determines how branches are reported when partitioning. Options include NULL (default), 
 #'                      scaled, unlinked, and linked

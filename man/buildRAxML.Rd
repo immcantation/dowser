@@ -26,7 +26,7 @@ buildRAxML(
 
 \item{seq}{the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"}
 
-\item{exec}{RAxML executable}
+\item{exec}{RAxML-ng executable}
 
 \item{model}{The DNA model to be used. GTR is the default.}
 

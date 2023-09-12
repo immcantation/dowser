@@ -44,12 +44,14 @@ nav:
     - topics/formatClones.md
     - topics/makeAirrClone.md
     - topics/airrClone-class.md
+    - topics/resolveLightChains.md
     #- 'Tree building functions':
     - topics/getTrees.md
     - topics/buildIgphyml.md
     - topics/buildPML.md
     - topics/buildPhylo.md
     - topics/buildPratchet.md
+    - topics/buildRAxML.md
     #- 'Visualization functions':
     - topics/plotTrees.md
     - topics/treesToPDF.md
@@ -60,8 +62,14 @@ nav:
     - topics/rerootTree.md
     #- 'Intermediate sequence functions':
     - topics/getNodeSeq.md
+    - topics/getSubTaxa.md
     #- 'Discrete trait analysis functions':
     - topics/findSwitches.md
     - topics/testPS.md
     - topics/testSC.md
     - topics/testSP.md
+    #- 'Tree based statitsitcs':
+    - topics/calcRF.md
+    - topics/correlationTest.md
+    - topics/getBootstraps.md
+    - topics/getDivergence.md
