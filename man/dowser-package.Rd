@@ -2,8 +2,8 @@
 % Please edit documentation in R/Dowser.R
 \docType{package}
 \name{dowser-package}
-\alias{dowser}
 \alias{dowser-package}
+\alias{_PACKAGE}
 \title{dowser: B Cell Receptor Phylogenetics Toolkit}
 \description{
 Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenetic trees. Provides methods to 1) reconstruct unmutated ancestral sequences, 2) build B cell phylogenetic trees using multiple methods, 3) visualize trees with metadata at the tips, 4) reconstruct intermediate sequences, 5) detect biased ancestor-descendant relationships among metadata types Workflow examples available at documentation site (see URL). Citations: Hoehn et al (2022) \doi{10.1371/journal.pcbi.1009885}, Hoehn et al (2021) \doi{10.1101/2021.01.06.425648}.

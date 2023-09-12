@@ -21,109 +21,90 @@ clones = formatClones(ExampleAirr, traits=c("sample_id","c_call"),
 
 print(clones)
 
+## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
+#  
+#  clones = getTrees(clones, nproc=1)
+#  
+#  print(clones)
+#  ## A tibble: 2 x 6
+#  #  clone_id data       locus  seqs subject_id trees
+#  #     <dbl> <list>     <chr> <int> <chr>      <list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>
 
 ## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## 
-## # Build trees using the pratchet maximum parsimony function in phangnorn
-## clones = getTrees(clones, nproc=1)
-## 
-## print(clones)
-## ## A tibble: 2 x 6
-## #  clone_id data       locus  seqs subject_id trees
-## #     <dbl> <list>     <chr> <int> <chr>      <list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>
-
+#  # exec here is set to dnapars position in the Docker image.
+#  clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars", nproc=1)
+#  
+#  clones
+#  ## A tibble: 2 x 6
+#  #  clone_id data       locus  seqs subject_id trees
+#  #     <dbl> <list>     <chr> <int> <chr>      <list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>
 
 ## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## # Build trees using dnapars.
-## # exec here is set to dnapars position in the Docker image.
-## clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars", nproc=1)
-## 
-## clones
-## ## A tibble: 2 x 6
-## #  clone_id data       locus  seqs subject_id trees
-## #     <dbl> <list>     <chr> <int> <chr>      <list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>
-
+#  
+#  clones = getTrees(clones, build="pml")
+#  
+#  print(clones)
+#  ## A tibble: 2 x 6
+#  #  clone_id data       locus  seqs subject_id trees
+#  #     <dbl> <list>     <chr> <int> <chr>      <list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>
 
 ## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## # Build trees using the optim.pml maximum likelihood function in phangnorn
-## clones = getTrees(clones, build="pml")
-## 
-## print(clones)
-## ## A tibble: 2 x 6
-## #  clone_id data       locus  seqs subject_id trees
-## #     <dbl> <list>     <chr> <int> <chr>      <list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>
-
-
-## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## # Build trees using dnaml.
-## # exec here is set to dnaml position in the Docker image.
-## clones = getTrees(clones, build="dnaml", exec="/usr/local/bin/dnaml")
-## 
-## clones
-## # A tibble: 2 x 6
-## #  clone_id data       locus  seqs subject_id trees
-## #     <dbl> <list>     <chr> <int> <chr>      <list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>
+#  
+#  # exec here is set to dnaml position in the Docker image.
+#  clones = getTrees(clones, build="dnaml", exec="/usr/local/bin/dnaml")
+#  
+#  clones
+#  # A tibble: 2 x 6
+#  #  clone_id data       locus  seqs subject_id trees
+#  #     <dbl> <list>     <chr> <int> <chr>      <list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>
 
 ## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## # Build trees using RAxML
-## # exec here is set to RAxML position in the Docker image.
-## clones = getTrees(clones, build="raxml", exec="/usr/local/share/raxml-ng")
-## print(clones)
-## # A tibble: 2 x 7
-## #  clone_id data       locus  seqs subject_id trees        parameters
-## #     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>i
+#  
+#  # exec here is set to raxml position in the Docker image.
+#  clones = getTrees(clones, build="raxml", exec="/usr/local/bin/raxml-ng")
+#  
+#  clones
+#  # A tibble: 2 x 6
+#  #  clone_id data       locus  seqs subject_id trees
+#  #     <dbl> <list>     <chr> <int> <chr>      <list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>
 
 ## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## 
-## # Build trees using IgPhyML.
-## # exec here is set to IgPhyML. position in the Docker image.
-## clones = getTrees(clones, build="igphyml",
-##     exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
-## 
-## print(clones)
-## ## A tibble: 2 x 7
-## #  clone_id data       locus  seqs subject_id trees        parameters
-## #     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
-## 
-## 
-## clones$parameters[[1]]$omega_mle
-## #[1] 0.5286
+#  
+#  # exec here is set to IgPhyML position in the Docker image.
+#  clones = getTrees(clones, build="igphyml",
+#      exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
+#  
+#  print(clones)
+#  ## A tibble: 2 x 7
+#  #  clone_id data       locus  seqs subject_id trees        parameters
+#  #     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
+#  
+#  
+#  clones$parameters[[1]]$omega_mle
+#  #[1] 0.5286
 
 ## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## 
-## # Build partitioned trees using IgPhyML.
-## # exec here is set to IgPhyML. position in the Docker image.
-## clones = getTrees(clones, build="igphyml", 
-##                  exec="/usr/local/share/igphyml/src/igphyml", nproc=1, id="hl", omega="e,e", rates="0,1")
-## 
-## print(clones)
-## ## A tibble: 2 x 7
-## #  clone_id data       locus  seqs subject_id trees        parameters
-## #     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
+#  
+#  # exec here is set to IgPhyML position in the Docker image.
+#  clones = getTrees(clones, build="igphyml",
+#      exec="/usr/local/share/igphyml/src/igphyml", nproc=1, partition="cf")
+#  
+#  print(clones)
+#  ## A tibble: 2 x 7
+#  #  clone_id data       locus  seqs subject_id trees        parameters
+#  #     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>
+#  #1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
+#  #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>
 
-## ---- eval=FALSE, warning=FALSE, message=FALSE--------------------------------
-## 
-## # Build partitioned trees using RAxML
-## # exec here is set to RAxML position in the Docker image.
-## clones = getTrees(clones, build="raxml", 
-##                   exec="/usr/local/share/raxml-ng", nproc=1, partition=TRUE)
-## print(clones)
-## ## A tibble: 2 x 7
-## #  clone_id data       locus  seqs subject_id trees        parameters
-## #     <dbl> <list>     <chr> <int> <chr>      <named list> <named list>
-## #1     3170 <airrClon> N        13 Subject_1  <phylo>      <named list [13]>
-## #2     3184 <airrClon> N        12 Subject_1  <phylo>      <named list [13]>

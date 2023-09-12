@@ -1,5 +1,7 @@
 #' @keywords internal
+#' @aliases dowser-package
 "_PACKAGE"
+
 
 # Dowser package documentation and import directives
 #'
