@@ -33,7 +33,10 @@
 #' @importFrom  tidyselect  all_of
 #' @importFrom  gridExtra   grid.arrange
 #' @importFrom  stringr     str_count    
-#' @importFrom  alakazam    makeChangeoClone DNA_IUPAC
+#' @importFrom  alakazam    checkColumns maskSeqGaps padSeqEnds 
+#'                          collapseDuplicates getGene translateDNA seqDist
+#'                          getAllele buildPhylipLineage graphToPhylo DNA_IUPAC
+#'                          makeTempDir
 #' @importFrom  phylotate   read_annotated
 #' @importFrom  ape         read.tree di2multi reorder.phylo root ladderize subtrees
 #'                          as.AAbin as.DNAbin getMRCA dist.nodes multi2di extract.clade

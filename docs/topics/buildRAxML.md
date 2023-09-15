@@ -37,7 +37,7 @@ seq
 :   the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"
 
 exec
-:   RAxML executable
+:   RAxML-ng executable
 
 model
 :   The DNA model to be used. GTR is the default.
