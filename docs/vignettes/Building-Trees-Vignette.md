@@ -67,7 +67,7 @@ Maximum parsimony trees can be built with the `getTrees` function, which by defa
 
 The output is the same tibble as the input, but with a `trees` column containing an R `ape::phylo` object for each clone.
 
-Build trees using *phangorn's pratchet*.
+**Maximum parsimony trees using phangorn.**
 
 ```r
 clones = getTrees(clones, nproc=1)
@@ -84,7 +84,8 @@ Maximum parsimony trees can also be built using the PHYLIP function `dnapars`. T
 
 [PHYLIP download site](https://evolution.genetics.washington.edu/phylip/getme-new1.html)
 
-Build trees using *dnapars*. 
+**Maximum parsimony trees using dnapars.**
+
 
 ```r
 # exec here is set to dnapars position in the Docker image.
@@ -108,7 +109,7 @@ Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To
 
 Another maximum likelihood option that dowser supports is `raxml` which utilizes RAxML Next Generation. This option also needs a path to the `raxml` executable specified in the `exec` option. 
 
-Build trees using *phangorn's optim.pml*.
+**Maximum likelihood trees using phangorn**.
 
 ```r
 clones = getTrees(clones, build="pml")
@@ -121,7 +122,7 @@ print(clones)
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
 
-Build trees using *dnaml* instead, which like `dnapars` is also distributed as part of `PHYLIP`.
+**Maximum likelihood trees using dnaml.**
 
 ```r
 # exec here is set to dnaml position in the Docker image.
@@ -135,8 +136,7 @@ clones
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
 
-Build trees using *RAxML*.
-
+**Maximum likelihood trees using RAxML.**
 [RAxML documentation/download site](https://github.com/amkozlov/raxml-ng)
 
 
@@ -190,7 +190,7 @@ Three of the most useful IgPhyML partition models and defaults are listed below:
     * 2 partitions: 1 for the heavy chains and 1 for the light chains. By default, a separate omega value is estimated for each, as well as a separate branch length scalar. This allows heavy and light chains to have proportionally longer or shorter branches. This is only possible if you have paired heavy and light chain sequences and run formatClones with chain="HL" (see [Heavy+light chain tree building vignette](Resolve-Light-Chains-Vignette.md).)
 
 
-Building maximum likelihood trees with multiple partitions using the partition = `cf`  arugment in *IgPhyML*.
+Building maximum likelihood trees with multiple partitions using the partition = `cf`  arugment in IgPhyML.
 
 ```r
 # exec here is set to IgPhyML position in the Docker image.
