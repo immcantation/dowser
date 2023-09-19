@@ -49,7 +49,6 @@ data("ExampleMixedDb")
 # find the clone subgroups 
 ExampleMixedDb <- resolveLightChains(ExampleMixedDb)
 print(ExampleMixedDb$clone_subgroup)
-# [1] 2 1 1 1 1 1 1 1 1 1 1 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 ```
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
@@ -67,22 +66,16 @@ The next step is to convert the data into airrClone objects that can be used for
 clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = FALSE, 
                        split_light = TRUE, minseq = 3)
 print(clones)
-## A tibble: 5 x 4
-#   clone_id data       locus    seqs
-#   <chr>    <list>     <chr>   <int>
-# 10004_1  <airrClon> IGH,IGK     5
-# 8232_1   <airrClon> IGH,IGL     4
-# 43426_1  <airrClon> IGH,IGL     3
-# 60925_1  <airrClon> IGH,IGL     3
 ```
 ## Building trees 
 
-Trees can now be built with any of the methods that dowser supports. Methods are divided into three broad categories: maximum parsimony, maximum likelihood, and partitioned maximum likelihood. IgphyML and RAxML can use partitioned maximum likelihood models. Both of these methods support "scaled" branch lengths models. These models group information from paired heavy and light chain data separately into different groups called partitions. This allows different partitions to differ by a scalar factor estimated by maximum likelihood. This creates the most accurate branch length reconstructions, where branch lengths represent the number of mutations per site along both heavy and light chains.
+Trees can now be built with any of the methods that dowser supports. Methods are divided into three broad categories: maximum parsimony, maximum likelihood, and partitioned maximum likelihood. IgPhyML v2.0.0 and RAxML can use partitioned maximum likelihood models. Both of these methods support "scaled" branch lengths models. These models group information from paired heavy and light chain data separately into different groups called partitions. This allows different partitions to differ by a scalar factor estimated by maximum likelihood. This creates the most accurate branch length reconstructions, where branch lengths represent the number of mutations per site along both heavy and light chains.
 
 For details on each of the different methods, including the specifics about different partition models, see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
 # Building maximum likelihood trees with multiple partitions using IgPhyML where partitions 
+# Only the newest version of IgPhyML supports this option
 # separate by heavy chain information and light chain information
 # exec here is set to IgPhyML position in the Docker image.
 clones <- getTrees(clones, build="igphyml", nproc=1, partition="hl",

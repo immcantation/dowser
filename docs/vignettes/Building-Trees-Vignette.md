@@ -178,7 +178,7 @@ clones$parameters[[1]]$omega_mle
 ```
 ## Building maximum likelihood trees with multiple partitions
 
-Two of the tree building methods that dowser supports, IgPhyML and RAxML, support models with multiple partitions. This allows different parameters to be estimated for different regions (partitions) of the sequence data. Both of these methods support "scaled" branch lengths models. This approach allows different partitions to differ by a scalar factor estimated by maximum likelihood. This is recommended when analyzing single cell data paired heavy and light chains. IgPhyML also allows for separated values of omegas (dN/dS) to be estimated for different partitions. There are many possible models that can be specified, but the most common are detailed below. For full details on different possibilities, see the `buildIgphyml` documentation (all arguments can be passed through getTrees). 
+Two of the tree building methods that dowser supports, IgPhyML v2.0.0 and RAxML, support models with multiple partitions. This allows different parameters to be estimated for different regions (partitions) of the sequence data. Both of these methods support "scaled" branch lengths models. This approach allows different partitions to differ by a scalar factor estimated by maximum likelihood. This is recommended when analyzing single cell data paired heavy and light chains. IgPhyML also allows for separated values of omegas (dN/dS) to be estimated for different partitions. There are many possible models that can be specified, but the most common are detailed below. For full details on different possibilities, see the `buildIgphyml` documentation (all arguments can be passed through getTrees). 
 
 Three of the most useful IgPhyML partition models and defaults are listed below:
 
@@ -194,6 +194,7 @@ Building maximum likelihood trees with multiple partitions using the partition =
 
 ```r
 # exec here is set to IgPhyML position in the Docker image.
+# Only the newest version of IgPhyML (v2.0.0) supports multi-partition trees
 clones = getTrees(clones, build="igphyml", 
     exec="/usr/local/share/igphyml/src/igphyml", nproc=1, partition="cf")
 
