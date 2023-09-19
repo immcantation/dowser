@@ -116,7 +116,7 @@ Standard maximum likelihood trees can also be built with the `getTrees` function
 
 Maximum likelihood trees can also be built using the PHYLIP function `dnaml`. To do this, the `build` option needs to be set as `dnaml` and the path to the `dnaml` executable needs to be specified in the `exec` option. 
 
-Another maximum likelihood option that dowser supports is `raxml` which utilizes RAxML Next Generation. This option also needs a path to the `raxml` executable specified in the `exec` option. 
+Another maximum likelihood option that dowser supports is `RAxML` which utilizes RAxML Next Generation. This option also needs a path to the `RAxML` executable specified in the `exec` option. 
 
 **Maximum likelihood trees using phangorn**.
 ```{r, eval=FALSE, warning=FALSE, message=FALSE}
