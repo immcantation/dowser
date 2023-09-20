@@ -47,3 +47,7 @@ expect_equal("seq19" %in% data$sequence_id, FALSE)
 expect_equal(data$clone_subgroup[which(data$sequence_id == "seq5")], data$clone_subgroup[which(data$sequence_id == "seq20")])
 expect_equal(data$clone_subgroup[which(data$sequence_id == "seq15")], data$clone_subgroup[which(data$sequence_id == "seq21")])
 expect_equal(data$clone_subgroup[which(data$sequence_id == "seq26")], 1)
+
+expect_equal(data$clone_subgroup, data$expected_clone_subgroup)
+
+
