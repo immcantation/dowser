@@ -49,32 +49,34 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 
 ## Citing
 
+
 To cite the dowser package in publications, please use
 
-  Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of
-  migration, differentiation, and class switching in B cells.” _PLoS
-  Computational Biology_. doi:10.1371/journal.pcbi.1009885
-  <https://doi.org/10.1371/journal.pcbi.1009885>,
-  <https://doi.org/10.1371/journal.pcbi.1009885>.
+Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of
+migration, differentiation, and class switching in B cells.” _PLoS
+Computational Biology_. doi: 10.1371/journal.pcbi.1009885 (URL:
+https://doi.org/10.1371/journal.pcbi.1009885), <URL:
+https://doi.org/10.1371/journal.pcbi.1009885>.
 
 If you use the [correlationTest](vignettes/Measurable-Evolution.md)
 function for measurable evolution, please also cite
 
-  Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein
-  S (2021). “Human B cell lineages associated with germinal centers
-  following influenza vaccination are measurably evolving.” _eLife_.
-  doi:10.7554/eLife.70873 <https://doi.org/10.7554/eLife.70873>,
-  <https://elifesciences.org/articles/70873>.
+Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein S
+(2021). “Human B cell lineages associated with germinal centers
+following influenza vaccination are measurably evolving.” _eLife_. doi:
+10.7554/eLife.70873 (URL: https://doi.org/10.7554/eLife.70873), <URL:
+https://elifesciences.org/articles/70873>.
 
 If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for
 building trees please also cite
 
-  Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S
-  (2019). “Repertoire-wide phylogenetic models of B cell molecular
-  evolution reveal evolutionary signatures of aging and vaccination.”
-  _PNAS_. doi:10.1073/pnas.1906020116
-  <https://doi.org/10.1073/pnas.1906020116>,
-  <https://doi.org/10.1073/pnas.1906020116>.
+Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S
+(2019). “Repertoire-wide phylogenetic models of B cell molecular
+evolution reveal evolutionary signatures of aging and vaccination.”
+_PNAS_. doi: 10.1073/pnas.1906020116 (URL:
+https://doi.org/10.1073/pnas.1906020116), <URL:
+https://doi.org/10.1073/pnas.1906020116>.
+
 
 
 
