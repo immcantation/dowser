@@ -1377,20 +1377,25 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         if(length(proper_index) > 1){
           subgroups <- hd_sc[[subgroup]][proper_index]
           if(length(unique(subgroups)) > 1){
-            subgroup_size <- c()
-            for(val in subgroups){
-              nrows <- nrow(hd_sc[hd_sc[[subgroup]] == val,])
-              subgroup_size <- append(subgroup_size, nrows)
-            }
-            if(length(unique(max(subgroup_size))) == 1 && length(unique(subgroup_size)) != 1){
-              proper_index_value <- unique(subgroups[which(subgroup_size == max(subgroup_size))])
-            } else { 
-              potential_subgroups <- subgroups[which(subgroup_size == max(subgroup_size))]
-              proper_index_value <- min(potential_subgroups)
-            }
-          } else{
-            proper_index_value <- hd_sc[[subgroup]][proper_index[1]]
-          }
+            # find the subgroups that below to the lowest seq dists
+            subgroups <- hd_sc[[subgroup]][proper_index]
+            if(length(unique(subgroups)) > 1){
+              # if there is more than one subgroup find the subgroup sizes of the 
+              # subgroups being considered
+              subgroup_size <- data.frame(clone_subgroup = subgroups)
+              subgroup_size$sizes <- unlist(lapply(1:nrow(subgroup_size), function(x){
+                return(nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],]))
+              }))
+              # if there is one subgroup that is the largest use it
+              if(length(which(subgroup_size$sizes == max(subgroup_size$sizes))) == 1){
+                proper_index_value <- unique(subgroups[which(subgroup_size == 
+                                                               max(subgroup_size))])
+              } else { 
+                # if there are more than one subgroup with the same size use the lower number
+                potential_subgroups <- subgroup_size$clone_subgroup[
+                  which(subgroup_size$sizes == max(subgroup_size))]
+                proper_index_value <- min(potential_subgroups)
+              }
         } else{
           proper_index_value <- hd_sc[[subgroup]][proper_index]
         }
