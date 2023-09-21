@@ -1,15 +1,16 @@
-**calcRF** - *Finds the Robinson-Fould's Distance between phylogenies.*
+**calcRF** - *Finds the Robinson-Fould's cluster distance between phylogenies.*
 
 Description
 --------------------
 
-`calcRF` Calculates the RF distance between two phylogenetic trees with the same tips and tip labels.
+`calcRF` Calculates the RF distance between two phylogenetic trees with 
+the same tips and tip labels.
 
 
 Usage
 --------------------
 ```
-calcRF(tree_1, tree_2)
+calcRF(tree_1, tree_2, nproc = 1)
 ```
 
 Arguments
@@ -21,13 +22,16 @@ tree_1
 tree_2
 :   A `phylo` object
 
+nproc
+:   Number of cores to use for calculations.
+
 
 
 
 Value
 -------------------
 
-The input clones tibble with an additional column for the bootstrap replicate trees.
+The RF cluster value for the two input trees.
 
 
 

@@ -1374,31 +1374,28 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         rating <- sapply(hd_sc[[seq]], function(x)
           alakazam::seqDist(x, hd_bulk[[seq]][sequence]))
         rating <- as.numeric(rating)
-        proper_subgroup <- which(rating == min(rating))
-        if(length(proper_subgroup) > 1){
-          subgroups <- c()
-          for(number in unique(proper_subgroup)){
-            subgroups <- append(subgroups, hd_sc[[subgroup]][number])
-          }
+        proper_index <- which(rating == min(rating))
+        if(length(proper_index) > 1){
+          subgroups <- hd_sc[[subgroup]][proper_index]
           if(length(unique(subgroups)) > 1){
-            sizes <- c()
-            for(uniq_subgroups in subgroups){
-              nrows <- nrow(hd_sc[hd_sc[[subgroup]] == uniq_subgroups,])
-              sizes <- append(sizes, nrows)
+            subgroup_size <- c()
+            for(val in subgroups){
+              nrows <- nrow(hd_sc[hd_sc[[subgroup]] == val,])
+              subgroup_size <- append(subgroup_size, nrows)
             }
-            if(sum(sizes == max(sizes)) == 1){
-              proper_subgroup_value <- subgroups[which(sizes == max(sizes))]
-            } else if(sum(sizes == max(sizes)) != 1){
-              potential_subgroups <- subgroups[which(sizes == max(sizes))]
-              proper_subgroup_value <- min(potential_subgroups)
+            if(length(unique(max(subgroup_size))) == 1){
+              proper_index_value <- unique(subgroups[which(subgroup_size == max(subgroup_size))])
+            } else if(length(unique(max(subgroup_size))) != 1){ 
+              potential_subgroups <- subgroups[which(subgroup_size == max(subgroup_size))]
+              proper_index_value <- min(potential_subgroups)
             }
           } else{
-            proper_subgroup_value <- hd_sc[[subgroup]][proper_subgroup[1]]
+            proper_index_value <- hd_sc[[subgroup]][proper_index[1]]
           }
         } else{
-          proper_subgroup_value <- hd_sc[[subgroup]][proper_subgroup]
+          proper_index_value <- hd_sc[[subgroup]][proper_index]
         }
-        hd_bulk[[subgroup]][sequence] <- proper_subgroup_value
+        hd_bulk[[subgroup]][sequence] <- proper_index_value
       }
     } 
     if(nrow(hd_bulk) != 0){

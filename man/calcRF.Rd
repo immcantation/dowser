@@ -2,18 +2,21 @@
 % Please edit documentation in R/Statistics.R
 \name{calcRF}
 \alias{calcRF}
-\title{Finds the Robinson-Fould's Distance between phylogenies.}
+\title{Finds the Robinson-Fould's cluster distance between phylogenies.}
 \usage{
-calcRF(tree_1, tree_2)
+calcRF(tree_1, tree_2, nproc = 1)
 }
 \arguments{
 \item{tree_1}{A \code{phylo} object}
 
 \item{tree_2}{A \code{phylo} object}
+
+\item{nproc}{Number of cores to use for calculations.}
 }
 \value{
-The input clones tibble with an additional column for the bootstrap replicate trees.
+The RF cluster value for the two input trees.
 }
 \description{
-\code{calcRF} Calculates the RF distance between two phylogenetic trees with the same tips and tip labels.
+\code{calcRF} Calculates the RF distance between two phylogenetic trees with 
+              the same tips and tip labels.
 }
