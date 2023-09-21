@@ -1382,7 +1382,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
             if(length(unique(subgroups)) > 1){
               # if there is more than one subgroup find the subgroup sizes of the 
               # subgroups being considered
-              subgroup_size <- data.frame(clone_subgroup = subgroups)
+              subgroup_size <- data.frame(clone_subgroup = unique(subgroups))
               subgroup_size$sizes <- unlist(lapply(1:nrow(subgroup_size), function(x){
                 return(nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],]))
               }))
