@@ -1226,7 +1226,6 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' 1. clone_subgroup which identifies the light chain VJ rearrangement that sequence belongs to within it's clone
 #' 2. clone_subgroup_id which combines the clone_id variable and the clone_subgroup variable by a "_". 
 #' 3. vj_cell which combines the vj_gene and vj_alt_cell columns by a ",".
-# TODO: Group by junction length as well?
 # TODO: add "fields" option consistent with other functions
 #' @export
 resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
@@ -1383,9 +1382,9 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
               nrows <- nrow(hd_sc[hd_sc[[subgroup]] == val,])
               subgroup_size <- append(subgroup_size, nrows)
             }
-            if(length(unique(max(subgroup_size))) == 1){
+            if(length(unique(max(subgroup_size))) == 1 && length(unique(subgroup_size)) != 1){
               proper_index_value <- unique(subgroups[which(subgroup_size == max(subgroup_size))])
-            } else if(length(unique(max(subgroup_size))) != 1){ 
+            } else { 
               potential_subgroups <- subgroups[which(subgroup_size == max(subgroup_size))]
               proper_index_value <- min(potential_subgroups)
             }
