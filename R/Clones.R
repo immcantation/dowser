@@ -1176,9 +1176,9 @@ maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequen
 #' @export
 
 getSubclones <- function(heavy, light, nproc=1, minseq=1,
-                               id="sequence_id", seq="sequence_alignment",
-                               clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
-                               junc_len="junction_length", nolight="missing"){
+                         id="sequence_id", seq="sequence_alignment",
+                         clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
+                         junc_len="junction_length", nolight="missing"){
   stop("This function has been depreciated. Please use resolveLightChains.")
 }
 
@@ -1229,9 +1229,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 # TODO: add "fields" option consistent with other functions
 #' @export
 resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
-                                   id="sequence_id", seq="sequence_alignment",
-                                   clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
-                                   junc_len="junction_length", nolight="missing"){
+                               id="sequence_id", seq="sequence_alignment",
+                               clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
+                               junc_len="junction_length", nolight="missing"){
   
   subgroup <- "clone_subgroup"
 
@@ -1373,29 +1373,31 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         rating <- sapply(hd_sc[[seq]], function(x)
           alakazam::seqDist(x, hd_bulk[[seq]][sequence]))
         rating <- as.numeric(rating)
+        # row number of heavy chain only df with lowest seq dist
         proper_index <- which(rating == min(rating))
         if(length(proper_index) > 1){
+          # find the subgroups that belong to the lowest seq dists
           subgroups <- hd_sc[[subgroup]][proper_index]
           if(length(unique(subgroups)) > 1){
-            # find the subgroups that below to the lowest seq dists
-            subgroups <- hd_sc[[subgroup]][proper_index]
-            if(length(unique(subgroups)) > 1){
-              # if there is more than one subgroup find the subgroup sizes of the 
-              # subgroups being considered
-              subgroup_size <- data.frame(clone_subgroup = unique(subgroups))
-              subgroup_size$sizes <- unlist(lapply(1:nrow(subgroup_size), function(x){
-                return(nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],]))
-              }))
-              # if there is one subgroup that is the largest use it
-              if(length(which(subgroup_size$sizes == max(subgroup_size$sizes))) == 1){
-                proper_index_value <- unique(subgroups[which(subgroup_size == 
-                                                               max(subgroup_size))])
-              } else { 
-                # if there are more than one subgroup with the same size use the lower number
-                potential_subgroups <- subgroup_size$clone_subgroup[
-                  which(subgroup_size$sizes == max(subgroup_size))]
-                proper_index_value <- min(potential_subgroups)
-              }
+            # if there is more than one subgroup find the subgroup sizes of the 
+            # subgroups being considered
+            subgroup_size <- data.frame(clone_subgroup = unique(subgroups))
+            subgroup_size$sizes <- unlist(lapply(1:nrow(subgroup_size), function(x){
+              return(nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],]))
+            }))
+            # if there is one subgroup that is the largest use it
+            if(length(which(subgroup_size$sizes == max(subgroup_size$sizes))) == 1){
+              proper_index_value <- subgroup_size$clone_subgroup[
+                which(subgroup_size$sizes == max(subgroup_size$sizes))]
+            } else { 
+              # if there are more than one subgroup with the same size use the lower number
+              potential_subgroups <- subgroup_size$clone_subgroup[
+                which(subgroup_size$sizes == max(subgroup_size$sizes))]
+              proper_index_value <- min(potential_subgroups)
+            }
+          } else{
+            proper_index_value <- hd_sc[[subgroup]][proper_index[1]]
+          }
         } else{
           proper_index_value <- hd_sc[[subgroup]][proper_index]
         }
