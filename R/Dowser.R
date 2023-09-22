@@ -48,7 +48,7 @@
 #'                          group_by ungroup
 #'                          filter slice select 
 #'                          mutate mutate_at 
-#'                          one_of if_else
+#'                          one_of
 #'                          right_join rowwise
 #'                          summarize summarize_at
 #'                          transmute rename
