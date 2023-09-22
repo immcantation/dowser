@@ -1183,7 +1183,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 }
 
 
-#' Define subgroups based on light chain rearrangements
+#' Define subgroups within clones based on light chain rearrangements
 #' 
 #' \code{resolveLightChains} resolve light chain V and J subgroups within a clone
 #' @param    data         a tibble containing heavy and light chain sequences with clone_id
@@ -1212,15 +1212,17 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' V and J genes, with at most one light chain per cell.
 #' @details
 #' 1. Make temporary array containing light chain clones
-#' 2. Enumerate all possible V and J combinations
+#' 2. Enumerate all possible V, J, and junction length combinations
 #' 3. Determine which combination is the most frequent
 #' 4. Assign sequences with that combination to clone t
 #' 5. Copy those sequences to return array
 #' 6. Remove all cells with that combination from temp array
-#' 7. Repeat 1-5 until temporary array zero.
+#' 7. Repeat 1-6 until temporary array zero.
 #' If there is more than rearrangement with the same V/J
 #' in the same cell, pick the one with the highest non-ambiguous
-#' characters. 
+#' characters. Cells with missing light chains are grouped with their
+#' subgroup with the closest matching heavy chain (Hamming distance)
+#' then the largest and lowest index subgroup if ties are present.
 #' 
 #' Outputs of the function are 
 #' 1. clone_subgroup which identifies the light chain VJ rearrangement that sequence belongs to within it's clone
@@ -1383,7 +1385,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
             # subgroups being considered
             subgroup_size <- data.frame(clone_subgroup = unique(subgroups))
             subgroup_size$sizes <- unlist(lapply(1:nrow(subgroup_size), function(x){
-              return(nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],]))
+              nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],])
             }))
             # if there is one subgroup that is the largest use it
             if(length(which(subgroup_size$sizes == max(subgroup_size$sizes))) == 1){
