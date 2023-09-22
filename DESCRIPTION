@@ -31,14 +31,14 @@ BuildVignettes: true
 VignetteBuilder: knitr
 Encoding: UTF-8
 Depends:
-    R (>= 3.1.2),
-    ggplot2 (>= 3.2.0)
+    R (>= 4.0),
+    ggplot2 (>= 3.4.0)
 biocViews:
 Imports:
     alakazam (>= 1.1.0),
     ape (>= 5.6),
     Biostrings,
-    dplyr (>= 0.8.1),
+    dplyr (>= 1.0),
     ggtree,
     graphics,
     gridExtra,
