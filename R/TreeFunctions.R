@@ -1319,7 +1319,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     write(paste0(clone_seqids[i], "    ", clone_seqs[i]), file=file.path(dir, paste0(name, "_input_data.phy")), 
           append = TRUE)
   }
-  closeAllConnections()
+  close(fileConn)
   input_data <- file.path(dir, paste0(name, "_input_data.phy"))
   
   command <- paste("--model", model, "--seed", rseed, "-msa", 
@@ -1341,7 +1341,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     write(paste0(model, ", p2 = ", nchar(end_heavy)+1, "-", nchar(clone_seqs[1])), 
           file=file.path(dir, paste0(name, "_partition.txt")), 
           append = TRUE)
-    closeAllConnections()
+    close(fileConn)
     old_command <- strsplit(command, "--seed")[[1]][2]
     new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
     command <- paste0(new_model, old_command, " --brlen ", partition)
@@ -1555,7 +1555,6 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   tree$tree_method <- paste0("RAxML:", strsplit(tree_method[grep("Model: ", tree_method)],
                                "Model: ")[[1]][2])
   tree$edge_type <- "genetic_distance"
-  closeAllConnections()
   if(rm_files){
     unlink(file.path(dir, paste0(name,"*")))
   }
