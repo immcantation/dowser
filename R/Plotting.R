@@ -172,7 +172,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' plotTrees(trees)[[1]]
 #' @export
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
-    scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
+    scale=0.01, node_palette="Paired", tip_palette=node_palette, base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="blend", bootstrap_scores=FALSE){
 
