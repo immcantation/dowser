@@ -43,7 +43,7 @@ data(ExampleAirr)
 ExampleAirr = ExampleAirr[ExampleAirr$clone_id %in% c("3170", "3184"),]
 
 # Process example data into proper format, store isotype (optional)
-clones = formatClones(ExampleAirr, trait="c_call")
+clones = formatClones(ExampleAirr, traits="c_call")
 
 # Build maxmimum parsimony trees for first two clones using 
 # phangorn package in R

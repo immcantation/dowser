@@ -13,6 +13,7 @@ makeAirrClone(
   j_call = "j_call",
   junc_len = "junction_length",
   clone = "clone_id",
+  subgroup = "clone_subgroup",
   mask_char = "N",
   max_mask = 0,
   pad_end = TRUE,
@@ -30,7 +31,8 @@ makeAirrClone(
   mod3 = TRUE,
   randomize = TRUE,
   use_regions = TRUE,
-  dup_singles = FALSE
+  dup_singles = FALSE,
+  traits_light = FALSE
 )
 }
 \arguments{
@@ -58,6 +60,8 @@ for any given clone.}
 
 \item{clone}{name of the column containing the identifier for the clone. All 
 entries in this column should be identical.}
+
+\item{subgroup}{name of the column containing the identifier for the subgroup.}
 
 \item{mask_char}{character to use for masking and padding.}
 
@@ -106,6 +110,8 @@ sequences silently.}
 \item{use_regions}{assign CDR/FWR regions?}
 
 \item{dup_singles}{Duplicate sequences in singleton clones to include them as trees?}
+
+\item{traits_light}{Include the traits from the light chain when concatenating and collapsing trees?}
 }
 \value{
 A \link{airrClone} object containing the modified clone.

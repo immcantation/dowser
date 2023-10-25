@@ -2272,9 +2272,9 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     if(is.null(clone)){
       stop("must provide either tree object or clone ID")
     }
-    tree <- filter(data,!!rlang::sym("clone_id")==clone)$trees[[1]]
+    tree <- dplyr::filter(data,!!rlang::sym("clone_id")==clone)$trees[[1]]
   }
-  clone <- filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
+  clone <- dplyr::filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
   seqs <- c()
   seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
   loci <- unique(clone@locus)

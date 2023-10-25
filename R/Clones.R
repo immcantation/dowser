@@ -14,15 +14,16 @@
 #' @param    germ         name of the column containing germline DNA sequences. All entries 
 #'                        in this column should be identical for any given clone, and they
 #'                        must be multiple aligned with the data in the \code{seq} column.
-#' @param    v_call        name of the column containing V-segment allele assignments. All 
+#' @param    v_call       name of the column containing V-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
-#' @param    j_call        name of the column containing J-segment allele assignments. All 
+#' @param    j_call       name of the column containing J-segment allele assignments. All 
 #'                        entries in this column should be identical to the gene level.
 #' @param    junc_len     name of the column containing the length of the junction as a 
 #'                        numeric value. All entries in this column should be identical 
 #'                        for any given clone.
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
+#' @param    subgroup     name of the column containing the identifier for the subgroup.
 #' @param    mask_char    character to use for masking and padding.
 #' @param    max_mask     maximum number of characters to mask at the leading and trailing
 #'                        sequence ends. If \code{NULL} then the upper masking bound will 
@@ -51,8 +52,9 @@
 #' @param    locus        name of the column containing locus information
 #' @param    mod3         pad sequences to length mutliple three?
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
-#' @param    use_regions   assign CDR/FWR regions?
-#' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?
+#' @param    use_regions  assign CDR/FWR regions?
+#' @param    dup_singles  Duplicate sequences in singleton clones to include them as trees?
+#' @param    traits_light Include the traits from the light chain when concatenating and collapsing trees? 
 #' @return   A \link{airrClone} object containing the modified clone.
 #'
 #' @details
@@ -102,11 +104,11 @@
 makeAirrClone <- 
   function(data, id="sequence_id", seq="sequence_alignment", 
            germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
-           junc_len="junction_length", clone="clone_id", mask_char="N",
-           max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
-           add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", heavy=NULL,
-           cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-           use_regions=TRUE, dup_singles=FALSE){
+           junc_len="junction_length", clone="clone_id", subgroup = "clone_subgroup",
+           mask_char="N", max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, 
+           seq_fields=NULL, add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", 
+           heavy=NULL, cell="cell_id", locus="locus", traits=NULL, mod3=TRUE,
+           randomize=TRUE, use_regions=TRUE, dup_singles=FALSE, traits_light=FALSE){
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
@@ -126,6 +128,43 @@ makeAirrClone <-
       if(max(heavycount) > 1){
         stop(paste0(sum(heavycount > 1),
                     " cells with multiple heavy chains found. Remove before proceeeding"))
+      }
+      
+      # update the traits and columns CGJ 10/18/23
+      if(!is.null(traits) && traits_light){
+        new_traits <- c()
+        for(i in 1:length(traits)){
+          c_trait <- traits[[i]]
+          new_traits <- append(new_traits, c_trait)
+          new_traits <- append(new_traits, paste0(c_trait, "_light"))
+        }
+        
+        heavy_clones <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
+        light_clones <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
+        
+        for(i in 1:length(traits)){
+          heavy_clones[[paste0(traits[i], "_heavy")]] <- heavy_clones[[traits[i]]]
+          heavy_clones[[paste0(traits[i], "_light")]] <- unlist(lapply(1:nrow(heavy_clones), function(x){
+            cell_id <- heavy_clones[[cell]][x]
+            if(cell_id %in% light_clones[[cell]]){
+              matching_light <- light_clones[light_clones[[cell]] == cell_id,]
+              if(nrow(matching_light) == 1){
+                value <- matching_light[[traits[i]]][1]
+              } else {
+                matching_light <- filter(matching_light, subgroup == min(matching_light[[subgroup]]))
+                value <- matching_light[[traits[i]]][1]
+              }
+            } else {
+              value <- NA
+            }
+            return(value)
+          }))
+          light_clones[[paste0(traits[i], "_heavy")]] <- NA
+          light_clones[[paste0(traits[i], "_light")]] <- light_clones[[traits[i]]]
+        }
+        
+        traits <- new_traits
+        data <- rbind(heavy_clones, light_clones)
       }
       
       # Ensure cell and loci columns are not duplicated
@@ -601,7 +640,8 @@ cleanAlignment <- function(clone){
 #' @param    mod3         pad sequences to length mutliple three?
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
 #' @param    use_regions   assign CDR/FWR regions?
-#' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?                     
+#' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?   
+#' @param    traits_light  Include the traits from the light chain when concatenating and collapsing trees?              
 #'
 #' @return   A tibble of \link{airrClone} objects containing modified clones.
 #'
@@ -626,7 +666,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     add_count=TRUE, verbose=FALSE, collapse=TRUE,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
     use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
-    filterStop=TRUE, minseq=2, split_light=FALSE, majoronly=FALSE, columns=NULL){
+    filterStop=TRUE, minseq=2, split_light=FALSE, traits_light=FALSE,majoronly=FALSE,
+    columns=NULL){
   
   if(majoronly){
     if(!subgroup %in% names(data)){

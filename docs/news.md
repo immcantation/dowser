@@ -1,5 +1,11 @@
 # Release Notes
 
+Version 2.0.1: October 25, 2023
+-------------------------------------------------------------------------------
+
++ Fixed bugs in buildRAxML and getTrees
++ Added an option to formatClones to consider light chain traits  
+
 Version 2.0.0: September 8, 2023
 -------------------------------------------------------------------------------
 

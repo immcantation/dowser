@@ -21,6 +21,7 @@ v_call = "v_call",
 j_call = "j_call",
 junc_len = "junction_length",
 clone = "clone_id",
+subgroup = "clone_subgroup",
 mask_char = "N",
 max_mask = 0,
 pad_end = TRUE,
@@ -38,7 +39,8 @@ traits = NULL,
 mod3 = TRUE,
 randomize = TRUE,
 use_regions = TRUE,
-dup_singles = FALSE
+dup_singles = FALSE,
+traits_light = FALSE
 )
 ```
 
@@ -77,6 +79,9 @@ for any given clone.
 clone
 :   name of the column containing the identifier for the clone. All 
 entries in this column should be identical.
+
+subgroup
+:   name of the column containing the identifier for the subgroup.
 
 mask_char
 :   character to use for masking and padding.
@@ -143,6 +148,9 @@ use_regions
 
 dup_singles
 :   Duplicate sequences in singleton clones to include them as trees?
+
+traits_light
+:   Include the traits from the light chain when concatenating and collapsing trees?
 
 
 

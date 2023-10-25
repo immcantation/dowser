@@ -66,7 +66,7 @@ test_that("makeAirrClone",{
 
   # With splitting by trait value
   clones <- formatClones(db,germ="germline_alignment",randomize=FALSE,
-                         trait="isotype",add_count=TRUE,use_regions=FALSE)
+                         traits="isotype",add_count=TRUE,use_regions=FALSE)
   clone <- clones$data[[1]]
 
   expect_equal(clone@clone, "1")
