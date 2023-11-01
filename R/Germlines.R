@@ -690,6 +690,8 @@ createGermlines <- function(data, references, locus="locus",
                paste(required[!required %in% names(data)],collapse=", ")))
   }
   
+  # check if there are "" in the d_call column instead of NAs CGJ 11/1/23
+  data[[d_call]][data[[d_call]] == ""] <- NA
   has_dup_ids <- max(table(data %>% select(!!!rlang::syms(c(id, fields))))) != 1
   if (has_dup_ids){
     stop("Sequence IDs are not unique!")
