@@ -1327,6 +1327,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
     ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
     ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
+    if(dplyr::n_distinct(nchar(hd[[seq]])) > 1){
+      warning(paste("Heavy chains different lengths, padding seq ends for clone",cloneid))
+      hd[[seq]] <- padSeqEnds(hd[[seq]])
+    }
     hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){

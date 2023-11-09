@@ -10,7 +10,7 @@ plotTrees(
   tips = NULL,
   tipsize = NULL,
   scale = 0.01,
-  node_palette = "Dark2",
+  node_palette = "Paired",
   tip_palette = node_palette,
   base = FALSE,
   layout = "rectangular",
