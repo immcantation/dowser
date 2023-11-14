@@ -43,7 +43,7 @@ dup_singles = FALSE,
 nproc = 1,
 chain = "H",
 heavy = "IGH",
-filterStop = TRUE,
+filterstop = TRUE,
 minseq = 2,
 split_light = FALSE,
 traits_light = FALSE,
@@ -160,7 +160,7 @@ chain
 heavy
 :   name of heavy chain locus (default = "IGH")
 
-filterStop
+filterstop
 :   only use sequences that do not contain an in-frame stop codon
 
 minseq

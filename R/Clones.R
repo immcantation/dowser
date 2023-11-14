@@ -586,9 +586,8 @@ cleanAlignment <- function(clone){
 #' @param    data         data.frame containing the AIRR or Change-O data for a clone.
 #'                        See \link{makeAirrClone} for required columns and their defaults
 #' @param    split_light  split or lump subgroups? See \code{resolveLightChains}.
-#' @param    filterStop   only use sequences that do not contain an in-frame stop codon
+#' @param    filterstop   only use sequences that do not contain an in-frame stop codon
 #' @param    minseq       minimum number of sequences per clone
-#' @param    filterStop   only use sequences that do not contain an in-frame stop codon
 #' @param    majoronly    only return largest subgroup and sequences without light chains
 #' @param    clone        name of the column containing the identifier for the clone. All 
 #'                        entries in this column should be identical.
@@ -666,7 +665,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     add_count=TRUE, verbose=FALSE, collapse=TRUE,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
     use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
-    filterStop=TRUE, minseq=2, split_light=FALSE, traits_light=FALSE,majoronly=FALSE,
+    filterstop=TRUE, minseq=2, split_light=FALSE, traits_light=FALSE,majoronly=FALSE,
     columns=NULL){
   
   if(majoronly){
@@ -675,7 +674,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     data <- dplyr::filter(data, !!rlang::sym(subgroup) <= 1)
   }
-  if(filterStop){
+  if(filterstop){
     full_nrow <- nrow(data)
     data <- parallel::mclapply(1:nrow(data), function(x){
       sub_seq <- alakazam::translateDNA(data[[seq]][x])
@@ -687,7 +686,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     if(nrow(data) != full_nrow){
       n_removed <- full_nrow - nrow(data)
       warning(paste0("There was ", n_removed, " sequence(s) with an inframe stop codon",
-      " and were removed. If you want to keep these sequences use the option filterStop=FALSE."))
+      " and were removed. If you want to keep these sequences use the option filterstop=FALSE."))
     }
   }
   

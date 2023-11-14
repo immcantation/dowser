@@ -33,7 +33,7 @@ formatClones(
   nproc = 1,
   chain = "H",
   heavy = "IGH",
-  filterStop = TRUE,
+  filterstop = TRUE,
   minseq = 2,
   split_light = FALSE,
   traits_light = FALSE,
@@ -119,7 +119,7 @@ sequences silently.}
 
 \item{heavy}{name of heavy chain locus (default = "IGH")}
 
-\item{filterStop}{only use sequences that do not contain an in-frame stop codon}
+\item{filterstop}{only use sequences that do not contain an in-frame stop codon}
 
 \item{minseq}{minimum number of sequences per clone}
 

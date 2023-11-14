@@ -46,8 +46,35 @@ getPalette <- function(states, palette){
         names(pal) <- c("IgM", "IgD", "IgG31", "IgA1", "IgG24", "IgE", "IgA2", 
             "IgG", "IgA") 
     }else{
+      # changed 11/14/23 CGJ
+      # test if the palette is too small for what they are trying to do
+      pal_test <- suppressWarnings(tryCatch(
+        RColorBrewer::brewer.pal(n=length(unique(states)), name=palette),
+        error=function(e)e))
+      if(length(unique(states)) > length(pal_test)){
+        # if it is send a warning and replace the palette
+        warning(paste("There are", length(unique(states)), "unique tips specified",
+                      "which is more than the", palette, "allows. Switching to a",
+                      "larger palette."))
+        if(length(unique(states)) > 69){
+          stop(paste("There are", length(unique(states)), "unique states in a specified tip",
+                     "plotting variable. There are more states than what can be plotted."))
+        }
+        # this finds all the quantitative colors in RColorBrewer
+        qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
+        # get the palette of all of them together
+        pal <- unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+        pal <- unique(pal)
+        # remove the bright yellow right at the beginning
+        pal <- pal[!pal %in% '#FFFF99']
+        
+        # cut to where you need
+        pal <- pal[1:length(unique(states))]
+        names(pal) <- as.character(unique(states))
+      } else{
         pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
         names(pal) <- as.character(unique(states))
+      }
     }
     return(pal)
 }
@@ -172,7 +199,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' plotTrees(trees)[[1]]
 #' @export
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
-    scale=0.01, node_palette="Paired", tip_palette=node_palette, base=FALSE,
+    scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="blend", bootstrap_scores=FALSE){
 
