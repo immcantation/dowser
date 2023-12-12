@@ -20,8 +20,7 @@ plotTrees(
   labelsize = NULL,
   common_scale = FALSE,
   ambig = "blend",
-  bootstrap_scores = FALSE,
-  custom = FALSE
+  bootstrap_scores = FALSE
 )
 }
 \arguments{
@@ -60,8 +59,6 @@ determined by sequence with highest divergence}
 \item{ambig}{How to color ambiguous node reconstructions? (blend or grey)}
 
 \item{bootstrap_scores}{Show bootstrap scores for internal nodes? See getBootstraps.}
-
-\item{custom}{Use a custom internal node palette?}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
