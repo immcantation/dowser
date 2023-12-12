@@ -19,71 +19,65 @@ combineColors <- function(x, pal){
 #' \code{getPalette} Gets a color palette for a predefined set of trait values
 #' @param    states   states in model
 #' @param    palette  The colorbrewer palette to use
-#' @param    custom Use a custom internal node palette?
 #'
 #' @return   A named vector with each state corresponding to a color
 #'
 #' @seealso \link{getTrees}, \link{plotTrees}
 #' @export
-getPalette <- function(states, palette, custom = FALSE){
-  if(!custom){
-    if(palette == "AmG"){
-      #M        D         G13       A1        G24
-      pal <- c("#000000", "#696969", "#33a02c", "#1f78b4", "#e31a1c",
-               #E         A2        G         A
-               "#dd3497", "#6a3d9a", "#33a02c", "#1f78b4")
-      names(pal) <- c("M", "D", "G31", "A1", "G24", "E", "A2", "G", "A") 
-    }else if(palette == "FullIg"){
-      #M        D         G3        G1        A1        G2
-      pal <- c("#000000", "#696969", "#b15928", "#33a02c", "#1f78b4", "#e31a1c",
-               #G4       #E         #A2
-               "#ff7f00", "#dd3497", "#6a3d9a")
-      names(pal) <- c("IgM", "IgD", "IgG3", "IgG1", "IgA1", "IgG2", "IgG4",
-                      "IgE", "IgA2") 
-    }else if (palette == "IgAmG" || palette == "IgAmGA"){
-      #M        D         G13       A1        G24
-      pal <- c("#000000", "#696969", "#33a02c", "#1f78b4", "#e31a1c",
-               #E         A2        G         A
-               "#dd3497", "#6a3d9a", "#33a02c", "#1f78b4")
-      names(pal) <- c("IgM", "IgD", "IgG31", "IgA1", "IgG24", "IgE", "IgA2", 
-                      "IgG", "IgA") 
-    }else{
-      # changed 11/14/23 CGJ
-      # test if the palette is too small for what they are trying to do
-      pal_test <- suppressWarnings(tryCatch(
-        RColorBrewer::brewer.pal(n=length(unique(states)), name=palette),
-        error=function(e)e))
-      if(length(unique(states)) > length(pal_test)){
-        # if it is send a warning and replace the palette
-        warning(paste("There are", length(unique(states)), "unique tips specified",
-                      "which is more than the", palette, "allows. Switching to a",
-                      "larger palette."))
-        if(length(unique(states)) > 69){
-          stop(paste("There are", length(unique(states)), "unique states in a specified tip",
-                     "plotting variable. There are more states than what can be plotted."))
-        }
-        # this finds all the quantitative colors in RColorBrewer
-        qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
-        # get the palette of all of them together
-        pal <- unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-        pal <- unique(pal)
-        # remove the bright yellow right at the beginning
-        pal <- pal[!pal %in% '#FFFF99']
-        
-        # cut to where you need
-        pal <- pal[1:length(unique(states))]
-        names(pal) <- as.character(unique(states))
-      } else{
-        pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
-        names(pal) <- as.character(unique(states))
+getPalette <- function(states, palette){
+  # CGJ 12/6/23
+  if(palette == "AmG"){
+    #M        D         G13       A1        G24
+    pal <- c("#000000", "#696969", "#33a02c", "#1f78b4", "#e31a1c",
+             #E         A2        G         A
+             "#dd3497", "#6a3d9a", "#33a02c", "#1f78b4")
+    names(pal) <- c("M", "D", "G31", "A1", "G24", "E", "A2", "G", "A") 
+  }else if(palette == "FullIg"){
+    #M        D         G3        G1        A1        G2
+    pal <- c("#000000", "#696969", "#b15928", "#33a02c", "#1f78b4", "#e31a1c",
+             #G4       #E         #A2
+             "#ff7f00", "#dd3497", "#6a3d9a")
+    names(pal) <- c("IgM", "IgD", "IgG3", "IgG1", "IgA1", "IgG2", "IgG4",
+                    "IgE", "IgA2") 
+  }else if (palette == "IgAmG" || palette == "IgAmGA"){
+    #M        D         G13       A1        G24
+    pal <- c("#000000", "#696969", "#33a02c", "#1f78b4", "#e31a1c",
+             #E         A2        G         A
+             "#dd3497", "#6a3d9a", "#33a02c", "#1f78b4")
+    names(pal) <- c("IgM", "IgD", "IgG31", "IgA1", "IgG24", "IgE", "IgA2", 
+                    "IgG", "IgA") 
+  }else{
+    # changed 11/14/23 CGJ
+    # test if the palette is too small for what they are trying to do
+    pal_test <- suppressWarnings(tryCatch(
+      RColorBrewer::brewer.pal(n=length(unique(states)), name=palette),
+      error=function(e)e))
+    if(length(unique(states)) > length(pal_test)){
+      # if it is send a warning and replace the palette
+      warning(paste("There are", length(unique(states)), "unique tips specified",
+                    "which is more than the", palette, "allows. Switching to a",
+                    "larger palette."))
+      if(length(unique(states)) > 69){
+        stop(paste("There are", length(unique(states)), "unique states in a specified tip",
+                   "plotting variable. There are more states than what can be plotted."))
       }
+      # this finds all the quantitative colors in RColorBrewer
+      qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
+      # get the palette of all of them together
+      pal <- unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+      pal <- unique(pal)
+      # remove the bright yellow right at the beginning
+      pal <- pal[!pal %in% '#FFFF99']
+      
+      # cut to where you need
+      pal <- pal[1:length(unique(states))]
+      names(pal) <- as.character(unique(states))
+    } else{
+      pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
+      names(pal) <- as.character(unique(states))
     }
-  } else{
-    pal <- grDevices::colorRampPalette(colors = palette)(length(states))
-    names(pal) <- unique(states)
   }
-
-    return(pal)
+  return(pal)
 }
 
 #' Condense a set of equally parsimonious node labels into a single tree
@@ -189,7 +183,6 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    base               recursion base case (don't edit)
 #' @param    ambig              How to color ambiguous node reconstructions? (blend or grey)
 #' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
-#' @param    custom Use a custom internal node palette?
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -209,10 +202,15 @@ colorTrees <- function(trees, palette, ambig="blend"){
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
     scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
-    labelsize=NULL, common_scale=FALSE, ambig="blend", bootstrap_scores=FALSE,
-    custom = FALSE){
+    labelsize=NULL, common_scale=FALSE, ambig="blend", bootstrap_scores=FALSE){
 
     tiptype = "character"
+    # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
+    if(is.null(names(node_palette)) && length(node_palette) > 1){
+      stop("node_pallete cannot be an unnamed vector")
+    } else if(is.null(names(tip_palette)) && length(tip_palette) > 1){
+      stop("tip_palette cannot be an unnamed vector")
+    }
     if(!base){
         cols <- c()
         # set up global tip and node palette
@@ -223,10 +221,12 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                 stop("Can't currently plot numeric tip values and node values")
             }
             tipstates = c(sort(tipstates),"Germline")
-            nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
-                    unique(unlist(strsplit(x$state,split=",")))
-                    ))))
-            combpalette <- getPalette(c(nodestates,tipstates),node_palette, custom = custom)
+            if(is.null(names(node_palette))){
+              nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
+                unique(unlist(strsplit(x$state,split=",")))
+              ))))
+            }
+            combpalette <- getPalette(c(nodestates,tipstates),node_palette)
             trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
             nodestates <- unlist(lapply(trees$trees,function(x){
                 colors <- x$node.color
@@ -246,7 +246,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                 }else{
                     tipstates = c(sort(tipstates),"Germline")
                     if(is.null(names(tip_palette))){
-                        tip_palette <- getPalette(tipstates,tip_palette, custom = custom)
+                        tip_palette <- getPalette(tipstates,tip_palette)
                         tip_palette <- tip_palette[!is.na(names(tip_palette))]
                     }else{
                         nfound <- tipstates[!tipstates %in% names(tip_palette)]
@@ -263,7 +263,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     nodestates <- unique(unlist(lapply(trees$trees,function(x)
                         unique(unlist(strsplit(x$state,split=",")))
                         )))
-                    statepalette <- getPalette(sort(nodestates),node_palette, custom = custom)
+                    statepalette <- getPalette(sort(nodestates),node_palette)
                     statepalette <- statepalette[!is.na(names(statepalette))]
                 }else{
                     statepalette <- node_palette
