@@ -80,9 +80,7 @@ print(clones)
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
 
-Maximum parsimony trees can also be built using the PHYLIP function `dnapars`. To do this, the `build` option needs to be set as `dnapars` and the path to the `dnapars` executable needs to be specified in the `exec` option.
-
-[PHYLIP download site](https://evolution.genetics.washington.edu/phylip/getme-new1.html)
+Maximum parsimony trees can also be built using the [PHYLIP](https://evolution.genetics.washington.edu/phylip/getme-new1.html) function `dnapars`. To do this, the `build` option needs to be set as `dnapars` and the path to the `dnapars` [executable](https://evolution.genetics.washington.edu/phylip/getme-new1.html) needs to be specified in the `exec` option.
 
 **Maximum parsimony trees using dnapars.**
 
@@ -136,8 +134,7 @@ clones
 #2     3184 <airrClon> N        12 Subject_1  <phylo>
 ```
 
-**Maximum likelihood trees using RAxML.**
-[RAxML documentation/download site](https://github.com/amkozlov/raxml-ng)
+**Maximum likelihood trees using [RAxML](https://github.com/amkozlov/raxml-ng).**
 
 
 ```r
@@ -153,11 +150,9 @@ clones
 ```
 ## Build IgPhyML B cell trees
 
-B cell somatic hypermutation violates important assumptions in most phylogenetic models. IgPhyML implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, specify the build option appropriately and pass the location of the IgPhyML executable. The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML. Outside of Docker, IgPhyML is only supported for Linux and Mac OS.
+B cell somatic hypermutation violates important assumptions in most phylogenetic models. [IgPhyML](https://igphyml.readthedocs.io) implements models that incorporate SHM hotspot and coldspot motifs. To build trees using IgPhyML, specify the build option appropriately and pass the location of the [IgPhyML executable](https://igphyml.readthedocs.io). The returns object will also include a `parameters` column, which will contain the HLP19 model parameters estimated from IgPhyML. Outside of Docker, IgPhyML is only supported for Linux and Mac OS.
 
 Note: This function is slower than other maximum likelihood and parsimony approaches.
-
-[IgPhyML documentation/download site](https://igphyml.readthedocs.io)
 
 
 ```r
