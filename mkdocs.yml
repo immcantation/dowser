@@ -9,7 +9,7 @@ theme:
   sticky_navigation: False
   locale: en
   titles_only: False
-  logo: img/rod_white_leaf_light_background.png
+  #logo: img/rod_white_leaf_light_background.png
 markdown_extensions:
   - def_list
   - sane_lists
