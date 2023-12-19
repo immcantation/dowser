@@ -16,6 +16,16 @@ The simplest way to install `dowser` is via CRAN:
 install.packages("dowser")
 ```
 
+Alternatively, you can use Bioconductor's `install` function, which will install Bioconductor dependencies:
+
+```R
+
+install.packages("BiocManager")
+
+BiocManager::install("dowser")
+
+```
+
 Downloaded source builds from Bitbucket may be installed in the usual way:
 
 ```R
