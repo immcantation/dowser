@@ -36,7 +36,7 @@ formatClones(
   filterstop = TRUE,
   minseq = 2,
   split_light = FALSE,
-  traits_light = FALSE,
+  light_traits = FALSE,
   majoronly = FALSE,
   columns = NULL
 )
@@ -125,7 +125,7 @@ sequences silently.}
 
 \item{split_light}{split or lump subgroups? See \code{resolveLightChains}.}
 
-\item{traits_light}{Include the traits from the light chain when concatenating and collapsing trees?}
+\item{light_traits}{Include the traits from the light chain when concatenating and collapsing trees?}
 
 \item{majoronly}{only return largest subgroup and sequences without light chains}
 

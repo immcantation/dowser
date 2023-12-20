@@ -32,7 +32,7 @@ makeAirrClone(
   randomize = TRUE,
   use_regions = TRUE,
   dup_singles = FALSE,
-  traits_light = FALSE
+  light_traits = FALSE
 )
 }
 \arguments{
@@ -111,7 +111,7 @@ sequences silently.}
 
 \item{dup_singles}{Duplicate sequences in singleton clones to include them as trees?}
 
-\item{traits_light}{Include the traits from the light chain when concatenating and collapsing trees?}
+\item{light_traits}{Include the traits from the light chain when concatenating and collapsing trees?}
 }
 \value{
 A \link{airrClone} object containing the modified clone.

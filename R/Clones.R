@@ -54,7 +54,7 @@
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
 #' @param    use_regions  assign CDR/FWR regions?
 #' @param    dup_singles  Duplicate sequences in singleton clones to include them as trees?
-#' @param    traits_light Include the traits from the light chain when concatenating and collapsing trees? 
+#' @param    light_traits Include the traits from the light chain when concatenating and collapsing trees? 
 #' @return   A \link{airrClone} object containing the modified clone.
 #'
 #' @details
@@ -108,7 +108,7 @@ makeAirrClone <-
            mask_char="N", max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, 
            seq_fields=NULL, add_count=TRUE, verbose=FALSE, collapse=TRUE, chain="H", 
            heavy=NULL, cell="cell_id", locus="locus", traits=NULL, mod3=TRUE,
-           randomize=TRUE, use_regions=TRUE, dup_singles=FALSE, traits_light=FALSE){
+           randomize=TRUE, use_regions=TRUE, dup_singles=FALSE, light_traits=FALSE){
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
@@ -131,7 +131,7 @@ makeAirrClone <-
       }
       
       # update the traits and columns CGJ 10/18/23
-      if(!is.null(traits) && traits_light){
+      if(!is.null(traits) && light_traits){
         new_traits <- c()
         for(i in 1:length(traits)){
           c_trait <- traits[[i]]
@@ -640,7 +640,7 @@ cleanAlignment <- function(clone){
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
 #' @param    use_regions   assign CDR/FWR regions?
 #' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?   
-#' @param    traits_light  Include the traits from the light chain when concatenating and collapsing trees?              
+#' @param    light_traits  Include the traits from the light chain when concatenating and collapsing trees?              
 #'
 #' @return   A tibble of \link{airrClone} objects containing modified clones.
 #'
@@ -665,7 +665,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     add_count=TRUE, verbose=FALSE, collapse=TRUE,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
     use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
-    filterstop=TRUE, minseq=2, split_light=FALSE, traits_light=FALSE,majoronly=FALSE,
+    filterstop=TRUE, minseq=2, split_light=FALSE, light_traits=FALSE,majoronly=FALSE,
     columns=NULL){
   
   if(majoronly){
