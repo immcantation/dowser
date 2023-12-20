@@ -26,20 +26,21 @@ combineColors <- function(x, pal){
 #' @export
 getPalette <- function(states, palette){
   # CGJ 12/6/23
-  if(palette == "AmG"){
+  if(length(palette) == 1 && palette == "AmG"){
     #M        D         G13       A1        G24
     pal <- c("#000000", "#696969", "#33a02c", "#1f78b4", "#e31a1c",
              #E         A2        G         A
              "#dd3497", "#6a3d9a", "#33a02c", "#1f78b4")
     names(pal) <- c("M", "D", "G31", "A1", "G24", "E", "A2", "G", "A") 
-  }else if(palette == "FullIg"){
+  }else if(length(palette) == 1 && palette == "FullIg"){
     #M        D         G3        G1        A1        G2
     pal <- c("#000000", "#696969", "#b15928", "#33a02c", "#1f78b4", "#e31a1c",
              #G4       #E         #A2
              "#ff7f00", "#dd3497", "#6a3d9a")
     names(pal) <- c("IgM", "IgD", "IgG3", "IgG1", "IgA1", "IgG2", "IgG4",
                     "IgE", "IgA2") 
-  }else if (palette == "IgAmG" || palette == "IgAmGA"){
+  }else if (length(palette) == 1 && palette == "IgAmG" || length(palette) == 1 &&
+            palette == "IgAmGA"){
     #M        D         G13       A1        G24
     pal <- c("#000000", "#696969", "#33a02c", "#1f78b4", "#e31a1c",
              #E         A2        G         A
@@ -47,34 +48,52 @@ getPalette <- function(states, palette){
     names(pal) <- c("IgM", "IgD", "IgG31", "IgA1", "IgG24", "IgE", "IgA2", 
                     "IgG", "IgA") 
   }else{
-    # changed 11/14/23 CGJ
-    # test if the palette is too small for what they are trying to do
-    pal_test <- suppressWarnings(tryCatch(
-      RColorBrewer::brewer.pal(n=length(unique(states)), name=palette),
-      error=function(e)e))
-    if(length(unique(states)) > length(pal_test)){
-      # if it is send a warning and replace the palette
-      warning(paste("There are", length(unique(states)), "unique tips specified",
-                    "which is more than the", palette, "allows. Switching to a",
-                    "larger palette."))
-      if(length(unique(states)) > 69){
-        stop(paste("There are", length(unique(states)), "unique states in a specified tip",
-                   "plotting variable. There are more states than what can be plotted."))
+    # 12/20/23 CGJ -- changed the if elses to not freak out over the named vector
+    # also updated this section to check for a named vector or just a RBrewer input
+    if(length(palette) > 1 && !is.null(names(palette))){
+      # check to see if the palette is long enough as is 
+      if(length(palette) == length(states)){
+        pal <- palette
+      } else{
+        if(length(palette) > length(states)){
+          # find diff 
+          diff <- abs(length(palette) - length(states))
+          stop(paste("Your custom palette does not have enough entries for your desired output. Please add", diff, "more."))
+        } else{
+          diff <- abs(length(palette) - length(states))
+          stop(paste("Your custom palette has too many entries for your desired output. Please remove", diff,"."))
+        }
       }
-      # this finds all the quantitative colors in RColorBrewer
-      qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
-      # get the palette of all of them together
-      pal <- unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-      pal <- unique(pal)
-      # remove the bright yellow right at the beginning
-      pal <- pal[!pal %in% '#FFFF99']
-      
-      # cut to where you need
-      pal <- pal[1:length(unique(states))]
-      names(pal) <- as.character(unique(states))
     } else{
-      pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
-      names(pal) <- as.character(unique(states))
+      # changed 11/14/23 CGJ
+      # test if the palette is too small for what they are trying to do
+      pal_test <- suppressWarnings(tryCatch(
+        RColorBrewer::brewer.pal(n=length(unique(states)), name=palette),
+        error=function(e)e))
+      if(length(unique(states)) > length(pal_test)){
+        # if it is send a warning and replace the palette
+        warning(paste("There are", length(unique(states)), "unique tips specified",
+                      "which is more than the", palette, "allows. Switching to a",
+                      "larger palette."))
+        if(length(unique(states)) > 69){
+          stop(paste("There are", length(unique(states)), "unique states in a specified tip",
+                     "plotting variable. There are more states than what can be plotted."))
+        }
+        # this finds all the quantitative colors in RColorBrewer
+        qual_col_pals <- RColorBrewer::brewer.pal.info[RColorBrewer::brewer.pal.info$category == 'qual',]
+        # get the palette of all of them together
+        pal <- unlist(mapply(RColorBrewer::brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+        pal <- unique(pal)
+        # remove the bright yellow right at the beginning
+        pal <- pal[!pal %in% '#FFFF99']
+        
+        # cut to where you need
+        pal <- pal[1:length(unique(states))]
+        names(pal) <- as.character(unique(states))
+      } else{
+        pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
+        names(pal) <- as.character(unique(states))
+      }
     }
   }
   return(pal)
@@ -225,8 +244,10 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
               nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
                 unique(unlist(strsplit(x$state,split=",")))
               ))))
+            } else{
+              nodestates <- names(node_palette)
             }
-            combpalette <- getPalette(c(nodestates,tipstates),node_palette)
+            combpalette <- getPalette(unique(c(nodestates,tipstates)),node_palette)
             trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
             nodestates <- unlist(lapply(trees$trees,function(x){
                 colors <- x$node.color
