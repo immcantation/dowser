@@ -4,7 +4,7 @@
 \alias{condenseTrees}
 \title{Condense a set of equally parsimonious node labels into a single tree}
 \usage{
-condenseTrees(trees, states, palette)
+condenseTrees(trees, states, palette = NULL)
 }
 \arguments{
 \item{trees}{List of the same tree with equally parsimonious labels}

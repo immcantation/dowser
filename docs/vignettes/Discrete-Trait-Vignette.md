@@ -50,7 +50,7 @@ trait="biopsy"
 
 # Process example data using default settings
 clones = formatClones(ExampleAirr,
-    traits=trait,num_fields="duplicate_count", minseq=3)
+    traits=trait, num_fields="duplicate_count", minseq=3)
 
 # Column shows which biopsy the B cell was obtained from
 print(table(ExampleAirr[[trait]]))
@@ -84,7 +84,7 @@ igphyml_location = "/usr/local/share/igphyml/src/igphyml"
 trees = getTrees(clones, build="pml", trait=trait, igphyml=igphyml_location)
 
 # show internal node (edge) predictions based on maximum parsimony
-plotTrees(trees, tips=trait, nodes=TRUE, node_palette="Set1")[[1]]
+plotTrees(trees, tips=trait, nodes=TRUE, palette="Set1")[[1]]
 ```
 
 ![plot of chunk Discrete-Trait-Vignette-3](figure/Discrete-Trait-Vignette-3-1.png)
@@ -236,10 +236,10 @@ makeModelFile(file="isotype_model.txt", states=isotypes,
 
 # Build trees and predict states at internal nodes using maximum parsimony
 trees = getTrees(clones[isotype_counts > 1,], trait=trait, igphyml=igphyml_location, 
-  modelfile="isotype_model.txt", palette="Paired")
+  modelfile="isotype_model.txt")
 
 # show internal node (edge) predictions based on maximum parsimony
-plotTrees(trees, tips=trait, nodes=TRUE, node_palette="Paired", ambig="grey")[[1]]
+plotTrees(trees, tips=trait, nodes=TRUE, palette="Paired", ambig="grey")[[1]]
 ```
 
 ![plot of chunk Discrete-Trait-Vignette-9](figure/Discrete-Trait-Vignette-9-1.png)

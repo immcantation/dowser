@@ -95,14 +95,14 @@ custom_palette=c(
     "Germline"="#6a3d9a")
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
-    tip_palette=custom_palette)
+    palette=custom_palette)
 
 # or, use the getPalette function to create a named palette vector
 custom_palette = getPalette(c("IGHM","IGHD","IGHG3","IGHG1","IGHA1",
-    "IGHG2","IGHG4","IGHE","IGHA2","Germline"), "Paired")
+    "IGHG2","IGHG4","IGHE","IGHA2"), "Paired")
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
-    tip_palette=custom_palette)
+    palette=custom_palette)
 
 #Plot the largest tree
 plots[[1]]
@@ -148,7 +148,31 @@ treeplot
 ```
 
 ![plot of chunk Plotting-Trees-Vignette-7](figure/Plotting-Trees-Vignette-7-1.png)
+To make changes to all trees at once, use lapply
 
+
+```r
+library(ggtree)
+
+plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
+
+#Manually adjust all trees
+treeplots = lapply(plots, function(x)
+  x + geom_tiplab(aes(label=c_call), offset = 0.02) + 
+    geom_vline(xintercept=c(0.05,0.1,0.15,0.2,0.25),
+        linetype="dashed",color="grey") + xlim(0,0.3) +
+    ggtitle("Example B cell tree")
+  )
+
+# plot 1st and 2nd largest trees
+treeplots[[1]]
+treeplots[[2]]
+```
+
+<div class="figure">
+<img src="figure/Plotting-Trees-Vignette-8-1.png" alt="plot of chunk Plotting-Trees-Vignette-8" width="50%" /><img src="figure/Plotting-Trees-Vignette-8-2.png" alt="plot of chunk Plotting-Trees-Vignette-8" width="50%" />
+<p class="caption">plot of chunk Plotting-Trees-Vignette-8</p>
+</div>
 
 ## Saving trees to a file
 

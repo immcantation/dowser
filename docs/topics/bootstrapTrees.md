@@ -85,7 +85,7 @@ rm_temp
 :   remove temporary files (default=TRUE)
 
 palette
-:   a named vector specifying colors for each state
+:   deprecated
 
 resolve
 :   how should polytomies be resolved? 

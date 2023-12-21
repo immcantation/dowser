@@ -1,4 +1,5 @@
-**getPalette** - *Get a color palette for a predefined set of trait values*
+**getPalette** - *Get a color palette for a predefined set of trait values. 
+'Germline' defaults to black unless specified.*
 
 Description
 --------------------

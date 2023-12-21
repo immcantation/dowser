@@ -53,7 +53,7 @@ dnapars, dnaml, igphyml)}
 
 \item{rm_temp}{remove temporary files (default=TRUE)}
 
-\item{palette}{a named vector specifying colors for each state}
+\item{palette}{deprecated}
 
 \item{seq}{column name containing sequence information}
 

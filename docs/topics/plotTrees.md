@@ -15,8 +15,7 @@ nodes = FALSE,
 tips = NULL,
 tipsize = NULL,
 scale = 0.01,
-node_palette = "Dark2",
-tip_palette = node_palette,
+palette = "Dark2",
 base = FALSE,
 layout = "rectangular",
 node_nums = FALSE,
@@ -24,8 +23,10 @@ tip_nums = FALSE,
 title = TRUE,
 labelsize = NULL,
 common_scale = FALSE,
-ambig = "blend",
-bootstrap_scores = FALSE
+ambig = "grey",
+bootstrap_scores = FALSE,
+tip_palette = NULL,
+node_palette = NULL
 )
 ```
 
@@ -48,13 +49,11 @@ tipsize
 scale
 :   width of branch length scale bar
 
-node_palette
-:   color palette for nodes
-
-tip_palette
-:   color palette for tips. Can supply a named vector
+palette
+:   color palette for tips and/or nodes. Can supply a named vector
 for all tip states, or a palette named passed to
-ggplot2::scale_color_brewer
+ggplot2::scale_color_brewer (e.g. "Dark2", "Paired", "Set1") or
+ggplot2::scale_color_distiller (e.g. RdYlBu) or
 
 base
 :   recursion base case (don't edit)
@@ -79,10 +78,16 @@ common_scale
 determined by sequence with highest divergence
 
 ambig
-:   How to color ambiguous node reconstructions? (blend or grey)
+:   How to color ambiguous node reconstructions? (grey or blend)
 
 bootstrap_scores
 :   Show bootstrap scores for internal nodes? See getBootstraps.
+
+tip_palette
+:   deprecated, use palette
+
+node_palette
+:   deprecated, use palette
 
 
 

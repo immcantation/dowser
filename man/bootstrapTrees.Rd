@@ -63,7 +63,7 @@ if \code{igphyml} or \code{dnapars} specified)}
 
 \item{rm_temp}{remove temporary files (default=TRUE)}
 
-\item{palette}{a named vector specifying colors for each state}
+\item{palette}{deprecated}
 
 \item{resolve}{how should polytomies be resolved? 
 0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,

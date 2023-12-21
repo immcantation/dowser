@@ -10,13 +10,7 @@ or <a href="https://bitbucket.org/kleinstein/dowser/downloads" target="_blank">B
 Installing Released Versions
 -------------------------------------------------------------------------------
 
-The simplest way to install `dowser` is via CRAN:
-
-```R
-install.packages("dowser")
-```
-
-Alternatively, you can use Bioconductor's `install` function, which will install Bioconductor dependencies:
+The simplest method is to use Bioconductor's `install` function, which will install Bioconductor dependencies:
 
 ```R
 
@@ -24,6 +18,12 @@ install.packages("BiocManager")
 
 BiocManager::install("dowser")
 
+```
+
+You can also install `dowser` via CRAN, but Bioconductor dependencies may not install:
+
+```R
+install.packages("dowser")
 ```
 
 Downloaded source builds from Bitbucket may be installed in the usual way:
@@ -38,6 +38,10 @@ dependencies. You can run the following command to see what other packages may b
 ```R
 available.packages()["dowser", "Imports"]
 ```
+
+Try checking error messages and installing any failed dependencies individually. 
+If you have questions, you can email the 
+`Immcantation Group <mailto:immcantation@googlegroups.com>`__.
 
 Building Development Versions
 -------------------------------------------------------------------------------

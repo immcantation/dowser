@@ -12,7 +12,7 @@ Usage
 readLineages(
 file,
 states = NULL,
-palette = "Dark2",
+palette = NULL,
 run_id = "",
 quiet = TRUE,
 append = NULL,
@@ -31,7 +31,7 @@ states
 :   states in parsimony model
 
 palette
-:   palette for coloring internal nodes
+:   deprecated
 
 run_id
 :   id used for IgPhyML run

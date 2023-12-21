@@ -46,7 +46,7 @@ reconIgPhyML(
 
 \item{states}{states in parsimony model}
 
-\item{palette}{palette for coloring tree (see getPallete)}
+\item{palette}{deprecated}
 
 \item{resolve}{level of polytomy resolution. 0=none, 
 1=maximum parsimony, 2=maximum ambiguity}

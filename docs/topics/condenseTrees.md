@@ -10,7 +10,7 @@ into a single tree
 Usage
 --------------------
 ```
-condenseTrees(trees, states, palette)
+condenseTrees(trees, states, palette = NULL)
 ```
 
 Arguments

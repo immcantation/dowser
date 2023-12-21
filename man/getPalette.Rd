@@ -2,7 +2,8 @@
 % Please edit documentation in R/Plotting.R
 \name{getPalette}
 \alias{getPalette}
-\title{Get a color palette for a predefined set of trait values}
+\title{Get a color palette for a predefined set of trait values. 
+'Germline' defaults to black unless specified.}
 \usage{
 getPalette(states, palette)
 }

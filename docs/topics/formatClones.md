@@ -46,7 +46,7 @@ heavy = "IGH",
 filterstop = TRUE,
 minseq = 2,
 split_light = FALSE,
-traits_light = FALSE,
+light_traits = FALSE,
 majoronly = FALSE,
 columns = NULL
 )
@@ -169,7 +169,7 @@ minseq
 split_light
 :   split or lump subgroups? See `resolveLightChains`.
 
-traits_light
+light_traits
 :   Include the traits from the light chain when concatenating and collapsing trees?
 
 majoronly

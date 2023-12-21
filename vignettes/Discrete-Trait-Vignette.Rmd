@@ -78,7 +78,7 @@ trait="biopsy"
 
 # Process example data using default settings
 clones = formatClones(ExampleAirr,
-    traits=trait,num_fields="duplicate_count", minseq=3)
+    traits=trait, num_fields="duplicate_count", minseq=3)
 
 # Column shows which biopsy the B cell was obtained from
 print(table(ExampleAirr[[trait]]))
@@ -112,14 +112,14 @@ igphyml_location = "/usr/local/share/igphyml/src/igphyml"
 trees = getTrees(clones, build="pml", trait=trait, igphyml=igphyml_location)
 
 # show internal node (edge) predictions based on maximum parsimony
-plotTrees(trees, tips=trait, nodes=TRUE, node_palette="Set1")[[1]]
+plotTrees(trees, tips=trait, nodes=TRUE, palette="Set1")[[1]]
 ```
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(dowser)
 # Load data instead of running phylip
 data(BiopsyTrees)
-plotTrees(BiopsyTrees, tips="biopsy", nodes=TRUE, node_palette="Set1")[[1]]
+plotTrees(BiopsyTrees, tips="biopsy", nodes=TRUE, palette="Set1")[[1]]
 ```
 
 ## Discrete trait analysis with fixed trees
@@ -267,15 +267,15 @@ makeModelFile(file="isotype_model.txt", states=isotypes,
 
 # Build trees and predict states at internal nodes using maximum parsimony
 trees = getTrees(clones[isotype_counts > 1,], trait=trait, igphyml=igphyml_location, 
-  modelfile="isotype_model.txt", palette="Paired")
+  modelfile="isotype_model.txt")
 
 # show internal node (edge) predictions based on maximum parsimony
-plotTrees(trees, tips=trait, nodes=TRUE, node_palette="Paired", ambig="grey")[[1]]
+plotTrees(trees, tips=trait, nodes=TRUE, palette="Paired", ambig="grey")[[1]]
 ```
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 data(IsotypeTrees)
-plotTrees(IsotypeTrees, tips="c_call", nodes=TRUE, node_palette="Paired", ambig="grey")[[1]]
+plotTrees(IsotypeTrees, tips="c_call", nodes=TRUE, palette="Paired", ambig="grey")[[1]]
 ```
 
 Performing the SP test is the same as before, just specify the model file created earlier using the `modelfile` option. Note that no switches occur in directions that are forbidden by our model. If you try this without specifying the model file, you'll likely get many biologically impossible switches!

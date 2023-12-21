@@ -40,7 +40,7 @@ mod3 = TRUE,
 randomize = TRUE,
 use_regions = TRUE,
 dup_singles = FALSE,
-traits_light = FALSE
+light_traits = FALSE
 )
 ```
 
@@ -149,7 +149,7 @@ use_regions
 dup_singles
 :   Duplicate sequences in singleton clones to include them as trees?
 
-traits_light
+light_traits
 :   Include the traits from the light chain when concatenating and collapsing trees?
 
 

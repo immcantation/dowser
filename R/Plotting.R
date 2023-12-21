@@ -9,12 +9,17 @@
 # @return   A color hex code representing the average of input colors
 #
 combineColors <- function(x, pal){
+    x <- as.character(x)
+    if(sum(is.na(pal[x])) != 0){
+        stop(paste(x[!x %in% names(pal)]," not included in palette!"))
+    }
     cols <- rowMeans(grDevices::col2rgb(pal[as.character(x)]))
     col <- grDevices::rgb(cols[1],cols[2],cols[3],maxColorValue=255)
     return(col)
 }
 
-#' Get a color palette for a predefined set of trait values
+#' Get a color palette for a predefined set of trait values. 
+#' 'Germline' defaults to black unless specified.
 #' 
 #' \code{getPalette} Gets a color palette for a predefined set of trait values
 #' @param    states   states in model
@@ -51,32 +56,34 @@ getPalette <- function(states, palette){
     # 12/20/23 CGJ -- changed the if elses to not freak out over the named vector
     # also updated this section to check for a named vector or just a RBrewer input
     if(length(palette) > 1 && !is.null(names(palette))){
-      # check to see if the palette is long enough as is 
-      if(length(palette) == length(states)){
+      # check that all states (besides Germline) are found in palette
+        pal_names <- names(palette)
         pal <- palette
-      } else{
-        if(length(palette) > length(states)){
-          # find diff 
-          diff <- abs(length(palette) - length(states))
-          stop(paste("Your custom palette does not have enough entries for your desired output. Please add", diff, "more."))
-        } else{
-          diff <- abs(length(palette) - length(states))
-          stop(paste("Your custom palette has too many entries for your desired output. Please remove", diff,"."))
+        if(sum(!states %in% pal_names) != 0){
+            disjoint <- states[!states %in% pal_names]
+            if(length(disjoint) == 1 && disjoint == "Germline"){
+                warning("Germline not included in palette, setting to black")
+                pal["Germline"] <- "#000000"
+            }else{
+                stop(paste("States not in palette, please add:",
+                    paste(disjoint[disjoint != "Germline"], collapse=", ")))
+            }
         }
-      }
     } else{
       # changed 11/14/23 CGJ
       # test if the palette is too small for what they are trying to do
+      nongerm_states <- unique(states[states != "Germline"])
+      nstates <- dplyr::n_distinct(nongerm_states)
       pal_test <- suppressWarnings(tryCatch(
-        RColorBrewer::brewer.pal(n=length(unique(states)), name=palette),
+        RColorBrewer::brewer.pal(n=nstates, name=palette),
         error=function(e)e))
-      if(length(unique(states)) > length(pal_test)){
+      if(nstates > length(pal_test)){
         # if it is send a warning and replace the palette
-        warning(paste("There are", length(unique(states)), "unique tips specified",
+        warning(paste("There are", nstates, "unique tips specified",
                       "which is more than the", palette, "allows. Switching to a",
                       "larger palette."))
-        if(length(unique(states)) > 69){
-          stop(paste("There are", length(unique(states)), "unique states in a specified tip",
+        if(nstates > 69){
+          stop(paste("There are", nstates, "unique states in a specified tip",
                      "plotting variable. There are more states than what can be plotted."))
         }
         # this finds all the quantitative colors in RColorBrewer
@@ -88,11 +95,17 @@ getPalette <- function(states, palette){
         pal <- pal[!pal %in% '#FFFF99']
         
         # cut to where you need
-        pal <- pal[1:length(unique(states))]
-        names(pal) <- as.character(unique(states))
+        pal <- pal[1:nstates]
+        names(pal) <- as.character(nongerm_states)
+        if("Germline" %in% states){
+            pal["Germline"] <- "#000000"
+        }
       } else{
-        pal <- RColorBrewer::brewer.pal(n=length(unique(states)), name=palette)
-        names(pal) <- as.character(unique(states))
+        pal <- RColorBrewer::brewer.pal(n=nstates, name=palette)
+        names(pal) <- as.character(nongerm_states)
+        if("Germline" %in% states){
+            pal["Germline"] <- "#000000"
+        }
       }
     }
   }
@@ -110,7 +123,10 @@ getPalette <- function(states, palette){
 #' @return   a \code{phylo} object representing all represented internal node states
 #'
 #' @export
-condenseTrees <- function(trees, states, palette){
+condenseTrees <- function(trees, states, palette=NULL){
+    if(!is.null(palette)){
+        warning("palette option is deprecated in condenseTrees, specify in plotTrees")
+    }
     if(is(trees,"phylo")){
         trees <- list(trees)
         class(trees) <- "multiPhylo"
@@ -133,10 +149,10 @@ condenseTrees <- function(trees, states, palette){
                 }))]))
     }
     nt$unique <- unique(unlist(combs))
-    cv <- unlist(lapply(combs,function(x)combineColors(x,palette)))
+    #cv <- unlist(lapply(combs,function(x)combineColors(x,palette)))
     margl <- unlist(lapply(combs,function(x)paste(x,collapse=",")))
     nt$node.label <- margl[(tipn+1):noden]
-    nt$node.color <- cv
+    #nt$node.color <- cv
     nt$state <- margl
     return(nt)
 }
@@ -188,10 +204,10 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    tips               color tips if possible?
 #' @param    tipsize            size of tip shape objects
 #' @param    scale              width of branch length scale bar
-#' @param    node_palette       color palette for nodes
-#' @param    tip_palette        color palette for tips. Can supply a named vector
+#' @param    palette            color palette for tips and/or nodes. Can supply a named vector
 #'                              for all tip states, or a palette named passed to
-#'                              ggplot2::scale_color_brewer 
+#'                              ggplot2::scale_color_brewer (e.g. "Dark2", "Paired", "Set1") or
+#'                              ggplot2::scale_color_distiller (e.g. RdYlBu) or
 #' @param    common_scale       strecth plots so branches are on same scale?
 #'                              determined by sequence with highest divergence
 #' @param    layout             rectangular or circular tree layout?
@@ -200,8 +216,10 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    title              use clone id as title?
 #' @param    labelsize          text size
 #' @param    base               recursion base case (don't edit)
-#' @param    ambig              How to color ambiguous node reconstructions? (blend or grey)
+#' @param    ambig              How to color ambiguous node reconstructions? (grey or blend)
 #' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
+#' @param    node_palette       deprecated, use palette
+#' @param    tip_palette        deprecated, use palette
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -219,35 +237,43 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' plotTrees(trees)[[1]]
 #' @export
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
-    scale=0.01, node_palette="Dark2", tip_palette=node_palette, base=FALSE,
+    scale=0.01, palette="Dark2", base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
-    labelsize=NULL, common_scale=FALSE, ambig="blend", bootstrap_scores=FALSE){
+    labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
+    tip_palette=NULL, node_palette=NULL){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
-    if(is.null(names(node_palette)) && length(node_palette) > 1){
-      stop("node_pallete cannot be an unnamed vector")
-    } else if(is.null(names(tip_palette)) && length(tip_palette) > 1){
-      stop("tip_palette cannot be an unnamed vector")
+    if(is.null(names(palette)) && length(palette) > 1){
+      stop("palette must be either a named vector or ColorBrewer palette name (string)")
+    }
+    # KBH 12/21/23 Deprecate tip_palette and node_palette, now all is palette
+    if(!base && (!is.null(tip_palette) || !is.null(node_palette))){
+        warning("tip_palette and node_palette are deprecated, please use palette instead.")
+        if(!is.null(tip_palette)){
+            palette <- tip_palette
+        }else{
+            palette <- node_palette
+        }
     }
     if(!base){
         cols <- c()
         # set up global tip and node palette
-        if(!is.null(tips) && nodes && sum(tip_palette != node_palette) == 0){
+        if(!is.null(tips) && nodes){
             tipstates <- unique(c(unlist(lapply(trees$data,function(x)
                 unique(x@data[[tips]])))))
             if(is.numeric(tipstates)){
                 stop("Can't currently plot numeric tip values and node values")
             }
             tipstates = c(sort(tipstates),"Germline")
-            if(is.null(names(node_palette))){
+            if(is.null(names(palette))){
               nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
                 unique(unlist(strsplit(x$state,split=",")))
               ))))
             } else{
-              nodestates <- names(node_palette)
+              nodestates <- names(palette)
             }
-            combpalette <- getPalette(unique(c(nodestates,tipstates)),node_palette)
+            combpalette <- getPalette(unique(c(nodestates,tipstates)),palette)
             trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
             nodestates <- unlist(lapply(trees$trees,function(x){
                 colors <- x$node.color
@@ -256,7 +282,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                 }))
             nodepalette <- nodestates[unique(names(nodestates))]
             cols <- c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
-        }else{
+        }else if(!is.null(tips)){
             # set up global tip palette
             if(!is.null(tips)){
                 tipstates <- unique(c(unlist(lapply(trees$data,function(x)
@@ -266,39 +292,39 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     cols <- range(tipstates)
                 }else{
                     tipstates = c(sort(tipstates),"Germline")
-                    if(is.null(names(tip_palette))){
-                        tip_palette <- getPalette(tipstates,tip_palette)
-                        tip_palette <- tip_palette[!is.na(names(tip_palette))]
+                    if(is.null(names(palette))){
+                        palette <- getPalette(tipstates,palette)
+                        palette <- palette[!is.na(names(palette))]
                     }else{
-                        nfound <- tipstates[!tipstates %in% names(tip_palette)]
+                        palette <- getPalette(tipstates,palette)
+                        nfound <- tipstates[!tipstates %in% names(palette)]
                         if(length(nfound) > 0){
-                            stop(paste(nfound,"not found in tip_palette"))
+                            stop(paste(nfound,"not found in palette"))
                         }
                     }
-                    cols <- tip_palette
+                    cols <- palette
                 }
             }
+        }else if(nodes){
             # set up global node palette
-            if(nodes){
-                if(is.null(names(node_palette))){
-                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
-                        unique(unlist(strsplit(x$state,split=",")))
-                        )))
-                    statepalette <- getPalette(sort(nodestates),node_palette)
-                    statepalette <- statepalette[!is.na(names(statepalette))]
-                }else{
-                    statepalette <- node_palette
-                }
-                trees$trees <- colorTrees(trees$trees,palette=statepalette, ambig=ambig)
-                
-                nodestates <- unlist(lapply(trees$trees,function(x){
-                    colors <- x$node.color
-                    names(colors) <- x$state
-                    colors
-                    }))
-                nodepalette <- nodestates[unique(names(nodestates))]
-                cols <- c(tip_palette,nodestates)
+            if(is.null(names(palette))){
+                nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                    unique(unlist(strsplit(x$state,split=",")))
+                    )))
+                statepalette <- getPalette(sort(nodestates),palette)
+                statepalette <- statepalette[!is.na(names(statepalette))]
+            }else{
+                statepalette <- palette
             }
+            trees$trees <- colorTrees(trees$trees,palette=statepalette, ambig=ambig)
+            
+            nodestates <- unlist(lapply(trees$trees,function(x){
+                colors <- x$node.color
+                names(colors) <- x$state
+                colors
+                }))
+            nodepalette <- nodestates[unique(names(nodestates))]
+            cols <- c(palette,nodepalette[!names(nodepalette) %in% names(palette)])
         }
         if(common_scale){
             # get maximum divergence value
@@ -306,7 +332,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }
         
         ps <- lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
-            nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,node_palette=node_palette,
+            nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
             tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
             bootstrap_scores=bootstrap_scores))
@@ -319,7 +345,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                         x <- x + scale_color_manual(values=cols)
                     }else{
                         x <- x + scale_color_distiller(limits=cols,
-                            palette=tip_palette)
+                            palette=palette)
                     }})
         }
         if(common_scale){

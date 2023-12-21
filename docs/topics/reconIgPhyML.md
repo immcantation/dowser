@@ -66,7 +66,7 @@ states
 :   states in parsimony model
 
 palette
-:   palette for coloring tree (see getPallete)
+:   deprecated
 
 resolve
 :   level of polytomy resolution. 0=none, 
