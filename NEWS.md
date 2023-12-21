@@ -1,3 +1,10 @@
+Version 2.1.0 December 21, 2023
+
++ plotTrees uses palette instead of tip_palette/node_palette
++ palette options deprecated in getTrees and sub-functions
++ getPalette colors Germline as black by default
++ ambiguous nodes are now grey by default
+
 Version 2.0.1: October 25, 2023
 -------------------------------------------------------------------------------
 

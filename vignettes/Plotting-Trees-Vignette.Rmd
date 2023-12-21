@@ -160,9 +160,11 @@ treeplot = plots[[1]] + geom_tiplab(aes(label=c_call), offset = 0.02) +
 
 treeplot
 ```
+## Editing all trees at once
+
 To make changes to all trees at once, use lapply
 
-```{r, eval=TRUE, warning=FALSE, message=FALSE, fig.show="hold", out.width="50%"}
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(ggtree)
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
@@ -175,8 +177,7 @@ treeplots = lapply(plots, function(x)
     ggtitle("Example B cell tree")
   )
 
-# plot 1st and 2nd largest trees
-treeplots[[1]]
+# plot 2nd largest tree
 treeplots[[2]]
 ```
 

@@ -40,8 +40,8 @@ available.packages()["dowser", "Imports"]
 ```
 
 Try checking error messages and installing any failed dependencies individually. 
-If you have questions, you can email the 
-`Immcantation Group <mailto:immcantation@googlegroups.com>`__.
+You may need to upgrade to the latest version of R. If you have questions, you 
+can email the [Immcantation Group](mailto:immcantation@googlegroups.com).
 
 Building Development Versions
 -------------------------------------------------------------------------------

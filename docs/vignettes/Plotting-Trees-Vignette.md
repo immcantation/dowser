@@ -148,6 +148,8 @@ treeplot
 ```
 
 ![plot of chunk Plotting-Trees-Vignette-7](figure/Plotting-Trees-Vignette-7-1.png)
+## Editing all trees at once
+
 To make changes to all trees at once, use lapply
 
 
@@ -164,15 +166,11 @@ treeplots = lapply(plots, function(x)
     ggtitle("Example B cell tree")
   )
 
-# plot 1st and 2nd largest trees
-treeplots[[1]]
+# plot 2nd largest tree
 treeplots[[2]]
 ```
 
-<div class="figure">
-<img src="figure/Plotting-Trees-Vignette-8-1.png" alt="plot of chunk Plotting-Trees-Vignette-8" width="50%" /><img src="figure/Plotting-Trees-Vignette-8-2.png" alt="plot of chunk Plotting-Trees-Vignette-8" width="50%" />
-<p class="caption">plot of chunk Plotting-Trees-Vignette-8</p>
-</div>
+![plot of chunk Plotting-Trees-Vignette-8](figure/Plotting-Trees-Vignette-8-1.png)
 
 ## Saving trees to a file
 
