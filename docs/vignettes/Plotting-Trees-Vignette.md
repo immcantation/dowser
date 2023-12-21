@@ -71,7 +71,7 @@ plots[[1]]
 
 ![plot of chunk Plotting-Trees-Vignette-4](figure/Plotting-Trees-Vignette-4-1.png)
 
-The `tip_palette` is constant among all trees plotted at once, and can be specified as either a named vector of hex colors, or as an RColorBrewer palette name:
+The `palette` is constant among all trees plotted at once, and can be specified as either a named vector of hex colors, or as an RColorBrewer palette name:
 
 
 ```r
@@ -79,7 +79,7 @@ The `tip_palette` is constant among all trees plotted at once, and can be specif
 
 # Plot tree with sequence isotype at the tips, with palette "Set1"
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
-    tip_palette="Paired")
+    palette="Paired")
 
 # or, specify a named palette vector
 custom_palette=c(
@@ -95,7 +95,7 @@ custom_palette=c(
     "Germline"="#6a3d9a")
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
-    palette=custom_palette)
+      palette=custom_palette)
 
 # or, use the getPalette function to create a named palette vector
 custom_palette = getPalette(c("IGHM","IGHD","IGHG3","IGHG1","IGHA1",
