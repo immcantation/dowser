@@ -492,3 +492,54 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
     grDevices::dev.off()
 }
 
+#' Simple function for plotting BEAST trace parameter traces
+#' 
+#' \code{plotTraces} exports trees to a pdf in an orderly fashion
+#' @param  clones output from getTrees using BEAST
+#' @param  burnin percent of initial samples to discard (1-100)
+#' @param  file   file name for printing plots
+#' @param  width  width of plot in inches
+#' @param  height height of plot in inches
+#' @param  ...   optional arguments passed to grDevices::pdf
+#' 
+#' @return   a PDF of trace plots
+#'  
+#' @seealso \link{getTrees}
+#' @examples
+#' @export
+plotTraces = function(clones, burnin=10, file=NULL, width=8.5, height=11, ...){
+    if(burnin > 100 || burnin < 0){
+        stop("burnin must be between 0 and 100")
+    }
+    plots <- list()
+    for(i in 1:nrow(clones)){
+        post <- clones$trees[[i]]$parameters_posterior
+        if(nrow(post) == 0){
+            stop(paste("parameters_posterior empty for clone", clones$clone_id[[i]]))
+        }
+        sample_range = range(post$Sample)
+        burn <- floor(burnin/100 * (sample_range[2] - sample_range[1]))
+        post <- filter(post, !!rlang::sym("Sample") >= burn)
+        
+        post$parameter <- factor(post$parameter, levels=unique(post$parameter))
+        plots[[i]] <-  ggplot(post, aes(x=Sample,y=value)) + geom_line() + 
+            facet_wrap(parameter~., scales="free_y", ncol=2) +
+            theme_bw() + ggtitle(clones$clone_id[[i]]) + xlab("Parameter value")
+    }
+
+    if(!is.null(file)){
+        pdf(file, width=width, height=height)
+        print(plots)
+        dev.off()
+    }else{
+        return(plots)
+    }
+}
+
+
+
+
+
+
+
+

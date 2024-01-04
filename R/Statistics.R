@@ -1033,3 +1033,70 @@ calcRF <- function(tree_1, tree_2, nproc = 1){
   return(all_mismatches)
 }
 
+#' Get parameter estimates from posterior distributions
+#' 
+#' \code{getParams} performs root-to-tip regression date randomization test
+#' @param  clones A \code{tibble} object containing \code{airrClone} and 
+#'                 parameters_posterior column
+#' @param  burnin percent of initial samples to discard (1-100)
+#' @param  file   file name for printing plots
+#' @param  width  width of plot in inches
+#' @param  height height of plot in inches
+#' @param  ...    optional arguments passed to grDevices::pdf
+#' @return   A \code{tibble} with the same columns as clones, but additional
+#' column parameters corresponding to parameter estimates
+#'
+#' @export
+getParams = function(clones, burnin=10, file=NULL, width=8.5, height=11, ...){
+
+    if(!"tbl" %in% class(clones)){
+        print(paste("clones is of class",class(clones)))
+        stop("clones must be a tibble of airrClone objects!")
+    }else{
+        if(!inherits(clones$data[[1]], "airrClone")){
+            print(paste("clones is list of class",class(clones$data[[1]])))
+            stop("clones must be a list of airrClone objects!")
+        }
+    }
+    if(!"parameters_posterior" %in% names(clones$trees[[i]])){
+        stop("tree objects must have parameters_posterior (from BEAST)!")
+    }
+    if("parameters" %in% names(clones)){
+        warning("overwriting parameters column")
+    }
+
+    # TODO add ESS calculation!
+    parameters <- list()
+    for(i in 1:nrow(clones)){
+        post <- clones$trees[[i]]$parameters_posterior
+        if(nrow(post) == 0){
+            stop(paste("parameters_posterior empty for clone", 
+                clones$clone_id[[i]]))
+        }
+        # assumes samples are evenly distributed and that all params
+        # are included at each sampling event
+        sample_range = range(post$Sample)
+        burn <- floor(burnin/100 * (sample_range[2] - sample_range[1]))
+        post <- filter(post, !!rlang::sym("Sample") >= burn)
+        estimates <- post %>%
+            group_by(parameter) %>%
+            summarize(estimate = mean(value),
+                lci = quantile(value, prob=0.05),
+                hci = quantile(value, prob=0.95))
+        parameters[[i]] <- estimates
+    }
+    clones$parameters <- parameters
+
+    if(!is.null(file)){
+        plotTraces(clones, burnin=burnin, file=file, 
+            width=width, height=height, ...)
+    }
+
+    clones
+}
+
+
+
+
+
+

@@ -2039,9 +2039,17 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   m <- match(tree_names, clones$clone_id)
   clones <- clones[m,]
 
-  if(build == "igphyml" | build == "raxml"){
+  if(build == "igphyml" || build == "raxml"){
     clones$parameters <- lapply(trees,function(x)x$parameters)
   }
+  #if(build == "beast2-strict"){
+  #  clones$parameters_posterior <- 
+  #    lapply(trees, function(x) dplyr::tibble(x$parameters_posterior))
+  #  trees <- lapply(trees, function(x){
+  #    x$parameters_posterior <- NULL
+  #    x
+  #  })
+  #}
 
   if(!is.null(igphyml)){
     file <- writeLineageFile(data=data, trees=trees, dir=dir,
@@ -3252,67 +3260,132 @@ getBootstraps <- function(clones, bootstraps,
 #' @param dir           directory where temporary files will be placed
 #' @param germline      name of germline sequence
 #' @param units         time units
+#' @param log_every     log every X samples, default mcmc_length/10000
+#' @param verbose       if > 0 print run information
+#' @param burnin        percent of initial tree samples to discard (1-100)
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
 #' @export
 buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = ".", 
-                   include_gm = FALSE, nproc = 1) {
+                   include_gm = FALSE, nproc = 1, log_every=NULL, verbose=1,
+                   burnin=10) {
+
+  exec <- path.expand(exec)
+  beast_exec <- file.path(exec,"beast")
+  if(file.access(beast_exec, mode=1) == -1) {
+    stop("The file ", beast_exec, " cannot be executed.")
+  }
+  annotator_exec <- file.path(exec,"treeannotator")
+  if(file.access(annotator_exec, mode=1) == -1) {
+    stop("The file ", annotator_exec, " cannot be executed.")
+  }
+  if(burnin > 100 || burnin < 0){
+    stop("burnin must be between 0 and 100")
+  }
 
   # Add time value to sequence ids
   data <- lapply(data,function(x){
       x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[time]])
       x})
+
+  # setting log_every to get 10000 samples given chain length
+  if(is.null(log_every)){
+    log_every <- max(floor(mcmc_length/10000), 1)
+  }
   
-  xml_filepath = lapply(data, function(x) {
+  # write XML files
+  xml_filepath <- lapply(data, function(x) {
     writeBeast2StrictXML(x, dir=dir, time=time,
-             include_gm = include_gm, mcmc_length = mcmc_length)
+             include_gm = include_gm, mcmc_length = mcmc_length,
+             log_every = log_every)
   })
-  #clone_id = data$clone_id
-  # TODO: capture output, parallelize by tree, check for errors
-  capture <- lapply(xml_filepath, function(x) {
-      system(paste0(file.path(exec, "beast"), "\ ", "-threads\ ", nproc, "\ -overwrite", "\ ", x))})
 
-  treelog_filepath = lapply(data, function(x) {
-    ifelse(!include_gm, 
-           file.path(dir, paste0(x@clone, ".trees")),
-           file.path(dir, paste0(x@clone, "_gm.trees")))})
-  tree_filepath = lapply(data, function(x) {
-    ifelse(!include_gm, 
-           file.path(dir, paste0(x@clone, ".tree")),
-           file.path(dir, paste0(x@clone, "_gm.tree")))})
-  # capture output, parallelize by tree
-  for (i in 1:length(treelog_filepath)) {
-    system(paste0(file.path(exec, "treeannotator"), "\ ", treelog_filepath[[i]],
-     "\ ", tree_filepath[[i]]))
-  }
-  trees = lapply(tree_filepath, read.nexus)
+  # Run BEAST on each tree sequentially
+  # TODO: option to parallelize by tree?
+  capture <- lapply(1:length(xml_filepath), function(x) {
+    y <- xml_filepath[x]
+    command <- paste0(
+      "\ ", "-threads\ ", nproc,
+      "\ ", "-statefile\ ", paste0(y,".state"),
+      "\ -overwrite", "\ ", y)
+    
+    if(verbose > 0){
+      print(paste(beast_exec,command))
+    }
+      
+    params <- list(beast_exec, command, stdout=TRUE, stderr=TRUE)
+  
+    status <- tryCatch(do.call(base::system2, params), error=function(e){
+         print(paste("BEAST error: ",e));
+         return(e)
+     }, warning=function(w){
+         print(paste("BEAST warnings ",w));
+         return(w)
+     })
 
-  # remove final _<trait> from tree tips
-  trees = lapply(trees, function(x) {
-    x$tip.label = sapply(strsplit(x$tip.label,"_"), function(y)
-      paste0(y[1:(length(y)-1)], collapse="_"))
-    return(x)})
+    status
+    })
 
-  sequence = lapply(data, function(x) {as.list(x@data$sequence)})
-  sequence = lapply(sequence, as.list)
-  for (i in 1:length(trees)) {
-    #trees[[i]]$nodes = sequence[[i]]
-    #trees[[i]]$nodes = lapply(trees[[i]]$nodes, function(x) {x = as.list(x)})
-    #trees[[i]]$nodes = lapply(trees[[i]]$nodes, function(x) {
-    #  names(x) = "sequence"
-    #  return(x)})
-    trees[[i]]$tree_method = "BEAST::HKY"
-    trees[[i]]$edge_type = "time"
-    trees[[i]]$name = data[[i]]@clone
-    #trees[[i]]$seq = trees[[i]]$tip.label
-    trees[[i]]$seq = "sequence"
-    trees[[i]]$root.edge = NULL
+  for(i in 1:length(capture)){
+    if("error" %in% class(capture[[i]])){
+      print(capture[[i]])
+      stop(paste("Error running BEAST (see above), clone", data[[i]]@clone))
+    }
   }
 
- # read in parameter log files
+  # Run treeannotator in parallel
+  # should have another function that allows you to re-run treeannotator on 
+  # existing dirs
+  capture <- parallel::mclapply(1:length(data), function(x) {
+    y <- data[[x]]@clone
+    treesfile <- file.path(dir, paste0(data[[x]]@clone, ".trees"))
+    treefile <- file.path(dir, paste0(data[[x]]@clone, ".tree"))
+    command <- paste("-burnin",burnin,treesfile, treefile)
+    
+    if(verbose > 0){
+      print(paste(annotator_exec,command))
+    }
+      
+    params <- list(annotator_exec, command, stdout=TRUE, stderr=TRUE)
+  
+    status <- tryCatch(do.call(base::system2, params), error=function(e){
+         print(paste("TreeAnnotator error: ",e));
+         return(e)
+     }, warning=function(w){
+         print(paste("TreeAnnotator warnings ",w));
+         return(w)
+     }, mc.cores=nproc)
 
- # store tree distribution?
+    status
+    })
+
+  for(i in 1:length(capture)){
+    if("error" %in% class(capture[[i]])){
+      print(capture[[i]])
+      stop(paste("Error running TreeAnnotator (see above), clone", data[[i]]@clone))
+    }
+  }
+
+  # read in tree and parameter log
+  # TODO add nodes and sequences to tree
+  trees <- list()
+  for(i in 1:length(data)){
+    treefile <- file.path(dir, paste0(data[[i]]@clone, ".tree"))
+    logfile <- file.path(dir, paste0(data[[i]]@clone, ".log"))
+
+    tree <- ape::read.nexus(treefile)
+    tree$tip.label <- sapply(strsplit(tree$tip.label,"_"), function(x)
+      paste0(x[1:(length(x)-1)], collapse="_"))
+    tree$tree_method = "BEAST::HKY"
+    tree$edge_type = "time"
+    tree$name = data[[i]]@clone
+    tree$seq = "sequence"
+    tree$root.edge = NULL
+    l <- read.table(logfile, head=TRUE)
+    tree$parameters_posterior <- gather(l, "parameter", "value", -Sample)
+    trees[[i]] <- tree
+  }
 
   return(trees)
 }
@@ -3334,7 +3407,7 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
 #'  
 #' @export
 writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE, 
-  mcmc_length = 100000, germline = "Germline", units="day"){
+  mcmc_length = 100000, log_every=10, germline = "Germline", units="day"){
 
   xml_outdir = dir
   log_outdir = dir
@@ -3597,7 +3670,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
                              paste0(log_outdir, "/", clone_id, "_gm.log\"\ "))
   if (include_gm == F){
     tracelog = c(
-      paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"10000\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
+      paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"",log_every,"\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
       paste0(ind1, "<log idref=\"posterior\"/>"),
       paste0(ind1, "<log idref=\"likelihood\"/>"),
       paste0(ind1, "<log idref=\"prior\"/>"),
@@ -3611,7 +3684,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     )
   } else {
     tracelog = c(
-      paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"10000\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
+      paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"",log_every,"\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
       paste0(ind1, "<log idref=\"posterior\"/>"),
       paste0(ind1, "<log idref=\"likelihood\"/>"),
       paste0(ind1, "<log idref=\"prior\"/>"),
@@ -3627,16 +3700,16 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     )
   }
   screenlog = c(
-    paste0("<logger id=\"screenlog\" spec=\"Logger\" logEvery=\"400\">"),
+    paste0("<logger id=\"screenlog\" spec=\"Logger\" logEvery=\"",log_every,"\">"),
     paste0(ind1, "<log idref=\"posterior\"/>"),
     paste0(ind1, "<log idref=\"likelihood\"/>"),
     paste0(ind1, "<log idref=\"prior\"/>"),
     paste0("</logger>")
   )
   treelog_filepath = ifelse(include_gm == F, paste0(log_outdir, "/", clone_id, ".trees\"\ "),
-                            paste0(log_outdir, "/", clone_id, "_gm.trees\"\ "))
+                            paste0(log_outdir, "/", clone_id, ".trees\"\ "))
   treelog = c(
-    paste0("<logger id=\"treelog.t:", clone_id, "\" spec=\"Logger\" fileName=\"", treelog_filepath, "logEvery=\"10000\" mode=\"tree\">"),
+    paste0("<logger id=\"treelog.t:", clone_id, "\" spec=\"Logger\" fileName=\"", treelog_filepath, "logEvery=\"",log_every,"\" mode=\"tree\">"),
     paste0(ind1, "<log id=\"TreeWithMetaDataLogger.t:", clone_id, "\" spec=\"beast.base.evolution.TreeWithMetaDataLogger\" tree=\"@Tree.t:", clone_id, "\"/>"),
     paste0("</logger>")
   )
