@@ -500,6 +500,7 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
 #' @param  file   file name for printing plots
 #' @param  width  width of plot in inches
 #' @param  height height of plot in inches
+#' @param  ess    add ESS to facets?
 #' @param  ...   optional arguments passed to grDevices::pdf
 #' 
 #' @return   a PDF of trace plots
@@ -507,7 +508,7 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
 #' @seealso \link{getTrees}
 #' @examples
 #' @export
-plotTraces = function(clones, burnin=10, file=NULL, width=8.5, height=11, ...){
+plotTraces = function(clones, burnin=10, file=NULL, width=8.5, height=11, ess=TRUE, ...){
     if(burnin > 100 || burnin < 0){
         stop("burnin must be between 0 and 100")
     }
@@ -520,17 +521,32 @@ plotTraces = function(clones, burnin=10, file=NULL, width=8.5, height=11, ...){
         sample_range = range(post$Sample)
         burn <- floor(burnin/100 * (sample_range[2] - sample_range[1]))
         post <- filter(post, !!rlang::sym("Sample") >= burn)
-        
+
+        if(ess){
+            essv = post %>%
+                group_by(parameter) %>%
+                summarize(ess = mcmcse::ess(value))
+
+            labels = paste0(essv$parameter, " | ESS: ", floor(essv$ess))
+            names(labels) = essv$parameter
+        }else{
+            labels = unique(post$parameter)
+            names(labels) = labels
+        }
+
         post$parameter <- factor(post$parameter, levels=unique(post$parameter))
         plots[[i]] <-  ggplot(post, aes(x=Sample,y=value)) + geom_line() + 
-            facet_wrap(parameter~., scales="free_y", ncol=2) +
-            theme_bw() + ggtitle(clones$clone_id[[i]]) + xlab("Parameter value")
+            facet_wrap(parameter~., scales="free_y", ncol=2,
+                labeller = labeller(parameter=labels)) +
+            theme_bw() + ggtitle(clones$clone_id[[i]]) + ylab("Parameter value")
     }
 
     if(!is.null(file)){
-        pdf(file, width=width, height=height)
-        print(plots)
-        dev.off()
+        grDevices::pdf(file, width=width, height=height)
+        for(i in 1:length(plots)){
+            gridExtra::grid.arrange(grobs=plots[i], ncol=1)    
+        }
+        grDevices::dev.off()
     }else{
         return(plots)
     }

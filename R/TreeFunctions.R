@@ -2042,14 +2042,6 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   if(build == "igphyml" || build == "raxml"){
     clones$parameters <- lapply(trees,function(x)x$parameters)
   }
-  #if(build == "beast2-strict"){
-  #  clones$parameters_posterior <- 
-  #    lapply(trees, function(x) dplyr::tibble(x$parameters_posterior))
-  #  trees <- lapply(trees, function(x){
-  #    x$parameters_posterior <- NULL
-  #    x
-  #  })
-  #}
 
   if(!is.null(igphyml)){
     file <- writeLineageFile(data=data, trees=trees, dir=dir,
@@ -2088,6 +2080,16 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     stop("Tree column names don't match clone IDs")
   }
   
+  if(build == "beast2-strict"){
+    #clones$parameters_posterior <- 
+    #  lapply(trees, function(x) dplyr::tibble(x$parameters_posterior))
+    #trees <- lapply(trees, function(x){
+    #  x$parameters_posterior <- NULL
+    #  x
+    #})
+    clones <- getParams(clones, ...)
+  }
+
   clones
 }
 
@@ -3334,14 +3336,49 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
     }
   }
 
-  # Run treeannotator in parallel
-  # should have another function that allows you to re-run treeannotator on 
-  # existing dirs
+ trees <- readBEAST(clones=data, dir=dir, exec=exec, burnin=burnin, 
+  verbose=verbose, nproc=nproc)
+
+  return(trees)
+}
+
+#' Reads in a BEAST output directory
+#' 
+#' \code{readBEAST} Reads in data from BEAST output directory
+#' @param clones     either a tibble (getTrees) or list of \code{airrClone} object
+#' @param time     name of time column (trait in getTrees)
+#' @param dir      directory where temporary files will be placed
+#' @param verbose  if > 0 print run information
+#' @param burnin   percent of initial tree samples to discard (1-100)
+#' @param nproc    cores to use
+#'
+#' @return   
+#' If data is a tibble, then the input clones tibble with additional columns for 
+#' trees and parameter estimates given the specified burnin. If input is just a 
+#' list of airrClone objects, it will return the corresponding list of trees
+#' given the burnin
+#'  
+#' @export
+readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1) {
+
+  if(!"list" %in% class(clones) && "data" %in% names(clones)){
+    data <- clones$data
+  }else if("list" %in% class(clones)){
+    data <- clones
+  }else{
+    stop("Input data type not supported")
+  }
+
+  annotator_exec <- file.path(exec,"treeannotator")
+  if(file.access(annotator_exec, mode=1) == -1) {
+    stop("The file ", annotator_exec, " cannot be executed.")
+  }
+ # Run treeannotator in parallel
   capture <- parallel::mclapply(1:length(data), function(x) {
     y <- data[[x]]@clone
     treesfile <- file.path(dir, paste0(data[[x]]@clone, ".trees"))
     treefile <- file.path(dir, paste0(data[[x]]@clone, ".tree"))
-    command <- paste("-burnin",burnin,treesfile, treefile)
+    command <- paste("-burnin", burnin, treesfile, treefile)
     
     if(verbose > 0){
       print(paste(annotator_exec,command))
@@ -3374,7 +3411,10 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
     treefile <- file.path(dir, paste0(data[[i]]@clone, ".tree"))
     logfile <- file.path(dir, paste0(data[[i]]@clone, ".log"))
 
-    tree <- ape::read.nexus(treefile)
+    tree <- tryCatch(ape::read.nexus(treefile))
+    if("error" %in% class(tree)){
+      stop(paste("Couldn't read in ",treefile))
+    }
     tree$tip.label <- sapply(strsplit(tree$tip.label,"_"), function(x)
       paste0(x[1:(length(x)-1)], collapse="_"))
     tree$tree_method = "BEAST::HKY"
@@ -3383,11 +3423,19 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
     tree$seq = "sequence"
     tree$root.edge = NULL
     l <- read.table(logfile, head=TRUE)
-    tree$parameters_posterior <- gather(l, "parameter", "value", -Sample)
+    tree$parameters_posterior <- tidyr::gather(l, "parameter", "value", -Sample)
     trees[[i]] <- tree
   }
 
-  return(trees)
+  if(!"list" %in% class(clones) && "data" %in% names(clones)){
+    clones$trees <- trees
+    clones <- getParams(clones, burnin=burnin)
+    return(clones)
+  }else if("list" %in% class(clones)){
+    return(trees)
+  }else{
+    stop("Input data type not supported")
+  }
 }
 
 
