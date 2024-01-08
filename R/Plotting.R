@@ -506,7 +506,6 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
 #' @return   a PDF of trace plots
 #'  
 #' @seealso \link{getTrees}
-#' @examples
 #' @export
 plotTraces = function(clones, burnin=10, file=NULL, width=8.5, height=11, ess=TRUE, ...){
     if(burnin > 100 || burnin < 0){

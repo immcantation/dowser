@@ -2377,7 +2377,7 @@ getSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
 #' @param    tip_switch  maximum tip/switch ratio
 #' @return   A vector with sequence for each locus at a specified \code{node}
 #'           in \code{tree}.
-#' @export
+# @export
 downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
   
   cdata <- clone@data
