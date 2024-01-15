@@ -3429,6 +3429,7 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1) {
     tree$name = data[[i]]@clone
     tree$seq = "sequence"
     tree$root.edge = NULL
+    tree$burnin <- burnin
     l <- read.table(logfile, head=TRUE)
     tree$parameters_posterior <- tidyr::gather(l, "parameter", "value", -Sample)
     trees[[i]] <- tree
@@ -3488,7 +3489,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   # break over multiple lines
   intro = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><beast beautitemplate='Standard' beautistatus='' namespace=\"beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.base.evolution.alignment:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood\" required=\"BEAST.base v2.7.0\" version=\"2.7\">\n"
   if (!include_gm) {
-    data = c(paste0(ind1, "<data\n", "id=\"", clone_id, "\" \n", 
+    data = c(paste0(ind1, "<data\n", "id=\"X", clone_id, "\" \n", 
       "spec=\"Alignment\" \n", "name=\"alignment\">"),
              paste0(ind2, paste(
                paste0("<sequence id=\"seq_", seq_id_t, "\""),
@@ -3498,7 +3499,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
                paste0("value=", "\"", sequence_alignment, "\"/>"), sep="\ ")),
              paste0(ind1, "</data>\n"))
   } else {
-    data = append(c(paste0(ind1, "<data\n", "id=\"", clone_id, "\" \n", 
+    data = append(c(paste0(ind1, "<data\n", "id=\"X", clone_id, "\" \n", 
       "spec=\"Alignment\" \n", "name=\"alignment\">"),
                     paste0(ind2, paste(
                       paste0("<sequence id=\"seq_", seq_id_t, "\""),
@@ -3529,21 +3530,21 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     trait = c(
       paste0(
         paste(
-          "<trait id=\"dateTrait.t:", clone_id, "\"",
+          "<trait id=\"dateTrait.t:X", clone_id, "\"",
           "spec=\"beast.base.evolution.tree.TraitSet\"",
           "traitname=\"date\"",
           "units=\"day\"",
           paste("value=\"", paste(paste0(seq_id_t, "=", clone$time), collapse = ",")),
           sep = "\ "),
         "\">"),
-      paste0(ind1, "<taxa id=\"TaxonSet.", clone_id, "\" spec=\"TaxonSet\">"),
-      paste0(ind2, "<alignment idref=\"", clone_id, "\"/>"),
+      paste0(ind1, "<taxa id=\"TaxonSet.X", clone_id, "\" spec=\"TaxonSet\">"),
+      paste0(ind2, "<alignment idref=\"X", clone_id, "\"/>"),
       paste0(ind1, "</taxa>"),
       paste0("</trait>"),
-      paste0("<taxonset idref=\"TaxonSet.", clone_id, "\"/>"))
+      paste0("<taxonset idref=\"TaxonSet.X", clone_id, "\"/>"))
   } else {
     trait = c(paste0(paste(
-      "<trait id=\"dateTrait.t:", clone_id, "\"",
+      "<trait id=\"dateTrait.t:X", clone_id, "\"",
       "spec=\"beast.base.evolution.tree.TraitSet\"",
       "traitname=\"date\"",
       "units=\"day\"",
@@ -3552,17 +3553,17 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
                paste0(seq_id_t, "=", clone$time), collapse = ","), ",",
              paste0(germline_seq_id_t, "=", 0), "\""),
       sep = "\ "), ">"),
-      paste0(ind1, "<taxa id=\"TaxonSet.", clone_id, "\" spec=\"TaxonSet\">"),
-      paste0(ind2, "<alignment idref=\"", clone_id, "\"/>"),
+      paste0(ind1, "<taxa id=\"TaxonSet.X", clone_id, "\" spec=\"TaxonSet\">"),
+      paste0(ind2, "<alignment idref=\"X", clone_id, "\"/>"),
       paste0(ind1, "</taxa>"),
       paste0("</trait>"),
-      paste0("<taxonset idref=\"TaxonSet.", clone_id, "\"/>")
+      paste0("<taxonset idref=\"TaxonSet.X", clone_id, "\"/>")
     )
   }
   state = c("</state>",
-      paste0("<init id=\"RandomTree.t:", clone_id, "\" spec=\"RandomTree\" estimate=\"false\" initial=\"@Tree.t:", clone_id, "\" taxa=\"@", clone_id, "\">"),
-      paste0(ind1, "<populationModel id=\"ConstantPopulation0.t:", clone_id, "\" spec=\"ConstantPopulation\">"),
-      paste0(ind2, "<parameter id=\"randomPopSize.t:", clone_id, "\" spec=\"parameter.RealParameter\" name=\"popSize\">1.0</parameter>"),
+      paste0("<init id=\"RandomTree.t:X", clone_id, "\" spec=\"RandomTree\" estimate=\"false\" initial=\"@Tree.t:X", clone_id, "\" taxa=\"@X", clone_id, "\">"),
+      paste0(ind1, "<populationModel id=\"ConstantPopulation0.t:X", clone_id, "\" spec=\"ConstantPopulation\">"),
+      paste0(ind2, "<parameter id=\"randomPopSize.t:X", clone_id, "\" spec=\"parameter.RealParameter\" name=\"popSize\">1.0</parameter>"),
       paste0(ind1, "</populationModel>"),
       paste0("</init>")
   )
@@ -3571,13 +3572,13 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   mcmc_prior_tree = c()
   if(tree_prior == "coalescent-constant"){
     mcmc_prior_tree <- c(
-    paste0(ind2, "<distribution id=\"CoalescentConstant.t:", clone_id, "\" spec=\"Coalescent\">"),
-    paste0(ind3,  "<populationModel id=\"ConstantPopulation.t:", clone_id, "\" spec=\"ConstantPopulation\" popSize=\"@popSize.t:", clone_id, "\"/>"),
-    paste0(ind3, "<treeIntervals id=\"TreeIntervals.t:", clone_id, "\" spec=\"beast.base.evolution.tree.TreeIntervals\" tree=\"@Tree.t:", clone_id, "\"/>"))
+    paste0(ind2, "<distribution id=\"CoalescentConstant.t:X", clone_id, "\" spec=\"Coalescent\">"),
+    paste0(ind3,  "<populationModel id=\"ConstantPopulation.t:X", clone_id, "\" spec=\"ConstantPopulation\" popSize=\"@popSize.t:X", clone_id, "\"/>"),
+    paste0(ind3, "<treeIntervals id=\"TreeIntervals.t:X", clone_id, "\" spec=\"beast.base.evolution.tree.TreeIntervals\" tree=\"@Tree.t:X", clone_id, "\"/>"))
   }else if(tree_prior == "coalescent-skyline"){
     mcmc_prior_tree <- c(
-    paste0(ind2, "<distribution id=\"BayesianSkyline.t:",clone_id,"\" spec=\"BayesianSkyline\" groupSizes=\"@bGroupSizes.t:",clone_id,"\" popSizes=\"@bPopSizes.t:",clone_id,"\">"),
-    paste0(ind3, "<treeIntervals id=\"BSPTreeIntervals.t:",clone_id,"\" spec=\"beast.base.evolution.tree.TreeIntervals\" tree=\"@Tree.t:",clone_id,"\"/>"))
+    paste0(ind2, "<distribution id=\"BayesianSkyline.t:X", clone_id,"\" spec=\"BayesianSkyline\" groupSizes=\"@bGroupSizes.t:X", clone_id,"\" popSizes=\"@bPopSizes.t:X", clone_id,"\">"),
+    paste0(ind3, "<treeIntervals id=\"BSPTreeIntervals.t:X", clone_id,"\" spec=\"beast.base.evolution.tree.TreeIntervals\" tree=\"@Tree.t:X", clone_id,"\"/>"))
   }else{
     stop("tree_prior not recognized")
   }
@@ -3589,11 +3590,11 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   if(tree_prior == "coalescent-skyline"){
     mcmc_dist = c(
       mcmc_dist,
-      paste0(ind2, "<distribution id=\"MarkovChainedPopSizes.t:",clone_id,"\" spec=\"distribution.MarkovChainDistribution\" jeffreys=\"true\" parameter=\"@bPopSizes.t:",clone_id,"\"/>")
+      paste0(ind2, "<distribution id=\"MarkovChainedPopSizes.t:X", clone_id,"\" spec=\"distribution.MarkovChainDistribution\" jeffreys=\"true\" parameter=\"@bPopSizes.t:X", clone_id,"\"/>")
       )
   }
   clockRate = c(
-    paste0("<prior id=\"ClockPrior.c:", clone_id, "\" name=\"distribution\" x=\"@clockRate.c:", clone_id, "\">"),
+    paste0("<prior id=\"ClockPrior.c:X", clone_id, "\" name=\"distribution\" x=\"@clockRate.c:X", clone_id, "\">"),
     paste0(ind1, "<LogNormal id=\"LogNormalDistributionModel.2\" name=\"distr\">"),
     paste0(ind2, "<parameter id=\"RealParameter.8\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"M\">1.0</parameter>"),
     paste0(ind2, "<parameter id=\"RealParameter.9\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"S\" upper=\"5.0\">1.25</parameter>"),
@@ -3601,7 +3602,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     "</prior>"
   )
   kappa = c(
-    paste0("<prior id=\"KappaPrior.s:", clone_id, "\" name=\"distribution\" x=\"@kappa.s:", clone_id, "\">"),
+    paste0("<prior id=\"KappaPrior.s:X", clone_id, "\" name=\"distribution\" x=\"@kappa.s:X", clone_id, "\">"),
     paste0(ind1, "<LogNormal id=\"LogNormalDistributionModel.1\" name=\"distr\">"),
     paste0(ind2, "<parameter id=\"RealParameter.5\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"M\">1.0</parameter>"),
     paste0(ind2, "<parameter id=\"RealParameter.6\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"S\">1.25</parameter>"),
@@ -3609,12 +3610,12 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     paste0("</prior>")
   )
   popSize = c(
-    paste0("<prior id=\"PopSizePrior.t:", clone_id, "\" name=\"distribution\" x=\"@popSize.t:", clone_id, "\">"),
+    paste0("<prior id=\"PopSizePrior.t:X", clone_id, "\" name=\"distribution\" x=\"@popSize.t:X", clone_id, "\">"),
     paste0(ind1, "<OneOnX id=\"OneOnX.1\" name=\"distr\"/>"),
     paste0("</prior>")
   )
   germlinePrior = c(
-    paste0("<distribution id=\"germline.prior\" spec=\"beast.base.evolution.tree.MRCAPrior\" tipsonly=\"true\" tree=\"@Tree.t:", clone_id, "\">"),
+    paste0("<distribution id=\"germline.prior\" spec=\"beast.base.evolution.tree.MRCAPrior\" tipsonly=\"true\" tree=\"@Tree.t:X", clone_id, "\">"),
     paste0(ind1, "<taxonset id=\"germline\" spec=\"TaxonSet\">"),
     paste0(ind2, "<taxon id=\"",germline_seq_id_t,"\" spec=\"Taxon\"/>"),
     paste0(ind1, "</taxonset>"),
@@ -3625,7 +3626,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     paste0("</distribution>")
   )
   monophyleticPrior = c(
-    paste0("<distribution id=\"monophyletic.prior\" spec=\"beast.base.evolution.tree.MRCAPrior\" monophyletic=\"true\" tree=\"@Tree.t:", clone_id, "\">"),
+    paste0("<distribution id=\"monophyletic.prior\" spec=\"beast.base.evolution.tree.MRCAPrior\" monophyletic=\"true\" tree=\"@Tree.t:X", clone_id, "\">"),
     paste0(ind1, "<taxonset id=\"monophyletic\" spec=\"TaxonSet\">"),
     paste0(ind2, "<taxon id=\"", seq_id_t, "\" spec=\"Taxon\"/>"),
     paste0(ind1, "</taxonset>"),
@@ -3653,16 +3654,16 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   likelihood = c(
     paste0("</distribution>"),
     paste0("<distribution id=\"likelihood\" spec=\"CompoundDistribution\" useThreads=\"true\">"),
-    paste0(ind1, "<distribution id=\"treeLikelihood.", clone_id, "\" spec=\"ThreadedTreeLikelihood\" data=\"@", clone_id, "\" tree=\"@Tree.t:", clone_id, "\" useAmbiguities=\"true\">"),
-    paste0(ind2, "<siteModel id=\"SiteModel.s:", clone_id, "\" spec=\"SiteModel\">"),
-    paste0(ind3, "<parameter id=\"mutationRate.s:", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"mutationRate\">1.0</parameter>"),
-    paste0(ind3, "<parameter id=\"gammaShape.s:", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.1\" name=\"shape\">1.0</parameter>"),
-    paste0(ind3, "<parameter id=\"proportionInvariant.s:", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"proportionInvariant\" upper=\"1.0\">0.0</parameter>"),
-    paste0(ind3, "<substModel id=\"hky.s:", clone_id, "\" spec=\"HKY\" kappa=\"@kappa.s:", clone_id, "\">"),
-    paste0(ind4, "<frequencies id=\"empiricalFreqs.s:", clone_id, "\" spec=\"Frequencies\" data=\"@", clone_id, "\"/>"),
+    paste0(ind1, "<distribution id=\"treeLikelihood.X", clone_id, "\" spec=\"ThreadedTreeLikelihood\" data=\"@X", clone_id, "\" tree=\"@Tree.t:X", clone_id, "\" useAmbiguities=\"true\">"),
+    paste0(ind2, "<siteModel id=\"SiteModel.s:X", clone_id, "\" spec=\"SiteModel\">"),
+    paste0(ind3, "<parameter id=\"mutationRate.s:X", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"mutationRate\">1.0</parameter>"),
+    paste0(ind3, "<parameter id=\"gammaShape.s:X", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.1\" name=\"shape\">1.0</parameter>"),
+    paste0(ind3, "<parameter id=\"proportionInvariant.s:X", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"proportionInvariant\" upper=\"1.0\">0.0</parameter>"),
+    paste0(ind3, "<substModel id=\"hky.s:X", clone_id, "\" spec=\"HKY\" kappa=\"@kappa.s:X", clone_id, "\">"),
+    paste0(ind4, "<frequencies id=\"empiricalFreqs.s:X", clone_id, "\" spec=\"Frequencies\" data=\"@X", clone_id, "\"/>"),
     paste0(ind4, "</substModel>"),
     paste0(ind2, "</siteModel>"),
-    paste0(ind2, "<branchRateModel id=\"StrictClock.c:", clone_id, "\" spec=\"beast.base.evolution.branchratemodel.StrictClockModel\" clock.rate=\"@clockRate.c:", clone_id, "\"/>"),
+    paste0(ind2, "<branchRateModel id=\"StrictClock.c:X", clone_id, "\" spec=\"beast.base.evolution.branchratemodel.StrictClockModel\" clock.rate=\"@clockRate.c:X", clone_id, "\"/>"),
     paste0(ind1, "</distribution>"),
     paste0("</distribution>")
   )
@@ -3671,31 +3672,31 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   prior_operator = c()
     if(tree_prior == "coalescent-constant"){
       tree_prior_operator <- c(
-      paste0("<operator id=\"CoalescentConstantBICEPSEpochTop.t:", clone_id, "\" spec=\"EpochFlexOperator\" scaleFactor=\"0.1\" tree=\"@Tree.t:", clone_id, "\" weight=\"2.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantBICEPSEpochAll.t:", clone_id, "\" spec=\"EpochFlexOperator\" fromOldestTipOnly=\"false\" scaleFactor=\"0.1\" tree=\"@Tree.t:", clone_id, "\" weight=\"2.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantBICEPSTreeFlex.t:", clone_id, "\" spec=\"TreeStretchOperator\" scaleFactor=\"0.01\" tree=\"@Tree.t:", clone_id, "\" weight=\"2.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantTreeRootScaler.t:", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" rootOnly=\"true\" scaleFactor=\"0.1\" tree=\"@Tree.t:", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantUniformOperator.t:", clone_id, "\" spec=\"kernel.BactrianNodeOperator\" tree=\"@Tree.t:", clone_id, "\" weight=\"30.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantSubtreeSlide.t:", clone_id, "\" spec=\"kernel.BactrianSubtreeSlide\" tree=\"@Tree.t:", clone_id, "\" weight=\"15.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantNarrow.t:", clone_id, "\" spec=\"Exchange\" tree=\"@Tree.t:", clone_id, "\" weight=\"15.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantWide.t:", clone_id, "\" spec=\"Exchange\" isNarrow=\"false\" tree=\"@Tree.t:", clone_id, "\" weight=\"3.0\"/>"),
-      paste0("<operator id=\"CoalescentConstantWilsonBalding.t:", clone_id, "\" spec=\"WilsonBalding\" tree=\"@Tree.t:", clone_id, "\" weight=\"3.0\"/>"),
-      paste0("<operator id=\"PopSizeScaler.t:", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@popSize.t:", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"))
-      #paste0("<operator id=\"tipDatesSampler.germline\" spec=\"TipDatesRandomWalker\" taxonset=\"@germline\" tree=\"@Tree.t:", clone_id, "\" weight=\"1.0\" windowSize=\"1.0\"/>"))
+      paste0("<operator id=\"CoalescentConstantBICEPSEpochTop.t:X", clone_id, "\" spec=\"EpochFlexOperator\" scaleFactor=\"0.1\" tree=\"@Tree.t:X", clone_id, "\" weight=\"2.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantBICEPSEpochAll.t:X", clone_id, "\" spec=\"EpochFlexOperator\" fromOldestTipOnly=\"false\" scaleFactor=\"0.1\" tree=\"@Tree.t:X", clone_id, "\" weight=\"2.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantBICEPSTreeFlex.t:X", clone_id, "\" spec=\"TreeStretchOperator\" scaleFactor=\"0.01\" tree=\"@Tree.t:X", clone_id, "\" weight=\"2.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantTreeRootScaler.t:X", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" rootOnly=\"true\" scaleFactor=\"0.1\" tree=\"@Tree.t:X", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantUniformOperator.t:X", clone_id, "\" spec=\"kernel.BactrianNodeOperator\" tree=\"@Tree.t:X", clone_id, "\" weight=\"30.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantSubtreeSlide.t:X", clone_id, "\" spec=\"kernel.BactrianSubtreeSlide\" tree=\"@Tree.t:X", clone_id, "\" weight=\"15.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantNarrow.t:X", clone_id, "\" spec=\"Exchange\" tree=\"@Tree.t:X", clone_id, "\" weight=\"15.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantWide.t:X", clone_id, "\" spec=\"Exchange\" isNarrow=\"false\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
+      paste0("<operator id=\"CoalescentConstantWilsonBalding.t:X", clone_id, "\" spec=\"WilsonBalding\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
+      paste0("<operator id=\"PopSizeScaler.t:X", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@popSize.t:X", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"))
+      #paste0("<operator id=\"tipDatesSampler.germline\" spec=\"TipDatesRandomWalker\" taxonset=\"@germline\" tree=\"@Tree.t:X", clone_id, "\" weight=\"1.0\" windowSize=\"1.0\"/>"))
     }else if(tree_prior == "coalescent-skyline"){
       tree_prior_operator <- c(
-      paste0("<operator id=\"BayesianSkylineBICEPSEpochTop.t:",clone_id,"\" spec=\"EpochFlexOperator\" scaleFactor=\"0.1\" tree=\"@Tree.t:",clone_id,"\" weight=\"2.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineBICEPSEpochAll.t:",clone_id,"\" spec=\"EpochFlexOperator\" fromOldestTipOnly=\"false\" scaleFactor=\"0.1\" tree=\"@Tree.t:",clone_id,"\" weight=\"2.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineBICEPSTreeFlex.t:",clone_id,"\" spec=\"TreeStretchOperator\" scaleFactor=\"0.01\" tree=\"@Tree.t:",clone_id,"\" weight=\"2.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineTreeRootScaler.t:",clone_id,"\" spec=\"kernel.BactrianScaleOperator\" rootOnly=\"true\" scaleFactor=\"0.1\" tree=\"@Tree.t:",clone_id,"\" upper=\"10.0\" weight=\"3.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineUniformOperator.t:",clone_id,"\" spec=\"kernel.BactrianNodeOperator\" tree=\"@Tree.t:",clone_id,"\" weight=\"30.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineSubtreeSlide.t:",clone_id,"\" spec=\"kernel.BactrianSubtreeSlide\" tree=\"@Tree.t:",clone_id,"\" weight=\"15.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineNarrow.t:",clone_id,"\" spec=\"Exchange\" tree=\"@Tree.t:",clone_id,"\" weight=\"15.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineWide.t:",clone_id,"\" spec=\"Exchange\" isNarrow=\"false\" tree=\"@Tree.t:",clone_id,"\" weight=\"3.0\"/>"),
-      paste0("<operator id=\"BayesianSkylineWilsonBalding.t:",clone_id,"\" spec=\"WilsonBalding\" tree=\"@Tree.t:",clone_id,"\" weight=\"3.0\"/>"),
-      paste0("<operator id=\"popSizesScaler.t:",clone_id,"\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@bPopSizes.t:",clone_id,"\" upper=\"10.0\" weight=\"15.0\"/>"),
-      paste0("<operator id=\"groupSizesDelta.t:",clone_id,"\" spec=\"operator.kernel.BactrianDeltaExchangeOperator\" integer=\"true\" weight=\"6.0\">"),
-      paste0(ind1, "<intparameter idref=\"bGroupSizes.t:",clone_id,"\"/>"),
+      paste0("<operator id=\"BayesianSkylineBICEPSEpochTop.t:X", clone_id,"\" spec=\"EpochFlexOperator\" scaleFactor=\"0.1\" tree=\"@Tree.t:X", clone_id,"\" weight=\"2.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineBICEPSEpochAll.t:X", clone_id,"\" spec=\"EpochFlexOperator\" fromOldestTipOnly=\"false\" scaleFactor=\"0.1\" tree=\"@Tree.t:X", clone_id,"\" weight=\"2.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineBICEPSTreeFlex.t:X", clone_id,"\" spec=\"TreeStretchOperator\" scaleFactor=\"0.01\" tree=\"@Tree.t:X", clone_id,"\" weight=\"2.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineTreeRootScaler.t:X", clone_id,"\" spec=\"kernel.BactrianScaleOperator\" rootOnly=\"true\" scaleFactor=\"0.1\" tree=\"@Tree.t:X", clone_id,"\" upper=\"10.0\" weight=\"3.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineUniformOperator.t:X", clone_id,"\" spec=\"kernel.BactrianNodeOperator\" tree=\"@Tree.t:X", clone_id,"\" weight=\"30.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineSubtreeSlide.t:X", clone_id,"\" spec=\"kernel.BactrianSubtreeSlide\" tree=\"@Tree.t:X", clone_id,"\" weight=\"15.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineNarrow.t:X", clone_id,"\" spec=\"Exchange\" tree=\"@Tree.t:X", clone_id,"\" weight=\"15.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineWide.t:X", clone_id,"\" spec=\"Exchange\" isNarrow=\"false\" tree=\"@Tree.t:X", clone_id,"\" weight=\"3.0\"/>"),
+      paste0("<operator id=\"BayesianSkylineWilsonBalding.t:X", clone_id,"\" spec=\"WilsonBalding\" tree=\"@Tree.t:X", clone_id,"\" weight=\"3.0\"/>"),
+      paste0("<operator id=\"popSizesScaler.t:X", clone_id,"\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@bPopSizes.t:X", clone_id,"\" upper=\"10.0\" weight=\"15.0\"/>"),
+      paste0("<operator id=\"groupSizesDelta.t:X", clone_id,"\" spec=\"operator.kernel.BactrianDeltaExchangeOperator\" integer=\"true\" weight=\"6.0\">"),
+      paste0(ind1, "<intparameter idref=\"bGroupSizes.t:X", clone_id,"\"/>"),
       paste0("</operator>"))
     }else{
       stop(" tree_prior not recognized")
@@ -3703,68 +3704,68 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
 
   if (!include_gm) {
     operator = c(
-      paste0("<operator id=\"StrictClockRateScaler.c:", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
-      paste0(ind1, "<parameter idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind1, "<operator id=\"AVMNOperator.", clone_id, "\" spec=\"kernel.AdaptableVarianceMultivariateNormalOperator\" allowNonsense=\"true\" beta=\"0.05\" burnin=\"400\" initial=\"800\" weight=\"0.1\">"),
-      paste0(ind2, "<transformations id=\"AVMNSumTransform.", clone_id, "\" spec=\"operator.kernel.Transform$LogConstrainedSumTransform\"/>"),
-      paste0(ind2, "<transformations id=\"AVMNLogTransform.", clone_id, "\" spec=\"operator.kernel.Transform$LogTransform\">"),
-      paste0(ind3, "<f idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind3, "<f idref=\"kappa.s:", clone_id, "\"/>"),
+      paste0("<operator id=\"StrictClockRateScaler.c:X", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
+      paste0(ind1, "<parameter idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<operator id=\"AVMNOperator.X", clone_id, "\" spec=\"kernel.AdaptableVarianceMultivariateNormalOperator\" allowNonsense=\"true\" beta=\"0.05\" burnin=\"400\" initial=\"800\" weight=\"0.1\">"),
+      paste0(ind2, "<transformations id=\"AVMNSumTransform.X", clone_id, "\" spec=\"operator.kernel.Transform$LogConstrainedSumTransform\"/>"),
+      paste0(ind2, "<transformations id=\"AVMNLogTransform.X", clone_id, "\" spec=\"operator.kernel.Transform$LogTransform\">"),
+      paste0(ind3, "<f idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind3, "<f idref=\"kappa.s:X", clone_id, "\"/>"),
       paste0(ind2, "</transformations>"),
-      paste0(ind2, "<transformations id=\"AVMNNoTransform.", clone_id, "\" spec=\"operator.kernel.Transform$NoTransform\">"),
-      paste0(ind3, "<f idref=\"Tree.t:", clone_id, "\"/>"),
+      paste0(ind2, "<transformations id=\"AVMNNoTransform.X", clone_id, "\" spec=\"operator.kernel.Transform$NoTransform\">"),
+      paste0(ind3, "<f idref=\"Tree.t:X", clone_id, "\"/>"),
       paste0(ind2, "</transformations>"),
       paste0(ind1, "</operator>"),
-      paste0(ind1, "<operator id=\"StrictClockRateScalerX.c:", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@clockRate.c:", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"),
+      paste0(ind1, "<operator id=\"StrictClockRateScalerX.c:X", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@clockRate.c:X", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"),
       paste0("</operator>"),
-      paste0("<operator id=\"strictClockUpDownOperator.c:", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
-      paste0(ind1, "<parameter idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind1, "<tree idref=\"Tree.t:", clone_id, "\"/>"),
-      paste0(ind1, "<operator idref=\"AVMNOperator.", clone_id, "\"/>"),
-      paste0(ind1, "<operator id=\"strictClockUpDownOperatorX.c:", clone_id, "\" spec=\"operator.kernel.BactrianUpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
-      paste0(ind2, "<up idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind2, "<down idref=\"Tree.t:", clone_id, "\"/>"),
+      paste0("<operator id=\"strictClockUpDownOperator.c:X", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
+      paste0(ind1, "<parameter idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<tree idref=\"Tree.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<operator idref=\"AVMNOperator.X", clone_id, "\"/>"),
+      paste0(ind1, "<operator id=\"strictClockUpDownOperatorX.c:X", clone_id, "\" spec=\"operator.kernel.BactrianUpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
+      paste0(ind2, "<up idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind2, "<down idref=\"Tree.t:X", clone_id, "\"/>"),
       paste0(ind1, "</operator>"),
       paste0("</operator>"),
-      paste0("<operator id=\"KappaScaler.s:", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"0.05\">"),
-      paste0(ind1, "<parameter idref=\"kappa.s:", clone_id, "\"/>"),
-      paste0(ind1, "<operator idref=\"AVMNOperator.", clone_id, "\"/>"),
-      paste0(ind1, "<operator id=\"KappaScalerX.s:", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@kappa.s:", clone_id, "\" scaleFactor=\"0.1\" upper=\"10.0\" weight=\"0.1\"/>"),
+      paste0("<operator id=\"KappaScaler.s:X", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"0.05\">"),
+      paste0(ind1, "<parameter idref=\"kappa.s:X", clone_id, "\"/>"),
+      paste0(ind1, "<operator idref=\"AVMNOperator.X", clone_id, "\"/>"),
+      paste0(ind1, "<operator id=\"KappaScalerX.s:X", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@kappa.s:X", clone_id, "\" scaleFactor=\"0.1\" upper=\"10.0\" weight=\"0.1\"/>"),
       paste0("</operator>"),
       tree_prior_operator
       )
   } else {
     operator = c(
-      paste0("<operator id=\"StrictClockRateScaler.c:", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
-      paste0(ind1, "<parameter idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind1, "<operator id=\"AVMNOperator.", clone_id, "\" spec=\"kernel.AdaptableVarianceMultivariateNormalOperator\" allowNonsense=\"true\" beta=\"0.05\" burnin=\"400\" initial=\"800\" weight=\"0.1\">"),
-      paste0(ind2, "<transformations id=\"AVMNSumTransform.", clone_id, "\" spec=\"operator.kernel.Transform$LogConstrainedSumTransform\"/>"),
-      paste0(ind2, "<transformations id=\"AVMNLogTransform.", clone_id, "\" spec=\"operator.kernel.Transform$LogTransform\">"),
-      paste0(ind3, "<f idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind3, "<f idref=\"kappa.s:", clone_id, "\"/>"),
+      paste0("<operator id=\"StrictClockRateScaler.c:X", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
+      paste0(ind1, "<parameter idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<operator id=\"AVMNOperator.X", clone_id, "\" spec=\"kernel.AdaptableVarianceMultivariateNormalOperator\" allowNonsense=\"true\" beta=\"0.05\" burnin=\"400\" initial=\"800\" weight=\"0.1\">"),
+      paste0(ind2, "<transformations id=\"AVMNSumTransform.X", clone_id, "\" spec=\"operator.kernel.Transform$LogConstrainedSumTransform\"/>"),
+      paste0(ind2, "<transformations id=\"AVMNLogTransform.X", clone_id, "\" spec=\"operator.kernel.Transform$LogTransform\">"),
+      paste0(ind3, "<f idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind3, "<f idref=\"kappa.s:X", clone_id, "\"/>"),
       paste0(ind2, "</transformations>"),
-      paste0(ind2, "<transformations id=\"AVMNNoTransform.", clone_id, "\" spec=\"operator.kernel.Transform$NoTransform\">"),
-      paste0(ind3, "<f idref=\"Tree.t:", clone_id, "\"/>"),
+      paste0(ind2, "<transformations id=\"AVMNNoTransform.X", clone_id, "\" spec=\"operator.kernel.Transform$NoTransform\">"),
+      paste0(ind3, "<f idref=\"Tree.t:X", clone_id, "\"/>"),
       paste0(ind2, "</transformations>"),
       paste0(ind1, "</operator>"),
-      paste0(ind1, "<operator id=\"StrictClockRateScalerX.c:", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@clockRate.c:", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"),
+      paste0(ind1, "<operator id=\"StrictClockRateScalerX.c:X", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@clockRate.c:X", clone_id, "\" upper=\"10.0\" weight=\"3.0\"/>"),
       paste0("</operator>"),
-      paste0("<operator id=\"strictClockUpDownOperator.c:", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
-      paste0(ind1, "<parameter idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind1, "<tree idref=\"Tree.t:", clone_id, "\"/>"),
-      paste0(ind1, "<operator idref=\"AVMNOperator.", clone_id, "\"/>"),
-      paste0(ind1, "<operator id=\"strictClockUpDownOperatorX.c:", clone_id, "\" spec=\"operator.kernel.BactrianUpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
-      paste0(ind2, "<up idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind2, "<down idref=\"Tree.t:", clone_id, "\"/>"),
+      paste0("<operator id=\"strictClockUpDownOperator.c:X", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"1.5\">"),
+      paste0(ind1, "<parameter idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<tree idref=\"Tree.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<operator idref=\"AVMNOperator.X", clone_id, "\"/>"),
+      paste0(ind1, "<operator id=\"strictClockUpDownOperatorX.c:X", clone_id, "\" spec=\"operator.kernel.BactrianUpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
+      paste0(ind2, "<up idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind2, "<down idref=\"Tree.t:X", clone_id, "\"/>"),
       paste0(ind1, "</operator>"),
       paste0("</operator>"),
-      paste0("<operator id=\"KappaScaler.s:", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"0.05\">"),
-      paste0(ind1, "<parameter idref=\"kappa.s:", clone_id, "\"/>"),
-      paste0(ind1, "<operator idref=\"AVMNOperator.", clone_id, "\"/>"),
-      paste0(ind1, "<operator id=\"KappaScalerX.s:", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@kappa.s:", clone_id, "\" scaleFactor=\"0.1\" upper=\"10.0\" weight=\"0.1\"/>"),
+      paste0("<operator id=\"KappaScaler.s:X", clone_id, "\" spec=\"AdaptableOperatorSampler\" weight=\"0.05\">"),
+      paste0(ind1, "<parameter idref=\"kappa.s:X", clone_id, "\"/>"),
+      paste0(ind1, "<operator idref=\"AVMNOperator.X", clone_id, "\"/>"),
+      paste0(ind1, "<operator id=\"KappaScalerX.s:X", clone_id, "\" spec=\"kernel.BactrianScaleOperator\" parameter=\"@kappa.s:X", clone_id, "\" scaleFactor=\"0.1\" upper=\"10.0\" weight=\"0.1\"/>"),
       paste0("</operator>"),
       tree_prior_operator,
-      paste0("<operator id=\"tipDatesSampler.germline\" spec=\"TipDatesRandomWalker\" taxonset=\"@germline\" tree=\"@Tree.t:", clone_id, "\" weight=\"1.0\" windowSize=\"1.0\"/>")
+      paste0("<operator id=\"tipDatesSampler.germline\" spec=\"TipDatesRandomWalker\" taxonset=\"@germline\" tree=\"@Tree.t:X", clone_id, "\" weight=\"1.0\" windowSize=\"1.0\"/>")
      )
   }
   tracelog_filepath = ifelse(!include_gm, paste0(log_outdir,  "/", clone_id, ".log\"\ "),
@@ -3773,13 +3774,13 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   tracelog_tree_prior <- c()
   if(tree_prior == "coalescent-constant"){
     tracelog_tree_prior <- c(
-      paste0(ind1, "<log idref=\"popSize.t:", clone_id, "\"/>"),
-      paste0(ind1, "<log idref=\"CoalescentConstant.t:", clone_id, "\"/>"))
+      paste0(ind1, "<log idref=\"popSize.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"CoalescentConstant.t:X", clone_id, "\"/>"))
   }else if(tree_prior == "coalescent-skyline"){
     tracelog_tree_prior <- c(
-       paste0(ind1, "<log idref=\"BayesianSkyline.t:",clone_id,"\"/>"),
-       paste0(ind1, "<log idref=\"bPopSizes.t:",clone_id,"\"/>"),
-       paste0(ind1, "<log idref=\"bGroupSizes.t:",clone_id,"\"/>")
+       paste0(ind1, "<log idref=\"BayesianSkyline.t:X", clone_id,"\"/>"),
+       paste0(ind1, "<log idref=\"bPopSizes.t:X", clone_id,"\"/>"),
+       paste0(ind1, "<log idref=\"bGroupSizes.t:X", clone_id,"\"/>")
       )
   }else{
     stop("tree_prior not recognized")
@@ -3790,10 +3791,10 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
       paste0(ind1, "<log idref=\"posterior\"/>"),
       paste0(ind1, "<log idref=\"likelihood\"/>"),
       paste0(ind1, "<log idref=\"prior\"/>"),
-      paste0(ind1, "<log idref=\"treeLikelihood.", clone_id, "\"/>"),
-      paste0(ind1, "<log id=\"TreeHeight.t:", clone_id, "\" spec=\"beast.base.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:", clone_id, "\"/>"),
-      paste0(ind1, "<log idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind1, "<log idref=\"kappa.s:", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"treeLikelihood.X", clone_id, "\"/>"),
+      paste0(ind1, "<log id=\"TreeHeight.t:X", clone_id, "\" spec=\"beast.base.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"kappa.s:X", clone_id, "\"/>"),
       tracelog_tree_prior,
       paste0("</logger>")
     )
@@ -3803,10 +3804,10 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
       paste0(ind1, "<log idref=\"posterior\"/>"),
       paste0(ind1, "<log idref=\"likelihood\"/>"),
       paste0(ind1, "<log idref=\"prior\"/>"),
-      paste0(ind1, "<log idref=\"treeLikelihood.", clone_id, "\"/>"),
-      paste0(ind1, "<log id=\"TreeHeight.t:", clone_id, "\" spec=\"beast.base.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:", clone_id, "\"/>"),
-      paste0(ind1, "<log idref=\"clockRate.c:", clone_id, "\"/>"),
-      paste0(ind1, "<log idref=\"kappa.s:", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"treeLikelihood.X", clone_id, "\"/>"),
+      paste0(ind1, "<log id=\"TreeHeight.t:X", clone_id, "\" spec=\"beast.base.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"kappa.s:X", clone_id, "\"/>"),
       tracelog_tree_prior,
       paste0(ind1, "<log idref=\"germline.prior\"/>"),
       paste0(ind1, "<log idref=\"monophyletic.prior\"/>"),
@@ -3823,8 +3824,8 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   treelog_filepath = ifelse(include_gm == F, paste0(log_outdir, "/", clone_id, ".trees\"\ "),
                             paste0(log_outdir, "/", clone_id, ".trees\"\ "))
   treelog = c(
-    paste0("<logger id=\"treelog.t:", clone_id, "\" spec=\"Logger\" fileName=\"", treelog_filepath, "logEvery=\"",log_every,"\" mode=\"tree\">"),
-    paste0(ind1, "<log id=\"TreeWithMetaDataLogger.t:", clone_id, "\" spec=\"beast.base.evolution.TreeWithMetaDataLogger\" tree=\"@Tree.t:", clone_id, "\"/>"),
+    paste0("<logger id=\"treelog.t:X", clone_id, "\" spec=\"Logger\" fileName=\"", treelog_filepath, "logEvery=\"",log_every,"\" mode=\"tree\">"),
+    paste0(ind1, "<log id=\"TreeWithMetaDataLogger.t:X", clone_id, "\" spec=\"beast.base.evolution.TreeWithMetaDataLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
     paste0("</logger>")
   )
   logs = c(tracelog, screenlog, treelog, "<operatorschedule id=\"OperatorSchedule\" spec=\"OperatorSchedule\"/>")
@@ -3832,22 +3833,22 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   #kbh 1/8/23
   if(tree_prior == "coalescent-constant"){
     popsize <- 
-    c(paste0(ind2, "<parameter id=\"clockRate.c:", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">1.0</parameter>"),
-      paste0(ind2, "<parameter id=\"kappa.s:", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">2.0</parameter>"),
-      paste0(ind2, "<parameter id=\"popSize.t:", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.3</parameter>"))
+    c(paste0(ind2, "<parameter id=\"clockRate.c:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">1.0</parameter>"),
+      paste0(ind2, "<parameter id=\"kappa.s:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">2.0</parameter>"),
+      paste0(ind2, "<parameter id=\"popSize.t:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.3</parameter>"))
   }else if(tree_prior == "coalescent-skyline"){
     popsize <- 
-      c(paste0(ind2, "<parameter id=\"clockRate.c:", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">1.0</parameter>"),
-      paste0(ind2, "<parameter id=\"kappa.s:", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">2.0</parameter>"),
-      paste0(ind2, "<parameter id=\"bPopSizes.t:",clone_id,"\" spec=\"parameter.RealParameter\" dimension=\"",intervals,"\" lower=\"0.0\" name=\"stateNode\">380.0</parameter>"),
-      paste0(ind2, "<stateNode id=\"bGroupSizes.t:",clone_id,"\" spec=\"parameter.IntegerParameter\" dimension=\"5\">1</stateNode>"))
+      c(paste0(ind2, "<parameter id=\"clockRate.c:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">1.0</parameter>"),
+      paste0(ind2, "<parameter id=\"kappa.s:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">2.0</parameter>"),
+      paste0(ind2, "<parameter id=\"bPopSizes.t:X", clone_id,"\" spec=\"parameter.RealParameter\" dimension=\"",pop_sizes,"\" lower=\"0.0\" name=\"stateNode\">380.0</parameter>"),
+      paste0(ind2, "<stateNode id=\"bGroupSizes.t:X", clone_id,"\" spec=\"parameter.IntegerParameter\" dimension=\"5\">1</stateNode>"))
   }else{
     stop(paste(tree_prior, "not a recognized tree_prior option"))
   }
   mcmc = paste0(ind1, c(
     paste0("<run id=\"mcmc\" spec=\"MCMC\" chainLength=\"", mcmc_length, "\" storeEvery=\"5000\">"),
     paste0(ind1, "<state id=\"state\" spec=\"State\" storeEvery=\"5000\">"),
-    paste0(ind2, "<tree id=\"Tree.t:", clone_id, "\" spec=\"beast.base.evolution.tree.Tree\" name=\"stateNode\">"),
+    paste0(ind2, "<tree id=\"Tree.t:X", clone_id, "\" spec=\"beast.base.evolution.tree.Tree\" name=\"stateNode\">"),
     paste0(ind3, trait),
     paste0(ind2, "</tree>"),
     popsize, #kbh 1/8/23

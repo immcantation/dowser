@@ -1081,8 +1081,8 @@ getParams = function(clones, burnin=10, tracefile=NULL, width=8.5, height=11, ..
         estimates <- post %>%
             group_by(parameter) %>%
             summarize(estimate = mean(value),
-                lci = quantile(value, prob=0.05),
-                hci = quantile(value, prob=0.95),
+                lci = quantile(value, prob=0.025),
+                hci = quantile(value, prob=0.975),
                 ess = floor(mcmcse::ess(value)),
                 n = n())
         parameters[[i]] <- estimates
@@ -1097,8 +1097,206 @@ getParams = function(clones, burnin=10, tracefile=NULL, width=8.5, height=11, ..
     clones
 }
 
+#' get values for Bayesian Skyline plot
+#' 
+#' \code{makeSkyline} 
+#' @param  logfile   Beast log file
+#' @param  treesfile BEAST trees file 
+#' @param  burnin    file name for trace plots
+#' @param  bins      number of bins for plotting
+#' @param  youngest  timepoint of the most recently tip sampled (if 0, backward time used)
+#' @param  clone_id  name of the clone being analyzed (if desired)
+#' @return   Bayesian Skyline values for given clone
+#'
+#' @export
+makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0, 
+    clone_id=NULL){
+    
+    l <- tryCatch(read.table(logfile, head=TRUE),error=function(e)e)
+    if("error" %in% class(l)){
+        stop(paste("couldn't open",logtilfe))
+    }
+    phylos <- tryCatch(ape::read.nexus(treesfile), error=function(e)e)
+    if("error" %in% class(phylos)){
+        stop(paste("couldn't open", treesfile))
+    }
+    params <- tidyr::gather(l, "parameter", "value", -Sample)
+
+    if(!"bPopSizes.1" %in% unique(params$parameter)){
+        stop(paste("log file doesn't have pop sizes.",
+            "Was it run with skyline tree_prior='coalescent_skyline'?"))
+    }
+
+    burn <- floor(length(phylos)*burnin/100)
+    samples <- unique(params$Sample)
+    if(burn > 0){
+      phylos <- phylos[(burn+1):length(phylos)]
+      samples <- samples[(burn+1):length(samples)]
+      params <- filter(params, Sample %in% samples)
+    }
+    if(n_distinct(params$Sample) != length(phylos)){
+      stop("Parameter and tree posteriors not same length")
+    }
+
+    groups <- filter(params, grepl("GroupSizes", parameter))
+    pops <- filter(params, grepl("PopSizes", parameter))
+
+    pops$index <- as.numeric(gsub("bPopSizes\\.","",pops$parameter))
+    groups$index <- as.numeric(gsub("bGroupSizes\\.","",groups$parameter))
+
+    # smallest tree height in log file (this is what tracer seems to do)
+    maxheight <- min(filter(params, parameter == "Tree.height")$value)
+    if(youngest > 0){
+        mintime <- youngest - maxheight;
+        maxtime <- youngest;
+    }else{
+        mintime <- 0
+        maxtime <- maxheight - youngest
+    }
+
+    binwidth <- (maxtime - mintime)/(bins - 1)
+
+    all_intervals <- tibble()
+    for(index in 1:length(phylos)){
+      tr <- phylos[[index]]
+      sample <- samples[index]
+      mrca <- ape::getMRCA(tr, tip=tr$tip.label)
+      d <- ape::dist.nodes(tr)
+      times <- d[mrca,]
+      maxheight <- max(times)
+      nodes <- maxheight - times[(length(tr$tip.label)+1):length(times)]
+      nodes <- nodes[order(nodes, decreasing=FALSE)]
 
 
+      pop <- filter(pops, !!rlang::sym("Sample") == sample)
+      group <- filter(groups, !!rlang::sym("Sample") == sample)
 
+      temp <- nodes
+      results <- tibble()
+      for(i in 1:nrow(group)){
+        groupsize <- group$value[i]
+        popsize <- pop$value[i]
+        events <- temp[1:(groupsize)]
+        results <- bind_rows(results,
+          tibble(end=events[length(events)], interval=i,
+            events=length(events), popsize=popsize))
+        temp <- temp[-1:-(groupsize)]
+      }
+      results$sample <- sample
+      results$index <- index
+      all_intervals <- bind_rows(all_intervals, results)
+    }
+
+    skyline <- tidyr::tibble()
+    n_sample <- dplyr::n_distinct(all_intervals$sample)
+    bin_intervals <- seq(0, length=bins, by=binwidth)
+    interval_bins <- tibble()
+    for(j in 1:(length(bin_intervals)-1)){
+      bin_start <- bin_intervals[j]
+      bin_end <- bin_intervals[j+1]
+
+      matches <- all_intervals %>%
+        dplyr::group_by(!!rlang::sym("sample")) %>%
+        dplyr::filter(!!rlang::sym("end") > bin_start) %>%
+        slice_min(!!rlang::sym("end"))
+
+      if(nrow(matches) != n_sample){
+        stop("didn't find some indexes")
+      }
+
+      matches <- select(matches, !!rlang::sym("end"), 
+        !!rlang::sym("popsize"), !!rlang::sym("sample"), !!rlang::sym("index"))
+      matches$bin <- bin_start
+      skyline <- bind_rows(skyline, matches)
+    }
+
+    # similar behavior to 
+    # dr.stat.getQuantile in beast-mcmc
+    getQuantiles <- function(x, probs=NULL){
+      if(is.null(probs)){
+        stop("probs can't be null")
+      }
+      x <- sort(x)
+      index <- sapply(probs, function(y)
+        ceiling(length(x)*y))
+      x <- x[index]
+      names(x) <- paste0(probs*100,"%")
+      return(x)
+    }
+
+    skyplot <- skyline %>%
+      dplyr::group_by(!!rlang::sym("bin")) %>%
+      dplyr::summarize(
+        mean=mean(!!rlang::sym("popsize")), 
+        median=getQuantiles(!!rlang::sym("popsize"), 0.5),
+        lci=getQuantiles(!!rlang::sym("popsize"), 0.025), 
+        uci=getQuantiles(!!rlang::sym("popsize"), 0.975))
+
+    if(!is.null(clone_id)){
+        skyplot$clone_id <- clone_id
+    }
+    if(youngest != 0){
+        skyplot$bin <- youngest - skyplot$bin
+    }
+
+    return(skyplot)
+}
+
+#' Make data frames for Bayesian skyline plots
+#' 
+#' \code{makeSkylines} 
+#' @param  clones    clone tibble
+#' @param  dir       directory of BEAST trees file 
+#' @param  time      name of time column
+#' @param  bins      number of bins for plotting
+#' @param  oldest    age of the oldest tip sampled (if forward time desired)
+#' @param  verbose   if 1, print name of clones
+#' @param  forward   plot in forward or (FALSE) backward time?
+#' @param  nproc     processors for parallelization (by clone)
+#' @return   Bayesian Skyline values for given clone
+#' @details Burnin set from readBEAST or getTrees
+#' @export
+getSkylines <- function(clones, dir, time, bins=100, verbose=0, forward=TRUE,
+    nproc=1){
+
+    treesfiles <- sapply(clones$data, function(x)
+        file.path(dir, paste0(x@clone, ".trees")))
+
+    logfiles <- sapply(clones$data, function(x)
+        file.path(dir, paste0(x@clone, ".log")))
+
+    burnins <- sapply(clones$trees, function(x)
+        x$burnin)
+
+    if(sum(is.null(burnins)) > 0){
+        stop("burnin not found in some tree objects")
+    }
+
+    if(forward){
+        youngest <- sapply(clones$data, function(x)
+            max(as.numeric(x@data[[time]])))
+    }else{
+        youngest <- rep(0, length=nrow(clones))
+    }
+
+    skylines <- parallel::mclapply(1:nrow(clones), function(x){
+        if(verbose != 0){
+            print(paste(clones$clone_id[x], logfiles[x], 
+                treesfiles[x], youngest[x], burnins[x]))
+        }
+        makeSkyline(logfile=logfiles[x], treesfile=treesfiles[x],
+            youngest=youngest[x], burnin=burnins[x], bins=bins, 
+            clone_id=clones$clone_id[x])
+    }, mc.cores=nproc)
+
+    clones$skyline <- skylines
+    for(i in 1:nrow(clones)){
+        if("error" %in% class(skylines[[i]])){
+            warning(paste("Error making skyline clone,",clones$clone_id[i]))
+            clones$skyline[[i]] <- NULL
+        }
+    }
+    return(clones)
+}
 
 
