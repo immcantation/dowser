@@ -1112,7 +1112,7 @@ getParams = function(clones, burnin=10, tracefile=NULL, width=8.5, height=11, ..
 makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0, 
     clone_id=NULL){
     
-    l <- tryCatch(read.table(logfile, head=TRUE),error=function(e)e)
+    l <- tryCatch(read.csv(logfile, head=TRUE, sep="\t", comment.char="#"),error=function(e)e)
     if("error" %in% class(l)){
         stop(paste("couldn't open",logtilfe))
     }
@@ -1140,6 +1140,13 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 
     groups <- filter(params, grepl("GroupSizes", parameter))
     pops <- filter(params, grepl("PopSizes", parameter))
+
+    if(sum(pops$value < 0) > 0){
+        stop(paste(logfile, "found popsizes < 0, can't continue"))
+    }
+    if(sum(groups$value < 0) > 0){
+        stop(paste(logfile, "found groupsizes < 0, can't continue"))
+    }
 
     pops$index <- as.numeric(gsub("bPopSizes\\.","",pops$parameter))
     groups$index <- as.numeric(gsub("bGroupSizes\\.","",groups$parameter))
@@ -1187,6 +1194,22 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
       all_intervals <- bind_rows(all_intervals, results)
     }
 
+    indistinct <- all_intervals %>%
+        group_by(sample) %>%
+        summarize(distinct = dplyr::n_distinct(end),
+            n = n()) %>%
+        filter(distinct < n) %>%
+        pull(sample)
+
+    if(length(indistinct) > 0){
+        warning(paste(logfile, "Removing",length(indistinct),
+            "samples with indistinct intervals. This shouldn't happen."))
+        all_intervals <- dplyr::filter(all_intervals, !sample %in% indistinct)
+        if(nrow(all_intervals) == 0){
+            stop("No intervals left :-(")
+        }
+    }
+ 
     skyline <- tidyr::tibble()
     n_sample <- dplyr::n_distinct(all_intervals$sample)
     bin_intervals <- seq(0, length=bins, by=binwidth)
@@ -1284,16 +1307,17 @@ getSkylines <- function(clones, dir, time, bins=100, verbose=0, forward=TRUE,
             print(paste(clones$clone_id[x], logfiles[x], 
                 treesfiles[x], youngest[x], burnins[x]))
         }
-        makeSkyline(logfile=logfiles[x], treesfile=treesfiles[x],
+        tryCatch(makeSkyline(logfile=logfiles[x], treesfile=treesfiles[x],
             youngest=youngest[x], burnin=burnins[x], bins=bins, 
-            clone_id=clones$clone_id[x])
+            clone_id=clones$clone_id[x]), error=function(e)e)
     }, mc.cores=nproc)
 
     clones$skyline <- skylines
     for(i in 1:nrow(clones)){
         if("error" %in% class(skylines[[i]])){
+            print(skylines[[i]])
             warning(paste("Error making skyline clone,",clones$clone_id[i]))
-            clones$skyline[[i]] <- NULL
+            clones$skyline[[i]] <- NA
         }
     }
     return(clones)

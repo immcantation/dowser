@@ -1,4 +1,4 @@
-0
+
 # Functions for performing discrete trait analysis on B cell lineage trees
 
 # Write a clone's sequence alignment to a fasta file
@@ -3534,7 +3534,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
           "spec=\"beast.base.evolution.tree.TraitSet\"",
           "traitname=\"date\"",
           "units=\"day\"",
-          paste("value=\"", paste(paste0(seq_id_t, "=", clone$time), collapse = ",")),
+          paste("value=\"", paste(paste0(seq_id_t, "=", clone[[time]]), collapse = ",")),
           sep = "\ "),
         "\">"),
       paste0(ind1, "<taxa id=\"TaxonSet.X", clone_id, "\" spec=\"TaxonSet\">"),
@@ -3550,7 +3550,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
       "units=\"day\"",
       paste0("value=", "\"",
              paste(
-               paste0(seq_id_t, "=", clone$time), collapse = ","), ",",
+               paste0(seq_id_t, "=", clone[[time]]), collapse = ","), ",",
              paste0(germline_seq_id_t, "=", 0), "\""),
       sep = "\ "), ">"),
       paste0(ind1, "<taxa id=\"TaxonSet.X", clone_id, "\" spec=\"TaxonSet\">"),

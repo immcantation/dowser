@@ -570,6 +570,10 @@ plotSkylines = function(clones, file=NULL, width=8.5, height=11){
     plots <- list()
     for(i in 1:nrow(clones)){
         skyline <- clones$skyline[[i]]
+        if(is.na(clones$skyline[i])){
+            warning(clones$clone_id[i], "skyline not found, skipping")
+            next
+        }
 
         plots[[i]] <- ggplot(skyline, aes(x=bin, y=median, ymin=lci, ymax=uci)) +
             geom_ribbon(fill = "grey70") + scale_y_log10() + theme_bw() + 
