@@ -16,7 +16,8 @@ buildBeast2Strict(
   verbose = 1,
   burnin = 10,
   tree_prior = c("coalescent-skyline", "coalescent-constant"),
-  pop_sizes = 5
+  pop_sizes = 5,
+  tree_posterior = FALSE
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ buildBeast2Strict(
 \item{tree_prior}{prior for tree model}
 
 \item{pop_sizes}{number of population sizes for coalescent-skyline prior}
+
+\item{tree_posterior}{store tree posterior? Used for densitree plots}
 
 \item{germline}{name of germline sequence}
 

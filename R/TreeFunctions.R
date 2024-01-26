@@ -1820,6 +1820,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     warning("palette option is deprecated in getTrees, specify in plotTrees")
     palette <- NULL
   }
+  if(sum(clones$clone_id != sapply(clones$data, function(x)x@clone)) > 0){
+    stop("clone_id and airrClone values not identical")
+  }
 
   # make sure all sequences and germlines within a clone are the same length
   unlist(lapply(data, function(x){
@@ -1906,6 +1909,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   if(build == "beast2-strict"){
     if(is.null(trait)){
       stop("trait (time) must be specified when using beast")
+    }
+    if(is.null(dir)){
+      stop("dir must be specified when running BEAST")
     }
     # remove problematic characters from trait values
     capture <- lapply(data,function(x)
@@ -3268,6 +3274,7 @@ getBootstraps <- function(clones, bootstraps,
 #' @param burnin        percent of initial tree samples to discard (1-100)
 #' @param tree_prior    prior for tree model
 #' @param pop_sizes     number of population sizes for coalescent-skyline prior
+#' @param tree_posterior  store tree posterior? Used for densitree plots
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
@@ -3275,7 +3282,7 @@ getBootstraps <- function(clones, bootstraps,
 buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = ".", 
                    include_gm = FALSE, nproc = 1, log_every=NULL, verbose=1,
                    burnin=10, tree_prior = c("coalescent-skyline", "coalescent-constant"),
-                   pop_sizes=5) {
+                   pop_sizes=5, tree_posterior=FALSE) {
 
   tree_prior <- match.arg(tree_prior)
 
@@ -3344,7 +3351,7 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
   }
 
  trees <- readBEAST(clones=data, dir=dir, exec=exec, burnin=burnin, 
-  verbose=verbose, nproc=nproc)
+  verbose=verbose, nproc=nproc, tree_posterior=tree_posterior)
 
   return(trees)
 }
@@ -3352,12 +3359,13 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
 #' Reads in a BEAST output directory
 #' 
 #' \code{readBEAST} Reads in data from BEAST output directory
-#' @param clones     either a tibble (getTrees) or list of \code{airrClone} object
-#' @param time     name of time column (trait in getTrees)
-#' @param dir      directory where temporary files will be placed
-#' @param verbose  if > 0 print run information
-#' @param burnin   percent of initial tree samples to discard (1-100)
-#' @param nproc    cores to use
+#' @param clones         either a tibble (getTrees) or list of \code{airrClone} object
+#' @param time           name of time column (trait in getTrees)
+#' @param dir            directory where temporary files will be placed
+#' @param verbose        if > 0 print run information
+#' @param burnin         percent of initial tree samples to discard (1-100)
+#' @param nproc          cores to use
+#' @param tree_posterior Store tree posterior distribution? (used for density plot)
 #'
 #' @return   
 #' If data is a tibble, then the input clones tibble with additional columns for 
@@ -3366,7 +3374,8 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
 #' given the burnin
 #'  
 #' @export
-readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1) {
+readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1, 
+  tree_posterior=FALSE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
@@ -3418,7 +3427,8 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1) {
     treefile <- file.path(dir, paste0(data[[i]]@clone, ".tree"))
     logfile <- file.path(dir, paste0(data[[i]]@clone, ".log"))
 
-    tree <- tryCatch(ape::read.nexus(treefile))
+    #tree <- tryCatch(ape::read.nexus(treefile))
+    tree <- phylotate::read_annotated(treefile, format="nexus")
     if("error" %in% class(tree)){
       stop(paste("Couldn't read in ",treefile))
     }
@@ -3432,6 +3442,45 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1) {
     tree$burnin <- burnin
     l <- read.table(logfile, head=TRUE)
     tree$parameters_posterior <- tidyr::gather(l, "parameter", "value", -Sample)
+
+    nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
+    tree$node.label <- NULL
+
+
+    height_intervals <- lapply(tree$node.comment, function(x){ 
+      m = stringr::str_match(x,
+        "height_95%_HPD=\\{(?<lci>\\d+.?\\d*E?\\-?\\d*),(?<uci>\\d+.?\\d*E?\\-?\\d*)\\}")
+      c(lci=as.numeric(m[1,2]), uci=as.numeric(m[1,3]))
+    })
+    heights <- lapply(tree$node.comment, function(x){ 
+      m = stringr::str_match(x,
+        "height=(\\d+.?\\d*E?\\-?\\d*)")
+      as.numeric(m[1,2])
+    })
+
+    tree$nodes <- lapply(1:nnodes, function(x){
+      l <- list()
+      l$height_0.95_HPD = height_intervals[[x]]
+      l$height = heights[[x]]
+      l
+    })
+
+    if(tree_posterior){
+      treesfile <- file.path(dir, paste0(data[[i]]@clone, ".trees"))
+      phylos <- ape::read.nexus(treesfile)
+      burn <- floor(length(phylos)*burnin/100)
+      phylos <- phylos[(burn+1):length(phylos)]
+      phylos <- lapply(phylos, function(y){
+        y$tip.label <- sapply(strsplit(y$tip.label,"_"), function(x)
+          paste0(x[1:(length(x)-1)], collapse="_"))
+        y
+      })
+
+      
+      tree$tree_posterior <- phylos
+    }
+
+
     trees[[i]] <- tree
   }
 
@@ -3478,7 +3527,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   sequence_id = clone$sequence_id
   sequence_alignment = clone$sequence
   germline_alignment_d_mask = clone_data@germline
-  time = clone[[time]]
+  times = clone[[time]]
   clone_id = clone_data@clone
   ind1 = paste("\ \ \ \ ")
   ind2 = paste0(ind1, ind1)

@@ -218,8 +218,13 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    base               recursion base case (don't edit)
 #' @param    ambig              How to color ambiguous node reconstructions? (grey or blend)
 #' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
+#' @param    height_intervals   plot 95 percent HPD intervals (only BEAST trees)
+#' @param    densitree          plot posterior density trees (only BEAST trees)
+#' @param    densitree_sample   trees to plot in densitree
 #' @param    node_palette       deprecated, use palette
 #' @param    tip_palette        deprecated, use palette
+#' @param    height_width       width of height intervals 
+#' @param    height_color       color of height intervals 
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -240,7 +245,8 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     scale=0.01, palette="Dark2", base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
-    tip_palette=NULL, node_palette=NULL){
+    height_intervals=FALSE, tip_palette=NULL, node_palette=NULL, height_width=NULL,
+    height_color="red", densitree=FALSE, densitree_sample=100){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
@@ -255,6 +261,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }else{
             palette <- node_palette
         }
+    }
+    if(height_intervals && densitree){
+        stop("Cannot plot both height_intervals and densitree")
     }
     if(!base){
         cols <- c()
@@ -335,7 +344,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
             tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
-            bootstrap_scores=bootstrap_scores))
+            bootstrap_scores=bootstrap_scores, height_intervals=height_intervals,
+            height_width=height_width, height_color=height_color, densitree=densitree,
+            densitree_sample=densitree_sample))
         if(!is.null(tips) || nodes){
             ps  <- lapply(ps,function(x){
                     x <- x + theme(legend.position="right",
@@ -359,6 +370,21 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     tree <- trees$trees[[1]]
     data <- trees$data[[1]]
     p <- ggtree::ggtree(tree,layout=layout)
+
+    if(densitree){
+        phylos <- tree$tree_posterior
+        if(length(phylos) == 0){
+            stop("Tree posterior not found. Be sure tree_posterior=TRUE in getTrees and/or readBEAST")
+        }
+        p <- p + ggtree::geom_tiplab()
+        pdata <- p$data
+        pdata <- pdata[order(pdata$y),]
+        tip_order <- pdata[pdata$isTip,]$label
+
+        phylos <- phylos[floor(seq(1, length(phylos), length=densitree_sample))]
+        p <- ggtree::ggdensitree(phylos, tip.order=tip_order, 
+            alpha=2/densitree_sample)
+    }
 
     #add bootstrap scores to ggplot object
     if(bootstrap_scores){
@@ -396,6 +422,27 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     if(!is.null(tree$pars_recon)){
         if(nodes){
             p <- p + aes(color=tree$state)
+        }
+    }
+    if(!is.null(tree$tree_method)){
+        if(grepl("BEAST", tree$tree_method) && !densitree){
+            intervals <- lapply(tree$nodes, function(x)x$height_0.95_HPD)
+            node_data <- dplyr::tibble(node=1:length(intervals),
+              height_0.95_HPD=intervals)
+            p <- p %<+% node_data
+
+            if(height_intervals){
+                if(length(intervals) == 0){
+                    stop("height_0.95_HPD not found in nodes, was tree built with BEAST?")
+                }
+                if(!is.null(height_width)){
+                    p <- p + ggtree::geom_range("height_0.95_HPD", color=height_color,
+                        size=height_width, alpha=.5) 
+                }else{
+                    p <- p  + ggtree::geom_range("height_0.95_HPD", color=height_color, 
+                        alpha=.5) 
+                }
+            }
         }
     }
     if(!is.null(tips)){

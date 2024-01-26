@@ -4,7 +4,15 @@
 \alias{readBEAST}
 \title{Reads in a BEAST output directory}
 \usage{
-readBEAST(clones, dir, exec, burnin = 10, nproc = 1, verbose = 1)
+readBEAST(
+  clones,
+  dir,
+  exec,
+  burnin = 10,
+  nproc = 1,
+  verbose = 1,
+  tree_posterior = FALSE
+)
 }
 \arguments{
 \item{clones}{either a tibble (getTrees) or list of \code{airrClone} object}
@@ -16,6 +24,8 @@ readBEAST(clones, dir, exec, burnin = 10, nproc = 1, verbose = 1)
 \item{nproc}{cores to use}
 
 \item{verbose}{if > 0 print run information}
+
+\item{tree_posterior}{Store tree posterior distribution? (used for density plot)}
 
 \item{time}{name of time column (trait in getTrees)}
 }

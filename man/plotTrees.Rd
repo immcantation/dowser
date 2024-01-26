@@ -20,8 +20,13 @@ plotTrees(
   common_scale = FALSE,
   ambig = "grey",
   bootstrap_scores = FALSE,
+  height_intervals = FALSE,
   tip_palette = NULL,
-  node_palette = NULL
+  node_palette = NULL,
+  height_width = NULL,
+  height_color = "red",
+  densitree = FALSE,
+  densitree_sample = 100
 )
 }
 \arguments{
@@ -60,9 +65,19 @@ determined by sequence with highest divergence}
 
 \item{bootstrap_scores}{Show bootstrap scores for internal nodes? See getBootstraps.}
 
+\item{height_intervals}{plot 95 percent HPD intervals (only BEAST trees)}
+
 \item{tip_palette}{deprecated, use palette}
 
 \item{node_palette}{deprecated, use palette}
+
+\item{height_width}{width of height intervals}
+
+\item{height_color}{color of height intervals}
+
+\item{densitree}{plot posterior density trees (only BEAST trees)}
+
+\item{densitree_sample}{trees to plot in densitree}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
