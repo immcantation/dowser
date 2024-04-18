@@ -8,6 +8,7 @@ buildBeast2Strict(
   data,
   exec,
   time,
+  build,
   mcmc_length = 1e+06,
   dir = ".",
   include_gm = FALSE,
@@ -17,7 +18,10 @@ buildBeast2Strict(
   burnin = 10,
   tree_prior = c("coalescent-skyline", "coalescent-constant"),
   pop_sizes = 5,
-  tree_posterior = FALSE
+  tree_posterior = FALSE,
+  germline_time = 0,
+  asr = FALSE,
+  epoch_dates = NULL
 )
 }
 \arguments{
@@ -42,6 +46,12 @@ buildBeast2Strict(
 \item{pop_sizes}{number of population sizes for coalescent-skyline prior}
 
 \item{tree_posterior}{store tree posterior? Used for densitree plots}
+
+\item{germline_time}{date of the germline sequence}
+
+\item{asr}{log ancestral sequences?}
+
+\item{epoch_dates}{dates of epochs if desired}
 
 \item{germline}{name of germline sequence}
 

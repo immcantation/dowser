@@ -11,7 +11,8 @@ readBEAST(
   burnin = 10,
   nproc = 1,
   verbose = 1,
-  tree_posterior = FALSE
+  tree_posterior = FALSE,
+  asr = FALSE
 )
 }
 \arguments{

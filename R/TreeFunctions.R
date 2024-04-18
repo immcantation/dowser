@@ -1906,7 +1906,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
       x})
   }
-  if(build == "beast2-strict"){
+  if(build == "beast2-strict" || build == "beast2-epoch"){
     if(is.null(trait)){
       stop("trait (time) must be specified when using beast")
     }
@@ -1921,7 +1921,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       })
   }
   if(build=="dnapars" || build=="igphyml" || build=="dnaml" ||
-   !is.null(igphyml) || build=="raxml" || build=="beast2-strict"){
+   !is.null(igphyml) || build=="raxml" || build=="beast2-strict" || build == "beast2-epoch"){
     if(!is.null(dir)){
       if(!dir.exists(dir)){
         dir.create(dir)
@@ -1996,7 +1996,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                           dir=dir,
                           starting_tree=trees[[x]],...),error=function(e)e),
       mc.cores=nproc)
-  } else if(build == "beast2-strict"){
+  } else if(build == "beast2-strict" || build == "beast2-epoch"){
     if(rm_temp){
       rm_dir <- file.path(dir,id)
     }else{
@@ -2008,6 +2008,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                             exec=exec,
                             dir=dir,
                             nproc=nproc,
+                            build=build,
                             ...),error=function(e)e)
     if(inherits(trees, "error")){
       stop(trees)
@@ -2021,7 +2022,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   # data -> data_save
   # clones -> clones_save
   #catch any tree inference errors
-  if(build != "igphyml" && build != "beast2-strict"){
+  if(build != "igphyml" && build != "beast2-strict" && build != "beast2-epoch"){
     errors <- unlist(lapply(trees, function(x) inherits(x, "error")))
     messages <- trees[errors]
     errorclones <- clones$clone_id[errors]
@@ -2087,7 +2088,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     stop("Tree column names don't match clone IDs")
   }
   
-  if(build == "beast2-strict"){
+  if(build == "beast2-strict" || build == "beast2-epoch"){
     #clones$parameters_posterior <- 
     #  lapply(trees, function(x) dplyr::tibble(x$parameters_posterior))
     #trees <- lapply(trees, function(x){
@@ -3275,14 +3276,17 @@ getBootstraps <- function(clones, bootstraps,
 #' @param tree_prior    prior for tree model
 #' @param pop_sizes     number of population sizes for coalescent-skyline prior
 #' @param tree_posterior  store tree posterior? Used for densitree plots
+#' @param germline_time date of the germline sequence
+#' @param asr           log ancestral sequences?
+#' @param epoch_dates   dates of epochs if desired
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
 #' @export
-buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = ".", 
+buildBeast2Strict <- function(data, exec, time, build, mcmc_length = 1000000, dir = ".", 
                    include_gm = FALSE, nproc = 1, log_every=NULL, verbose=1,
                    burnin=10, tree_prior = c("coalescent-skyline", "coalescent-constant"),
-                   pop_sizes=5, tree_posterior=FALSE) {
+                   pop_sizes=5, tree_posterior=FALSE, germline_time=0, asr=FALSE, epoch_dates=NULL) {
 
   tree_prior <- match.arg(tree_prior)
 
@@ -3309,12 +3313,30 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
     log_every <- max(floor(mcmc_length/10000), 1)
   }
   
+  if(!grepl("2\\.7", exec) && build == "beast2-strict"){
+    stop("beast2-strict currently compatible with only beast 2.7")
+  }
+  if(!grepl("2\\.6", exec) && build == "beast2-epoch"){
+    stop("beast2-epoch currently compatible with only beast 2.6")
+  }
+  if(build == "beast2-epoch" && is.null(epoch_dates)){
+    stop("Epoch date(s) not specified")
+  }
+
   # write XML files
   xml_filepath <- lapply(data, function(x) {
-    writeBeast2StrictXML(x, dir=dir, time=time,
-             include_gm = include_gm, mcmc_length = mcmc_length,
-             log_every = log_every, tree_prior = tree_prior,
-             pop_sizes = pop_sizes)
+    if(build == "beast2-strict"){
+      writeBeast2StrictXML(x, dir=dir, time=time,
+               include_gm = include_gm, mcmc_length = mcmc_length,
+               log_every = log_every, tree_prior = tree_prior,
+               pop_sizes = pop_sizes)
+    }else if(build == "beast2-epoch"){
+      writeBeast2EpochXML(x, dir=dir, time=time,
+               include_gm = include_gm, mcmc_length = mcmc_length,
+               log_every = log_every, tree_prior = tree_prior,
+               pop_sizes = pop_sizes, epoch_dates=epoch_dates,
+               germline_time = germline_time, asr=asr)
+    }
   })
 
   # Run BEAST on each tree sequentially
@@ -3351,7 +3373,7 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
   }
 
  trees <- readBEAST(clones=data, dir=dir, exec=exec, burnin=burnin, 
-  verbose=verbose, nproc=nproc, tree_posterior=tree_posterior)
+  verbose=verbose, nproc=nproc, tree_posterior=tree_posterior, asr=asr)
 
   return(trees)
 }
@@ -3366,6 +3388,7 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
 #' @param burnin         percent of initial tree samples to discard (1-100)
 #' @param nproc          cores to use
 #' @param tree_posterior Store tree posterior distribution? (used for density plot)
+#' @param low_ram        run with less memory (slower)       
 #'
 #' @return   
 #' If data is a tibble, then the input clones tibble with additional columns for 
@@ -3375,7 +3398,7 @@ buildBeast2Strict <- function(data, exec, time, mcmc_length = 1000000, dir = "."
 #'  
 #' @export
 readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1, 
-  tree_posterior=FALSE) {
+  tree_posterior=FALSE, asr=FALSE, low_ram=FALSE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
@@ -3392,9 +3415,14 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1,
  # Run treeannotator in parallel
   capture <- parallel::mclapply(1:length(data), function(x) {
     y <- data[[x]]@clone
-    treesfile <- file.path(dir, paste0(data[[x]]@clone, ".trees"))
+    treesfile <- ifelse(asr, paste0(data[[x]]@clone, "_asr.trees"),
+                    paste0(data[[x]]@clone, ".trees"))
+    treesfile <- file.path(dir, treesfile)
     treefile <- file.path(dir, paste0(data[[x]]@clone, ".tree"))
     command <- paste("-burnin", burnin, treesfile, treefile)
+    if(low_ram){
+      command = paste("-lowMem", command)
+    }
     
     if(verbose > 0){
       print(paste(annotator_exec,command))
@@ -3457,11 +3485,18 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1,
         "height=(\\d+.?\\d*E?\\-?\\d*)")
       as.numeric(m[1,2])
     })
+    if(asr){
+      node_seqs <- lapply(tree$node.comment, function(x){ 
+        m = stringr::str_match(x, "seq=([A-Z]+),")
+        m[1,2]
+      })
+    }
 
     tree$nodes <- lapply(1:nnodes, function(x){
       l <- list()
       l$height_0.95_HPD = height_intervals[[x]]
       l$height = heights[[x]]
+      if(asr){l$sequence = node_seqs[[x]]}
       l
     })
 
@@ -3475,14 +3510,13 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1,
           paste0(x[1:(length(x)-1)], collapse="_"))
         y
       })
-
-      
+   
       tree$tree_posterior <- phylos
     }
-
-
     trees[[i]] <- tree
   }
+
+  print("Ran readBEAST")
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     clones$trees <- trees
@@ -3915,7 +3949,388 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
   return(file.path(xml_outdir, filename_xml))
 }
 
+#' Writes a BEAST XML file given an airrClone object
+#' TODO: Make all model params optional
+#' 
+#' \code{writeBeast2EpochXML}
+#' @param clone_data    an \code{airrClone} object
+#' @param time          name of time column (trait in getTrees)
+#' @param epoch_dates   dates defining epochs (currently only 1 date supported)
+#' @param include_gm    Include germline sequence?
+#' @param mcmc_length   Length of MCMC chain
+#' @param dir           directory where temporary files will be placed
+#' @param germline      name of germline sequence
+#' @param units         time units
+#' @param tree_prior    prior to use on tree (currently only constant pop supported)
+#' @param pop_sizes     number of population sizes for coalescent-skyline prior
+#' @param germline_time date of the germline sequence
+#' @param asr           log ancestral sequences?
+#'
+#' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
+#'  
+#' @export
+writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", include_gm = TRUE, 
+  mcmc_length = 100000, log_every=10, germline = "Germline", units="day",
+  tree_prior = c("coalescent-constant"), pop_sizes=5,
+  germline_time=0, asr=TRUE){
 
+  xml_outdir = dir
+  log_outdir = dir
+
+  if(length(epoch_dates) > 1){
+    stop("currently only support 1 epoch date")
+  }
+  if(!include_gm){
+    stop("must include gm for now")
+  }
+
+  epoch_heights = sort(max(as.numeric(clone_data@data[[time]])) - epoch_dates)
+
+  tree_prior = match.arg(tree_prior)
+
+  clone = clone_data@data
+  clone = clone[order(as.numeric(clone[[time]]), clone$sequence_id), ]
+  sequence_id = clone$sequence_id
+  sequence_alignment = clone$sequence
+  germline_alignment_d_mask = clone_data@germline
+  times = clone[[time]]
+  clone_id = clone_data@clone
+  ind1 = paste("\ \ \ \ ")
+  ind2 = paste0(ind1, ind1)
+  ind3 = paste0(ind1, ind1, ind1)
+  ind4 = paste0(ind1, ind1, ind1, ind1)
+  seq_id_t = sequence_id
+  germline_seq_id_t = germline
+  # break over multiple lines
+  intro = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><beast beautitemplate=\'Standard\' beautistatus=\'\' namespace=\"beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood\" required=\"\" version=\"2.6\">\n"
+
+  if (!include_gm) {
+    data = c(paste0(ind1, "<data\n", "id=\"X", clone_id, "\" \n", 
+      "spec=\"Alignment\" \n", "name=\"alignment\">"),
+             paste0(ind2, paste(
+               paste0("<sequence id=\"seq_", seq_id_t, "\""),
+               paste0("spec=\"Sequence\""),
+               paste0("taxon=", "\"", seq_id_t, "\""),
+               paste0("totalcount=\"4\""),
+               paste0("value=", "\"", sequence_alignment, "\"/>"), sep="\ ")),
+             paste0(ind1, "</data>\n"))
+  } else {
+    data = append(c(paste0(ind1, "<data\n", "id=\"X", clone_id, "\" \n", 
+      "spec=\"Alignment\" \n", "name=\"alignment\">"),
+                    paste0(ind2, paste(
+                      paste0("<sequence id=\"seq_", seq_id_t, "\""),
+                      paste0("spec=\"Sequence\""),
+                      paste0("taxon=", "\"", seq_id_t, "\""),
+                      paste0("totalcount=\"4\""),
+                      paste0("value=", "\"", sequence_alignment, "\"/>"), sep="\ ")),
+                    paste0(ind2, paste(
+                      paste0("<sequence id=\"seq_",germline_seq_id_t, "\""),
+                      paste0("spec=\"Sequence\""),
+                      paste0("taxon=", "\"",germline_seq_id_t,"\""),
+                      paste0("totalcount=\"4\""),
+                      paste0("value=", "\"", germline_alignment_d_mask, "\"/>"), sep="\ "))),
+                  paste0(ind1, "</data>\n"))
+  }
+  distribution = paste0(ind1, c(
+    "<map name=\"Uniform\" >beast.math.distributions.Uniform</map>",
+    "<map name=\"Exponential\" >beast.math.distributions.Exponential</map>",
+    "<map name=\"LogNormal\" >beast.math.distributions.LogNormalDistributionModel</map>",
+    "<map name=\"Normal\" >beast.math.distributions.Normal</map>",
+    "<map name=\"Beta\" >beast.math.distributions.Beta</map>",
+    "<map name=\"Gamma\" >beast.math.distributions.Gamma</map>",
+    "<map name=\"LaplaceDistribution\" >beast.math.distributions.LaplaceDistribution</map>",
+    "<map name=\"prior\" >beast.math.distributions.Prior</map>",
+    "<map name=\"InverseGamma\" >beast.math.distributions.InverseGamma</map>",
+    "<map name=\"OneOnX\" >beast.math.distributions.OneOnX</map>"), "\n")
+  if (!include_gm){
+    trait = c(
+      paste0(
+        paste(
+          "<trait id=\"dateTrait.t:X", clone_id, "\"",
+          "spec=\"beast.evolution.tree.TraitSet\"",
+          "traitname=\"date\"",
+          "units=\"day\"",
+          paste("value=\"", paste(paste0(seq_id_t, "=", clone[[time]]), collapse = ",")),
+          sep = "\ "),
+        "\">"),
+      paste0(ind1, "<taxa id=\"TaxonSet.X", clone_id, "\" spec=\"TaxonSet\">"),
+      paste0(ind2, "<alignment idref=\"X", clone_id, "\"/>"),
+      paste0(ind1, "</taxa>"),
+      paste0("</trait>"),
+      paste0("<taxonset idref=\"TaxonSet.X", clone_id, "\"/>"))
+  } else {
+    trait = c(paste0(paste(
+      "<trait id=\"dateTrait.t:X", clone_id, "\"",
+      "spec=\"beast.evolution.tree.TraitSet\"",
+      "traitname=\"date\"",
+      "units=\"day\"",
+      paste0("value=", "\"",
+             paste(
+               paste0(seq_id_t, "=", clone[[time]]), collapse = ","), ",",
+             paste0(germline_seq_id_t, "=", 0), "\""),
+      sep = "\ "), ">"),
+      paste0(ind1, "<taxa id=\"TaxonSet.X", clone_id, "\" spec=\"TaxonSet\">"),
+      paste0(ind2, "<alignment idref=\"X", clone_id, "\"/>"),
+      paste0(ind1, "</taxa>"),
+      paste0("</trait>"),
+      paste0("<taxonset idref=\"TaxonSet.X", clone_id, "\"/>")
+    )
+  }
+  state = c("</state>",
+      paste0("<init id=\"RandomTree.t:X", clone_id, "\" spec=\"beast.evolution.tree.RandomTree\" estimate=\"false\" initial=\"@Tree.t:X", clone_id, "\" taxa=\"@X", clone_id, "\">"),
+      paste0(ind1, "<populationModel id=\"ConstantPopulation0.t:X", clone_id, "\" spec=\"ConstantPopulation\">"),
+      paste0(ind2, "<parameter id=\"randomPopSize.t:X", clone_id, "\" spec=\"parameter.RealParameter\" name=\"popSize\">1.0</parameter>"),
+      paste0(ind1, "</populationModel>"),
+      paste0("</init>")
+  )
+
+  #kbh 1/8/23
+  mcmc_prior_tree = c()
+  if(tree_prior == "coalescent-constant"){
+    mcmc_prior_tree <- c(
+    paste0(ind2, "<distribution id=\"CoalescentConstant.t:X", clone_id, "\" spec=\"Coalescent\">"),
+    paste0(ind3,  "<populationModel id=\"ConstantPopulation.t:X", clone_id, "\" spec=\"ConstantPopulation\" popSize=\"@popSize.t:X", clone_id, "\"/>"),
+    paste0(ind3, "<treeIntervals id=\"TreeIntervals.t:X", clone_id, "\" spec=\"TreeIntervals\" tree=\"@Tree.t:X", clone_id, "\"/>"))
+  }else if(tree_prior == "coalescent-skyline"){
+    mcmc_prior_tree <- c(
+    paste0(ind2, "<distribution id=\"BayesianSkyline.t:X", clone_id,"\" spec=\"BayesianSkyline\" groupSizes=\"@bGroupSizes.t:X", clone_id,"\" popSizes=\"@bPopSizes.t:X", clone_id,"\">"),
+    paste0(ind3, "<treeIntervals id=\"BSPTreeIntervals.t:X", clone_id,"\" spec=\"TreeIntervals\" tree=\"@Tree.t:X", clone_id,"\"/>"))
+  }else{
+    stop("tree_prior not recognized")
+  }
+  mcmc_dist = c(
+    "<distribution id=\"posterior\" spec=\"CompoundDistribution\">",
+    paste0(ind1, "<distribution id=\"prior\" spec=\"CompoundDistribution\">"),
+    mcmc_prior_tree,
+    paste0(ind2, "</distribution>"))#kbh 1/8/23
+  if(tree_prior == "coalescent-skyline"){
+    mcmc_dist = c(
+      mcmc_dist,
+      paste0(ind2, "<distribution id=\"MarkovChainedPopSizes.t:X", clone_id,"\" spec=\"distribution.MarkovChainDistribution\" jeffreys=\"true\" parameter=\"@bPopSizes.t:X", clone_id,"\"/>")
+      )
+  }
+  clockRate = c(
+        paste0("<prior id=\"ClockPrior.c:test1\" name=\"distribution\" x=\"@clockRate.c:test1\">"),
+        paste0("<Gamma id=\"Gamma.7\" name=\"distr\">"),
+            paste0("<parameter id=\"RealParameter.28\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"alpha\">0.04</parameter>"),
+            paste0("<parameter id=\"RealParameter.29\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"beta\">0.04</parameter>"),
+        paste0("</Gamma>"),
+    paste0("</prior>"),
+    paste0("<prior id=\"ClockPrior.c:test2\" name=\"distribution\" x=\"@clockRate.c:test2\">"),
+        paste0("<Gamma id=\"Gamma.8\" name=\"distr\">"),
+            paste0("<parameter id=\"RealParameter.30\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"alpha\">0.04</parameter>"),
+            paste0("<parameter id=\"RealParameter.31\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"beta\">0.04</parameter>"),
+        paste0("</Gamma>"),
+    paste0("</prior>"))
+  kappa = c(
+    paste0("<prior id=\"KappaPrior.s:X", clone_id, "\" name=\"distribution\" x=\"@kappa.s:X", clone_id, "\">"),
+    paste0(ind1, "<LogNormal id=\"LogNormalDistributionModel.1\" name=\"distr\">"),
+    paste0(ind2, "<parameter id=\"RealParameter.5\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"M\">1.0</parameter>"),
+    paste0(ind2, "<parameter id=\"RealParameter.6\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"S\">1.25</parameter>"),
+    paste0(ind1, "</LogNormal>"),
+    paste0("</prior>")
+  )
+  popSize = c(
+    paste0("<prior id=\"PopSizePrior.t:X", clone_id, "\" name=\"distribution\" x=\"@popSize.t:X", clone_id, "\">"),
+    paste0(ind1, "<OneOnX id=\"OneOnX.1\" name=\"distr\"/>"),
+    paste0("</prior>")
+  )
+  germlinePrior = c(
+    paste0("<distribution id=\"height.prior\" spec=\"beast.math.distributions.MRCAPrior\" monophyletic=\"true\" tree=\"@Tree.t:X", clone_id, "\">"),
+    paste0(ind1, "<taxonset id=\"all\" spec=\"TaxonSet\">"),
+    paste0(ind2, "<taxon id=\"", seq_id_t, "\" spec=\"Taxon\"/>"),
+    paste0(ind2, "<taxon id=\"", germline_seq_id_t, "\" spec=\"Taxon\"/>"),
+    paste0(ind1, "</taxonset>"),
+    paste0("<LaplaceDistribution id=\"LaplaceDistribution.1\" name=\"distr\">"),
+      paste0("<parameter id=\"RealParameter.32\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"mu\">",germline_time,"</parameter>"),
+      paste0("<parameter id=\"RealParameter.33\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"scale\">0.001</parameter>"),
+    paste0("</LaplaceDistribution>"),
+    paste0("</distribution>"))
+  monophyleticPrior = c(
+    paste0("<distribution id=\"monophyletic.prior\" spec=\"beast.math.distributions.MRCAPrior\" monophyletic=\"true\" tree=\"@Tree.t:X", clone_id, "\">"),
+    paste0(ind1, "<taxonset id=\"monophyletic\" spec=\"TaxonSet\">"),
+    paste0(ind2, "<taxon idref=\"", seq_id_t, "\"/>"),
+    paste0(ind1, "</taxonset>"),
+    paste0("</distribution>"))
+  if (include_gm == F){
+    prior = c(mcmc_dist,
+              paste0(ind2, clockRate),
+              paste0(ind2, kappa))
+    if(tree_prior == "coalescent-constant"){
+      prior = c(prior, paste0(ind2, popSize))
+    }
+  } else {
+    prior = c(mcmc_dist,
+              paste0(ind2, clockRate),
+              paste0(ind2, kappa))
+    #if(tree_prior == "coalescent-constant"){
+    #  prior = c(prior, paste0(ind2, popSize))
+    #}
+    prior = c(prior,
+              paste0(ind2, popSize),
+              paste0(ind2, germlinePrior),
+              paste0(ind2, monophyleticPrior))
+  }
+  likelihood = c(
+    paste0("</distribution>"),
+    paste0("<distribution id=\"likelihood\" spec=\"CompoundDistribution\" useThreads=\"true\">"),
+    paste0(ind1, "<distribution id=\"treeLikelihood.X", clone_id, "\" spec=\"ThreadedTreeLikelihood\" data=\"@X", clone_id, "\" tree=\"@Tree.t:X", clone_id, "\" useAmbiguities=\"true\">"),
+    paste0(ind2, "<siteModel id=\"SiteModel.s:X", clone_id, "\" spec=\"SiteModel\">"),
+    paste0(ind3, "<parameter id=\"mutationRate.s:X", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"mutationRate\">1.0</parameter>"),
+    paste0(ind3, "<parameter id=\"gammaShape.s:X", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.1\" name=\"shape\">1.0</parameter>"),
+    paste0(ind3, "<parameter id=\"proportionInvariant.s:X", clone_id, "\" spec=\"parameter.RealParameter\" estimate=\"false\" lower=\"0.0\" name=\"proportionInvariant\" upper=\"1.0\">0.0</parameter>"),
+    paste0(ind3, "<substModel id=\"hky.s:X", clone_id, "\" spec=\"HKY\" kappa=\"@kappa.s:X", clone_id, "\">"),
+    paste0(ind4, "<frequencies id=\"empiricalFreqs.s:X", clone_id, "\" spec=\"Frequencies\" data=\"@X", clone_id, "\"/>"),
+    paste0(ind4, "</substModel>"),
+    paste0(ind2, "</siteModel>"),
+                paste0("<branchRateModel id=\"EpochClock.c:test\" spec=\"beast.evolution.branchratemodel.EpochClockModel\" clock.rate=\"@clockRate.c:test1\">"),
+                    paste0("<epochDates spec=\"parameter.RealParameter\">",paste(epoch_heights, collapse=" "),"</epochDates>"),
+                        paste0("<clockRate spec=\"parameter.RealParameter\" idref=\"clockRate.c:test1\"/>"),
+                        paste0("<clockRate spec=\"parameter.RealParameter\" idref=\"clockRate.c:test2\"/>"),
+                paste0("</branchRateModel>  "),
+    paste0(ind1, "</distribution>"),
+    paste0("</distribution>")
+  )
+  
+  #kbh 1/8/23
+  prior_operator = c()
+    if(tree_prior == "coalescent-constant"){
+    operator <- c(
+    paste0("<operator id=\"KappaScaler.s:X", clone_id, "\" spec=\"ScaleOperator\" parameter=\"@kappa.s:X", clone_id, "\" scaleFactor=\"0.5\" weight=\"0.1\"/>"),
+    paste0("<operator id=\"StrictClockRateScaler.c:test1\" spec=\"ScaleOperator\" parameter=\"@clockRate.c:test1\" weight=\"3.0\"/>"),
+    paste0("<operator id=\"StrictClockRateScaler.c:test2\" spec=\"ScaleOperator\" parameter=\"@clockRate.c:test2\" weight=\"3.0\"/>"),
+    paste0("<operator id=\"strictClockUpDownOperator.c:test1\" spec=\"UpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
+        paste0("<up idref=\"clockRate.c:test1\"/>"),
+        paste0("<down idref=\"Tree.t:X", clone_id, "\"/>"),
+    paste0("</operator>"),
+    paste0("<operator id=\"strictClockUpDownOperator.c:test2\" spec=\"UpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
+        paste0("<up idref=\"clockRate.c:test2\"/>"),
+        paste0("<down idref=\"Tree.t:X", clone_id, "\"/>"),
+    paste0("</operator>"),
+    paste0("<operator id=\"CoalescentConstantTreeScaler.t:X", clone_id, "\" spec=\"ScaleOperator\" scaleFactor=\"0.5\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
+    paste0("<operator id=\"CoalescentConstantTreeRootScaler.t:X", clone_id, "\" spec=\"ScaleOperator\" rootOnly=\"true\" scaleFactor=\"0.5\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
+    paste0("<operator id=\"CoalescentConstantUniformOperator.t:X", clone_id, "\" spec=\"Uniform\" tree=\"@Tree.t:X", clone_id, "\" weight=\"30.0\"/>"),
+    paste0("<operator id=\"CoalescentConstantSubtreeSlide.t:X", clone_id, "\" spec=\"SubtreeSlide\" tree=\"@Tree.t:X", clone_id, "\" weight=\"15.0\"/>"),
+    paste0("<operator id=\"CoalescentConstantNarrow.t:X", clone_id, "\" spec=\"Exchange\" tree=\"@Tree.t:X", clone_id, "\" weight=\"15.0\"/>"),
+    paste0("<operator id=\"CoalescentConstantWide.t:X", clone_id, "\" spec=\"Exchange\" isNarrow=\"false\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
+    paste0("<operator id=\"CoalescentConstantWilsonBalding.t:X", clone_id, "\" spec=\"WilsonBalding\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
+    paste0("<operator id=\"PopSizeScaler.t:X", clone_id, "\" spec=\"ScaleOperator\" parameter=\"@popSize.t:X", clone_id, "\" weight=\"3.0\"/>"))
+    #paste0("<operator id=\"FrequenciesExchanger.s:X", clone_id, "\" spec=\"DeltaExchangeOperator\" delta=\"0.01\" weight=\"0.1\">"),
+#    paste0("<parameter idref=\"freqParameter.s:X",clone_id, "\"/>\n\t</operator>"))
+    }else{
+      stop(" tree_prior not recognized")
+    }
+
+  tracelog_filepath = ifelse(!include_gm, paste0(log_outdir,  "/", clone_id, ".log\"\ "),
+                             paste0(log_outdir, "/", clone_id, ".log\"\ "))
+  #kbh 1/8/23
+  tracelog_tree_prior <- c()
+  if(tree_prior == "coalescent-constant"){
+    tracelog_tree_prior <- c(
+      paste0(ind1, "<log idref=\"popSize.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"CoalescentConstant.t:X", clone_id, "\"/>"))
+  }else if(tree_prior == "coalescent-skyline"){
+    tracelog_tree_prior <- c(
+       paste0(ind1, "<log idref=\"BayesianSkyline.t:X", clone_id,"\"/>"),
+       paste0(ind1, "<log idref=\"bPopSizes.t:X", clone_id,"\"/>"),
+       paste0(ind1, "<log idref=\"bGroupSizes.t:X", clone_id,"\"/>")
+      )
+  }else{
+    stop("tree_prior not recognized")
+  }
+  if (include_gm == F){
+    tracelog = c(
+      paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"",log_every,"\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
+      paste0(ind1, "<log idref=\"posterior\"/>"),
+      paste0(ind1, "<log idref=\"likelihood\"/>"),
+      paste0(ind1, "<log idref=\"prior\"/>"),
+      paste0(ind1, "<log idref=\"treeLikelihood.X", clone_id, "\"/>"),
+      paste0(ind1, "<log id=\"TreeHeight.t:X", clone_id, "\" spec=\"beast.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"clockRate.c:X", clone_id, "\"/>"),
+      paste0(ind1, "<log idref=\"kappa.s:X", clone_id, "\"/>"),
+      tracelog_tree_prior,
+      paste0("</logger>")
+    )
+  } else {
+    tracelog = c(
+      paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"",log_every,"\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
+      paste0(ind1, "<log idref=\"posterior\"/>"),
+      paste0(ind1, "<log idref=\"likelihood\"/>"),
+      paste0(ind1, "<log idref=\"prior\"/>"),
+      paste0(ind1, "<log idref=\"treeLikelihood.X", clone_id, "\"/>"),
+      paste0(ind1, "<log id=\"TreeHeight.t:X", clone_id, "\" spec=\"beast.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
+      paste0("<log idref=\"clockRate.c:test1\"/>"),
+      paste0("<log idref=\"clockRate.c:test2\"/>"),
+      paste0(ind1, "<log idref=\"kappa.s:X", clone_id, "\"/>"),
+      tracelog_tree_prior,
+      paste0(ind1, "<log idref=\"height.prior\"/>"),
+      paste0(ind1, "<log idref=\"monophyletic.prior\"/>"),
+      paste0("</logger>")
+    )
+  }
+  screenlog = c(
+    paste0("<logger id=\"screenlog\" spec=\"Logger\" logEvery=\"",log_every,"\">"),
+    paste0(ind1, "<log idref=\"posterior\"/>"),
+    paste0(ind1, "<log idref=\"likelihood\"/>"),
+    paste0(ind1, "<log idref=\"prior\"/>"),
+    paste0("<log idref=\"clockRate.c:test1\"/>"),
+    paste0("<log idref=\"clockRate.c:test2\"/>"),
+    paste0("<log idref=\"TreeHeight.t:X", clone_id, "\"/>"),
+    paste0("</logger>")
+  )
+  treelog_filepath = ifelse(include_gm == F, paste0(log_outdir, "/", clone_id, ".trees\"\ "),
+                            paste0(log_outdir, "/", clone_id, ".trees\"\ "))
+  treelog = c(
+    paste0("<logger id=\"treelog.t:X", clone_id, "\" spec=\"Logger\" fileName=\"", treelog_filepath, "logEvery=\"",log_every,"\" mode=\"tree\">"),
+    paste0(ind1, "<log id=\"TreeWithMetaDataLogger.t:X", clone_id, "\" spec=\"beast.evolution.tree.TreeWithMetaDataLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
+    paste0("</logger>")
+  )
+
+  asr_log = c()
+  if(asr){
+    asr_log = c(
+        paste0("<logger id=\"AncestralSequenceLogger\" fileName=\"",log_outdir,"/",clone_id,"_asr.trees\" logEvery=\"",log_every,
+          "\" mode=\"tree\">"),
+        paste0("<log id=\"",clone_id,"_asr\" spec=\"beast.evolution.likelihood.AncestralSequenceLogger\""), 
+        paste0("data=\"@X",clone_id,"\" siteModel=\"@SiteModel.s:X",clone_id,"\""),
+        paste0("branchRateModel=\"@EpochClock.c:test\""),
+        paste0("tree=\"@Tree.t:X",clone_id,"\" tag=\"seq\" useMAP=\"true\"/>"),
+        paste0("</logger>"))
+  }
+
+  logs = c(tracelog, screenlog, treelog, "<operatorschedule id=\"OperatorSchedule\" spec=\"OperatorSchedule\"/>", asr_log)
+
+  #kbh 1/8/23
+  if(tree_prior == "coalescent-constant"){
+    popsize <- 
+    c(paste0(ind2, "<parameter id=\"clockRate.c:test1\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.01</parameter>"),
+      paste0(ind2, "<parameter id=\"clockRate.c:test2\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.01</parameter>"),
+      paste0(ind2, "<parameter id=\"kappa.s:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">2.0</parameter>"),
+      paste0(ind2, "<parameter id=\"popSize.t:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.3</parameter>"))
+  }else if(tree_prior == "coalescent-skyline"){
+  }else{
+    stop(paste(tree_prior, "not a recognized tree_prior option"))
+  }
+  mcmc = paste0(ind1, c(
+    paste0("<run id=\"mcmc\" spec=\"MCMC\" chainLength=\"", mcmc_length, "\" storeEvery=\"5000\">"),
+    paste0(ind1, "<state id=\"state\" spec=\"State\" storeEvery=\"5000\">"),
+    paste0(ind2, "<tree id=\"Tree.t:X", clone_id, "\" spec=\"beast.evolution.tree.Tree\" name=\"stateNode\">"),
+    paste0(ind3, trait),
+    paste0(ind2, "</tree>"),
+    popsize, #kbh 1/8/23
+    paste0(ind1, state),
+    paste0(ind1, prior),
+    paste0(ind2, likelihood),
+    paste0(ind1, "</distribution>"),
+    paste0(ind1, operator),
+    paste0(ind1, logs),
+    "</run>"
+  ))
+  outro = "\n</beast>"
+  filename_xml = paste0(clone_id, ".xml")
+  writeLines(c(intro, data, distribution, mcmc, outro), file.path(xml_outdir, filename_xml))
+  return(file.path(xml_outdir, filename_xml))
+}
 
 
 

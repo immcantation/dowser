@@ -838,7 +838,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
   }
   
   colpaste <- function(x){
-    s <- sort(unique(x))
+    s <- sort(unique(as.character(x)))
     if(length(s) > 1){
       paste(s,collapse=",")
     }else{
@@ -863,7 +863,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       dplyr::group_by(!!rlang::sym(clone)) %>%
       dplyr::summarize(dplyr::across(columns, colpaste))
     
-    m <- match(fclones[[clone]],d[[clone]])
+    m <- match(fclones$clone_id,d[[clone]])
     fclones[,columns] <- d[m,columns]
   }
   
