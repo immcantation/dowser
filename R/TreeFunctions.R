@@ -3929,7 +3929,7 @@ writeBeast2StrictXML <- function(clone_data, time, dir = ".", include_gm = FALSE
     stop(paste(tree_prior, "not a recognized tree_prior option"))
   }
   mcmc = paste0(ind1, c(
-    paste0("<run id=\"mcmc\" spec=\"MCMC\" chainLength=\"", mcmc_length, "\" storeEvery=\"5000\">"),
+    paste0("<run id=\"mcmc\" spec=\"MCMC\" chainLength=\"", format(mcmc_length, scientific=F), "\" storeEvery=\"5000\">"),
     paste0(ind1, "<state id=\"state\" spec=\"State\" storeEvery=\"5000\">"),
     paste0(ind2, "<tree id=\"Tree.t:X", clone_id, "\" spec=\"beast.base.evolution.tree.Tree\" name=\"stateNode\">"),
     paste0(ind3, trait),
@@ -4312,7 +4312,7 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
     stop(paste(tree_prior, "not a recognized tree_prior option"))
   }
   mcmc = paste0(ind1, c(
-    paste0("<run id=\"mcmc\" spec=\"MCMC\" chainLength=\"", mcmc_length, "\" storeEvery=\"5000\">"),
+    paste0("<run id=\"mcmc\" spec=\"MCMC\" chainLength=\"", format(mcmc_length, scientific=F), "\" storeEvery=\"5000\">"),
     paste0(ind1, "<state id=\"state\" spec=\"State\" storeEvery=\"5000\">"),
     paste0(ind2, "<tree id=\"Tree.t:X", clone_id, "\" spec=\"beast.evolution.tree.Tree\" name=\"stateNode\">"),
     paste0(ind3, trait),
