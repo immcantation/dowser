@@ -31,12 +31,13 @@ BuildVignettes: true
 VignetteBuilder: knitr
 Encoding: UTF-8
 Depends:
-    R (>= 4.4),
+    R (>= 4.0),
     ggplot2 (>= 3.4.0)
 biocViews:
 Imports:
     alakazam (>= 1.1.0),
     ape (>= 5.6),
+    Biostrings,
     dplyr (>= 1.0),
     ggtree,
     graphics,
@@ -45,7 +46,6 @@ Imports:
     methods,
     phangorn (>= 2.7.1),
     phylotate,
-    pwalign,
     RColorBrewer,
     rlang,
     shazam (>= 1.1.1),
@@ -57,7 +57,8 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    testthat
+    testthat,
+    pwalign
 RoxygenNote: 7.3.1
 Collate:
     'Data.R'

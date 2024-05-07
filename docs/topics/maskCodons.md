@@ -37,10 +37,10 @@ keep_alignment
 :   store q and s alignments
 
 gap_opening
-:   gap opening penalty (pwalign::pairwiseALignment)
+:   gap opening penalty (Biostrings::pairwiseAlignment)
 
 gap_extension
-:   gap extension penalty (pwalign::pairwiseALignment)
+:   gap extension penalty (Biostrings::pairwiseAlignment)
 
 keep_insertions
 :   return removed insertion sequences?
@@ -80,7 +80,8 @@ print(maskCodons(1,q,s,TRUE))
 
 ```
 
-
+*Warning*:pairwiseAlignment() has moved to the pwalign package. Please call
+  pwalign::pairwiseAlignment() to get rid of this warning.
 ```
 $sequence_id
 [1] 1
@@ -114,7 +115,8 @@ q <- "ATTTTCATCATC"
 print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
 ```
 
-
+*Warning*:pairwiseAlignment() has moved to the pwalign package. Please call
+  pwalign::pairwiseAlignment() to get rid of this warning.
 ```
 $sequence_id
 [1] "test"
@@ -145,7 +147,7 @@ $sequence_masked_v
 See also
 -------------------
 
-[maskSequences](maskSequences.md), pwalign::pairwiseAlignment.
+[maskSequences](maskSequences.md), Biostrings::pairwiseAlignment.
 
 
 

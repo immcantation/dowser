@@ -24,9 +24,9 @@ maskCodons(
 
 \item{keep_alignment}{store q and s alignments}
 
-\item{gap_opening}{gap opening penalty (pwalign::pairwiseALignment)}
+\item{gap_opening}{gap opening penalty (Biostrings::pairwiseAlignment)}
 
-\item{gap_extension}{gap extension penalty (pwalign::pairwiseALignment)}
+\item{gap_extension}{gap extension penalty (Biostrings::pairwiseAlignment)}
 
 \item{keep_insertions}{return removed insertion sequences?}
 
@@ -57,5 +57,5 @@ q <- "ATTTTCATCATC"
 print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
 }
 \seealso{
-\link{maskSequences}, pwalign::pairwiseAlignment.
+\link{maskSequences}, Biostrings::pairwiseAlignment.
 }

@@ -51,6 +51,6 @@
 #'                          right_join rowwise
 #'                          summarize summarize_at
 #'                          transmute rename
-#' @importFrom  pwalign     pairwiseAlignment
+#' @importFrom Biostrings   pairwiseAlignment
 
 NULL

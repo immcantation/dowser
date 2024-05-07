@@ -877,8 +877,8 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 #' @param    s               (subject) aligned input sequence (sequence_alignment)
 #' @param    keep_alignment  store q and s alignments
 #' @param    keep_insertions return removed insertion sequences?
-#' @param    gap_opening      gap opening penalty (pwalign::pairwiseALignment)
-#' @param    gap_extension    gap extension penalty (pwalign::pairwiseALignment)
+#' @param    gap_opening      gap opening penalty (Biostrings::pairwiseAlignment)
+#' @param    gap_extension    gap extension penalty (Biostrings::pairwiseAlignment)
 #' @param    mask            if FALSE, don't mask codons
 #' @return   A list with split codons masked, if found (sequence_masked).
 #'
@@ -890,7 +890,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
 #' subject_alignment contains subject sequence aligned to query (q) sequence
 #' query_alignment contains query sequence aligned to subject (q) sequence
 #' sequence_masked will be NA if frameshift or alignment error detected/
-#' @seealso  \link{maskSequences}, pwalign::pairwiseAlignment.
+#' @seealso  \link{maskSequences}, Biostrings::pairwiseAlignment.
 #' 
 #' @examples
 #' s = "ATCATCATC..."
@@ -936,7 +936,7 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5,
   sg <- gsub("---", "XXX", sg)
   
   # perform global alignment
-  n <- pwalign::pairwiseAlignment(q, sg, type="global",
+  n <- Biostrings::pairwiseAlignment(q, sg, type="global",
                                      gapOpening=gap_opening, gapExtension=gap_extension)
   qa <- as.character(n@pattern)
   sa <- as.character(n@subject)
@@ -1084,7 +1084,7 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5,
 #' insertions column will be returned if keep_insertions=TRUE, contains a
 #' comma-separated list of each <position in query alignment>-<sequence>. See example.
 #' in masking_note.
-#' @seealso  \link{maskCodons}, pwalign::pairwiseAlignment.
+#' @seealso  \link{maskCodons}, Biostrings::pairwiseAlignment.
 #' 
 #' @export
 maskSequences <- function(data,  sequence_id = "sequence_id", sequence = "sequence",
