@@ -5,7 +5,7 @@
 ####
 # Add here Biocondutor dependencies that 
 # are not installed in the immcantation/test container
-bioconductor_deps <- NULL
+bioconductor_deps <- "pwalign"
 ####
 
 library(devtools)
