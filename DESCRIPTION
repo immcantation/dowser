@@ -1,7 +1,7 @@
 Package: dowser
 Type: Package
 Version: 2.2.0
-Date: 2024-03-29
+Date: 2024-05-07
 Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"),
                     email="kenneth.b.hoehn@dartmouth.edu"),
              person("Cole", "Jensen", role=c("ctb"),
