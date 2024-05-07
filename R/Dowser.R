@@ -42,7 +42,6 @@
 #'                          as.AAbin as.DNAbin getMRCA dist.nodes multi2di extract.clade
 #'                          keep.tip bind.tree collapse.singles bind.tree unroot read.dna
 #'                          is.rooted
-#' @importFrom  Biostrings  pairwiseAlignment
 #' @importFrom  dplyr       do n desc %>% pull
 #'                          bind_cols bind_rows combine arrange 
 #'                          group_by ungroup
@@ -52,5 +51,6 @@
 #'                          right_join rowwise
 #'                          summarize summarize_at
 #'                          transmute rename
+#' @importFrom  pwalign     pairwiseAlignment
 
 NULL

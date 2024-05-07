@@ -37,10 +37,10 @@ keep_alignment
 :   store q and s alignments
 
 gap_opening
-:   gap opening penalty (Biostrings::pairwiseALignment)
+:   gap opening penalty (pwalign::pairwiseALignment)
 
 gap_extension
-:   gap extension penalty (Biostrings::pairwiseALignment)
+:   gap extension penalty (pwalign::pairwiseALignment)
 
 keep_insertions
 :   return removed insertion sequences?
@@ -145,7 +145,7 @@ $sequence_masked_v
 See also
 -------------------
 
-[maskSequences](maskSequences.md), Biostrings::pairwiseAlignment.
+[maskSequences](maskSequences.md), pwalign::pairwiseAlignment.
 
 
 

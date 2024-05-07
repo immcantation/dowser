@@ -34,7 +34,7 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 ## Dependencies
 
 **Depends:** ggplot2  
-**Imports:** alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
+**Imports:** alakazam, ape, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, pwalign, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
 **Suggests:** knitr, rmarkdown, testthat
 
 

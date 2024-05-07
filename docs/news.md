@@ -1,6 +1,13 @@
 # Release Notes
 
+Version 2.2.0 May 7, 2024
+-------------------------------------------------------------------------------
+
++ changed BioStrings dependency to pwalign dependency
++ changed R version requirements to meet BioConductor requirements
+
 Version 2.1.0 December 21, 2023
+-------------------------------------------------------------------------------
 
 + plotTrees uses palette instead of tip_palette/node_palette
 + palette options deprecated in getTrees and sub-functions

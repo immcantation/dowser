@@ -1,6 +1,6 @@
 Package: dowser
 Type: Package
-Version: 2.1.0.999
+Version: 2.2.0
 Date: 2024-03-29
 Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"),
                     email="kenneth.b.hoehn@dartmouth.edu"),
@@ -31,13 +31,12 @@ BuildVignettes: true
 VignetteBuilder: knitr
 Encoding: UTF-8
 Depends:
-    R (>= 4.0),
+    R (>= 4.4),
     ggplot2 (>= 3.4.0)
 biocViews:
 Imports:
     alakazam (>= 1.1.0),
     ape (>= 5.6),
-    Biostrings,
     dplyr (>= 1.0),
     ggtree,
     graphics,
@@ -46,6 +45,7 @@ Imports:
     methods,
     phangorn (>= 2.7.1),
     phylotate,
+    pwalign,
     RColorBrewer,
     rlang,
     shazam (>= 1.1.1),
@@ -58,7 +58,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Collate:
     'Data.R'
     'Dowser.R'
