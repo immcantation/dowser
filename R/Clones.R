@@ -665,7 +665,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     add_count=TRUE, verbose=FALSE, collapse=TRUE,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
     use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
-    filterstop=TRUE, minseq=2, split_light=FALSE, light_traits=FALSE,majoronly=FALSE,
+    filterstop=FALSE, minseq=2, split_light=FALSE, light_traits=FALSE, majoronly=FALSE,
     columns=NULL){
   
   if(majoronly){

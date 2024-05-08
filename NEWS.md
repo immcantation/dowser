@@ -2,7 +2,7 @@ Version 2.2.0 May 7, 2024
 -------------------------------------------------------------------------------
 
 + changed BioStrings dependency to pwalign dependency
-+ changed R version requirements to meet BioConductor requirements
++ set filter_stop=FALSE in formatClones for better speed
 
 Version 2.1.0 December 21, 2023
 -------------------------------------------------------------------------------
