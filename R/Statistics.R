@@ -711,7 +711,11 @@ resolvePolytomies = function(phy, clone, minlength=0.001,
         }
         tphy <- ape::drop.tip(phy, collapse.singles=TRUE, trim.internal=FALSE, tip = 
             ape::extract.clade(phy, node = target_node)$tip.label, subtree=TRUE)
-        pruned_tip <- paste0("[",length(polytomy$tip.label),"_tips]")
+        # CGJ 5/15/24 with the ape 5.8 update, the function keep.tip (which is fed into drop.tip)
+        # was updated. This resulted in a different naming scheme to be used for the 
+        # dropped tips were meant to be kept somewhere in the tree. It is simpler now -- always "".
+        # pruned_tip <- paste0("[",length(polytomy$tip.label),"_tips]")
+        pruned_tip <- ""
         ntree <- ape::bind.tree(tphy, polytomy, where=which(tphy$tip.label==pruned_tip),
             position=polytomy$root.edge)
         ntree <- ape::drop.tip(ntree, tip=pruned_tip)
