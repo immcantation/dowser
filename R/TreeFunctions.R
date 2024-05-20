@@ -1459,34 +1459,39 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
       num_asr <- data.frame(node_num = num_asr[[1]][1], asr_seq = num_asr[[1]][2])
       full_asr <- rbind(full_asr, num_asr)
     }
-    # add the ASR seq by whichever node is called in the tree
+    ASR <- list()
     for(i in 1:length(full_order)){
       node_num <- full_order[i]
       asr_seq <- full_asr$asr_seq[full_asr$node_num == node_num]
-      tree$nodes[[(ape::Ntip(tree)+i)]]$sequence <- asr_seq
+      asr_seq <- gsub("-", "N", asr_seq)
+      ASR[[as.character(i)]] <- asr_seq
     }
-    
     for(i in 1:length(tree$tip.label)){
-      tip <- tree$tip.label[i]
-      if(tip != "Germline"){
-        seq_num <- which(clone@data$sequence_id == tip)
-        if(seq == "hlsequence"){
-          tree$nodes[i]$sequence <- clone@data$hlsequence[seq_num]
-        } else if(seq == "sequence"){
-          tree$nodes[i]$sequence <- clone@data$sequence[seq_num]
-        }else{
-          tree$nodes[i]$sequence <- clone@data$lsequence[seq_num]
+      # add in the tip sequences
+      if(tree$tip.label[i] == "Germline"){
+        if(clone@phylo_seq == "sequence"){
+          asr_seq <- clone@germline
+        } else if(clone@phylo_seq == "hlsequence"){
+          asr_seq <- clone@hlgermline
+        } else{
+          asr_seq <- clone@lgermline
         }
-      }else{
-        if(seq == "hlsequence"){
-          tree$nodes[i]$sequence <- clone@hlgermline
-        } else if(seq == "sequence"){
-          tree$nodes[i]$sequence <- clone@germline
-        }else{
-          tree$nodes[i]$sequence <- clone@lgermline
+      } else{
+        if(clone@phylo_seq == "sequence"){
+          asr_seq <- clone@data$sequence[which(clone@data$sequence_id == tree$tip.label[i])]
+        } else if(clone@phylo_seq == "hlsequence"){
+          asr_seq <- clone@data$hlsequence[which(clone@data$sequence_id == tree$tip.label[i])]
+        } else{
+          asr_seq <- clone@data$lsequence[which(clone@data$sequence_id == tree$tip.label[i])]
         }
       }
+      ASR[[as.character(length(ASR) + i)]] <- asr_seq
     }
+    
+    tree$nodes <- lapply(1:length(tree$nodes),function(x){
+      tree$nodes[[x]]$sequence <- ASR[[x]]
+      tree$nodes[[x]]
+    })
     tree <- rerootTree(tree, "Germline", verbose=0)
   }else {
     tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
