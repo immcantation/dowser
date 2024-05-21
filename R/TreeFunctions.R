@@ -791,7 +791,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
                                           type=asr_type, cost=NULL, return="prob")
     ASR <- list()
     for(i in 1:max(tree$edge)){
-      patterns <- t(subset(seqs_pars, i)[[1]])
+      patterns <- t(seqs_pars[[i]])
       pat <- patterns[,attr(seqs_pars,"index")]
       if(asr == "seq"){
         thresh <- pat > asr_thresh
@@ -907,7 +907,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
                                        type="marginal",return="prob")
     ASR <- list()
     for(i in 1:max(tree$edge)){
-      patterns <- t(subset(seqs_ml, i)[[1]])
+      patterns <- t(seqs_ml[[i]])
       pat <- patterns[,attr(seqs_ml,"index")]
       if(asr == "seq"){
         thresh <- pat > asr_thresh
