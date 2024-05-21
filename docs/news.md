@@ -1,9 +1,15 @@
 # Release Notes
 
+Version 2.2.1 May 21, 2024
+-------------------------------------------------------------------------------
+
++ Updated correlationTest 
++ Fixed bugs in buildRAxML
+
 Version 2.2.0 May 7, 2024
 -------------------------------------------------------------------------------
 
-+ changed BioStrings dependency to pwalign dependency
++ added suggestion for pwalign dependency
 + set filter_stop=FALSE in formatClones for better speed
 
 Version 2.1.0 December 21, 2023

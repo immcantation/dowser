@@ -1786,7 +1786,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'
 #' @seealso \link{formatClones}, \link{findSwitches}, \link{buildPhylo},
-#' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}
+#' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}, \link{buildRAxML}
 #' @examples
 #' data(ExampleClones)
 #'
