@@ -13,7 +13,7 @@ To resolve the light chains within a clone, use the `resolveLightChains` functio
 The output of this function is a tibble in which each row is a different sequence, with all of the previously included data along with a few more columns. Two columns are added: `clone_subgroup` contains the subgroup within the heavy chain-defined clone, with 1 being the largest subgroup within a clone. `clone_subgroup_id` contains the `clone_id` + the `clone_subgroup`.
 
 
-```r
+``` r
 library(dowser)
 library(ggtree)
 # load example tsv data
@@ -29,7 +29,7 @@ print(ExampleMixedDb$clone_subgroup)
 Next, it is important to reconstruct the clonal germline sequences for each subgroup. In this step it is important to specify `clone = clone_subgroup_id` so that a separate germline is constructed for each light chain subgroup.
 
 
-```r
+``` r
 # run createGermlines -- this will create new germline for each locus in each subgroup 
 # the directory for the references matches the location on docker
 references <- readIMGT("/usr/local/share/germlines/imgt/human/vdj")
@@ -41,7 +41,7 @@ ExampleMixedDb <- createGermlines(ExampleMixedDb, references = references, clone
 The next step is to convert the data into airrClone objects that can be used for tree building. As with heavy chain sequences, this is done using the `formatClones` function. To build trees with paired heavy and light chains, specify `chain = "HL"`. This will concatenate the paired heavy and light chains into a single sequence alignment. To only use the heavy chain, simply leave `chain = "H"`, the default. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 
-```r
+``` r
 clones <- formatClones(ExampleMixedDb, chain="HL", nproc=1, collapse = FALSE, 
                        split_light = TRUE, minseq = 3)
 print(clones)
@@ -53,7 +53,7 @@ Trees can be built from paired heavy and light chains with any of the methods th
 For details on each of the different methods, including the specifics about different partition models, see the [Building Trees Vignette](Building-Trees-Vignette.md).
 
 
-```r
+``` r
 # Building maximum likelihood trees with multiple partitions using IgPhyML 
 # Only the newest version of IgPhyML supports this option
 # exec here is set to IgPhyML position in the Docker image.
@@ -63,7 +63,7 @@ clones <- getTrees(clones, build="igphyml", nproc=1, partition="hl",
 
 
 
-```r
+``` r
 plotTrees(clones)[[1]]+geom_tiplab()+xlim(0,0.35)
 ```
 
@@ -73,14 +73,14 @@ plotTrees(clones)[[1]]+geom_tiplab()+xlim(0,0.35)
 Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to `partition = "hl"` in IgPhyML. 
 
 
-```r
+``` r
 # exec is set to RAxML position in the Docker image.
 clones = getTrees(clones, build="raxml", 
     exec="/usr/local/bin/raxml-ng", nproc=1, partition="scaled")
 ```
 
 
-```r
+``` r
 plotTrees(clones)[[1]]+geom_tiplab()+xlim(0, 0.12)
 ```
 

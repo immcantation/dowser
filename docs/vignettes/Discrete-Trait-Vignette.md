@@ -39,7 +39,7 @@ All of the switch count statistics on this page require IgPhyML. IgPhyML needs t
 This step proceeds as in tree building, but it is important to specify the column of the discrete trait you want to analyze in the `formatClones` step. In this example we are using simulated data from nose and lung biospies. However, this could be any discrete trait value such as cell types. Filtering out clones that contain only a single trait value type is not strictly necessary but can dramatically improve computing time.
 
 
-```r
+``` r
 library(dowser)
 
 # load example AIRR tsv data
@@ -73,7 +73,7 @@ trees = getTrees(clones, build="pml")
 Sometimes it can be useful to visualize the predicted state of each internal node in the tree using maximum parsimony. In Dowser, this can be accomplished by modifying the `getTrees` call to specify the `trait` value of interest, and the location of the `igphyml` executable. The internal node states can be plotted using plotTrees with `nodes=TRUE` and `tips` specifying the trait value. Edges in the tree are colored by the predicted state of their descendant (lower) node.
 
 
-```r
+``` r
 # the location of the igphyml executable
 # this is location in Docker image, will likely be different if you've set it up yourself
 # note this is the location of the compiled executable file, not just the source folder
@@ -94,7 +94,7 @@ plotTrees(trees, tips=trait, nodes=TRUE, palette="Set1")[[1]]
 Once we've set up the tree objects, we can calculate the switches along these trees using a maximum parsimony algorithm implemented in IgPhyML. We only need to perform this computationally intensive step once. All discrete trait tests use the resulting object. Note the IgPhyML location must be properly configured for your setup. Note also that your results may differ slightly from the ones shown below, due to the stochasticity of this test.
 
 
-```r
+``` r
 # the location of the igphyml executable
 # this is location in Docker image, will likely be different if you've set it up yourself
 # note this is the location of the compiled executable file, not just the source folder
@@ -135,7 +135,7 @@ print(sp$means)
 The previous analysis used fixed tree topologies, which will speed up calculations but does not account for uncertainty in tree topology. To account for this, be sure `fixtrees=FALSE` (the default option). For this option, the trees will be re-built for each permutation in the manner specified (same parameters as getTrees). 
 
 
-```r
+``` r
 # calculate switches along bootstrap distribution of trees
 # build using the 'pml' maximum likelihood option
 # in a real analysis it's important to use at least 100 permutations
@@ -157,7 +157,7 @@ print(sp$means)
 In some cases it may be preferable to permute trait values among trees rather than within them. This will detect association between traits within a tree as well as directional relationships. In general it is harder to interpret. To perform this test, set `permuteAll=TRUE`.
 
 
-```r
+``` r
 sp = testSP(switches$switches, alternative="greater", permuteAll=TRUE)
 print(sp$means)
 # A tibble: 2 x 8
@@ -173,7 +173,7 @@ print(sp$means)
 The SP test has been shown to have a high false positive rate if switching events are rare along very large trees (see paper). To reduce this effect, by default a downsampling algorithm in `findSwitches` will downsample all trees to have a maximum tip-to-switch ratio of 20. This ratio can be toggled by altering the `tip_switch` parameter. This feature can also be turned off by setting `downsample=FALSE`, but this is not recommended.
 
 
-```r
+``` r
 # Downsample each tree to a tip-to-switch ratio of 10 instead of 20 
 # this will reduce the false positive rate but also (likely) power
 switches = findSwitches(trees, permutations=100, trait=trait, 
@@ -201,7 +201,7 @@ Some processes, like Ig isotype switching, can only happen in a particular direc
 `makeModelFile` produces a physical file - you can open it with a text editor to inspect it. All runs of `findSwitches` create a model file, it's just normally not seen by the user and by default contains no constraints.
 
 
-```r
+``` r
 # the location of the igphyml executable
 # this is location in Docker image, will likely be different if you've set it up yourself
 # note this is the location of the compiled executable file, not just the source folder
@@ -247,7 +247,7 @@ plotTrees(trees, tips=trait, nodes=TRUE, palette="Paired", ambig="grey")[[1]]
 Performing the SP test is the same as before, just specify the model file created earlier using the `modelfile` option. Note that no switches occur in directions that are forbidden by our model. If you try this without specifying the model file, you'll likely get many biologically impossible switches!
 
 
-```r
+``` r
 # Downsample each tree to a tip-to-switch ratio of 10 instead of 20 
 # this will reduce the false positive rate but also (likely) power
 switches = findSwitches(trees, permutations=100, trait=trait, 
@@ -308,7 +308,7 @@ print(sp$means,n=42)
 If you're interested only in switches to a particular tissue or isotype, you can specify this using the `to` option in the `testSP` function. Here, we only look at the proportion of switches that go to IGHA2:
 
 
-```r
+``` r
 sp = testSP(switches$switches, alternative="greater", to="IGHA2")
 print(sp$means)
 # A tibble: 8 × 8

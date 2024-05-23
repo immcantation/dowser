@@ -121,7 +121,6 @@ Examples
 
 ```R
 data(ExampleClones)
-
 trees <- getTrees(ExampleClones[10,])
 plotTrees(trees)[[1]]
 
@@ -145,7 +144,7 @@ See also
 -------------------
 
 [formatClones](formatClones.md), [findSwitches](findSwitches.md), [buildPhylo](buildPhylo.md),
-[buildPratchet](buildPratchet.md), [buildPML](buildPML.md), [buildIgphyml](buildIgphyml.md)
+[buildPratchet](buildPratchet.md), [buildPML](buildPML.md), [buildIgphyml](buildIgphyml.md), [buildRAxML](buildRAxML.md)
 
 
 

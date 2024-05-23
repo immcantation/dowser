@@ -3,7 +3,7 @@
 Quick start of lineage tree reconstruction.
 
 
-```r
+``` r
 # Load required packages
 library(alakazam)
 library(dowser)

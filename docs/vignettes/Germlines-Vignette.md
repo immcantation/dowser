@@ -13,7 +13,7 @@ The international ImMunoGeneTics information system ([IMGT](https://www.imgt.org
 These commands will create a series of directories containing the IMGT reference directories of their respective species.
 
 
-```bash
+``` bash
 # Enter these commands in a terminal, not an R session!
 
 # Move to the directory of interest
@@ -37,7 +37,7 @@ To reconstruct clonal germlines, read in the IMGT-gapped sequence directory and 
 Input data can be from multiple loci (this is different from older Dowser versions). However, the input reference sequences must be from one organism, such as human.
 
 
-```r
+``` r
 library(dowser)
 library(dplyr)
 

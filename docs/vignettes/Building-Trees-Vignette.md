@@ -17,7 +17,7 @@ Before trees can be built, data must be formatted into a data table of AIRR clon
 The output of this function is a tibble in which each row is a clone, ordered by the number of sequences. The column `data` contains airrClone objects with the clonal sequence alignments. By default, identical sequences will be collapsed into one sequence. This feature can be turned off by setting `collapse` to `FALSE`. Additionally, the `traits` argument can be used to specify other columns that should be considered when identifying identical sequences to collapse. Other columns contain information about the clone, and can be specified using the `columns` argument.
 
 
-```r
+``` r
 library(dowser)
 
 # load example AIRR tsv data
@@ -41,7 +41,7 @@ print(clones)
 ## 2     3184 <airrClon> N        12
 ```
 
-```r
+``` r
 # Process example data keeping samples from different times
 # distinct, adding duplicate_count among collapsed sequences,
 # and show the sample_id within each clone in the tibble.
@@ -69,7 +69,7 @@ The output is the same tibble as the input, but with a `trees` column containing
 
 **Maximum parsimony trees using phangorn.**
 
-```r
+``` r
 clones = getTrees(clones, nproc=1)
 
 print(clones)
@@ -85,7 +85,7 @@ Maximum parsimony trees can also be built using the [PHYLIP](https://evolution.g
 **Maximum parsimony trees using dnapars.**
 
 
-```r
+``` r
 # exec here is set to dnapars position in the Docker image.
 clones = getTrees(clones, build="dnapars", exec="/usr/local/bin/dnapars", nproc=1)
 
@@ -109,7 +109,7 @@ Another maximum likelihood option that dowser supports is `RAxML` which utilizes
 
 **Maximum likelihood trees using phangorn**.
 
-```r
+``` r
 clones = getTrees(clones, build="pml")
 
 print(clones)
@@ -122,7 +122,7 @@ print(clones)
 
 **Maximum likelihood trees using dnaml.**
 
-```r
+``` r
 # exec here is set to dnaml position in the Docker image.
 clones = getTrees(clones, build="dnaml", exec="/usr/local/bin/dnaml")
 
@@ -137,7 +137,7 @@ clones
 **Maximum likelihood trees using [RAxML](https://github.com/amkozlov/raxml-ng).**
 
 
-```r
+``` r
 # exec here is set to raxml position in the Docker image.
 clones = getTrees(clones, build="raxml", exec="/usr/local/bin/raxml-ng")
 
@@ -155,7 +155,7 @@ B cell somatic hypermutation violates important assumptions in most phylogenetic
 Note: This function is slower than other maximum likelihood and parsimony approaches.
 
 
-```r
+``` r
 # exec here is set to IgPhyML position in the Docker image.
 clones = getTrees(clones, build="igphyml", 
     exec="/usr/local/share/igphyml/src/igphyml", nproc=1)
@@ -187,7 +187,7 @@ Three of the most useful IgPhyML partition models and defaults are listed below:
 
 Building maximum likelihood trees with multiple partitions using the partition = `cf`  arugment in IgPhyML.
 
-```r
+``` r
 # exec here is set to IgPhyML position in the Docker image.
 # Only the newest version of IgPhyML (v2.0.0) supports multi-partition trees
 clones = getTrees(clones, build="igphyml", 

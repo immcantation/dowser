@@ -7,7 +7,7 @@ First, collapse internal nodes with identical sequences using the `collapesNodes
 To obtain the IMGT-gapped sequence for each reconstructed node, specify the clone ID and node number in the `getNodeSeq` function.
 
 
-```r
+``` r
 library(dowser)
 
 data(ExampleClones)
@@ -23,7 +23,7 @@ plots[[1]]
 
 ![plot of chunk Sequences-Vignette-1](figure/Sequences-Vignette-1-1.png)
 
-```r
+``` r
 sequence = getNodeSeq(trees, node=50, clone=3128)
 
 print(sequence)

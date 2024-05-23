@@ -1,10 +1,11 @@
 # Release Notes
 
-Version 2.2.1 May 21, 2024
+Version 2.2.1 May 23, 2024
 -------------------------------------------------------------------------------
 
-+ Updated correlationTest 
++ Updated correlationTest
 + Fixed bugs in buildRAxML
++ Added ASR check for version changes in phangorn
 
 Version 2.2.0 May 7, 2024
 -------------------------------------------------------------------------------

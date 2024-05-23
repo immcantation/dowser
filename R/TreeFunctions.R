@@ -742,6 +742,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
                           data_type="DNA"){
   seqs <- clone@data[[seq]]
   names <- clone@data$sequence_id
+
   if(verbose > 0){
     print(clone@clone)
   }
@@ -755,10 +756,13 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
   }else{
     germline <- clone@germline
   }
+  
   seqs <- base::append(seqs,germline)
   names <- c(names,"Germline")
+  
   seqs <- strsplit(seqs,split="")
   names(seqs) <- names
+
   lengths = unlist(lapply(seqs,function(x)length(x)))
   if(any(lengths != lengths[1])){
     stop(paste0("Sequence and/or germline lengths of clone ",
@@ -786,28 +790,71 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
   }
   tree$name <- clone@clone
   tree$seq <- seq
+  
   if(asr != "none" && data_type=="DNA"){
     seqs_pars <- phangorn::ancestral.pars(tree, data, 
                                           type=asr_type, cost=NULL, return="prob")
-    ASR <- list()
-    for(i in 1:max(tree$edge)){
-      patterns <- t(seqs_pars[[i]])
-      pat <- patterns[,attr(seqs_pars,"index")]
-      if(asr == "seq"){
-        thresh <- pat > asr_thresh
-        acgt <- c("A","C","G","T")
-        seq_ar <- unlist(lapply(1:ncol(pat),function(x){
-          site <- acgt[thresh[,x]]
-          site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
-          if(length(site) == 0){
-            site <- "N"
-          }
-          site}))
-        ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-      }else{
-        ASR[[as.character(i)]] <- pat
+    
+    # CGJ 5/23/24 for the phangorn update (3.0.0) and so it passes win builder devel
+    if("prob" %in% names(seqs_pars)){
+      ASR <- list()
+      tip_data <- data.frame(seqs_pars$data)
+      for(i in 1:ncol(tip_data)){
+        if(asr == "seq"){
+          sub_seq <- paste0(toupper(tip_data[,i]))
+          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+            site <- sub_seq[x]
+            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+            if(length(site) == 0){
+              site <- "N"
+            }
+            site}))
+          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+        } else{
+          ASR[[as.character(i)]] <- paste0(toupper(tip_data[,i]), collapse = "")
+        }
+      }
+      nASR <- length(ASR)
+      internal_seqs <- seqs_pars$prob
+      for(i in 1:length(unique(internal_seqs$Node))){
+        sub <- internal_seqs[internal_seqs$Node == unique(internal_seqs$Node)[i],]
+        if(asr == "seq"){
+          sub_seq <- paste0(toupper(sub$State))
+          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+            site <- sub_seq[x]
+            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+            if(length(site) == 0){
+              site <- "N"
+            }
+            site}))
+          ASR[[as.character(nASR + i)]] <- paste(seq_ar,collapse="")
+        } else{
+          ASR[[as.character(nASR + i)]] <- paste0(toupper(sub$State), collapse = "")
+        }
+      }
+    } else{ # if they are using an older version of phangorn keep it the same
+      ASR <- list()
+      for(i in 1:max(tree$edge)){
+        patterns <- t(subset(seqs_pars, i)[[1]])
+        pat <- patterns[,attr(seqs_pars,"index")]
+        if(asr == "seq"){
+          thresh <- pat > asr_thresh
+          acgt <- c("A","C","G","T")
+          seq_ar <- unlist(lapply(1:ncol(pat),function(x){
+            site <- acgt[thresh[,x]]
+            site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+            if(length(site) == 0){
+              site <- "N"
+            }
+            site}))
+          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+        }else{
+          ASR[[as.character(i)]] <- pat
+        }
       }
     }
+    
+
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]
       tree$nodes[[x]]
@@ -905,23 +952,62 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
   if(asr != "none" && data_type=="DNA"){
     seqs_ml <- phangorn::ancestral.pml(fit,
                                        type="marginal",return="prob")
-    ASR <- list()
-    for(i in 1:max(tree$edge)){
-      patterns <- t(seqs_ml[[i]])
-      pat <- patterns[,attr(seqs_ml,"index")]
-      if(asr == "seq"){
-        thresh <- pat > asr_thresh
-        acgt <- c("A","C","G","T")
-        seq_ar <- unlist(lapply(1:ncol(pat),function(x){
-          site <- acgt[thresh[,x]]
-          site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
-          if(length(site) == 0){
-            site <- "N"
-          }
-          site}))
-        ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-      }else{
-        ASR[[as.character(i)]] <- pat
+    # CGJ 5/23/24 for the phangorn update (3.0.0) and so it passes win builder devel
+    if("prob" %in% names(seqs_ml)){
+      ASR <- list()
+      tip_data <- data.frame(seqs_ml$data)
+      for(i in 1:ncol(tip_data)){
+        if(asr == "seq"){
+          sub_seq <- paste0(toupper(tip_data[,i]))
+          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+            site <- sub_seq[x]
+            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+            if(length(site) == 0){
+              site <- "N"
+            }
+            site}))
+          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+        } else{
+          ASR[[as.character(i)]] <- paste0(toupper(tip_data[,i]), collapse = "")
+        }
+      }
+      nASR <- length(ASR)
+      internal_seqs <- seqs_ml$prob
+      for(i in 1:length(unique(internal_seqs$Node))){
+        sub <- internal_seqs[internal_seqs$Node == unique(internal_seqs$Node)[i],]
+        if(asr == "seq"){
+          sub_seq <- paste0(toupper(sub$State))
+          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+            site <- sub_seq[x]
+            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+            if(length(site) == 0){
+              site <- "N"
+            }
+            site}))
+          ASR[[as.character(nASR + i)]] <- paste(seq_ar,collapse="")
+        } else{
+          ASR[[as.character(nASR + i)]] <- paste0(toupper(sub$State), collapse = "")
+        }
+      }
+    } else{ # if they are using an older version of phangorn keep it the same
+      ASR <- list()
+      for(i in 1:max(tree$edge)){
+        patterns <- t(subset(seqs_ml, i)[[1]])
+        pat <- patterns[,attr(seqs_ml,"index")]
+        if(asr == "seq"){
+          thresh <- pat > asr_thresh
+          acgt <- c("A","C","G","T")
+          seq_ar <- unlist(lapply(1:ncol(pat),function(x){
+            site <- acgt[thresh[,x]]
+            site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+            if(length(site) == 0){
+              site <- "N"
+            }
+            site}))
+          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+        }else{
+          ASR[[as.character(i)]] <- pat
+        }
       }
     }
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
@@ -1789,7 +1875,6 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' \link{buildPratchet}, \link{buildPML}, \link{buildIgphyml}, \link{buildRAxML}
 #' @examples
 #' data(ExampleClones)
-#'
 #' trees <- getTrees(ExampleClones[10,])
 #' plotTrees(trees)[[1]]
 #'
@@ -1812,7 +1897,6 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   if(!is.null(dir)){
     dir <- path.expand(dir)
   }
-
   data <- clones$data
   if(!inherits(data, "list")){
     data <- list(data)
@@ -1824,7 +1908,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     warning("palette option is deprecated in getTrees, specify in plotTrees")
     palette <- NULL
   }
-
+  
   # make sure all sequences and germlines within a clone are the same length
   unlist(lapply(data, function(x){
     if(x@phylo_seq == "hlsequence"){
@@ -1842,6 +1926,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                   x@clone," are not equal."))
     }
   }))
+
   if(fixtrees){
     if(!"trees" %in% names(clones)){
       stop("trees column must be specified if fixtrees=TRUE")
@@ -1853,6 +1938,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else{
     trees <- NULL
   }
+
   if(is.null(id)){
     id <- "sample"
   }
@@ -1907,6 +1993,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       x@data$sequence_id <- paste0(x@data$sequence_id,"_",x@data[[trait]])
       x})
   }
+
   if(build=="dnapars" || build=="igphyml" || build=="dnaml" || !is.null(igphyml) || build=="raxml"){
     if(!is.null(dir)){
       if(!dir.exists(dir)){
@@ -1934,11 +2021,13 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }
 
   reps <- as.list(1:length(data))
+
   if(is.null(seq)){
     seqs <- unlist(lapply(data,function(x)x@phylo_seq))
   }else{
     seqs <- rep(seq,length=length(data))
   }
+  
   if(build=="dnapars" || build=="dnaml"){
     trees <- parallel::mclapply(reps,function(x)
       tryCatch(buildPhylo(data[[x]],
