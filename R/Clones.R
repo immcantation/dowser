@@ -1246,6 +1246,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #'                        numeric value. All entries in this column should be identical 
 #'                        for any given clone.
 #' @param    nolight      string to use to indicate a missing light chain
+#' @param    pad_ends          pad sequences within a clone to same length?
 #'
 #' @return   a tibble containing the same data as inputting, but with the column clone_subgroup
 #' added. This column contains subgroups within clones that contain distinct light chain
@@ -1273,7 +1274,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
                                id="sequence_id", seq="sequence_alignment",
                                clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
-                               junc_len="junction_length", nolight="missing"){
+                               junc_len="junction_length", nolight="missing", pad_ends=TRUE){
   
   subgroup <- "clone_subgroup"
 
@@ -1326,7 +1327,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
     ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
     ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
-    if(dplyr::n_distinct(nchar(hd[[seq]])) > 1){
+    if(dplyr::n_distinct(nchar(hd[[seq]])) > 1 && pad_ends){
       warning(paste("Heavy chains different lengths, padding seq ends for clone",cloneid))
       hd[[seq]] <- padSeqEnds(hd[[seq]])
     }

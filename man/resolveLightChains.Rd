@@ -17,7 +17,8 @@ resolveLightChains(
   v_call = "v_call",
   j_call = "j_call",
   junc_len = "junction_length",
-  nolight = "missing"
+  nolight = "missing",
+  pad_ends = TRUE
 )
 }
 \arguments{
@@ -53,6 +54,8 @@ numeric value. All entries in this column should be identical
 for any given clone.}
 
 \item{nolight}{string to use to indicate a missing light chain}
+
+\item{pad_ends}{pad sequences within a clone to same length?}
 }
 \value{
 a tibble containing the same data as inputting, but with the column clone_subgroup
