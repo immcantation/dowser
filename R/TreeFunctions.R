@@ -1334,6 +1334,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @param    rseed      The random seed used for the parsimony inferences. This allows you to reproduce your results.
 #' @param    name       specifies the name of the output file
 #' @param    starting_tree specifies a user starting tree file name and path in Newick format
+#' @param    data_type  Specifies what format your data is in, DNA or AA
 #' @param    from_getTrees A logical that indicates if the desired starting tree is from getTrees and not a newick file
 #' @param    rm_files   remove temporary files?
 #' @param    asr        computes the marginal ancestral states of a tree
@@ -1346,7 +1347,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #'          containing reconstructed sequences.
 #' @export
 buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = NULL, 
-                       rseed = 28, name = "run", starting_tree = NULL, 
+                       rseed = 28, name = "run", starting_tree = NULL, data_type = "DNA",
                        from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, ...){
   exec <- path.expand(exec)
   if(file.access(exec, mode=1) == -1) {
@@ -1415,7 +1416,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   
   command <- paste("--model", model, "--seed", rseed, "-msa", 
                    input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
-                   "--force msa")
+                   "--force msa", "--data-type", data_type)
   if(!is.null(starting_tree)){
     if(from_getTrees){
       ape::write.tree(starting_tree, file.path(dir, paste0(name, "_og_starting_tree.tree")))
@@ -1463,7 +1464,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     ape::write.tree(tree, starting_tree)
     command <- paste("--model", model, "--seed", rseed, "-msa", 
                      input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
-                     "--force msa --tree", starting_tree, "--ancestral")
+                     "--force msa --tree", starting_tree, "--ancestral", "data-type", data_type)
     if(!is.null(partition)){
       old_command <- strsplit(command, "--seed")[[1]][2]
       new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
@@ -3305,4 +3306,62 @@ getBootstraps <- function(clones, bootstraps,
     }
   }
   return(clones)
+}
+
+
+#' Exports the phylogentic trees from the airrClone object
+#' 
+#' \code{exportTrees}   Exports phylogenetic trees
+#' @param clones         tibble \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
+#' @param file       The file path and name of where the trees will be saved
+#' @param ...        additional arguments to be passed
+#'  
+#' @export
+exportTrees <- function(clones, file, tree_column = "trees", ...){
+  # check to see if the trees column is there 
+  if(alakazam::checkColumns(clones, tree_column)){
+    ape::write.tree(phy = clones$trees, file = file, ...)
+  } else{
+    stop(paste(tree_column, "not found in the input airrClone object. Please",
+               "specify what column cotains the phylogentic trees."))
+  }
+  
+}
+
+#' Write the sequences used in tree building to a fasta format. If there are more 
+#' than one tree in airrClone output the sequence id will be followed by "|clone_id".
+#' 
+#' \code{writeCloneSequences}   Exports the sequences used in tree building. 
+#' @param clones         tibble \code{airrClone} objects, the output of 
+#'                      \link{formatClones}
+#' @param file       The file path and name of where the sequences will be saved
+#'  
+#' @export
+writeCloneSequences <- function(clones, file){
+  for(i in 1:nrow(clones)){
+    clone_id <- clones$clone_id[i]
+    # grab the germline 
+    if(clones$data[[i]]@phylo_seq == "sequence"){
+      germline <- clones$data[[i]]@germline
+    } else if(clones$data[[i]]@phylo_seq == "hlsequence"){
+      germline <- clones$data[[i]]@hlgermline
+    } else if(clones$data[[i]]@phylo_seq == "lsequence"){
+      germline <- clones$data[[i]]@lgermline
+    }
+    write(paste0(">Germline|", clone_id), file, append = TRUE)
+    write(germline, file, append = TRUE)
+    for(j in 1:nrow(clones$data[[i]]@data)){
+      seq_id <- clones$data[[i]]@data$sequence_id[j]
+      if(clones$data[[i]]@phylo_seq == "sequence"){
+        sequence <- clones$data[[i]]@data$sequence[j]
+      } else if(clones$data[[i]]@phylo_seq == "hlsequence"){
+        sequence <- clones$data[[i]]@data$hlsequence[j]
+      } else if(clones$data[[i]]@phylo_seq == "lsequence"){
+        sequence <- clones$data[[i]]@data$lsequence[j]
+      }
+      write(paste0(">", seq_id, "|", clone_id), file, append = TRUE)
+      write(sequence, file, append = TRUE)
+    }
+  }
 }
