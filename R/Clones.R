@@ -1329,7 +1329,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
     if(dplyr::n_distinct(nchar(hd[[seq]])) > 1 && pad_ends){
       warning(paste("Heavy chains different lengths, padding seq ends for clone",cloneid))
-      hd[[seq]] <- padSeqEnds(hd[[seq]])
+      hd[[seq]] <- alakazam::padSeqEnds(hd[[seq]])
     }
     hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
@@ -1549,5 +1549,3 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones <- dplyr::ungroup(clones)
   clones
 }
-
-
