@@ -220,6 +220,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
 #' @param    node_palette       deprecated, use palette
 #' @param    tip_palette        deprecated, use palette
+#' @param    guide_title        Title of color guide. Defaults to tips vairable if specified.
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -240,7 +241,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     scale=0.01, palette="Dark2", base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
-    tip_palette=NULL, node_palette=NULL){
+    tip_palette=NULL, node_palette=NULL, guide_title=NULL){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
@@ -335,12 +336,21 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
             tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
-            bootstrap_scores=bootstrap_scores))
+            bootstrap_scores=bootstrap_scores, guide_title=guide_title))
         if(!is.null(tips) || nodes){
+            if(!is.null(guide_title)){
+                gt <- guide_title
+            }else{
+                if(!is.null(tips)){
+                    gt <- tips
+                }else{
+                    gt <- "State"
+                }
+            }
             ps  <- lapply(ps,function(x){
                     x <- x + theme(legend.position="right",
                     legend.box.margin=margin(0, -10, 0, 0))+
-                    guides(color=guide_legend(title="State"))
+                    guides(color=guide_legend(title=gt))
                     if(tiptype == "character"){
                         x <- x + scale_color_manual(values=cols)
                     }else{

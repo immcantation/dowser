@@ -21,7 +21,8 @@ plotTrees(
   ambig = "grey",
   bootstrap_scores = FALSE,
   tip_palette = NULL,
-  node_palette = NULL
+  node_palette = NULL,
+  guide_title = NULL
 )
 }
 \arguments{
@@ -63,6 +64,8 @@ determined by sequence with highest divergence}
 \item{tip_palette}{deprecated, use palette}
 
 \item{node_palette}{deprecated, use palette}
+
+\item{guide_title}{Title of color guide. Defaults to tips vairable if specified.}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.

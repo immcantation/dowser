@@ -1016,6 +1016,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     })
   }
   tree <- rerootTree(tree,"Germline",verbose=0)
+  tree$parameters <- fit
   return(tree)
 }
 

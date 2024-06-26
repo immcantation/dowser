@@ -13,6 +13,7 @@ buildRAxML(
   rseed = 28,
   name = "run",
   starting_tree = NULL,
+  data_type = "DNA",
   from_getTrees = FALSE,
   rm_files = TRUE,
   asr = TRUE,
@@ -38,6 +39,8 @@ scaled, unlinked, and linked}
 \item{name}{specifies the name of the output file}
 
 \item{starting_tree}{specifies a user starting tree file name and path in Newick format}
+
+\item{data_type}{Specifies what format your data is in, DNA or AA}
 
 \item{from_getTrees}{A logical that indicates if the desired starting tree is from getTrees and not a newick file}
 
