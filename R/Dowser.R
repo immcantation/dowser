@@ -13,7 +13,6 @@
 #' \code{browseVignettes("dowser")}
 #' 
 #' @name     dowser
-#' @docType  package
 #' @references
 #' \enumerate{
 #'   \item  Hoehn KB, Pybus OG, Kleinstein SH (2022) Phylogenetic analysis of 
@@ -52,5 +51,8 @@
 #'                          summarize summarize_at
 #'                          transmute rename
 #' @importFrom Biostrings   pairwiseAlignment
+#' @importFrom airr		    read_rearrangement
 
 NULL
+
+"_PACKAGE"

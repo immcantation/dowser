@@ -2,7 +2,7 @@
 
 # Write a clone's sequence alignment to a fasta file
 # 
-# \code{writeFasta} write clone sequences as a fasta file
+# \code{cloneToFasta} write clone sequences as a fasta file
 # @param    c            airrClone object
 # @param    fastafile    file to be exported
 # @param    germid       sequence id of germline
@@ -10,7 +10,7 @@
 # @param    empty        don't include real sequence information
 #
 # @return   Name of exported fasta file.
-writeFasta <- function(c, fastafile, germid, trait=NULL, empty=FALSE){
+cloneToFasta <- function(c, fastafile, germid, trait=NULL, empty=FALSE){
   text <- ""
   if(!is.null(trait)){
     c@data$sequence_id <- paste(c@data$sequence_id,c@data[,trait],sep="_")
@@ -58,6 +58,9 @@ writeFasta <- function(c, fastafile, germid, trait=NULL, empty=FALSE){
 #' @export
 readFasta <- function(file){
   f <- readLines(file)
+  if(length(f) == 1){
+    return(NULL)
+  }
   seqs <- list()
   id <- NA
   for(line in f){
@@ -539,7 +542,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
     fastafile <- file.path(outdir,paste0(data[[i]]@clone,".fasta"))
     treefile <- file.path(outdir,paste0(data[[i]]@clone,".tree"))
     germid <- paste0(data[[i]]@clone,"_GERM")
-    writeFasta(data[[i]],fastafile,germid,trait,empty=empty)
+    cloneToFasta(data[[i]],fastafile,germid,trait,empty=empty)
     if(data[[i]]@phylo_seq == "sequence"){
       g <- data[[i]]@germline
     }else if(data[[i]]@phylo_seq == "lsequence"){
