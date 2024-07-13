@@ -856,14 +856,17 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     multi <- names(d[d > 1])
     if(length(multi) > 0){
       warning(paste("columns",paste(multi,collapse=" "),
-                    "contain multiple values per clone, flattening with comma"))
+                    "contain multiple values per clone, setting to character, flattening with comma"))
+      for(col in columns){
+        data[[col]] = as.character(data[[col]])
+      }
     }
     d <- data %>%
-      dplyr::select(!!rlang::sym(clone),columns) %>%
+      dplyr::select(!!rlang::sym(clone),dplyr::all_of(columns)) %>%
       dplyr::group_by(!!rlang::sym(clone)) %>%
       dplyr::summarize(dplyr::across(columns, colpaste))
     
-    m <- match(fclones[[clone]],d[[clone]])
+    m <- match(fclones$clone_id,d[[clone]])
     fclones[,columns] <- d[m,columns]
   }
   
