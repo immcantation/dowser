@@ -15,6 +15,7 @@ buildBeast2Strict(
   nproc = 1,
   log_every = NULL,
   verbose = 1,
+  rerun = NULL,
   burnin = 10,
   tree_prior = c("coalescent-skyline", "coalescent-constant"),
   pop_sizes = 5,
@@ -38,6 +39,8 @@ buildBeast2Strict(
 \item{log_every}{log every X samples, default mcmc_length/10000}
 
 \item{verbose}{if > 0 print run information}
+
+\item{rerun}{clone IDs to re-run}
 
 \item{burnin}{percent of initial tree samples to discard (1-100)}
 

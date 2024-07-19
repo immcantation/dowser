@@ -12,7 +12,8 @@ readBEAST(
   nproc = 1,
   verbose = 1,
   tree_posterior = FALSE,
-  asr = FALSE
+  asr = FALSE,
+  low_ram = FALSE
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ readBEAST(
 \item{verbose}{if > 0 print run information}
 
 \item{tree_posterior}{Store tree posterior distribution? (used for density plot)}
+
+\item{low_ram}{run with less memory (slower)}
 
 \item{time}{name of time column (trait in getTrees)}
 }

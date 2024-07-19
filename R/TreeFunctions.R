@@ -3272,6 +3272,7 @@ getBootstraps <- function(clones, bootstraps,
 #' @param units         time units
 #' @param log_every     log every X samples, default mcmc_length/10000
 #' @param verbose       if > 0 print run information
+#' @param rerun         clone IDs to re-run
 #' @param burnin        percent of initial tree samples to discard (1-100)
 #' @param tree_prior    prior for tree model
 #' @param pop_sizes     number of population sizes for coalescent-skyline prior
@@ -3284,11 +3285,19 @@ getBootstraps <- function(clones, bootstraps,
 #'  
 #' @export
 buildBeast2Strict <- function(data, exec, time, build, mcmc_length = 1000000, dir = ".", 
-                   include_gm = FALSE, nproc = 1, log_every=NULL, verbose=1,
+                   include_gm = FALSE, nproc = 1, log_every=NULL, verbose=1, rerun=NULL,
                    burnin=10, tree_prior = c("coalescent-skyline", "coalescent-constant"),
                    pop_sizes=5, tree_posterior=FALSE, germline_time=0, asr=FALSE, epoch_dates=NULL) {
 
   tree_prior <- match.arg(tree_prior)
+
+  if(!is.null(rerun)){
+    not_found = rerun[!rerun %in% sapply(data, function(x)x@clone)]
+    if(length(not_found) > 0){
+      stop("Clones ", paste(not_found, collapse=","), " not in data")
+    }
+    cat("Re-running clones ", paste(rerun, collapse=","), "\n")
+  }
 
   exec <- path.expand(exec)
   beast_exec <- file.path(exec,"beast")
@@ -3325,6 +3334,11 @@ buildBeast2Strict <- function(data, exec, time, build, mcmc_length = 1000000, di
 
   # write XML files
   xml_filepath <- lapply(data, function(x) {
+    if(!is.null(rerun)){
+      if(!x@clone %in% rerun){
+        return(NA)
+      }
+    }
     if(build == "beast2-strict"){
       writeBeast2StrictXML(x, dir=dir, time=time,
                include_gm = include_gm, mcmc_length = mcmc_length,
@@ -3338,6 +3352,8 @@ buildBeast2Strict <- function(data, exec, time, build, mcmc_length = 1000000, di
                germline_time = germline_time, asr=asr)
     }
   })
+
+  xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
   # Run BEAST on each tree sequentially
   # TODO: option to parallelize by tree?

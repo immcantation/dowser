@@ -17,3 +17,27 @@ vignettes:\cr
         PLoS Computational Biology. https://doi.org/10.1371/journal.pcbi.1009885
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://dowser.readthedocs.io}
+  \item Report bugs at \url{https://bitbucket.org/kleinstein/dowser/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Kenneth Hoehn \email{kenneth.b.hoehn@dartmouth.edu}
+
+Authors:
+\itemize{
+  \item Steven Kleinstein \email{steven.kleinstein@yale.edu} [copyright holder]
+}
+
+Other contributors:
+\itemize{
+  \item Cole Jensen \email{cole.jensen@yale.edu} [contributor]
+  \item Susanna Marquez \email{susanna.marquez@yale.edu} [contributor]
+  \item Jason Vander Heiden \email{jason.vanderheiden@gmail.com} [contributor]
+}
+
+}
