@@ -685,9 +685,12 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     data <- do.call(rbind, data)
     if(nrow(data) != full_nrow){
       n_removed <- full_nrow - nrow(data)
-      warning(paste0("There was ", n_removed, " sequence(s) with an inframe stop codon",
+      warning(paste0("There were ", n_removed, " sequence(s) with an inframe stop codon",
       " and were removed. If you want to keep these sequences use the option filterstop=FALSE."))
     }
+  }
+  if(!clone %in% names(data)){
+    stop(clone," column not found.")
   }
   
   # CGJ 8/10/23

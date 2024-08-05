@@ -1449,6 +1449,7 @@ buildClonalGermline <- function(receptors, references,
 #' @param data          AIRR-table containing sequences from one clone
 #' @param references    Full list of reference segments, see \link{readIMGT}
 #' @param locus         Name of the locus column in the input data
+#' @param trim_n        Remove trailing Ns from \code{seq} column?
 #' @param nproc         Number of cores to use
 #' @param na.rm         Remove clones with failed germline reconstruction?
 #' @param seq           Column name for sequence alignment
@@ -1489,7 +1490,7 @@ buildClonalGermline <- function(receptors, references,
 #' imgt <- readIMGT(vdj_dir)
 #' db <- createGermlines(ExampleAirr[1,], imgt)
 #' @export
-createGermlines <- function(data, references, locus="locus",
+createGermlines <- function(data, references, locus="locus", trim_n=FALSE,
                             nproc=1, seq="sequence_alignment", v_call="v_call", d_call="d_call", 
                             j_call="j_call", amino_acid=FALSE,  id="sequence_id", clone="clone_id",
                             v_germ_start="v_germline_start", v_germ_end="v_germline_end", v_germ_length="v_germline_length",
@@ -1532,7 +1533,7 @@ createGermlines <- function(data, references, locus="locus",
   if (has_dup_ids){
     stop("Sequence IDs are not unique!")
   }
-  
+
   if(!v_germ_length %in% names(data)){
     data[[v_germ_length]] <- data[[v_germ_end]] - data[[v_germ_start]] + 1
   }
@@ -1562,6 +1563,25 @@ createGermlines <- function(data, references, locus="locus",
      sum(is.na(data[[j_germ_length]])) > 0){
     stop("Missing values in v_germ_length or j_germ_length")
   }
+
+
+  # check if sequence_alignments contain trailing Ns and trim if desired
+  # trailing Ns frequently cause length errors downstream
+  # KBH 8/5/24
+  trailing_ns <- grepl("N+$", data[[seq]])
+  if(sum(trailing_ns) > 0){
+    trailing_clones <- dplyr::n_distinct(data[trailing_ns,]$clone_id)
+    if(!trim_n){
+      warning("Trailing Ns in ", sum(trailing_ns)," sequences in ",
+       trailing_clones, 
+       " clones, consider setting trim_n=TRUE if germline reconstruction fails")
+    }else{
+      data[[seq]] <- gsub("N+$", "", data[[seq]])
+      cat("Removed trailing Ns from", sum(trailing_ns),"sequences in",
+       trailing_clones, "clones\n")
+    }
+  }
+
   unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
   data[['tmp_row_id']] <- 1:nrow(data)
   complete <- parallel::mclapply(1:nrow(unique_clones), function(x){

@@ -8,6 +8,7 @@ createGermlines(
   data,
   references,
   locus = "locus",
+  trim_n = FALSE,
   nproc = 1,
   seq = "sequence_alignment",
   v_call = "v_call",
@@ -39,6 +40,8 @@ createGermlines(
 \item{references}{Full list of reference segments, see \link{readIMGT}}
 
 \item{locus}{Name of the locus column in the input data}
+
+\item{trim_n}{Remove trailing Ns from \code{seq} column?}
 
 \item{nproc}{Number of cores to use}
 
