@@ -8,7 +8,8 @@ createGermlines(
   data,
   references,
   locus = "locus",
-  trim_n = FALSE,
+  trim_lengths = FALSE,
+  force_trim = FALSE,
   nproc = 1,
   seq = "sequence_alignment",
   v_call = "v_call",
@@ -41,7 +42,9 @@ createGermlines(
 
 \item{locus}{Name of the locus column in the input data}
 
-\item{trim_n}{Remove trailing Ns from \code{seq} column?}
+\item{trim_lengths}{Remove trailing Ns from \code{seq} column if length different from germine?}
+
+\item{force_trim}{Remove all characters from sequence if different from germline? (not recommended)}
 
 \item{nproc}{Number of cores to use}
 
