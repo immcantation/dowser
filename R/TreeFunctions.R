@@ -3518,6 +3518,12 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1,
 
     if(tree_posterior){
       treesfile <- file.path(dir, paste0(data[[i]]@clone, ".trees"))
+      l <- readLines(treesfile, warn=FALSE)
+      if(!grepl("End;",l[length(l)])){
+        l[length(l) + 1] = "End;"
+        warning("Adding End; to ",treesfile)
+        writeLines(l, con=treesfile)
+      }
       phylos <- ape::read.nexus(treesfile)
       burn <- floor(length(phylos)*burnin/100)
       phylos <- phylos[(burn+1):length(phylos)]
