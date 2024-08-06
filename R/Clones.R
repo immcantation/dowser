@@ -1333,10 +1333,6 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
     ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
     ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
-    if(dplyr::n_distinct(nchar(hd[[seq]])) > 1 && pad_ends){
-      warning(paste("Heavy chains different lengths, padding seq ends for clone",cloneid))
-      hd[[seq]] <- alakazam::padSeqEnds(hd[[seq]])
-    }
     hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){
@@ -1423,8 +1419,15 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     comb[[subgroup]] <- as.integer(comb[[subgroup]])
     if(nrow(ld) != 0 & nrow(hd_bulk) != 0){
       for(sequence in 1:nrow(hd_bulk)){
-        rating <- sapply(hd_sc[[seq]], function(x)
-          alakazam::seqDist(x, hd_bulk[[seq]][sequence]))
+        # CGJ 8/6/24 -- updated to do the padding on the temp sequences
+        rating <- unlist(lapply(1:nrow(hd_sc), function(x){
+          temp <- rbind(hd_sc[x,], hd_bulk[sequence,])
+          if(nchar(temp[[seq]][1] != nchar(temp[[seq]][2]))){
+            temp <- alakazam::padSeqEnds(temp[[seq]])
+          }
+          value <- alakazam::seqDist(temp[1], temp[2])
+          return(value)
+        }))
         rating <- as.numeric(rating)
         # row number of heavy chain only df with lowest seq dist
         proper_index <- which(rating == min(rating))

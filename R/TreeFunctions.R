@@ -1420,7 +1420,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   
   command <- paste("--model", model, "--seed", rseed, "-msa", 
                    input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
-                   "--force msa", "--data-type", data_type)
+                   "--data-type", data_type)
   if(!is.null(starting_tree)){
     if(from_getTrees){
       ape::write.tree(starting_tree, file.path(dir, paste0(name, "_og_starting_tree.tree")))
@@ -1468,7 +1468,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     ape::write.tree(tree, starting_tree)
     command <- paste("--model", model, "--seed", rseed, "-msa", 
                      input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
-                     "--force msa --tree", starting_tree, "--ancestral", "data-type", data_type)
+                     "--tree", starting_tree, "--ancestral", "data-type", data_type)
     if(!is.null(partition)){
       old_command <- strsplit(command, "--seed")[[1]][2]
       new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
