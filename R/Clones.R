@@ -118,7 +118,7 @@ makeAirrClone <-
     
     if(chain=="HL"){
       check <- alakazam::checkColumns(data, c(cell,locus))
-      if (check != TRUE) { stop(check) }
+      if (!check) { stop(check) }
       if(is.null(heavy)){
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "heavy chain loci ID must be specified if combining loci!"))
@@ -533,6 +533,8 @@ cleanAlignment <- function(clone){
   seq <- clone@phylo_seq
   if(seq == "hlsequence"){
     g <- strsplit(clone@hlgermline[1],split="")[[1]]
+    lg <- strsplit(clone@lgermline[1],split="")[[1]]
+    hg <- strsplit(clone@germline[1],split="")[[1]]
   }else if(seq == "sequence"){
     g <- strsplit(clone@germline[1],split="")[[1]]
   }else if(seq == "lsequence"){
@@ -540,17 +542,50 @@ cleanAlignment <- function(clone){
   }else{
     stop(paste(seq, "not a recognized sequence type"))
   }
-  sk <- strsplit(clone@data[[seq]],split="")
-  sites <- seq(1,length(g)-3,by=3)
-  ns <- c()
-  for(i in sites){ #for each codon site, tally number of NNN codons
-    l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
-    ns <- c(ns,rep(sum(l),length=3))
+  if(seq == "hlsequence"){
+    sk <- strsplit(clone@data[[seq]],split="")
+    sites <- seq(1,length(g)-3,by=3)
+    sk_h <- strsplit(clone@data$sequence,split="")
+    sk_l <- strsplit(clone@data$lsequence,split="")
+    h_sites <- seq(1,length(hg)-3,by=3)
+    l_sites <- seq(1,length(lg)-3,by=3)
+    ns <- c()
+    for(i in sites){ #for each codon site, tally number of NNN codons
+      l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
+      ns <- c(ns,rep(sum(l),length=3))
+    }
+    hns <- c()
+    for(i in h_sites){ #for each codon site, tally number of NNN codons
+      l <- unlist(lapply(sk_h,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
+      hns <- c(hns,rep(sum(l),length=3))
+    }
+    lns <- c()
+    for(i in l_sites){ #for each codon site, tally number of NNN codons
+      l <- unlist(lapply(sk_l,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
+      lns <- c(lns,rep(sum(l),length=3))
+    }
+  } else{
+    sk <- strsplit(clone@data[[seq]],split="")
+    sites <- seq(1,length(g)-3,by=3)
+    ns <- c()
+    for(i in sites){ #for each codon site, tally number of NNN codons
+      l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
+      ns <- c(ns,rep(sum(l),length=3))
+    }
   }
+
   # remove uninformative sites from germline and data
   informative <- ns != length(sk)
   l <- lapply(sk,function(x) x=paste(x[informative],collapse=""))
   gm <- paste(g[informative],collapse="")
+  if(seq == "hlsequence"){
+    hinformative <- hns != length(sk_h)
+    hl <- lapply(sk_h,function(x) x=paste(x[hinformative],collapse=""))
+    hgm <- paste(hg[hinformative],collapse="")
+    linformative <- lns != length(sk_l)
+    ll <- lapply(sk_l,function(x) x=paste(x[linformative],collapse=""))
+    lgm <- paste(lg[linformative],collapse="")
+  }
   
   if(.hasSlot(clone,"locus")){
     clone@locus <- clone@locus[informative]
@@ -563,6 +598,8 @@ cleanAlignment <- function(clone){
   }
   if(seq == "hlsequence"){
     clone@hlgermline=gm
+    clone@lgermline=lgm
+    clone@germline=hgm
   }else if(seq == "sequence"){
     clone@germline=gm
   }else if(seq == "lsequence"){

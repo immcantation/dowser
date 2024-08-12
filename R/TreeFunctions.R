@@ -1840,7 +1840,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' @param    trait      trait to use for parsimony models (required if
 #'                      \code{igphyml} specified)
 #' @param    build      program to use for tree building (pratchet, pml,
-#'                      dnapars, dnaml, igphyml)
+#'                      dnapars, dnaml, igphyml, raxml)
 #' @param    exec       location of desired phylogenetic executable
 #' @param    igphyml    optional location of igphyml executible for parsimony
 #' @param    id         unique identifer for this analysis (required if
