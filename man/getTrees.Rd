@@ -39,7 +39,7 @@ getTrees(
 \item{modelfile}{file specifying parsimony model to use}
 
 \item{build}{program to use for tree building (pratchet, pml,
-dnapars, dnaml, igphyml)}
+dnapars, dnaml, igphyml, raxml)}
 
 \item{exec}{location of desired phylogenetic executable}
 

@@ -600,6 +600,8 @@ cleanAlignment <- function(clone){
     clone@hlgermline=gm
     clone@lgermline=lgm
     clone@germline=hgm
+    clone@data$lsequence=unlist(ll)
+    clone@data$sequence=unlist(hl)
   }else if(seq == "sequence"){
     clone@germline=gm
   }else if(seq == "lsequence"){
