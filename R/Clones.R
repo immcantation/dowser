@@ -1386,6 +1386,12 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       return(hd)
     }
     ltemp <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
+    # CGJ 9/17/24
+    # make the gene level partiions be only gene level -- no allele
+    ltemp$temp_v <- ltemp[[v_call]]
+    ltemp$temp_j <- ltemp[[j_call]]
+    ltemp[[v_call]] <- alakazam::getGene(ltemp[[v_call]])
+    ltemp[[j_call]] <- alakazam::getGene(ltemp[[j_call]])
     ltemp[[clone]] <- -1
     ld <- dplyr::tibble()
     lclone <- 1
@@ -1439,6 +1445,13 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
                   collapse=",")
         }
       }
+      # CGJ 9/17/24
+      # update the include df to have proper v and j call and remove their temp cols
+      include[[v_call]] <- include$temp_v
+      include[[j_call]] <- include$temp_j
+      rm_indx <- which(colnames(include) %in% c("temp_v", "temp_j"))
+      include <- include[, -rm_indx]
+      
       ld <- dplyr::bind_rows(ld,include)
       ltemp <- dplyr::filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
       lclone <- lclone + 1
