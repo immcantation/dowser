@@ -1544,7 +1544,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
   },mc.cores=nproc)
   paired <- dplyr::bind_rows(paired)
   # remove the junction length from the vj_gene
-  paired$vj_gene <- gsub("\\;.", "", paired$vj_gene)
+  paired$vj_gene <- gsub("\\;.*", "", paired$vj_gene)
   return(paired)
 }
 
