@@ -1420,7 +1420,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   
   command <- paste("--model", model, "--seed", rseed, "-msa", 
                    input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
-                   "--data-type", data_type)
+                   "--data-type", data_type, "--force msa")
   if(!is.null(starting_tree)){
     if(from_getTrees){
       ape::write.tree(starting_tree, file.path(dir, paste0(name, "_og_starting_tree.tree")))
@@ -1468,7 +1468,8 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     ape::write.tree(tree, starting_tree)
     command <- paste("--model", model, "--seed", rseed, "-msa", 
                      input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
-                     "--tree", starting_tree, "--ancestral", "data-type", data_type)
+                     "--tree", starting_tree, "--ancestral", "data-type", data_type, 
+                     "--force msa")
     if(!is.null(partition)){
       old_command <- strsplit(command, "--seed")[[1]][2]
       new_model <- paste("--model", file.path(dir, paste0(name, "_partition.txt")), "--seed")
@@ -1543,6 +1544,10 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
       } else{
         # use the max node variable to find the right node -- update iteractivly 
         asr_seq <- strsplit(asr_seqs[max_node], "\t")[[1]][2]
+        # CGJ 9/19/24 # thanks James
+        # sometimes with --force msa where raxml-ng would normally remove stuff it leaves a "-"
+        # replace them with Ns
+        asr_seq <- gsub("-", "N", asr_seq)
         max_node <- max_node - 1
       }
       ASR[[i]] <- asr_seq
