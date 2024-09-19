@@ -60,7 +60,7 @@ Suggests:
     rmarkdown,
     testthat,
     pwalign
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Collate:
     'Data.R'
     'Dowser.R'
