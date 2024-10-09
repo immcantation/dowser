@@ -1344,6 +1344,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @param    asr        computes the marginal ancestral states of a tree
 #' @param    rep        Which repetition of the tree building is currently being run. Mainly for getBootstraps. 
 #' @param    dir        Where the output files are to be made. 
+#' @param    n_starts   Number of max parsimony starting trees (default is 10 pars + 10 random)
 #' @param    ...        Additional arguments (not currently used)
 #'
 #'
@@ -1352,7 +1353,8 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @export
 buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = NULL, 
                        rseed = 28, name = "run", starting_tree = NULL, data_type = "DNA",
-                       from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, ...){
+                       from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL,
+                       n_starts = NULL, ...){
   exec <- path.expand(exec)
   if(file.access(exec, mode=1) == -1) {
     stop("The file ", exec, " cannot be executed.")
@@ -1421,6 +1423,9 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   command <- paste("--model", model, "--seed", rseed, "-msa", 
                    input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
                    "--data-type", data_type, "--force msa")
+  if(!is.null(n_starts)){
+    command <- paste0(command, " --tree pars{",n_starts,"}")
+  }
   if(!is.null(starting_tree)){
     if(from_getTrees){
       ape::write.tree(starting_tree, file.path(dir, paste0(name, "_og_starting_tree.tree")))
@@ -1523,7 +1528,14 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
       stop("Internal node error")
     }
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
-    
+
+    #KBH 10/9/24 corrected for ASR matching - please check below
+    asr_seqs <- strsplit(asr_seqs, split="\t")
+    seqs <- sapply(asr_seqs, function(x)x[2])
+    names <- sapply(asr_seqs, function(x)x[1])
+    asr_seqs <- seqs
+    names(asr_seqs) <- names
+     
     ASR <- list()
     for(i in 1:nnodes){
       if(i <= length(tree$tip.label)){
@@ -1542,16 +1554,23 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
         }
         names(asr_seq) <- seq_id
       } else{
-        # use the max node variable to find the right node -- update iteractivly 
-        asr_seq <- strsplit(asr_seqs[max_node], "\t")[[1]][2]
-        # CGJ 9/19/24 # thanks James
-        # sometimes with --force msa where raxml-ng would normally remove stuff it leaves a "-"
-        # replace them with Ns
+        # KBH 10/9/24
+        # I don't understand the logic below. Nodes seemingly should match based on node.label
+        #
+        # # use the max node variable to find the right node -- update iteractivly 
+        # asr_seq <- strsplit(asr_seqs[max_node], "\t")[[1]][2]
+        # # CGJ 9/19/24 # thanks James
+        # # sometimes with --force msa where raxml-ng would normally remove stuff it leaves a "-"
+        # # replace them with Ns
+        # asr_seq <- gsub("-", "N", asr_seq)
+        # max_node <- max_node - 1
+        label <- tree$node.label[i - length(tree$tip.label)]
+        asr_seq <- asr_seqs[label]
         asr_seq <- gsub("-", "N", asr_seq)
-        max_node <- max_node - 1
       }
       ASR[[i]] <- asr_seq
     }
+
     
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]

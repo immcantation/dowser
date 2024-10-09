@@ -19,6 +19,7 @@ buildRAxML(
   asr = TRUE,
   rep = 1,
   dir = NULL,
+  n_starts = NULL,
   ...
 )
 }
@@ -51,6 +52,8 @@ scaled, unlinked, and linked}
 \item{rep}{Which repetition of the tree building is currently being run. Mainly for getBootstraps.}
 
 \item{dir}{Where the output files are to be made.}
+
+\item{n_starts}{Number of max parsimony starting trees (default is 10 pars + 10 random)}
 
 \item{...}{Additional arguments (not currently used)}
 }
