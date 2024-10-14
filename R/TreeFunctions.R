@@ -1522,11 +1522,11 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
     asr_seqs <- readLines(file.path(dir, paste0(name, "_asr.raxml.ancestralStates")))
     # find the max node 
-    max_node <- strsplit(asr_seqs, "Node")
-    max_node <- length(max_node)
-    if(nnodes != length(tree$tip.label) + max_node){
-      stop("Internal node error")
-    }
+    # max_node <- strsplit(asr_seqs, "Node")
+    # max_node <- length(max_node)
+    # if(nnodes != length(tree$tip.label) + max_node){
+    #   stop("Internal node error")
+    # }
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
 
     #KBH 10/9/24 corrected for ASR matching - please check below
@@ -1535,7 +1535,16 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     names <- sapply(asr_seqs, function(x)x[1])
     asr_seqs <- seqs
     names(asr_seqs) <- names
-     
+    
+    # CGJ 10/14/24 add in the internal germline node as "" to node.label and what not
+    tree$node.label <- unlist(lapply(0:length(tree$node.label), function(x){
+      if(x == 0){
+        return("")
+      } else{ 
+        value <- tree$node.label[x]
+      }
+    }))
+    
     ASR <- list()
     for(i in 1:nnodes){
       if(i <= length(tree$tip.label)){
@@ -1554,19 +1563,19 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
         }
         names(asr_seq) <- seq_id
       } else{
-        # KBH 10/9/24
-        # I don't understand the logic below. Nodes seemingly should match based on node.label
-        #
-        # # use the max node variable to find the right node -- update iteractivly 
-        # asr_seq <- strsplit(asr_seqs[max_node], "\t")[[1]][2]
-        # # CGJ 9/19/24 # thanks James
-        # # sometimes with --force msa where raxml-ng would normally remove stuff it leaves a "-"
-        # # replace them with Ns
-        # asr_seq <- gsub("-", "N", asr_seq)
-        # max_node <- max_node - 1
         label <- tree$node.label[i - length(tree$tip.label)]
-        asr_seq <- asr_seqs[label]
-        asr_seq <- gsub("-", "N", asr_seq)
+        if(label == ""){
+          if(clone@phylo_seq == "sequence"){
+            asr_seq <- clone@germline
+          } else if(clone@phylo_seq == "hlsequence"){
+            asr_seq <- clone@hlgermline
+          } else{
+            asr_seq <- clone@lgermline
+          }
+        } else{
+          asr_seq <- asr_seqs[label]
+          asr_seq <- gsub("-", "N", asr_seq)
+        }
       }
       ASR[[i]] <- asr_seq
     }
