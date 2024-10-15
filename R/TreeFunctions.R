@@ -1491,7 +1491,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     })
     
     # check that topology is the same
-    asr_tree <- ape::read.tree(file.path(dir, paste0(name, "_asr.raxml.ancestralTree")))
+    asr_tree <- ape::read.tree(file.path(dir, paste0(name, "_asr.raxml.ancestralTree"))) # is not rooted
     difference_check <- phangorn::RF.dist(asr_tree, tree)
     if(difference_check > 0){
       stop("ASR failed. Retry")
@@ -1522,11 +1522,11 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
     asr_seqs <- readLines(file.path(dir, paste0(name, "_asr.raxml.ancestralStates")))
     # find the max node 
-    # max_node <- strsplit(asr_seqs, "Node")
-    # max_node <- length(max_node)
-    # if(nnodes != length(tree$tip.label) + max_node){
-    #   stop("Internal node error")
-    # }
+    max_node <- strsplit(asr_seqs, "Node")
+    max_node <- length(max_node)
+    if(nnodes != length(tree$tip.label) + max_node){
+      stop("Internal node error")
+    }
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
 
     #KBH 10/9/24 corrected for ASR matching - please check below
@@ -1535,15 +1535,6 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     names <- sapply(asr_seqs, function(x)x[1])
     asr_seqs <- seqs
     names(asr_seqs) <- names
-    
-    # CGJ 10/14/24 add in the internal germline node as "" to node.label and what not
-    tree$node.label <- unlist(lapply(0:length(tree$node.label), function(x){
-      if(x == 0){
-        return("")
-      } else{ 
-        value <- tree$node.label[x]
-      }
-    }))
     
     ASR <- list()
     for(i in 1:nnodes){
@@ -1564,29 +1555,34 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
         names(asr_seq) <- seq_id
       } else{
         label <- tree$node.label[i - length(tree$tip.label)]
-        if(label == ""){
-          if(clone@phylo_seq == "sequence"){
-            asr_seq <- clone@germline
-          } else if(clone@phylo_seq == "hlsequence"){
-            asr_seq <- clone@hlgermline
-          } else{
-            asr_seq <- clone@lgermline
-          }
-        } else{
-          asr_seq <- asr_seqs[label]
-          asr_seq <- gsub("-", "N", asr_seq)
-        }
+        asr_seq <- asr_seqs[label]
+        asr_seq <- gsub("-", "N", asr_seq)
       }
       ASR[[i]] <- asr_seq
     }
 
-    
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]
       tree$nodes[[x]]
     })
     
     tree <- rerootTree(tree, "Germline", verbose=0)
+    
+    # CGJ 10/15/24 
+    # find the indx of the 'Germline' nodes
+    indx <- unlist(lapply(1:length(tree$nodes), function(x){
+      if(names(tree$nodes[[x]]$sequence) == "Germline"){
+        return(x)
+      }
+    }))
+    if(length(indx > 1)){
+      # rename the second one to "UCA"
+      names(tree$nodes[[indx[2]]]$sequence) <- "UCA"
+    }
+    # update the node labels to reflect
+    tree$node.label <- c("UCA", tree$node.label)
+    
+    
   }else {
     tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
     tree$germid <- paste0(clone@clone, "_GERM")
