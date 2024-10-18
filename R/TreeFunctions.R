@@ -2407,6 +2407,108 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
   return(seqs)
 }
 
+#' Return all tip and internal node sequences
+#' 
+#' \code{getNodeSeq} Sequence retrieval function.
+#' @param    data    a tibble of \code{airrClone} objects with reconstructed trees, 
+#'                   the output of \link{getTrees}
+#' @param    imgt_gaps    include a column of gapped sequences?
+#' @return   A tibble with sequence information for each tip and internal node
+#' of a set of trees.
+#'
+#' @details
+#' Column names:
+#' clone_id = clone id 
+#' node_id = name of node, either the sequence name if a tip or Node<number> if internal node
+#' node = node number in tree. Tips are nodes 1:<number of tips>.
+#' locus = locus of sequence
+#' sequence = ungapped sequence, either observed for tips or reconstructed for internal nodes
+#' sequence_alignment = sequence with IMGT gaps (optional)
+#'  
+#' @seealso \link{getTrees} \link{getNodeSeq}
+#' @export
+getAllSeqs <- function(data, imgt_gaps=TRUE){
+  if(!"trees" %in% names(data)){
+    stop("No trees found")
+  }
+  results <- dplyr::tibble()
+  for(i in 1:nrow(data)){
+    tree <- data$trees[[i]]
+    nodes <- length(tree$nodes)
+    tips <- length(tree$tip.label)
+    seqs <- lapply(1:nodes, function(x){
+      getNodeSeq(data, clone=data$clone_id[i], node=x, gaps=FALSE)
+    })
+    if(imgt_gaps){
+      seqs_alignment <- lapply(1:nodes, function(x){
+        getNodeSeq(data, clone=data$clone_id[i], node=x, gaps=TRUE)
+      })
+    }
+    names(seqs) = paste0("Node",1:nodes)
+    names(seqs)[1:tips] <- tree$tip.label
+    loci <- unique(unlist(lapply(seqs, function(x)names(x))))
+    for(locus in loci){
+      sequence <- sapply(seqs, function(x)x[[locus]])
+      names(sequence) <- NULL
+      temp <- dplyr::tibble(clone_id=data$clone_id[i], 
+        node_id=names(seqs), node=1:length(seqs), locus = locus, sequence=sequence)
+      if(imgt_gaps){
+        sequence_alignment <- sapply(seqs_alignment, function(x)x[[locus]])
+        names(sequence_alignment) <- NULL
+        temp$sequence_alignment <- sequence_alignment
+      }
+      results <- dplyr::bind_rows(results, temp)
+    }
+  }
+  results 
+}
+
+#' Write a fasta file of sequences
+#' \code{readFasta} reads a fasta file
+#' @param    df        dataframe of sequences
+#' @param    id        Column name of sequence ids
+#' @param    seq       Column name of sequences
+#' @param    file      FASTA file for output
+#' @param    imgt_gaps Keep IMGT gaps if present?
+#' @param    columns   vector of column names to append to sequence id
+#'
+#' @return   File of FASTA formatted sequences
+#' @export
+dfToFasta <- function(df, file, id="sequence_id", seq="sequence",
+  imgt_gaps=FALSE, columns=NULL){
+  if(!"data.frame" %in% class(df)){
+    stop("df must be a data.frame or tibble")
+  }
+  if(!id %in% names(df)){
+    stop(id, " column not found in df")
+  }
+  if(!seq %in% names(df)){
+    stop(seq, " column not found in df")
+  }
+
+  if(!imgt_gaps){
+    seqs <- gsub("\\.","",df[[seq]])
+  }else{
+    seqs <- df[[seq]]
+  }
+
+  if(is.null(columns)){
+    ids <- df[[id]]
+  }else{
+    if(sum(!columns %in% names(df)) > 0){
+      nf <- columns[!columns %in% names(df)]
+      stop(paste(nf, collapse=","), " not found in df")
+    }
+    ids <- df[[id]]
+    for(column in columns){
+      values <- paste0("|", column, "=", df[[column]])
+      ids <- paste0(ids, values)
+    }
+  }
+  lines <- paste0(">", ids, "\n", seqs)
+  writeLines(lines, con=file)
+}
+
 #' Deprecated! Use getNodeSeq
 #' 
 #' \code{getSeq} Sequence retrieval function.

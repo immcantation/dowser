@@ -61,7 +61,9 @@ nav:
     - topics/scaleBranches.md
     - topics/rerootTree.md
     #- 'Intermediate sequence functions':
+    - topics/getAllSeqs.md
     - topics/getNodeSeq.md
+    - topics/dfToFasta.md
     - topics/getSubTaxa.md
     #- 'Discrete trait analysis functions':
     - topics/findSwitches.md

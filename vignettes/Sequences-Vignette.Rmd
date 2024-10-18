@@ -35,6 +35,10 @@ First, collapse internal nodes with identical sequences using the `collapesNodes
 
 To obtain the IMGT-gapped sequence for each reconstructed node, specify the clone ID and node number in the `getNodeSeq` function.
 
+To obtain all observed and reconstructed sequences for all clones, use the `getAllSeqs` function.
+
+You can  save the output of `getAllSeqs` as a fasta file using the `dfToFasta` function.
+
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
 library(dowser)
 
@@ -51,5 +55,21 @@ plots[[1]]
 sequence = getNodeSeq(trees, node=50, clone=3128)
 
 print(sequence)
+
+# Get all sequences as a data frame
+all_sequences = getAllSeqs(trees)
+
+head(all_sequences)
+
+```
+
+## Saving sequences to a file
+
+The `dfToFasta` function can be used to save a dataframe of sequences as a fasta file:
+
+```{r, eval=FALSE, warning=FALSE, message=FALSE}
+
+# Save all sequences as a fasta file
+dfToFasta(all_sequences, file="all_sequences.fasta", id="node_id", columns=c("clone_id","locus"))
 
 ```
