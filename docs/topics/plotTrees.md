@@ -26,7 +26,8 @@ common_scale = FALSE,
 ambig = "grey",
 bootstrap_scores = FALSE,
 tip_palette = NULL,
-node_palette = NULL
+node_palette = NULL,
+guide_title = NULL
 )
 ```
 
@@ -88,6 +89,9 @@ tip_palette
 
 node_palette
 :   deprecated, use palette
+
+guide_title
+:   Title of color guide. Defaults to tips vairable if specified.
 
 
 

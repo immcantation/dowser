@@ -27,6 +27,19 @@ bibentry(bibtype = "Article",
          doi = "10.7554/eLife.70873")
 
 bibentry(bibtype = "Article",
+        style   = "citation",
+        header  = "If you construct [paired heavy and light chain trees](vignettes/Resolve-Light-Chains-Vignette.md), please also cite",
+        title   = "Inferring B Cell Phylogenies from Paired H and L Chain BCR Sequences with Dowser.",
+        author  = c(person("Cole G.", "Jensen"),
+                    person("Jacob A.", "Sumner"),
+                    person("Steven H.", "Kleinstein"),
+                    person("Kenneth B.", "Hoehn")),
+        year    = 2024,
+        journal = "The Journal of Immunology",
+        url = "https://journals.aai.org/jimmunol/article/212/10/1579/266795/Inferring-B-Cell-Phylogenies-from-Paired-H-and-L",
+        doi = "10.4049/jimmunol.2300851")
+
+bibentry(bibtype = "Article",
          style   = "citation",
          header  = "If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for building trees please also cite",
          title   = "Repertoire-wide phylogenetic models of B cell molecular evolution reveal evolutionary signatures of aging and vaccination.",

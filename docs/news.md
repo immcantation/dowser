@@ -1,5 +1,12 @@
 # Release Notes
 
+Version 2.3 October 18, 2024
+-------------------------------------------------------------------------------
+
++ Fixed bugs in and added features to buildRAxML
++ Fixed bugs in resolveLightChains
++ Added trimming option to createGermlines
+
 Version 2.2.1 May 23, 2024
 -------------------------------------------------------------------------------
 
@@ -25,7 +32,7 @@ Version 2.0.1: October 25, 2023
 -------------------------------------------------------------------------------
 
 + Fixed bugs in buildRAxML and getTrees
-+ Added an option to formatClones to consider light chain traits  
++ Added an option to formatClones to consider light chain traits
 
 Version 2.0.0: September 8, 2023
 -------------------------------------------------------------------------------

@@ -18,11 +18,13 @@ partition = NULL,
 rseed = 28,
 name = "run",
 starting_tree = NULL,
+data_type = "DNA",
 from_getTrees = FALSE,
 rm_files = TRUE,
 asr = TRUE,
 rep = 1,
 dir = NULL,
+n_starts = NULL,
 ...
 )
 ```
@@ -55,6 +57,9 @@ name
 starting_tree
 :   specifies a user starting tree file name and path in Newick format
 
+data_type
+:   Specifies what format your data is in, DNA or AA
+
 from_getTrees
 :   A logical that indicates if the desired starting tree is from getTrees and not a newick file
 
@@ -69,6 +74,9 @@ rep
 
 dir
 :   Where the output files are to be made.
+
+n_starts
+:   Number of max parsimony starting trees (default is 10 pars + 10 random)
 
 ...
 :   Additional arguments (not currently used)

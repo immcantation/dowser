@@ -52,8 +52,3 @@ Other contributors:
 +  Cole Jensen [cole.jensen@yale.edu](cole.jensen@yale.edu) [contributor]
 +  Susanna Marquez [susanna.marquez@yale.edu](susanna.marquez@yale.edu) [contributor]
 +  Jason Vander Heiden [jason.vanderheiden@gmail.com](jason.vanderheiden@gmail.com) [contributor]
-
-
-
-
-

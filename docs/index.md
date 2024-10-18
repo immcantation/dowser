@@ -34,7 +34,7 @@ or use the [issue tracker](https://bitbucket.org/kleinstein/dowser/issues?status
 ## Dependencies
 
 **Depends:** ggplot2  
-**Imports:** alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
+**Imports:** airr, alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
 **Suggests:** knitr, rmarkdown, testthat, pwalign
 
 
@@ -65,6 +65,15 @@ function for measurable evolution, please also cite
   following influenza vaccination are measurably evolving.” _eLife_.
   doi:10.7554/eLife.70873 <https://doi.org/10.7554/eLife.70873>,
   <https://elifesciences.org/articles/70873>.
+
+If you construct [paired heavy and light chain
+trees](vignettes/Resolve-Light-Chains-Vignette.md), please also cite
+
+  Jensen C, Sumner J, Kleinstein S, Hoehn K (2024). “Inferring B Cell
+  Phylogenies from Paired H and L Chain BCR Sequences with Dowser.”
+  _The Journal of Immunology_. doi:10.4049/jimmunol.2300851
+  <https://doi.org/10.4049/jimmunol.2300851>,
+  <https://journals.aai.org/jimmunol/article/212/10/1579/266795/Inferring-B-Cell-Phylogenies-from-Paired-H-and-L>.
 
 If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for
 building trees please also cite

@@ -3317,14 +3317,15 @@ getBootstraps <- function(clones, bootstraps,
 #' \code{exportTrees}   Exports phylogenetic trees
 #' @param clones         tibble \code{airrClone} objects, the output of 
 #'                      \link{formatClones}
-#' @param file       The file path and name of where the trees will be saved
-#' @param ...        additional arguments to be passed
+#' @param filepath      The file path for where the trees will be saved
+#' @param tree_column   The name of the column that contains the trees
+#' @param ...           additional arguments to be passed
 #'  
 #' @export
-exportTrees <- function(clones, file, tree_column = "trees", ...){
+exportTrees <- function(clones, filepath, tree_column = "trees", ...){
   # check to see if the trees column is there 
   if(alakazam::checkColumns(clones, tree_column)){
-    ape::write.tree(phy = clones$trees, file = file, ...)
+    ape::write.tree(phy = clones$trees, file = filepath, ...)
   } else{
     stop(paste(tree_column, "not found in the input airrClone object. Please",
                "specify what column cotains the phylogentic trees."))

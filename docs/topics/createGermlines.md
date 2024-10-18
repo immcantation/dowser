@@ -13,6 +13,8 @@ createGermlines(
 data,
 references,
 locus = "locus",
+trim_lengths = FALSE,
+force_trim = FALSE,
 nproc = 1,
 seq = "sequence_alignment",
 v_call = "v_call",
@@ -50,6 +52,12 @@ references
 
 locus
 :   Name of the locus column in the input data
+
+trim_lengths
+:   Remove trailing Ns from `seq` column if length different from germine?
+
+force_trim
+:   Remove all characters from sequence if different from germline? (not recommended)
 
 nproc
 :   Number of cores to use

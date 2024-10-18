@@ -4,13 +4,15 @@
 \alias{exportTrees}
 \title{Exports the phylogentic trees from the airrClone object}
 \usage{
-exportTrees(clones, file, tree_column = "trees", ...)
+exportTrees(clones, filepath, tree_column = "trees", ...)
 }
 \arguments{
 \item{clones}{tibble \code{airrClone} objects, the output of 
 \link{formatClones}}
 
-\item{file}{The file path and name of where the trees will be saved}
+\item{filepath}{The file path for where the trees will be saved}
+
+\item{tree_column}{The name of the column that contains the trees}
 
 \item{...}{additional arguments to be passed}
 }

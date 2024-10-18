@@ -53,7 +53,7 @@ modelfile
 
 build
 :   program to use for tree building (pratchet, pml,
-dnapars, dnaml, igphyml)
+dnapars, dnaml, igphyml, raxml)
 
 exec
 :   location of desired phylogenetic executable

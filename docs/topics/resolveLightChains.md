@@ -22,7 +22,8 @@ cell = "cell_id",
 v_call = "v_call",
 j_call = "j_call",
 junc_len = "junction_length",
-nolight = "missing"
+nolight = "missing",
+pad_ends = TRUE
 )
 ```
 
@@ -74,6 +75,9 @@ for any given clone.
 
 nolight
 :   string to use to indicate a missing light chain
+
+pad_ends
+:   pad sequences within a clone to same length?
 
 
 
