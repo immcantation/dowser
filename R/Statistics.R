@@ -908,7 +908,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
 #'         this is the number of tips.
 #'   \item  \code{p_gt/p_lt}: P value that permuted correlations are greater or less 
 #'         than observed correlation. Only returned if alternative = "two.sided"
-#'   \item  \code{test_trees}:  The \link{phylo} tree objects used, possibly with
+#'   \item  \code{test_trees}:  The \code{phylo} tree objects used, possibly with
 #'          resolved polytomies.
 #' }
 #' @seealso Uses output from \code{getTrees}.

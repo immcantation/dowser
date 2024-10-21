@@ -70,7 +70,7 @@ Object returned contains these columns which are added or modified from input:
         this is the number of tips.
   \item  \code{p_gt/p_lt}: P value that permuted correlations are greater or less 
         than observed correlation. Only returned if alternative = "two.sided"
-  \item  \code{test_trees}:  The \link{phylo} tree objects used, possibly with
+  \item  \code{test_trees}:  The \code{phylo} tree objects used, possibly with
          resolved polytomies.
 }
 }
