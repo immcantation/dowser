@@ -36,7 +36,7 @@ bibentry(bibtype = "Article",
                     person("Kenneth B.", "Hoehn")),
         year    = 2024,
         journal = "The Journal of Immunology",
-        url = "https://journals.aai.org/jimmunol/article/212/10/1579/266795/Inferring-B-Cell-Phylogenies-from-Paired-H-and-L",
+        url = "https://doi.org/10.4049/jimmunol.2300851",
         doi = "10.4049/jimmunol.2300851")
 
 bibentry(bibtype = "Article",
