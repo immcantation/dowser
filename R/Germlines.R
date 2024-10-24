@@ -789,6 +789,7 @@ addGaps <- function(db, gapdb, organism="human", locus="Ig", gapped_d=FALSE){
   }
   return(results)
 }
+
 #' \code{readIMGT} read in IMGT database
 #' 
 #' Loads all reference germlines from an Immcantation-formatted IMGT database.
@@ -860,6 +861,66 @@ readIMGT <- function(dir, quiet=FALSE){
   
   database
 }
+
+#' \code{annotate10X} Add 10X annotations to BCR data table
+#'  
+#' @param db       AIRR-rearrangment formatted dataframe outputted from \link{assignGenes}
+#' @param annot    data frame of 10X annotations (read.csv(filtered_contig_annotations.csv))
+#' @param data_id  sequence column in db
+#' @param annot_id sequence id in annot
+#' @return AIRR-rearrangement formatted data frame with new columns corresponding to 10X annotations
+#' @details 
+#' Mapping of 10X annotation names to returned object columns:
+#' 'barcode'= 'cell_id',
+#' 'c_gene'=  'c_call',
+#' 'chain'=   'locus',
+#' 'reads'=   'conscount',
+#' 'umis'=    'umicount',
+#' 'v_gene'=  'v_call_10x',
+#' 'd_gene'=  'd_call_10x',
+#' 'j_gene'=  'j_call_10x',
+#' 'cdr3_nt'= 'junction_10x',
+#' 'cdr3'=    'junction_10x_aa'
+#' 
+#' @export
+annotate10X <- function(db, annot, data_id="sequence_id", 
+  annot_id="contig_id", postfix="_10x"){
+
+  attr_map <- c(
+  'barcode'= 'cell_id',
+  'c_gene'=  'c_call',
+  'chain'=   'locus',
+  'reads'=   'conscount',
+  'umis'=    'umicount',
+  'v_gene'=  'v_call_10x',
+  'd_gene'=  'd_call_10x',
+  'j_gene'=  'j_call_10x',
+  'cdr3_nt'= 'junction_10x',
+  'cdr3'=    'junction_10x_aa')
+
+  if(!data_id %in% names(db)){
+    stop(data_id, " not found in data")
+  }
+  if(!annot_id %in% names(annot)){
+    stop(annot_id, " not found in annot")
+  }
+  m = match(db[[data_id]], annot[[annot_id]])
+  if(sum(is.na(m)) > 0){
+    if(sum(is.na(m)) == length(m)){
+      stop("No matching values found between data columns")
+    }else{
+      warning(sum(is.na(m)), 
+        " annotations couldn't be mapped to data object")
+    }
+  }
+  for(attr in names(attr_map)){
+    db[[attr_map[attr]]] <- annot[[attr]][m]
+  }
+
+  return(db)
+}
+
+
 
 #   TODO: this is not generalized for non-IMGT gapped sequences!
 #   Note: This is separated into three functions in CreateGermlines.py
