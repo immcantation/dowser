@@ -383,12 +383,11 @@ assignGenes <- function(
     stop("The file ", exec, " cannot be executed.")
   }
   
-  if(!is.null(igdata) && set_igdata){
-    if(is.null(igdata)){
-      print("igdata not specified, using igblast for IGDATA")
-      igdata <- igblast
-    }
-    
+  if(is.null(igdata)){
+    print(paste0("igdata not specified, using ",igblast," for IGDATA"))
+    igdata <- igblast
+  }
+  if(!is.null(igdata) && set_igdata){    
     cat(paste0("Setting IGDATA to ", igdata,"\n"))
     id <- file.path(igdata, "internal_data")
     opt <- file.path(igdata, "optional_file")
@@ -488,6 +487,9 @@ addGaps <- function(db, gapdb, organism="human", locus="Ig", gapped_d=FALSE){
   }
   
   gap_files <- list.files(file.path(gapdb, organism, "vdj"))
+  if(length(gap_files) == 0){
+    stop(paste("No files found in",file.path(gapdb, organism, "vdj")))
+  }
   vgap_files <- gap_files[grepl(paste0("_",toupper(locus),".V\\.fasta$"), gap_files)]
   gaps <- unlist(lapply(vgap_files, function(x)readFasta(file.path(gapdb, organism, "vdj", x))))
   gaps <- cleanSeqs(gaps, rm_gaps=FALSE)
