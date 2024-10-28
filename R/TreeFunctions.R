@@ -1262,7 +1262,8 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @export
 buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = NULL, 
                        rseed = 28, name = "run", starting_tree = NULL, 
-                       from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, ...){
+                       from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL, 
+                       n_starts = NULL, ...){
   exec <- path.expand(exec)
   if(file.access(exec, mode=1) == -1) {
     stop("The file ", exec, " cannot be executed.")
@@ -1331,6 +1332,9 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   command <- paste("--model", model, "--seed", rseed, "-msa", 
                    input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
                    "--force msa")
+  if(!is.null(n_starts)){
+    command <- paste0(command, " --tree pars{",n_starts,"}")
+  }
   if(!is.null(starting_tree)){
     if(from_getTrees){
       ape::write.tree(starting_tree, file.path(dir, paste0(name, "_og_starting_tree.tree")))
@@ -3458,7 +3462,7 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1,
     })
 
   for(i in 1:length(capture)){
-    if("error" %in% class(capture[[i]])){
+    if("error" %in% class(capture[[i]]) || grepl("[E|e]rror",capture[i])){
       print(capture[[i]])
       stop(paste("Error running TreeAnnotator (see above), clone", data[[i]]@clone))
     }
@@ -3999,9 +4003,9 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
   xml_outdir = dir
   log_outdir = dir
 
-  if(length(epoch_dates) > 1){
-    stop("currently only support 1 epoch date")
-  }
+  #if(length(epoch_dates) > 1){
+  #  stop("currently only support 1 epoch date")
+  #}
   if(!include_gm){
     stop("must include gm for now")
   }
@@ -4131,19 +4135,18 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
       paste0(ind2, "<distribution id=\"MarkovChainedPopSizes.t:X", clone_id,"\" spec=\"distribution.MarkovChainDistribution\" jeffreys=\"true\" parameter=\"@bPopSizes.t:X", clone_id,"\"/>")
       )
   }
-  clockRate = c(
-        paste0("<prior id=\"ClockPrior.c:test1\" name=\"distribution\" x=\"@clockRate.c:test1\">"),
-        paste0("<Gamma id=\"Gamma.7\" name=\"distr\">"),
-            paste0("<parameter id=\"RealParameter.28\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"alpha\">0.04</parameter>"),
-            paste0("<parameter id=\"RealParameter.29\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"beta\">0.04</parameter>"),
-        paste0("</Gamma>"),
-    paste0("</prior>"),
-    paste0("<prior id=\"ClockPrior.c:test2\" name=\"distribution\" x=\"@clockRate.c:test2\">"),
-        paste0("<Gamma id=\"Gamma.8\" name=\"distr\">"),
-            paste0("<parameter id=\"RealParameter.30\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"alpha\">0.04</parameter>"),
-            paste0("<parameter id=\"RealParameter.31\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"beta\">0.04</parameter>"),
-        paste0("</Gamma>"),
-    paste0("</prior>"))
+
+  epoch_prior = c()
+  for(epochi in 1:(length(epoch_dates)+1)){
+    epoch_prior = c(epoch_prior,
+    paste0("<prior id=\"ClockPrior.c:test",epochi,"\" name=\"distribution\" x=\"@clockRate.c:test",epochi,"\">"),
+          paste0("<Gamma id=\"Gamma.",7*epochi,"\" name=\"distr\">"),
+              paste0("<parameter id=\"RealParameter.",28*epochi,"\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"alpha\">0.04</parameter>"),
+              paste0("<parameter id=\"RealParameter.",29*epochi,"\" spec=\"parameter.RealParameter\" estimate=\"false\" name=\"beta\">0.04</parameter>"),
+          paste0("</Gamma>"),
+      paste0("</prior>"))
+  }
+  clockRate = epoch_prior
   kappa = c(
     paste0("<prior id=\"KappaPrior.s:X", clone_id, "\" name=\"distribution\" x=\"@kappa.s:X", clone_id, "\">"),
     paste0(ind1, "<LogNormal id=\"LogNormalDistributionModel.1\" name=\"distr\">"),
@@ -4193,6 +4196,10 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
               paste0(ind2, germlinePrior),
               paste0(ind2, monophyleticPrior))
   }
+  epochs = ""
+  for(epochi in 1:(length(epoch_dates)+1)){
+    epochs = paste0(epochs,"<clockRate spec=\"parameter.RealParameter\" idref=\"clockRate.c:test",epochi,"\"/>\n")
+  }
   likelihood = c(
     paste0("</distribution>"),
     paste0("<distribution id=\"likelihood\" spec=\"CompoundDistribution\" useThreads=\"true\">"),
@@ -4207,8 +4214,7 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
     paste0(ind2, "</siteModel>"),
                 paste0("<branchRateModel id=\"EpochClock.c:test\" spec=\"beast.evolution.branchratemodel.EpochClockModel\" clock.rate=\"@clockRate.c:test1\">"),
                     paste0("<epochDates spec=\"parameter.RealParameter\">",paste(epoch_heights, collapse=" "),"</epochDates>"),
-                        paste0("<clockRate spec=\"parameter.RealParameter\" idref=\"clockRate.c:test1\"/>"),
-                        paste0("<clockRate spec=\"parameter.RealParameter\" idref=\"clockRate.c:test2\"/>"),
+                      epochs,
                 paste0("</branchRateModel>  "),
     paste0(ind1, "</distribution>"),
     paste0("</distribution>")
@@ -4217,18 +4223,24 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
   #kbh 1/8/23
   prior_operator = c()
     if(tree_prior == "coalescent-constant"){
+
+    epoch_scalar = ""
+    for(epochi in 1:(length(epoch_dates)+1)){
+      epoch_scalar = paste0(epoch_scalar,"<operator id=\"StrictClockRateScaler.c:test",epochi,"\" spec=\"ScaleOperator\" parameter=\"@clockRate.c:test",epochi,"\" weight=\"3.0\"/>\n")
+    }
+    epoch_updown = c()
+    for(epochi in 1:(length(epoch_dates)+1)){
+      epoch_updown = c(epoch_updown,
+      paste0("<operator id=\"strictClockUpDownOperator.c:test",epochi,"\" spec=\"UpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
+          paste0("<up idref=\"clockRate.c:test",epochi,"\"/>"),
+          paste0("<down idref=\"Tree.t:X", clone_id, "\"/>"),
+      paste0("</operator>"))
+    }
+    
     operator <- c(
     paste0("<operator id=\"KappaScaler.s:X", clone_id, "\" spec=\"ScaleOperator\" parameter=\"@kappa.s:X", clone_id, "\" scaleFactor=\"0.5\" weight=\"0.1\"/>"),
-    paste0("<operator id=\"StrictClockRateScaler.c:test1\" spec=\"ScaleOperator\" parameter=\"@clockRate.c:test1\" weight=\"3.0\"/>"),
-    paste0("<operator id=\"StrictClockRateScaler.c:test2\" spec=\"ScaleOperator\" parameter=\"@clockRate.c:test2\" weight=\"3.0\"/>"),
-    paste0("<operator id=\"strictClockUpDownOperator.c:test1\" spec=\"UpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
-        paste0("<up idref=\"clockRate.c:test1\"/>"),
-        paste0("<down idref=\"Tree.t:X", clone_id, "\"/>"),
-    paste0("</operator>"),
-    paste0("<operator id=\"strictClockUpDownOperator.c:test2\" spec=\"UpDownOperator\" scaleFactor=\"0.75\" weight=\"3.0\">"),
-        paste0("<up idref=\"clockRate.c:test2\"/>"),
-        paste0("<down idref=\"Tree.t:X", clone_id, "\"/>"),
-    paste0("</operator>"),
+    epoch_scalar,
+    paste(epoch_updown,collapse="\n"),
     paste0("<operator id=\"CoalescentConstantTreeScaler.t:X", clone_id, "\" spec=\"ScaleOperator\" scaleFactor=\"0.5\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
     paste0("<operator id=\"CoalescentConstantTreeRootScaler.t:X", clone_id, "\" spec=\"ScaleOperator\" rootOnly=\"true\" scaleFactor=\"0.5\" tree=\"@Tree.t:X", clone_id, "\" weight=\"3.0\"/>"),
     paste0("<operator id=\"CoalescentConstantUniformOperator.t:X", clone_id, "\" spec=\"Uniform\" tree=\"@Tree.t:X", clone_id, "\" weight=\"30.0\"/>"),
@@ -4274,6 +4286,10 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
       paste0("</logger>")
     )
   } else {
+    epoch_trace = ""
+    for(epochi in 1:(length(epoch_dates)+1)){
+      epoch_trace = paste0(epoch_trace, paste0("<log idref=\"clockRate.c:test",epochi,"\"/>\n"))
+    }
     tracelog = c(
       paste0("<logger id=\"tracelog\" spec=\"Logger\" fileName=\"", tracelog_filepath, "logEvery=\"",log_every,"\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">"),
       paste0(ind1, "<log idref=\"posterior\"/>"),
@@ -4281,8 +4297,7 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
       paste0(ind1, "<log idref=\"prior\"/>"),
       paste0(ind1, "<log idref=\"treeLikelihood.X", clone_id, "\"/>"),
       paste0(ind1, "<log id=\"TreeHeight.t:X", clone_id, "\" spec=\"beast.evolution.tree.TreeStatLogger\" tree=\"@Tree.t:X", clone_id, "\"/>"),
-      paste0("<log idref=\"clockRate.c:test1\"/>"),
-      paste0("<log idref=\"clockRate.c:test2\"/>"),
+      epoch_trace,
       paste0(ind1, "<log idref=\"kappa.s:X", clone_id, "\"/>"),
       tracelog_tree_prior,
       paste0(ind1, "<log idref=\"height.prior\"/>"),
@@ -4295,8 +4310,7 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
     paste0(ind1, "<log idref=\"posterior\"/>"),
     paste0(ind1, "<log idref=\"likelihood\"/>"),
     paste0(ind1, "<log idref=\"prior\"/>"),
-    paste0("<log idref=\"clockRate.c:test1\"/>"),
-    paste0("<log idref=\"clockRate.c:test2\"/>"),
+    epoch_trace,
     paste0("<log idref=\"TreeHeight.t:X", clone_id, "\"/>"),
     paste0("</logger>")
   )
@@ -4324,9 +4338,13 @@ writeBeast2EpochXML <- function(clone_data, time, epoch_dates, dir = ".", includ
 
   #kbh 1/8/23
   if(tree_prior == "coalescent-constant"){
+    epoch_trace = ""
+    for(epochi in 1:(length(epoch_dates)+1)){
+      epoch_trace = paste0(epoch_trace, 
+        paste0(ind2, "<parameter id=\"clockRate.c:test",epochi,"\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.01</parameter>\n"))
+    }
     popsize <- 
-    c(paste0(ind2, "<parameter id=\"clockRate.c:test1\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.01</parameter>"),
-      paste0(ind2, "<parameter id=\"clockRate.c:test2\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.01</parameter>"),
+    c(epoch_trace,
       paste0(ind2, "<parameter id=\"kappa.s:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">2.0</parameter>"),
       paste0(ind2, "<parameter id=\"popSize.t:X", clone_id, "\" spec=\"parameter.RealParameter\" lower=\"0.0\" name=\"stateNode\">0.3</parameter>"))
   }else if(tree_prior == "coalescent-skyline"){

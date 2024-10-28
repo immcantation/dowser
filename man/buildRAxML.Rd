@@ -18,6 +18,7 @@ buildRAxML(
   asr = TRUE,
   rep = 1,
   dir = NULL,
+  n_starts = NULL,
   ...
 )
 }

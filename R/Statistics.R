@@ -1114,7 +1114,7 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     
     l <- tryCatch(read.csv(logfile, head=TRUE, sep="\t", comment.char="#"),error=function(e)e)
     if("error" %in% class(l)){
-        stop(paste("couldn't open",logtilfe))
+        stop(paste("couldn't open",logfile))
     }
     phylos <- tryCatch(ape::read.nexus(treesfile), error=function(e)e)
     if("error" %in% class(phylos)){
