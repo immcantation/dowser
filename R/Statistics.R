@@ -1083,7 +1083,7 @@ getParams = function(clones, burnin=10, tracefile=NULL, width=8.5, height=11, ..
             summarize(estimate = mean(value),
                 lci = quantile(value, prob=0.025),
                 hci = quantile(value, prob=0.975),
-                ess = floor(mcmcse::ess(value)),
+                ess = floor(tryCatch(mcmcse::ess(value),error=function(e)NA)),
                 n = n())
         parameters[[i]] <- estimates
     }
