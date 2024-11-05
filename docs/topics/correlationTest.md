@@ -95,7 +95,7 @@ distinct clade/timepoint combinations or number of permutations.
 this is the number of tips.
 + `p_gt/p_lt`: P value that permuted correlations are greater or less 
 than observed correlation. Only returned if alternative = "two.sided"
-+ `test_trees`:  The [phylo](http://www.rdocumentation.org/packages/ape/topics/read.tree) tree objects used, possibly with
++ `test_trees`:  The `phylo` tree objects used, possibly with
 resolved polytomies.
 
 

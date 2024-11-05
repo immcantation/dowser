@@ -3,7 +3,7 @@
 Description
 --------------------
 
-`airrClone` defines a common data structure for perform lineage recontruction
+`airrClone` defines a common data structure for perform lineage reconstruction
 from AIRR data, based heavily on alakazam::ChangeoClone.
 
 

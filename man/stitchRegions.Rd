@@ -3,7 +3,7 @@
 \name{stitchRegions}
 \alias{stitchRegions}
 \title{\link{stitchRegions} Similar to \link{stitchVDJ} but with segment IDs 
-instead of nulecotides}
+instead of nucleotides}
 \usage{
 stitchRegions(
   receptor,
@@ -70,7 +70,7 @@ nucleotides.
 }
 \description{
 \link{stitchRegions} Similar to \link{stitchVDJ} but with segment IDs 
-instead of nulecotides
+instead of nucleotides
 }
 \seealso{
 \link{stitchVDJ}

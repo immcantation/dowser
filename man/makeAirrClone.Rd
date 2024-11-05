@@ -103,7 +103,7 @@ sequences silently.}
 
 \item{traits}{column ids to keep distinct during sequence collapse}
 
-\item{mod3}{pad sequences to length mutliple three?}
+\item{mod3}{pad sequences to length multiple three?}
 
 \item{randomize}{randomize sequence order? Important if using PHYLIP}
 

@@ -15,7 +15,7 @@ readIMGT(dir, quiet = FALSE)
 List of lists, leading to IMGT-gapped nucleotide sequences.
 Structure of object is list[[locus]][[segment]]
 locus refers to locus (e.g. IGH, IGK, TRA)
-segment refers to gene segment caegory (V, D, or J)
+segment refers to gene segment category (V, D, or J)
 }
 \description{
 Loads all reference germlines from an Immcantation-formatted IMGT database.
@@ -28,7 +28,7 @@ of how to download.
 \examples{
 # vdj_dir contains a minimal example of reference germlines 
 # (IGHV3-11*05, IGHD3-10*01 and IGHJ5*02)
-# which are the gene assignments for ExamapleDb[1,]
+# which are the gene assignments for ExampleDb[1,]
 vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
 imgt <- readIMGT(vdj_dir)
 }

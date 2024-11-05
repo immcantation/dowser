@@ -86,7 +86,7 @@ PGT = p value for DELTA < 0
 + `PGT`: p value that DELTA > 0
 + `STAT`: Statistic used (SP).
 + `REP`: Bootstrap repetition.
-+ `REPS`: Total number of ootstrap repetition.
++ `REPS`: Total number of bootstrap repetition.
 
 
 
@@ -103,6 +103,7 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 # btrees = findSwitches(clones[1:2], bootstraps=10, nproc=1,
 # igphyml=igphyml, trait="sample_id")
 # testSP(btrees$switches)
+
 ```
 
 

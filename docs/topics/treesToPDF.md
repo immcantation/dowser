@@ -49,6 +49,7 @@ data(ExampleClones)
 # trees <- getTrees(ExampleClones[10,])
 # plots <- plotTrees(trees)
 # treesToPDF(plots,"test.pdf",width=5,height=6)
+
 ```
 
 

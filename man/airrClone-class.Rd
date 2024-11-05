@@ -6,7 +6,7 @@
 \alias{airrClone}
 \title{S4 class defining a clone in Dowser}
 \description{
-\code{airrClone} defines a common data structure for perform lineage recontruction
+\code{airrClone} defines a common data structure for perform lineage reconstruction
 from AIRR data, based heavily on alakazam::ChangeoClone.
 }
 \section{Slots}{

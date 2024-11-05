@@ -7,7 +7,7 @@
 readModelFile(file, useambig = FALSE)
 }
 \arguments{
-\item{file}{parimony model file.}
+\item{file}{parsimony model file.}
 
 \item{useambig}{use ambiguous naming as specified in the file?}
 }

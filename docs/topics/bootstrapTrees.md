@@ -59,7 +59,7 @@ dir
 if `igphyml` or `dnapars` specified)
 
 id
-:   unique identifer for this analysis (required if 
+:   unique identifier for this analysis (required if 
 `igphyml` or `dnapars` specified)
 
 modelfile
@@ -72,11 +72,11 @@ exec
 :   location of desired phylogenetic executable
 
 igphyml
-:   location of igphyml executible if trait models desired
+:   location of igphyml executable if trait models desired
 
 fixtrees
 :   keep tree topologies fixed?
-(bootstrapping will not be perfomed)
+(bootstrapping will not be performed)
 
 quiet
 :   amount of rubbish to print to console
@@ -89,7 +89,7 @@ palette
 
 resolve
 :   how should polytomies be resolved? 
-0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+0=none, 1=max parsimony, 2=max ambiguity + polytomy skipping,
 3=max ambiguity
 
 rep

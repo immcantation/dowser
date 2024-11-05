@@ -40,7 +40,7 @@ rm_temp
 :   remove temporary files?
 
 seq
-:   sequece column in `airrClone` object
+:   sequence column in `airrClone` object
 
 tree
 :   fixed tree topology if desired (currently does nothing

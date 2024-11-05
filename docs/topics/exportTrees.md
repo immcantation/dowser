@@ -1,4 +1,4 @@
-**exportTrees** - *Exports the phylogentic trees from the airrClone object*
+**exportTrees** - *Exports the phylogenetic trees from the airrClone object*
 
 Description
 --------------------

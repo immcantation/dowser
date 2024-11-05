@@ -54,7 +54,7 @@ dir
 if `igphyml` or `dnapars` specified)
 
 id
-:   unique identifer for this analysis (required if 
+:   unique identifier for this analysis (required if 
 `igphyml` or `dnapars` specified)
 
 build

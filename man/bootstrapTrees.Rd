@@ -45,7 +45,7 @@ bootstrapTrees(
 \item{dir}{directory where temporary files will be placed (required
 if \code{igphyml} or \code{dnapars} specified)}
 
-\item{id}{unique identifer for this analysis (required if 
+\item{id}{unique identifier for this analysis (required if 
 \code{igphyml} or \code{dnapars} specified)}
 
 \item{modelfile}{file specifying parsimony model to use}
@@ -54,10 +54,10 @@ if \code{igphyml} or \code{dnapars} specified)}
 
 \item{exec}{location of desired phylogenetic executable}
 
-\item{igphyml}{location of igphyml executible if trait models desired}
+\item{igphyml}{location of igphyml executable if trait models desired}
 
 \item{fixtrees}{keep tree topologies fixed?
-(bootstrapping will not be perfomed)}
+(bootstrapping will not be performed)}
 
 \item{quiet}{amount of rubbish to print to console}
 
@@ -66,7 +66,7 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{palette}{deprecated}
 
 \item{resolve}{how should polytomies be resolved? 
-0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+0=none, 1=max parsimony, 2=max ambiguity + polytomy skipping,
 3=max ambiguity}
 
 \item{rep}{current bootstrap replicate (experimental)}

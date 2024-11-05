@@ -19,7 +19,7 @@ buildPratchet(
 \arguments{
 \item{clone}{\code{airrClone} object}
 
-\item{seq}{sequece column in \code{airrClone} object}
+\item{seq}{sequence column in \code{airrClone} object}
 
 \item{asr}{return sequence or probability matrix?}
 

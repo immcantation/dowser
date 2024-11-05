@@ -31,7 +31,7 @@ getTrees(
 \item{trait}{trait to use for parsimony models (required if
 \code{igphyml} specified)}
 
-\item{id}{unique identifer for this analysis (required if
+\item{id}{unique identifier for this analysis (required if
 \code{igphyml} or \code{dnapars} specified)}
 
 \item{dir}{directory where temporary files will be placed.}
@@ -43,7 +43,7 @@ dnapars, dnaml, igphyml, raxml)}
 
 \item{exec}{location of desired phylogenetic executable}
 
-\item{igphyml}{optional location of igphyml executible for parsimony}
+\item{igphyml}{optional location of igphyml executable for parsimony}
 
 \item{fixtrees}{if TRUE, use supplied tree topologies}
 
@@ -69,7 +69,7 @@ A list of \code{phylo} objects in the same order as \code{data}.
 }
 \details{
 Estimates phylogenetic tree topologies and branch lengths for a list of
-\code{airrClone} objects. By default, it will use phangnorn::pratchet to
+\code{airrClone} objects. By default, it will use phangorn::pratchet to
 estimate maximum parsimony tree topologies, and ape::acctran to estimate
 branch lengths. If \code{igpyhml} is specified, internal node \code{trait}
 values will be predicted by maximum parsimony. In this case, \code{dir} will

@@ -57,7 +57,7 @@ PGT = p value for DELTA < 0
   \item  \code{PGT}: p value that DELTA > 0
   \item  \code{STAT}: Statistic used (SC).
   \item  \code{REP}: Bootstrap repetition.
-  \item  \code{REPS}: Total number of ootstrap repetition.
+  \item  \code{REPS}: Total number of bootstrap repetition.
 }
 }
 \examples{

@@ -54,7 +54,7 @@ ggplot2::scale_color_distiller (e.g. RdYlBu) or}
 
 \item{labelsize}{text size}
 
-\item{common_scale}{strecth plots so branches are on same scale?
+\item{common_scale}{stretch plots so branches are on same scale?
 determined by sequence with highest divergence}
 
 \item{ambig}{How to color ambiguous node reconstructions? (grey or blend)}
@@ -65,7 +65,7 @@ determined by sequence with highest divergence}
 
 \item{node_palette}{deprecated, use palette}
 
-\item{guide_title}{Title of color guide. Defaults to tips vairable if specified.}
+\item{guide_title}{Title of color guide. Defaults to tips variable if specified.}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
@@ -74,7 +74,7 @@ a grob containing a tree plotted by \code{ggtree}.
 \code{plotTrees} plots a tree or group of trees
 }
 \details{
-Function uses \code{ggtree} functions to plot tree topologlies estimated by 
+Function uses \code{ggtree} functions to plot tree topologies estimated by 
 \link{getTrees}, and \link{findSwitches}. Object can be further modified with 
 \code{ggtree} functions. Please check out 
 https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.html and

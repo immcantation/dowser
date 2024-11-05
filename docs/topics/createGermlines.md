@@ -54,7 +54,7 @@ locus
 :   Name of the locus column in the input data
 
 trim_lengths
-:   Remove trailing Ns from `seq` column if length different from germine?
+:   Remove trailing Ns from `seq` column if length different from germline?
 
 force_trim
 :   Remove all characters from sequence if different from germline? (not recommended)
@@ -171,9 +171,10 @@ imgt <- readIMGT(vdj_dir)
 
 ```R
 db <- createGermlines(ExampleAirr[1,], imgt)
+
 ```
 
-*Warning*:locus column not found, attempting to extract locus from V call*Warning*:Loci found: IGH*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-13*01 is not in the provided germline database.*Warning*:Removing 1 failed clonal germlines. Clones: 3128
+*Warning*:locus column not found, attempting to extract locus from V call*Warning*:Loci found: IGH*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-19*01 is not in the provided germline database.*Warning*:Removing 1 failed clonal germlines. Clones: 3170
 
 See also
 -------------------

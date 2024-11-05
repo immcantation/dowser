@@ -34,7 +34,7 @@ clone
 :   `airrClone` object
 
 seq
-:   sequece column in `airrClone` object
+:   sequence column in `airrClone` object
 
 sub_model
 :   substitution model to use

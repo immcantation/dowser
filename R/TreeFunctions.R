@@ -80,7 +80,7 @@ readFasta <- function(file){
 #' Read in a parsimony model file
 #' 
 #' \code{readModelFile} Filler
-#' @param    file         parimony model file.
+#' @param    file         parsimony model file.
 #' @param    useambig     use ambiguous naming as specified in the file?
 #'
 #' @return   A named vector containing the states of the model
@@ -674,7 +674,7 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
 #' @param    temp_path  path to temporary directory
 #' @param    verbose    amount of rubbish to print
 #' @param    rm_temp    remove temporary files?
-#' @param    seq        sequece column in \code{airrClone} object
+#' @param    seq        sequence column in \code{airrClone} object
 #' @param    tree       fixed tree topology if desired (currently does nothing
 #'                      if specified)
 #' @param    onetree    Only sample one tree if multiple found.
@@ -729,7 +729,7 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
 #' Wrapper for phangorn::pratchet
 #' 
 #' @param    clone           \code{airrClone} object
-#' @param    seq             sequece column in \code{airrClone} object
+#' @param    seq             sequence column in \code{airrClone} object
 #' @param    asr             return sequence or probability matrix?
 #' @param    asr_thresh      threshold for including a nucleotide as an alternative
 #' @param    tree            fixed tree topology if desired.
@@ -877,7 +877,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' Wrapper for phangorn::optim.pml
 #' 
 #' @param    clone      \code{airrClone} object
-#' @param    seq        sequece column in \code{airrClone} object
+#' @param    seq        sequence column in \code{airrClone} object
 #' @param    sub_model  substitution model to use
 #' @param    gamma      gamma site rate variation?
 #' @param    asr        return sequence or probability matrix?
@@ -1841,8 +1841,8 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' @param    build      program to use for tree building (pratchet, pml,
 #'                      dnapars, dnaml, igphyml, raxml)
 #' @param    exec       location of desired phylogenetic executable
-#' @param    igphyml    optional location of igphyml executible for parsimony
-#' @param    id         unique identifer for this analysis (required if
+#' @param    igphyml    optional location of igphyml executable for parsimony
+#' @param    id         unique identifier for this analysis (required if
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param    dir        directory where temporary files will be placed.
 #' @param    modelfile  file specifying parsimony model to use
@@ -1859,7 +1859,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #'
 #' @details
 #' Estimates phylogenetic tree topologies and branch lengths for a list of
-#' \code{airrClone} objects. By default, it will use phangnorn::pratchet to
+#' \code{airrClone} objects. By default, it will use phangorn::pratchet to
 #' estimate maximum parsimony tree topologies, and ape::acctran to estimate
 #' branch lengths. If \code{igpyhml} is specified, internal node \code{trait}
 #' values will be predicted by maximum parsimony. In this case, \code{dir} will
@@ -2617,22 +2617,22 @@ downsampleClone <- function(clone, trait, tip_switch=20, tree=NULL){
 #'                      \link{formatClones}
 #' @param permutations    number of bootstrap replicates to perform
 #' @param trait         trait to use for parsimony models
-#' @param igphyml       location of igphyml executible 
+#' @param igphyml       location of igphyml executable 
 #' @param build         program to use for tree building (phangorn, dnapars)
 #' @param exec          location of desired phylogenetic executable
-#' @param id            unique identifer for this analysis (required if 
+#' @param id            unique identifier for this analysis (required if 
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
 #' @param modelfile     file specifying parsimony model to use
 #' @param fixtrees      keep tree topologies fixed?
-#'                      (bootstrapping will not be perfomed)
+#'                      (bootstrapping will not be performed)
 #' @param nproc            number of cores to parallelize computations
 #' @param quiet           amount of rubbish to print to console
 #' @param rm_temp       remove temporary files (default=TRUE)
 #' @param palette       deprecated
 #' @param resolve       how should polytomies be resolved? 
-#'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+#'                       0=none, 1=max parsimony, 2=max ambiguity + polytomy skipping,
 #'                       3=max ambiguity
 #' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
 #' @param lfile         lineage file input to igphyml if desired (experimental)
@@ -2928,20 +2928,20 @@ findSwitches <- function(clones, permutations, trait, igphyml,
 #'                      \code{igphyml} specified)
 #' @param build           program to use for tree building (phangorn, dnapars)
 #' @param exec           location of desired phylogenetic executable
-#' @param igphyml        location of igphyml executible if trait models desired
-#' @param id            unique identifer for this analysis (required if 
+#' @param igphyml        location of igphyml executable if trait models desired
+#' @param id            unique identifier for this analysis (required if 
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
 #' @param modelfile        file specifying parsimony model to use
 #' @param fixtrees        keep tree topologies fixed?
-#'                      (bootstrapping will not be perfomed)
+#'                      (bootstrapping will not be performed)
 #' @param nproc            number of cores to parallelize computations
 #' @param quiet           amount of rubbish to print to console
 #' @param rm_temp       remove temporary files (default=TRUE)
 #' @param palette        deprecated
 #' @param resolve        how should polytomies be resolved? 
-#'                       0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+#'                       0=none, 1=max parsimony, 2=max ambiguity + polytomy skipping,
 #'                       3=max ambiguity
 #' @param keeptrees     keep trees estimated from bootstrap replicates? (TRUE)
 #' @param lfile         lineage file input to igphyml if desired (experimental)
@@ -3207,7 +3207,7 @@ makeTrees <- function(clones, seq, build, boot_part, exec, dir, rm_temp=TRUE, id
 #'                        column (required) should report their bootstrap value
 #' @param dir           directory where temporary files will be placed (required
 #'                      if \code{igphyml} or \code{dnapars} specified)
-#' @param id            unique identifer for this analysis (required if 
+#' @param id            unique identifier for this analysis (required if 
 #'                      \code{igphyml} or \code{dnapars} specified)
 #' @param build           program to use for tree building (phangorn, dnapars, igphyml)
 #' @param exec           location of desired phylogenetic executable
@@ -3414,7 +3414,7 @@ getBootstraps <- function(clones, bootstraps,
 }
 
 
-#' Exports the phylogentic trees from the airrClone object
+#' Exports the phylogenetic trees from the airrClone object
 #' 
 #' \code{exportTrees}   Exports phylogenetic trees
 #' @param clones         tibble \code{airrClone} objects, the output of 
@@ -3430,7 +3430,7 @@ exportTrees <- function(clones, filepath, tree_column = "trees", ...){
     ape::write.tree(phy = clones$trees, file = filepath, ...)
   } else{
     stop(paste(tree_column, "not found in the input airrClone object. Please",
-               "specify what column cotains the phylogentic trees."))
+               "specify what column contains the phylogenetic trees."))
   }
   
 }

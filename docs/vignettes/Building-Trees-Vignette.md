@@ -185,7 +185,7 @@ Three of the most useful IgPhyML partition models and defaults are listed below:
     * 2 partitions: 1 for the heavy chains and 1 for the light chains. By default, a separate omega value is estimated for each, as well as a separate branch length scalar. This allows heavy and light chains to have proportionally longer or shorter branches. This is only possible if you have paired heavy and light chain sequences and run formatClones with chain="HL" (see [Heavy+light chain tree building vignette](Resolve-Light-Chains-Vignette.md).)
 
 
-Building maximum likelihood trees with multiple partitions using the partition = `cf`  arugment in IgPhyML.
+Building maximum likelihood trees with multiple partitions using the partition = `cf` argument in IgPhyML.
 
 ``` r
 # exec here is set to IgPhyML position in the Docker image.

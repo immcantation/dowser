@@ -2,7 +2,7 @@
 % Please edit documentation in R/TreeFunctions.R
 \name{exportTrees}
 \alias{exportTrees}
-\title{Exports the phylogentic trees from the airrClone object}
+\title{Exports the phylogenetic trees from the airrClone object}
 \usage{
 exportTrees(clones, filepath, tree_column = "trees", ...)
 }

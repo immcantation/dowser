@@ -42,7 +42,7 @@ createGermlines(
 
 \item{locus}{Name of the locus column in the input data}
 
-\item{trim_lengths}{Remove trailing Ns from \code{seq} column if length different from germine?}
+\item{trim_lengths}{Remove trailing Ns from \code{seq} column if length different from germline?}
 
 \item{force_trim}{Remove all characters from sequence if different from germline? (not recommended)}
 

@@ -140,7 +140,7 @@ traits
 :   column ids to keep distinct during sequence collapse
 
 mod3
-:   pad sequences to length mutliple three?
+:   pad sequences to length multiple three?
 
 randomize
 :   randomize sequence order? Important if using PHYLIP
@@ -152,7 +152,7 @@ dup_singles
 :   Duplicate sequences in singleton clones to include them as trees?
 
 nproc
-:   number of cores to parallelize formating over.
+:   number of cores to parallelize formatting over.
 
 chain
 :   if HL, include light chain information if available.
@@ -203,6 +203,7 @@ data(ExampleAirr)
 # Select two clones, for demonstration purpose
 sel <- c("3170", "3184")
 clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
+
 ```
 
 

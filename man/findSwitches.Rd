@@ -40,10 +40,10 @@ findSwitches(
 
 \item{trait}{trait to use for parsimony models}
 
-\item{igphyml}{location of igphyml executible}
+\item{igphyml}{location of igphyml executable}
 
 \item{fixtrees}{keep tree topologies fixed?
-(bootstrapping will not be perfomed)}
+(bootstrapping will not be performed)}
 
 \item{downsample}{downsample clones to have a maximum specified tip/switch ratio?}
 
@@ -54,7 +54,7 @@ findSwitches(
 \item{dir}{directory where temporary files will be placed (required
 if \code{igphyml} or \code{dnapars} specified)}
 
-\item{id}{unique identifer for this analysis (required if 
+\item{id}{unique identifier for this analysis (required if 
 \code{igphyml} or \code{dnapars} specified)}
 
 \item{modelfile}{file specifying parsimony model to use}
@@ -70,7 +70,7 @@ if \code{igphyml} or \code{dnapars} specified)}
 \item{palette}{deprecated}
 
 \item{resolve}{how should polytomies be resolved? 
-0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+0=none, 1=max parsimony, 2=max ambiguity + polytomy skipping,
 3=max ambiguity}
 
 \item{rep}{current bootstrap replicate (experimental)}

@@ -42,7 +42,7 @@ trait
 `igphyml` specified)
 
 id
-:   unique identifer for this analysis (required if
+:   unique identifier for this analysis (required if
 `igphyml` or `dnapars` specified)
 
 dir
@@ -59,7 +59,7 @@ exec
 :   location of desired phylogenetic executable
 
 igphyml
-:   optional location of igphyml executible for parsimony
+:   optional location of igphyml executable for parsimony
 
 fixtrees
 :   if TRUE, use supplied tree topologies
@@ -98,7 +98,7 @@ Details
 -------------------
 
 Estimates phylogenetic tree topologies and branch lengths for a list of
-`airrClone` objects. By default, it will use phangnorn::pratchet to
+`airrClone` objects. By default, it will use phangorn::pratchet to
 estimate maximum parsimony tree topologies, and ape::acctran to estimate
 branch lengths. If `igpyhml` is specified, internal node `trait`
 values will be predicted by maximum parsimony. In this case, `dir` will
@@ -136,6 +136,7 @@ data(ExampleClones)
 # trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
 # id="temp",dir="temp", trait="sample_id")
 # plotTrees(trees)[[1]]
+
 ```
 
 

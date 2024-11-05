@@ -50,7 +50,7 @@
 #' @param    heavy        name of heavy chain locus (default = "IGH")
 #' @param    cell         name of the column containing cell assignment information
 #' @param    locus        name of the column containing locus information
-#' @param    mod3         pad sequences to length mutliple three?
+#' @param    mod3         pad sequences to length multiple three?
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
 #' @param    use_regions  assign CDR/FWR regions?
 #' @param    dup_singles  Duplicate sequences in singleton clones to include them as trees?
@@ -367,7 +367,7 @@ makeAirrClone <-
         loci <- unique(dplyr::pull(data,locus))
         if(length(loci) > 1){
           warning(paste("clone",unique(dplyr::pull(data,clone)),
-                        "mutliple loci present but not dealt with!"))
+                        "multiple loci present but not dealt with!"))
           loci <- paste(loci,collapse=",")
         }
       }else{
@@ -422,7 +422,7 @@ makeAirrClone <-
         loci <- unique(dplyr::pull(data,locus))
         if(length(loci) > 1){
           warning(paste("clone",unique(dplyr::pull(data,clone)),
-                        "mutliple loci present but not dealt with!"))
+                        "multiple loci present but not dealt with!"))
           loci <- paste(loci,collapse=",")
         }
       }else{
@@ -636,7 +636,7 @@ cleanAlignment <- function(clone){
 #' @param    heavy        name of heavy chain locus (default = "IGH")
 #' @param    cell         name of the column containing cell assignment information
 #' @param    locus        name of the column containing locus information
-#' @param    nproc        number of cores to parallelize formating over.
+#' @param    nproc        number of cores to parallelize formatting over.
 #' @param    columns      additional data columns to include in output
 #' @param    id           name of the column containing sequence identifiers.
 #' @param    seq          name of the column containing observed DNA sequences. All 
@@ -675,7 +675,7 @@ cleanAlignment <- function(clone){
 #' @param    traits       column ids to keep distinct during sequence collapse 
 #' @param    chain        if HL, include light chain information if available.
 #' @param    heavy        name of heavy chain locus (default = "IGH")
-#' @param    mod3         pad sequences to length mutliple three?
+#' @param    mod3         pad sequences to length multiple three?
 #' @param    randomize    randomize sequence order? Important if using PHYLIP
 #' @param    use_regions   assign CDR/FWR regions?
 #' @param    dup_singles   Duplicate sequences in singleton clones to include them as trees?   

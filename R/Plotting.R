@@ -208,7 +208,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #'                              for all tip states, or a palette named passed to
 #'                              ggplot2::scale_color_brewer (e.g. "Dark2", "Paired", "Set1") or
 #'                              ggplot2::scale_color_distiller (e.g. RdYlBu) or
-#' @param    common_scale       strecth plots so branches are on same scale?
+#' @param    common_scale       stretch plots so branches are on same scale?
 #'                              determined by sequence with highest divergence
 #' @param    layout             rectangular or circular tree layout?
 #' @param    node_nums          plot internal node numbers?
@@ -220,12 +220,12 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
 #' @param    node_palette       deprecated, use palette
 #' @param    tip_palette        deprecated, use palette
-#' @param    guide_title        Title of color guide. Defaults to tips vairable if specified.
+#' @param    guide_title        Title of color guide. Defaults to tips variable if specified.
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
 #' @details
-#' Function uses \code{ggtree} functions to plot tree topologlies estimated by 
+#' Function uses \code{ggtree} functions to plot tree topologies estimated by 
 #' \link{getTrees}, and \link{findSwitches}. Object can be further modified with 
 #' \code{ggtree} functions. Please check out 
 #' https://bioconductor.org/packages/devel/bioc/vignettes/ggtree/inst/doc/ggtree.html and

@@ -26,7 +26,7 @@ buildPhylo(
 
 \item{rm_temp}{remove temporary files?}
 
-\item{seq}{sequece column in \code{airrClone} object}
+\item{seq}{sequence column in \code{airrClone} object}
 
 \item{tree}{fixed tree topology if desired (currently does nothing
 if specified)}

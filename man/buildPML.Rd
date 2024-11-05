@@ -24,7 +24,7 @@ buildPML(
 \arguments{
 \item{clone}{\code{airrClone} object}
 
-\item{seq}{sequece column in \code{airrClone} object}
+\item{seq}{sequence column in \code{airrClone} object}
 
 \item{sub_model}{substitution model to use}
 

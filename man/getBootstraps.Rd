@@ -40,7 +40,7 @@ column (required) should report their bootstrap value}
 \item{dir}{directory where temporary files will be placed (required
 if \code{igphyml} or \code{dnapars} specified)}
 
-\item{id}{unique identifer for this analysis (required if 
+\item{id}{unique identifier for this analysis (required if 
 \code{igphyml} or \code{dnapars} specified)}
 
 \item{build}{program to use for tree building (phangorn, dnapars, igphyml)}

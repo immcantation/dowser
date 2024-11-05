@@ -29,7 +29,7 @@ clone
 :   `airrClone` object
 
 seq
-:   sequece column in `airrClone` object
+:   sequence column in `airrClone` object
 
 asr
 :   return sequence or probability matrix?

@@ -26,7 +26,7 @@
 #'   \item  \code{PGT}: p value that DELTA > 0
 #'   \item  \code{STAT}: Statistic used (PS).
 #'   \item  \code{REP}: Bootstrap repetition.
-#'   \item  \code{REPS}: Total number of ootstrap repetition.
+#'   \item  \code{REPS}: Total number of bootstrap repetition.
 #'}
 #'  
 #' @seealso Uses output from \link{findSwitches}. Related to \link{testSP}
@@ -180,7 +180,7 @@ testPS <- function(switches, bylineage=FALSE, pseudocount=0,
 #'   \item  \code{PGT}: p value that DELTA > 0
 #'   \item  \code{STAT}: Statistic used (SP).
 #'   \item  \code{REP}: Bootstrap repetition.
-#'   \item  \code{REPS}: Total number of ootstrap repetition.
+#'   \item  \code{REPS}: Total number of bootstrap repetition.
 #'}
 #'  
 #' @seealso Uses output from \link{findSwitches}. Related to \link{testPS}
@@ -414,7 +414,7 @@ testSP <- function(switches, permuteAll=FALSE,
 #'   \item  \code{PGT}: p value that DELTA > 0
 #'   \item  \code{STAT}: Statistic used (SC).
 #'   \item  \code{REP}: Bootstrap repetition.
-#'   \item  \code{REPS}: Total number of ootstrap repetition.
+#'   \item  \code{REPS}: Total number of bootstrap repetition.
 #'}
 #'  
 #' @seealso Uses output from \link{findSwitches}. Related to \link{testPS}

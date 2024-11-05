@@ -138,7 +138,7 @@ traits
 :   column ids to keep distinct during sequence collapse
 
 mod3
-:   pad sequences to length mutliple three?
+:   pad sequences to length multiple three?
 
 randomize
 :   randomize sequence order? Important if using PHYLIP
@@ -208,6 +208,7 @@ Examples
 ```R
 data(ExampleAirr)
 airr_clone <- makeAirrClone(ExampleAirr[ExampleAirr$clone_id=="3184",])
+
 ```
 
 

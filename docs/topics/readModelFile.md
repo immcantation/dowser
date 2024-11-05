@@ -16,7 +16,7 @@ Arguments
 -------------------
 
 file
-:   parimony model file.
+:   parsimony model file.
 
 useambig
 :   use ambiguous naming as specified in the file?

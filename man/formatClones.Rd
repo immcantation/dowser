@@ -105,7 +105,7 @@ sequences silently.}
 
 \item{traits}{column ids to keep distinct during sequence collapse}
 
-\item{mod3}{pad sequences to length mutliple three?}
+\item{mod3}{pad sequences to length multiple three?}
 
 \item{randomize}{randomize sequence order? Important if using PHYLIP}
 
@@ -113,7 +113,7 @@ sequences silently.}
 
 \item{dup_singles}{Duplicate sequences in singleton clones to include them as trees?}
 
-\item{nproc}{number of cores to parallelize formating over.}
+\item{nproc}{number of cores to parallelize formatting over.}
 
 \item{chain}{if HL, include light chain information if available.}
 

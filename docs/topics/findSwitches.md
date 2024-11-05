@@ -52,11 +52,11 @@ trait
 :   trait to use for parsimony models
 
 igphyml
-:   location of igphyml executible
+:   location of igphyml executable
 
 fixtrees
 :   keep tree topologies fixed?
-(bootstrapping will not be perfomed)
+(bootstrapping will not be performed)
 
 downsample
 :   downsample clones to have a maximum specified tip/switch ratio?
@@ -72,7 +72,7 @@ dir
 if `igphyml` or `dnapars` specified)
 
 id
-:   unique identifer for this analysis (required if 
+:   unique identifier for this analysis (required if 
 `igphyml` or `dnapars` specified)
 
 modelfile
@@ -95,7 +95,7 @@ palette
 
 resolve
 :   how should polytomies be resolved? 
-0=none, 1=max parsminy, 2=max ambiguity + polytomy skipping,
+0=none, 1=max parsimony, 2=max ambiguity + polytomy skipping,
 3=max ambiguity
 
 rep
@@ -160,6 +160,7 @@ data(ExampleAirr)
 # igphyml=igphyml, trait="sample_id")
 # plotTrees(btrees$trees[[4]])[[1]]
 # testPS(btrees$switches)
+
 ```
 
 

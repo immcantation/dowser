@@ -1,11 +1,11 @@
 **stitchRegions** - *[stitchRegions](stitchRegions.md) Similar to [stitchVDJ](stitchVDJ.md) but with segment IDs 
-instead of nulecotides*
+instead of nucleotides*
 
 Description
 --------------------
 
 [stitchRegions](stitchRegions.md) Similar to [stitchVDJ](stitchVDJ.md) but with segment IDs 
-instead of nulecotides
+instead of nucleotides
 
 
 Usage
