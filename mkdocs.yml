@@ -10,6 +10,8 @@ theme:
   locale: en
   titles_only: False
   #logo: img/rod_white_leaf_light_background.png
+  analytics:
+    gtag: G-CD0939NYSC
 markdown_extensions:
   - admonition
   - def_list
