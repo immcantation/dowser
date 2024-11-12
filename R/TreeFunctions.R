@@ -1332,7 +1332,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @param    clone      list of \code{airrClone} objects
 #' @param    seq        the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"
 #' @param    exec       RAxML-ng executable
-#' @param    model      The DNA model to be used. GTR is the default.
+#' @param    sub_model      The DNA model to be used. GTR is the default.
 #' @param    partition  A parameter that determines how branches are reported when partitioning. Options include NULL (default), 
 #'                      scaled, unlinked, and linked
 #' @param    rseed      The random seed used for the parsimony inferences. This allows you to reproduce your results.
@@ -1351,7 +1351,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
 #' @return  \code{phylo} object created by RAxML-ng with nodes attribute
 #'          containing reconstructed sequences.
 #' @export
-buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition = NULL, 
+buildRAxML <- function(clone, exec, seq = "sequence", sub_model = 'GTR', partition = NULL, 
                        rseed = 28, name = "run", starting_tree = NULL, data_type = "DNA",
                        from_getTrees = FALSE, rm_files = TRUE, asr = TRUE, rep = 1, dir = NULL,
                        n_starts = NULL, ...){
@@ -1420,7 +1420,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
   close(fileConn)
   input_data <- file.path(dir, paste0(name, "_input_data.phy"))
   
-  command <- paste("--model", model, "--seed", rseed, "-msa", 
+  command <- paste("--model", sub_model, "--seed", rseed, "-msa", 
                    input_data, "-prefix", paste0(dir,"/", name), "--threads 1",
                    "--data-type", data_type, "--force msa")
   if(!is.null(n_starts)){
@@ -1437,9 +1437,9 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     heavy_index <- clone@locus == "IGH"
     end_heavy <- paste(strsplit(clone_seqs,split="")[[1]][heavy_index], collapse = "")
     fileConn<-file(file.path(dir, paste0(name, "_partition.txt")))
-    write(paste0(model, ", p1 = 1-", nchar(end_heavy)), file=file.path(dir, paste0(name, "_partition.txt")), 
+    write(paste0(sub_model, ", p1 = 1-", nchar(end_heavy)), file=file.path(dir, paste0(name, "_partition.txt")), 
           append = TRUE)
-    write(paste0(model, ", p2 = ", nchar(end_heavy)+1, "-", nchar(clone_seqs[1])), 
+    write(paste0(sub_model, ", p2 = ", nchar(end_heavy)+1, "-", nchar(clone_seqs[1])), 
           file=file.path(dir, paste0(name, "_partition.txt")), 
           append = TRUE)
     close(fileConn)
@@ -1471,7 +1471,7 @@ buildRAxML <- function(clone, seq = "sequence", exec, model = 'GTR', partition =
     tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
     starting_tree <- file.path(dir, paste0(name, "_rerooted.tree"))
     ape::write.tree(tree, starting_tree)
-    command <- paste("--model", model, "--seed", rseed, "-msa", 
+    command <- paste("--model", sub_model, "--seed", rseed, "-msa", 
                      input_data, "-prefix", paste0(dir,"/", name, "_asr"), "--threads 1",
                      "--tree", starting_tree, "--ancestral", "data-type", data_type, 
                      "--force msa")

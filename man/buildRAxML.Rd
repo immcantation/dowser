@@ -6,9 +6,9 @@
 \usage{
 buildRAxML(
   clone,
-  seq = "sequence",
   exec,
-  model = "GTR",
+  seq = "sequence",
+  sub_model = "GTR",
   partition = NULL,
   rseed = 28,
   name = "run",
@@ -26,11 +26,11 @@ buildRAxML(
 \arguments{
 \item{clone}{list of \code{airrClone} objects}
 
-\item{seq}{the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"}
-
 \item{exec}{RAxML-ng executable}
 
-\item{model}{The DNA model to be used. GTR is the default.}
+\item{seq}{the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"}
+
+\item{sub_model}{The DNA model to be used. GTR is the default.}
 
 \item{partition}{A parameter that determines how branches are reported when partitioning. Options include NULL (default), 
 scaled, unlinked, and linked}
