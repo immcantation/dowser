@@ -21,6 +21,7 @@ getTrees(
   palette = NULL,
   seq = NULL,
   collapse = FALSE,
+  check_divergence = TRUE,
   ...
 )
 }
@@ -58,6 +59,8 @@ dnapars, dnaml, igphyml, raxml)}
 \item{seq}{column name containing sequence information}
 
 \item{collapse}{Collapse internal nodes with identical sequences?}
+
+\item{check_divergence}{run \link{checkDivergence} on trees?}
 
 \item{...}{Additional arguments passed to tree building programs}
 }

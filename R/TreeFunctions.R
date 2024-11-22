@@ -1830,6 +1830,67 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
   return(tree)
 }
 
+
+#' Compare divergence along a tree in terms of mutations (sum of branches)
+#' for each tip and reconstructed internal node 
+#' to its Hamming distance from the germline. Divergence should never be less than Hamming distance. 
+#' A threshold of -1 is used to represent 
+#' 1 full mutation difference. The function will throw a warning if any trees
+#' cross this threshold
+#'
+#' @param   clones    a tibble of clones and trees, output from \link{getTrees}
+#' @param   germline  ID of the tree's predicted germline sequence
+#' @param   threshold Minimum allowed value of divergence minus Hamming distance
+#' @param   verbose   Print whether all trees passed
+#' @return  \code{tibble} showing the clone_id, sequence_id, as well as tree-based
+#' divergence, hamming distance, and difference between the two.
+#' 
+#' @export
+checkDivergence <- function(clones, threshold=-1, verbose=TRUE, germline="Germline"){
+  if(!"trees" %in% names(clones)){
+    stop("trees column not found in input object!")
+  }
+  edge_types <- unique(sapply(clones$trees, function(x)x$edge_type))
+  if(length(edge_types) > 1){
+    stop("Can't work with mixture of scaled and unscaled branch lengths")
+  }
+  if(edge_types != "mutations"){
+    scaled <- scaleBranches(clones)
+  }else{
+    scaled <- clones
+  }
+  warning <- FALSE
+  results <- dplyr::tibble()
+  for(i in 1:nrow(scaled)){
+    phy <- scaled$trees[[i]]
+    gnode <- which(phy$tip.label == germline)
+    divs <- ape::dist.nodes(phy)[,gnode]
+    seqs <- unlist(lapply(phy$nodes, function(x)x$sequence))
+    uca <- seqs[gnode]
+    hamming <- sapply(1:length(seqs), function(x)alakazam::seqDist(uca, seqs[x]))
+    div_v_dist <- dplyr::bind_cols(clone=scaled$clone_id[i],
+      hamming=hamming, divergence=divs, diff=divs - hamming, node=1:length(seqs))
+
+      if(min(div_v_dist$diff) < threshold){
+        warning <- TRUE
+        mind <- min(div_v_dist$diff)
+        sumd <- sum(div_v_dist$diff < threshold)
+        warning(paste("divergence_check: Clone",scaled$clone_id[i],sumd,
+          "nodes are less diverged than their Hamming distance from the germline than threshold",
+          threshold, ".",
+          "Biggest difference:", mind,"mutations.",
+          "Usually indicates poor model fit. If using max likelihood, try a different substitution model.",
+          "Using sub_model='HKY' with pml or RAxML may help.",
+          "Otherwise contact package maintainers."))
+      }
+      results <- dplyr::bind_rows(results, div_v_dist)
+  }
+  if(!warning && verbose){
+    print(paste("Tested", nrow(scaled), "trees and all passed."))
+  }
+  return(results)
+}
+
 #' Estimate lineage tree topologies, branch lengths,
 #' and internal node states if desired
 #'
@@ -1853,6 +1914,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' @param    palette    deprecated
 #' @param    seq        column name containing sequence information
 #' @param    collapse   Collapse internal nodes with identical sequences?
+#' @param    check_divergence run \link{checkDivergence} on trees?
 #' @param    ...        Additional arguments passed to tree building programs
 #'
 #' @return   A list of \code{phylo} objects in the same order as \code{data}.
@@ -1893,7 +1955,7 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                      modelfile=NULL, build="pratchet", exec=NULL, igphyml=NULL,
                      fixtrees=FALSE, nproc=1, quiet=0, rm_temp=TRUE, palette=NULL,
-                     seq=NULL, collapse=FALSE, ...){
+                     seq=NULL, collapse=FALSE, check_divergence=TRUE, ...){
 
   if(is.null(exec) && (!build %in% c("pratchet", "pml"))){
     stop("exec must be specified for this build option")
@@ -2147,6 +2209,12 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     stop("Clone and tree names not in proper order!")
   }
   clones$trees <- mtrees
+
+  # check hamming distance vs divergence
+  if(check_divergence){
+    div_v_divergence <- checkDivergence(clones, verbose=FALSE, threshold=-1)
+  }
+
   if(collapse){
     clones <- collapseNodes(clones)
   }

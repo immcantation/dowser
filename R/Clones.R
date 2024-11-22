@@ -632,7 +632,7 @@ stopCodonCheck = function(sequences, nproc=1, check=TRUE){
       x[c(FALSE, FALSE, TRUE)])
     if(check){
       if(paste(codons, collapse="") != paste(x, collapse="")){
-        stop(paste("parsing error in stopCodonCheck",paste(x, collapse="")))
+        stop(paste("parsing error in stopCodonCheck", paste(x, collapse="")))
       }
     }
 
