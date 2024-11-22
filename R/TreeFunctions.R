@@ -940,7 +940,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     # this assumes we can change tree object without affecting ASR
     # KBH 11/22/24 safer update according to 
     # https://github.com/KlausVigo/phangorn/issues/176#issuecomment-2416189056
-    fit <- update(fit, tree=ape::unroot(ape::multi2di(fit$tree)))
+    fit <- stats::update(fit, tree=ape::unroot(ape::multi2di(fit$tree)))
     tree <- fit$tree
     # test if the tree is binary 
     if(!ape::is.binary(tree)){
