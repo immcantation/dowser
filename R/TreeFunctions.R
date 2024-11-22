@@ -938,7 +938,9 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     }
     #tree <- ape::unroot(ape::multi2di(fit$tree)) #CGJ 4/5/23
     # this assumes we can change tree object without affecting ASR
-    fit$tree <- ape::unroot(ape::multi2di(fit$tree))
+    # KBH 11/22/24 safer update according to 
+    # https://github.com/KlausVigo/phangorn/issues/176#issuecomment-2416189056
+    fit <- update(fit, tree=ape::unroot(ape::multi2di(fit$tree)))
     tree <- fit$tree
     # test if the tree is binary 
     if(!ape::is.binary(tree)){
@@ -1875,9 +1877,11 @@ checkDivergence <- function(clones, threshold=-1, verbose=TRUE, germline="Germli
         warning <- TRUE
         mind <- min(div_v_dist$diff)
         sumd <- sum(div_v_dist$diff < threshold)
-        warning(paste("divergence_check: Clone",scaled$clone_id[i],sumd,
-          "nodes are less diverged than their Hamming distance from the germline than threshold",
-          threshold, ".",
+        tipd <- sum(div_v_dist$diff[1:length(phy$tip.label)] < threshold)
+        warning(paste("divergence_check: Clone",scaled$clone_id[i],",",tipd,
+          "tips and",sumd-tipd,
+          "internal nodes are less diverged than their Hamming distance from the germline than threshold",
+          threshold,".",
           "Biggest difference:", mind,"mutations.",
           "Usually indicates poor model fit. If using max likelihood, try a different substitution model.",
           "Using sub_model='HKY' with pml or RAxML may help.",
