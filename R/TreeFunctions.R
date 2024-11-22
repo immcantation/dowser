@@ -1912,7 +1912,12 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     warning("palette option is deprecated in getTrees, specify in plotTrees")
     palette <- NULL
   }
-  
+  clone_counts <- table(clones$clone_id)
+  if(max(clone_counts) > 1){
+    repeats <- paste(unique(names(clone_counts)[clone_counts > 1]), collapse=" ")
+    stop(paste("Clone IDs not unique. Repeated names:", repeats))
+  }
+
   # make sure all sequences and germlines within a clone are the same length
   unlist(lapply(data, function(x){
     if(x@phylo_seq == "hlsequence"){

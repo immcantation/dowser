@@ -611,6 +611,42 @@ cleanAlignment <- function(clone){
   return(clone)
 }
 
+#' Check whether sequences have in-frame premature stop codons (PTCs)
+#' 
+#' @param    sequences    Vector of nucleotide sequences in desired reading frame
+#' @param    nproc        Number of cores for preprocessing
+#' @param    check        Check whether codons split correctly         
+#'
+#' @return   Boolean vector of whether each sequence has an in-frame PTC
+stopCodonCheck = function(sequences, nproc=1, check=TRUE){
+
+  stopCheck = function(x, check=TRUE){
+    stops <- c("TAA", "TAG", "TGA")
+    if(length(x) %% 3 != 0){
+      add <- 3-length(x) %% 3
+      x <- append(x, rep("N",add))
+    }
+    codons <- paste0(
+      x[c(TRUE, FALSE, FALSE)], 
+      x[c(FALSE, TRUE, FALSE)], 
+      x[c(FALSE, FALSE, TRUE)])
+    if(check){
+      if(paste(codons, collapse="") != paste(x, collapse="")){
+        stop(paste("parsing error in stopCodonCheck",paste(x, collapse="")))
+      }
+    }
+
+    return(sum(stops %in% toupper(codons)) > 0)
+  }
+
+  if(length(sequences) == 0){
+    stop("No sequences provided")
+  }
+  split <- strsplit(sequences, split="")
+  ptc <- unlist(parallel::mclapply(split, function(x)stopCheck(x, check), mc.cores=nproc))
+  return(ptc)
+}
+
 #### Preprocessing functions ####
 
 #' Generate an ordered list of airrClone objects for lineage construction
@@ -704,7 +740,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     add_count=TRUE, verbose=FALSE, collapse=TRUE,
     cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
     use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
-    filterstop=FALSE, minseq=2, split_light=FALSE, light_traits=FALSE, majoronly=FALSE,
+    filterstop=TRUE, minseq=2, split_light=FALSE, light_traits=FALSE, majoronly=FALSE,
     columns=NULL){
   
   if(majoronly){
@@ -714,19 +750,12 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     data <- dplyr::filter(data, !!rlang::sym(subgroup) <= 1)
   }
   if(filterstop){
-    full_nrow <- nrow(data)
-    data <- parallel::mclapply(1:nrow(data), function(x){
-      sub_seq <- alakazam::translateDNA(data[[seq]][x])
-      if(!grepl("\\*", sub_seq)){
-        data[x,] 
-      }
-    }, mc.cores = nproc)
-    data <- do.call(rbind, data)
-    if(nrow(data) != full_nrow){
-      n_removed <- full_nrow - nrow(data)
-      warning(paste0("There were ", n_removed, " sequence(s) with an inframe stop codon",
-      " and were removed. If you want to keep these sequences use the option filterstop=FALSE."))
+    ptcs <- stopCodonCheck(data[[seq]], nproc=nproc)
+    if(sum(ptcs) > 0){
+      warning(paste0(sum(ptcs), " sequence(s) with an inframe stop codon were removed.",
+      " If you want to keep these sequences use the option filterstop=FALSE."))
     }
+    data <- data[!ptcs,]
   }
   if(!clone %in% names(data)){
     stop(clone," column not found.")

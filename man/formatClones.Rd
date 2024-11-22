@@ -33,7 +33,7 @@ formatClones(
   nproc = 1,
   chain = "H",
   heavy = "IGH",
-  filterstop = FALSE,
+  filterstop = TRUE,
   minseq = 2,
   split_light = FALSE,
   light_traits = FALSE,
