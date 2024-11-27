@@ -887,6 +887,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @param    verbose    Print error messages as they happen?
 #' @param    optNni     Optimize tree topology
 #' @param    optQ       Optimize Q matrix
+#' @param    optEdge    Optimize edge lengths
 #' @param    resolve_random  randomly resolve polytomies?
 #' @param    quiet           amount of rubbish to print to console
 #' @param    rep             current bootstrap replicate (experimental)
@@ -896,7 +897,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @export
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
                      asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, 
-                     verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL){
+                     optEdge=TRUE, verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL){
   seqs <- clone@data[[seq]]
   names <- clone@data$sequence_id
   if(length(seqs) < 2){
@@ -928,7 +929,8 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
     pml <- phangorn::pml(ape::unroot(treeNJ),data=data)
     fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
-                                        optGamma=gamma, rearrangement="NNI",control=phangorn::pml.control(epsilon=1e-08,
+                                        optEdge=optEdge, optGamma=gamma, rearrangement="NNI",
+                                        control=phangorn::pml.control(epsilon=1e-08,
                                         maxit=10, trace=0)), error=function(e)e)
     if("error" %in% class(fit)){
       if(verbose){
@@ -950,6 +952,20 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     tree$edge_type <- "genetic_distance"
     nnodes <- length(unique(c(tree$edge[,1],tree$edge[,2])))
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
+  }else{
+    pml <- phangorn::pml(ape::unroot(tree),data=data)
+    fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=FALSE, optQ=optQ,
+                                        optGamma=FALSE, optEdge=FALSE, rearrangement="none",
+                                        control=phangorn::pml.control(epsilon=1e-08,
+                                        maxit=10, trace=0)), error=function(e)e)
+    if("error" %in% class(fit)){
+      if(verbose){
+        print(fit)
+      }
+      return(fit)
+    }
+    fit <- stats::update(fit, tree=ape::unroot(ape::multi2di(fit$tree)))
+    tree <- fit$tree
   }
   tree$name <- clone@clone
   tree$seq <- seq
