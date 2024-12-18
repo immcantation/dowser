@@ -3523,12 +3523,14 @@ readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1,
       l
     })
 
-    if(tree_posterior){
+    if(tree_posterior){ 
       treesfile <- file.path(dir, paste0(data[[i]]@clone, ".trees"))
       l <- readLines(treesfile, warn=FALSE)
       if(!grepl("End;",l[length(l)])){
         l[length(l) + 1] = "End;"
         warning("Adding End; to ",treesfile)
+        #make new file to avoid overwriting
+        treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
         writeLines(l, con=treesfile)
       }
       phylos <- ape::read.nexus(treesfile)
