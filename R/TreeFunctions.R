@@ -480,7 +480,7 @@ readLineages <- function(file, states=NULL, palette=NULL,
           format=format))
       }
     }else{
-      tf <- suppressWarnings(read_annotated(paste0(fasta,append),
+      tf <- suppressWarnings(phylotate::read_annotated(paste0(fasta,append),
                                             format=format))
     }
     if(!is.null(states)){
@@ -3390,6 +3390,9 @@ buildBeast2Strict <- function(data, exec, time, build, mcmc_length = 1000000, di
       print(capture[[i]])
       stop(paste("Error running BEAST (see above), clone", data[[i]]@clone))
     }
+    if(verbose > 1){
+       print(capture[[i]])
+    }
   }
 
  trees <- readBEAST(clones=data, dir=dir, exec=exec, burnin=burnin, 
@@ -3418,7 +3421,7 @@ buildBeast2Strict <- function(data, exec, time, build, mcmc_length = 1000000, di
 #'  
 #' @export
 readBEAST <- function(clones, dir, exec, burnin=10, nproc = 1, verbose=1, 
-  tree_posterior=FALSE, asr=FALSE, low_ram=FALSE) {
+  tree_posterior=FALSE, asr=FALSE, low_ram=TRUE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
