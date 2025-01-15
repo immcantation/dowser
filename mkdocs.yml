@@ -1,6 +1,6 @@
 site_name: dowser
 site_url: https://dowser.readthedocs.io
-repo_url: https://bitbucket.org/kleinstein/dowser
+repo_url: https://github.com/immcantation/dowser
 edit_uri: src/master/docs/
 theme:
   name: readthedocs

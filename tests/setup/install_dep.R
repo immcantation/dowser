@@ -60,13 +60,13 @@ installDep <- function(pkg, devel_mode, immcantation=immcantation_packages,
                          # This is needed if there is an Immcantation release package that is not 
                          # available from CRAN
                          cat(e, "\n")
-                         message("Installing ",pkg," from Bitbucket...\n ")
-                         install_bitbucket(paste0("kleinstein/", pkg_name, "@",pkg_version))
+                         message("Installing ",pkg," from GitHub\n ")
+                         install_github(paste0("immcantation/", pkg_name, "@",pkg_version))
                      })
         }
     } else {
-        message(paste0(pkg,": installing most recent version from Bitbucket @master.")) 
-        install_bitbucket(paste0("kleinstein/", pkg_name, "@master"), upgrade = "never")
+        message(paste0(pkg,": installing most recent version from GitHub @master.")) 
+        install_github(paste0("immcantation/", pkg_name, "@master"), upgrade = "never")
     }
 }
 

@@ -20,7 +20,7 @@ See also
 Useful links:
 
 +  [https://dowser.readthedocs.io](https://dowser.readthedocs.io)
-+  Report bugs at [https://bitbucket.org/kleinstein/dowser/issues](https://bitbucket.org/kleinstein/dowser/issues)
++  Report bugs at [https://github.com/immcantation/dowser/issues](https://github.com/immcantation/dowser/issues?q=is%3Aissue+is%3Aopen+)
 
 
 

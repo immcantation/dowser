@@ -5,7 +5,7 @@ Download
 
 The latest stable release of `dowser` can be downloaded from 
 <a href="http://cran.rstudio.com/web/packages/dowser" target="_blank">CRAN</a>
-or <a href="https://bitbucket.org/kleinstein/dowser/downloads" target="_blank">Bitbucket</a>.
+or <a href="https://github.com/immcantation/dowser/tags" target="_blank">GitHub</a>.
 
 Installing Released Versions
 -------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ You can also install `dowser` via CRAN, but Bioconductor dependencies may not in
 install.packages("dowser")
 ```
 
-Downloaded source builds from Bitbucket may be installed in the usual way:
+Downloaded source builds from GitHub may be installed in the usual way:
 
 ```R
 install.packages("dowser_x.y.z.tar.gz", repos = NULL, type = "source")
@@ -46,7 +46,7 @@ can email the [Immcantation Group](mailto:immcantation@googlegroups.com).
 Building Development Versions
 -------------------------------------------------------------------------------
 
-To build from the [source code](http://bitbucket.org/kleinstein/dowser),
+To build from the [source code](http://github.com/immcantation/dowser),
 first install the build dependencies:
 
 ```R
@@ -57,10 +57,10 @@ To install the latest development code via devtools:
 
 ```R
 library(devtools)
-install_bitbucket("kleinstein/dowser@master")
+install_github("immcantation/dowser@master")
 ```
 
-Note, using `install_bitbucket` will not build the documentation. To generate the 
+Note, using `install_github` will not build the documentation. To generate the 
 documentation, clone the repository and build as normal using `devtools`, 
 `roxygen` and `knitr`:
 

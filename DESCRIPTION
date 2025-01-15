@@ -1,7 +1,7 @@
 Package: dowser
 Type: Package
 Version: 2.3.0.999
-Date: 2024-10-21
+Date: 2025-01-15
 Authors@R: c(person("Kenneth", "Hoehn", role=c("aut", "cre"),
                     email="kenneth.b.hoehn@dartmouth.edu"),
              person("Cole", "Jensen", role=c("ctb"),
@@ -25,7 +25,7 @@ Description: Provides a set of functions for inferring, visualizing, and analyzi
     Hoehn et al (2021) <doi:10.1101/2021.01.06.425648>.
 License: AGPL-3
 URL: https://dowser.readthedocs.io
-BugReports: https://bitbucket.org/kleinstein/dowser/issues
+BugReports: https://github.com/immcantation/dowser/issues
 LazyData: true
 BuildVignettes: true
 VignetteBuilder: knitr

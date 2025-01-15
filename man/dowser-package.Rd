@@ -11,7 +11,7 @@ Provides a set of functions for inferring, visualizing, and analyzing B cell phy
 Useful links:
 \itemize{
   \item \url{https://dowser.readthedocs.io}
-  \item Report bugs at \url{https://bitbucket.org/kleinstein/dowser/issues}
+  \item Report bugs at \url{https://github.com/immcantation/dowser/issues}
 }
 
 }
