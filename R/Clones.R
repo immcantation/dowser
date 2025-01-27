@@ -1453,7 +1453,9 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       cell_counts <- table(ltemp[cvs,][[cell]])
       mcells <- names(cell_counts)[cell_counts > 1]
       for(cellname in mcells){
-        ttemp <- dplyr::filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
+        # CGJ 1/27/25 -- old way now causes internal dplyr error
+        ttemp <- ltemp[cvs & ltemp[[cell]] == cellname, ]
+        # ttemp <- dplyr::filter(ltemp,cvs & !!rlang::sym(cell) == cellname)
         ttemp$str_counts <-
           stringr::str_count(ttemp[[seq]],"[A|C|G|T]")
         # keep version with most non-N characters
@@ -1461,8 +1463,11 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
         rmseqs <- c(rmseqs,rmtemp[[id]])
       }
-      include <- dplyr::filter(ltemp, cvs & !(!!rlang::sym(id) %in% rmseqs))
-      leave <- dplyr::filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
+      # CGJ 1/27/25 -- old way now causes internal dplyr error
+      include <- ltemp[cvs & !(ltemp[[id]] %in% rmseqs), ]
+      leave <- ltemp[!cvs & (ltemp[[id]] %in% rmseqs), ]
+      # include <- dplyr::filter(ltemp, cvs & !(!!rlang::sym(id) %in% rmseqs))
+      # leave <- dplyr::filter(ltemp,!cvs | (!!rlang::sym(id) %in% rmseqs))
       
       # find other cells still in ltemp and add as vj_alt_cell
       mcells <- unique(include[[cell]])
