@@ -3,7 +3,7 @@
 [![](https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=plastic)](https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html)
 
 **IMPORTANT!** 
-Dowser has moved to https://github.com/immcantation/dowser
+Dowser's source code has moved to https://github.com/immcantation/dowser
 
 To update Git configuration settings use:
 
@@ -35,6 +35,13 @@ Dowser has 6 primary functions:
 
 
 [What's a dowser?](https://en.wikipedia.org/wiki/Dowsing)
+
+
+Documentation and tutorials
+-------------------------------------------------------------------------------
+
+Full documention, including tutorials and vignettes: https://dowser.readthedocs.io
+
 
 Contact
 -------------------------------------------------------------------------------
