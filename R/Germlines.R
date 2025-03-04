@@ -1002,13 +1002,48 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #'   \item  \code{UCA}:    The inferred UCA
 #' }
 #' @seealso \link{getTrees} 
-#' @examples 
-# data("ExampleClones")
-# clones <- ExampleClones[1:3,]
-# exec = ".../igphyml/src/igphyml"
-# model_folder = "../../human_B_heavy"
-# uca_script = "../get_UCA.py"
-# clones <- function(clones, build = "igphyml", exec = exec, 
-#                              model_folder = model_folder,
-#                              uca_script = uca_script)
 #' @export
+getTrees_and_UCA <- function(clones, dir = NULL, build, exec, model_folder, uca_script, id = "sample", 
+                             max_iters = 100, nproc = 1, rm_temp = TRUE,
+                             quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
+                             hotness = "e,e,e,e,e,e", ...){
+  if(!is.null(dir)){
+    dir <- path.expand(dir)
+    dir <- file.path(dir, paste0("all_", id))
+    if(!dir.exists(dir)){
+      dir.create(dir)
+    }
+  }else{
+    dir <- alakazam::makeTempDir(name)
+  }
+  
+  if(rm_temp){
+    rm_dir = dir
+  } else{
+    rm_dir = NULL
+  }
+
+  # create the trees for each clone -- save the data 
+  if(quiet > 0){
+    print("preparing the clones for UCA analysis")
+  }
+  invisible(parallel::mclapply(unique(clones$clone_id), function(x)
+    processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
+                         exec = exec, id = id, omega = omega, optimize = optimize, 
+                         motifs = motifs, hotness = hotness, ...), mc.cores = nproc))
+  # run the UCA
+  if(quiet > 0){
+    print("running UCA analysis")
+  }
+  clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
+  callOlga(clone_ids = clone_ids_str, dir = dir, uca_script = uca_script,
+           max_iters = max_iters, nproc = nproc, id = id, model_folder = model_folder, 
+           quiet = quiet)
+  
+  # read in the clones to make the base clones object again with the UCA in the data table
+  clones <- updateClone(clones, dir, id, nproc)
+  
+  # unlink if desired 
+  unlink(rm_dir,recursive=TRUE)
+  return(clones)
+}
