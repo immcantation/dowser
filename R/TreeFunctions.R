@@ -521,7 +521,7 @@ readLineages <- function(file, states=NULL, palette=NULL,
 #' @return   Name of created lineage file.
 #' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
-                             trait=NULL, empty=TRUE, partition="single", heavy="IGH"){
+                             trait=NULL, empty=TRUE, partition="single", heavy="IGH", ...){
   
   file <- file.path(dir,paste0(id,"_lineages_pars.tsv"))
   if(!is.null(rep)){
@@ -1085,7 +1085,6 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                          partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
                          omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
                          rates=NULL, asrc=0.95, splitfreqs=FALSE, ...){
-  
   warning("Dowser igphyml doesn't mask split codons!")
   partition <- match.arg(partition)
   
@@ -2098,9 +2097,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     }
   }
 
-  if(!inherits(data, "list")){
-    data <- list(data)
-  }
+  # if(!inherits(data, "list")){
+  #   data <- list(data)
+  # }
   if(!is.null(dir)){
     if(!dir.exists(dir)){
       dir.create(dir)

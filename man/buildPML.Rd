@@ -15,6 +15,7 @@ buildPML(
   data_type = "DNA",
   optNni = TRUE,
   optQ = TRUE,
+  optEdge = TRUE,
   verbose = FALSE,
   resolve_random = TRUE,
   quiet = 0,
@@ -41,6 +42,8 @@ buildPML(
 \item{optNni}{Optimize tree topology}
 
 \item{optQ}{Optimize Q matrix}
+
+\item{optEdge}{Optimize edge lengths}
 
 \item{verbose}{Print error messages as they happen?}
 

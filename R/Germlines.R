@@ -771,7 +771,7 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
   unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
   data[['tmp_row_id']] <- 1:nrow(data)
   complete <- parallel::mclapply(1:nrow(unique_clones), function(x){
-    sub <- right_join(data, unique_clones[x,,drop=F], by=c(clone,fields))
+    sub <- dplyr::right_join(data, unique_clones[x,,drop=F], by=c(clone,fields))
     if(verbose > 0){
       print(unique(sub[[clone]]))
     }
@@ -817,3 +817,198 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
   }
   results
 }
+
+# Prepares clones for UCA inference. 
+#
+# \code{processCloneGermline} Exports two text files that are used as inputs for 
+#                             the UCA script.
+# @param clone_ids  A clone id for the clones object. This is only used in parallel
+# @param clones     A clones object from \link{formatClones}
+# @param dir        The directory where data should be saved to 
+# @param exec       The file path to the tree building executable 
+# @param id         The run id
+# @param nproc      The number of cores to use 
+# @param omega      Omega parameters to estimate (see IgPhyMl docs)
+# @param optimize   Optimize HLP rates (r), lengths (l), and/or topology (r)
+# @param motifs     Motifs to consider (see IgPhyMl docs)
+# @param hotness    Hotness parameters to estimate (see IgPhyMl docs)
+#
+processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc = 1,
+                                 omega = NULL, optimize = "lr", motifs = "FCH", 
+                                 hotness = "e,e,e,e,e,e", ...){
+  sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
+  subDir <- file.path(dir, paste0(id, "_",clone_ids))
+  if(!dir.exists(subDir)){
+    dir.create(subDir, recursive = T)
+  }
+  sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                  omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, ...)
+  saveRDS(sub, file.path(subDir, "clone.rds"))
+  # now make the system call to get the likelihood dataframe -- needs to be able to parse '...' inputs for the tree
+  repfile <- paste0(subDir, "/", id, "/", id, "_lineages_sample_pars.tsv_gyrep")
+  
+  call <- paste(exec, "--repfile", repfile, "--threads 1 --omega", omega, "-o", optimize, 
+                "--motifs", motifs, "--hotness", hotness, "-m HLP --run_id hlp --oformat tab --ASRp")
+  system(call)
+  
+  # TODO resolve V and J 
+  # get the MRCA for the UCA input -- and the input germline 
+  mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
+  imgt_germline <- sub$data[[1]]@germline
+  r <- sub$data[[1]]@region
+  cdr3_index <- (min(which(r == "cdr3")) - 3):(max(which(r == "cdr3")) + 3)
+  
+  mrcaseq <- sub$trees[[1]]$nodes[[mrca]]$sequence
+  mrcaseq <- strsplit(mrcaseq, split = "")[[1]]
+  if (sum(c("Y", "R", "K", "M", "S", "W", "B", "D", "H", "V") %in% mrcaseq) > 0) {
+    values <- c("Y", "R", "K", "M", "S", "W", "B", "D", "H", "V")[c("Y", "R", "K", "M", "S", "W", "B", "D", "H", "V") %in% mrcaseq]
+    for (value in values) {
+      mrcaseq <- gsub(value, "N", mrcaseq)
+    }
+  }
+  mrcacdr3 <- mrcaseq[cdr3_index]
+  if (sum(!mrcacdr3 %in% c("A", "T", "C", "G", "N")) != 0) {
+    warning(paste(sum(!mrcacdr3 %in% c("A", "T", "C", "G")),
+                  " non ATCG characters in MRCA -- replacing with N"))
+    chars <- c("A", "T", "C", "G")
+    mrcacdr3[!mrcacdr3 %in% c("A", "T", "C", "G")] <-
+      sample(chars, size = sum(!mrcacdr3 %in% c("A", "T", "C", "G")),
+             replace = TRUE)
+  }
+  mrcacdr3 <- paste0(mrcacdr3, collapse = "")
+  
+  # double check that the sequence starts with C and ends with F/W
+  tree_df <- suppressWarnings(read.table(file = file.path(subDir, id, 
+                                                          paste0(id, "_lineages_", id, "_pars_hlp_rootprobs.txt")), 
+                                         header = F, sep = "\t"))
+  colnames(tree_df) = c("site", "codon", "partial_likelihood", "nope", "nada", "no", "equilbrium")
+  test_cdr3 <- strsplit(alakazam::translateDNA(mrcacdr3), "")[[1]]
+  if(test_cdr3[1] != "C" || !test_cdr3[length(test_cdr3)] %in% c("F", "W")){
+    # group regions into codons to find the right site(s)
+    groupedList <- split(1:length(r), ceiling(seq_along(r) / 3))
+    if(test_cdr3[1] != "C"){
+      # replace with the most likely "C" from the tree
+      codon_site <- which(sapply(groupedList, function(group) min(cdr3_index) %in% group))
+      sub_tree_df <- dplyr::filter(tree_df, site == codon_site)
+      sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
+      sub_tree_df <- dplyr::filter(sub_tree_df, aa == "C")
+      sub_tree_df$value <- sub_tree_df$partial_likelihood * sub_tree_df$equilbrium
+      value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
+      mrcacdr3 <- paste0(value[1], substring(mrcacdr3, 4, nchar(mrcacdr3)))
+    }
+    if(!test_cdr3[length(test_cdr3)] %in% c("F", "W")){
+      # replace with the most likely "F" or "W" from the tree
+      codon_site <- which(sapply(groupedList, function(group) max(cdr3_index) %in% group))
+      sub_tree_df <- dplyr::filter(tree_df, site == codon_site)
+      sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
+      sub_tree_df <- dplyr::filter(sub_tree_df, aa %in% c("W", "F"))
+      sub_tree_df$value <- sub_tree_df$partial_likelihood * sub_tree_df$equilbrium
+      value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
+      mrcacdr3 <- paste0(substring(mrcacdr3, 1, nchar(mrcacdr3)-3), value[1])
+    }
+  }
+  
+  v_len <- length(r[!r %in% c("cdr3", "fwr4")]) - 2
+  v <- substring(imgt_germline, 1, v_len - 1)
+  j_start <- length(r[!r %in% "fwr4"]) + 4
+  j <- substr(imgt_germline, j_start, nchar(imgt_germline))
+  # j_len <- nchar(j)
+  # padded <- stringr::str_count(substring(j, j_len -2, j_len), "N")
+  
+  # this is where resolving the V and J should go 
+  
+  # pu it all together 
+  v_cdr3 <- paste0(v, paste0(mrcacdr3, collapse = ""), collapse = "")
+  starting_germ <- paste0(v_cdr3, j, collapse = "")
+  
+  sink(file.path(subDir, paste("olga_testing_germline.txt")))
+  cat(paste0(starting_germ, collapse = ""))
+  sink()
+  
+  sink(file.path(subDir, paste("olga_testing_germline_cdr3.txt")))
+  cat(mrcacdr3)
+  sink()
+}
+
+# Runs clones through a UCA inference. 
+#
+# \code{callOlga} Performs UCA inference and exports the UCA, some data about the UCA,
+#                 and UCA likelihoods
+# @param clone_ids  A string that contains comma separated clone ids for the clones object. 
+# @param dir        The directory where data should be saved to 
+# @param uca_script The file path to the UCA python script
+# @param max_iters  The maximum number of iterations to run before ending
+# @param nproc      The number of cores to use 
+# @param id         The run id
+# @param model_folder The file path to the model parameters provide by OLGA
+# @param quiet      Amount of noise to print out
+#
+
+callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_folder,
+                     quiet){
+  args <- c(
+    "--clone_ids", clone_ids, 
+    "--directory", dir, 
+    "--max_iters", max_iters,
+    "--nproc", nproc, 
+    "--id", id, 
+    "--model_folder", model_folder,
+    "--quiet", quiet
+  )
+  #call_olga <- paste("python", args = c(uca_script, args))
+  system2("python", args = c(uca_script, args))
+}
+
+# Adds the UCA to the clones object 
+#
+# \code{updateClone} Adds the UCA to the data frame within the clones object
+# @param clones     The clones object
+# @param dir        The directory where data should be saved to 
+# @param id         The run id
+# @param nproc      The number of cores to use 
+#
+
+updateClone <- function(clones, dir, id, nproc = 1){
+  updated_clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+    clone <- readRDS(file.path(dir, paste0(id, "_", clones$clone_id[x]), "clone.rds"))
+    uca <- read.table(file.path(dir, paste0(id, "_", clones$clone_id[x]), "UCA.txt"), sep = "\t")[[1]]
+    clone$data[[1]]@data$UCA <- uca
+    return(clone)
+  }, mc.cores = nproc))
+  return(updated_clones)
+}
+
+#' \link{getTrees_and_UCA} Construct trees and infer the UCA
+#' @param data          AIRR-table containing sequences \link{formatClones}
+#' @param dir           The file path of the directory of where data is saved. NULL is default.
+#' @param build         Name of the tree building method
+#' @param exec          File path to the tree building executable
+#' @param model_folder  The file path to the model parameters provide by OLGA
+#' @param uca_script    The file path to the UCA python script
+#' @param id            The run ID
+#' @param max_iters     The maximum number of iterations to run before ending
+#' @param nproc         The number of cores to use 
+#' @param rm_temp       Remove the generated files?
+#' @param quiet         Amount of noise to print out
+#' @param omega         Omega parameters to estimate (see IgPhyMl docs)
+#' @param optimize      Optimize HLP rates (r), lengths (l), and/or topology (r)
+#' @param motifs        Motifs to consider (see IgPhyMl docs)
+#' @param hotness       Hotness parameters to estimate (see IgPhyMl docs)
+#' @param ...           Additional arguments passed to \link{buildGermline}
+#' @return An \code{airrClone} object with trees and the inferred UCA
+#' @details Return object adds/edits following columns:
+#' \itemize{
+#'   \item  \code{trees}:  The phylogenies associated with each clone
+#'   \item  \code{UCA}:    The inferred UCA
+#' }
+#' @seealso \link{getTrees} 
+#' @examples 
+# data("ExampleClones")
+# clones <- ExampleClones[1:3,]
+# exec = ".../igphyml/src/igphyml"
+# model_folder = "../../human_B_heavy"
+# uca_script = "../get_UCA.py"
+# clones <- function(clones, build = "igphyml", exec = exec, 
+#                              model_folder = model_folder,
+#                              uca_script = uca_script)
+#' @export

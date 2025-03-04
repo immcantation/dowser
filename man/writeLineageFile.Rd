@@ -13,7 +13,8 @@ writeLineageFile(
   trait = NULL,
   empty = TRUE,
   partition = "single",
-  heavy = "IGH"
+  heavy = "IGH",
+  ...
 )
 }
 \arguments{

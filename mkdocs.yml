@@ -1,3 +1,4 @@
+theme: readthedocs
 site_name: dowser
 site_url: https://dowser.readthedocs.io
 repo_url: https://github.com/immcantation/dowser
@@ -17,50 +18,76 @@ markdown_extensions:
   - def_list
   - sane_lists
   - smarty
+  - pymdownx.arithmatex
   - toc:
-      baselevel: 1
-      toc_depth: 1-4
       permalink: True
-docs_dir: 'docs'
-nav:
-  - 'Immcantation Portal': https://immcantation.readthedocs.io/
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+pages:
   - 'About':
     - 'Introduction': index.md
-    - 'Download & Installation': install.md
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
-    - 'Related Projects': projects.md
   - 'Vignettes':
+    - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md
+    - 'Discrete Trait Analysis': vignettes/Discrete-Trait-Vignette.md
+    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
+    - 'Measurable evolution': vignettes/Measurable-Evolution.md
+    - 'Plotting Lineage Trees': vignettes/Plotting-Trees-Vignette.md
     - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Reconstruct clonal germlines': vignettes/Germlines-Vignette.md
-    - 'Build lineage trees': vignettes/Building-Trees-Vignette.md
-    - 'Plot lineage trees': vignettes/Plotting-Trees-Vignette.md
-    - 'Heavy+light chain tree building': vignettes/Resolve-Light-Chains-Vignette.md
-    - 'Reconstruct intermediate sequences': vignettes/Sequences-Vignette.md
-    - 'Detecting evolution over time': vignettes/Measurable-Evolution.md
-    - 'Migration, differentiation, and isotype switching': vignettes/Discrete-Trait-Vignette.md
-  - 'Function Documentation':
-    #- 'Germline construction functions':
-    - topics/readIMGT.md
-    - topics/createGermlines.md
-    #- 'Clone formating functions':
-    - topics/formatClones.md
-    - topics/makeAirrClone.md
+    - 'Building trees with paired heavy and light chain data': vignettes/Resolve-Light-Chains-Vignette.md
+    - 'Reconstruct Intermediate Sequences': vignettes/Sequences-Vignette.md
+  - 'Help Topics':
     - topics/airrClone-class.md
-    - topics/resolveLightChains.md
-    #- 'Tree building functions':
-    - topics/getTrees.md
+    - topics/BiopsyTrees.md
+    - topics/bootstrapTrees.md
+    - topics/buildClonalGermline.md
+    - topics/buildGermline.md
     - topics/buildIgphyml.md
-    - topics/buildPML.md
     - topics/buildPhylo.md
+    - topics/buildPML.md
     - topics/buildPratchet.md
     - topics/buildRAxML.md
-    #- 'Visualization functions':
-    - topics/plotTrees.md
-    - topics/treesToPDF.md
-    - topics/colorTrees.md
-    - topics/getPalette.md
+    - topics/calcRF.md
     - topics/collapseNodes.md
+    - topics/colorTrees.md
+    - topics/condenseTrees.md
+    - topics/correlationTest.md
+    - topics/createGermlines.md
+    - topics/downsampleClone.md
+    - topics/dowser-package.md
+    - topics/ExampleAirr.md
+    - topics/ExampleClones.md
+    - topics/ExampleDbChangeo.md
+    - topics/ExampleMixedClones.md
+    - topics/ExampleMixedDb.md
+    - topics/exportTrees.md
+    - topics/findSwitches.md
+    - topics/formatClones.md
+    - topics/getBootstraps.md
+    - topics/getDivergence.md
+    - topics/getGermline.md
+    - topics/getNodeSeq.md
+    - topics/getPalette.md
+    - topics/getSeq.md
+    - topics/getSubclones.md
+    - topics/getSubTaxa.md
+    - topics/getTrees.md
+    - topics/IsotypeTrees.md
+    - topics/makeAirrClone.md
+    - topics/makeModelFile.md
+    - topics/maskCodons.md
+    - topics/maskSequences.md
+    - topics/plotTrees.md
+    - topics/readFasta.md
+    - topics/readIMGT.md
+    - topics/readLineages.md
+    - topics/readModelFile.md
+    - topics/reconIgPhyML.md
+    - topics/rerootTree.md
+    - topics/resolveLightChains.md
+    - topics/resolvePolytomies.md
+    - topics/runCorrelationTest.md
     - topics/scaleBranches.md
     - topics/rerootTree.md
     #- 'Intermediate sequence functions':
@@ -73,8 +100,7 @@ nav:
     - topics/testPS.md
     - topics/testSC.md
     - topics/testSP.md
-    #- 'Tree based statitsitcs':
-    - topics/calcRF.md
-    - topics/correlationTest.md
-    - topics/getBootstraps.md
-    - topics/getDivergence.md
+    - topics/TimeTrees.md
+    - topics/treesToPDF.md
+    - topics/writeCloneSequences.md
+    - topics/writeLineageFile.md
