@@ -43,6 +43,7 @@ Imports:
     ggtree,
     graphics,
     gridExtra,
+    lifecycle,
     markdown,
     methods,
     phangorn (>= 2.7.1),
@@ -59,8 +60,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat,
-    pwalign,
-    lifecycle
+    pwalign
 RoxygenNote: 7.3.2
 Collate:
     'Data.R'
