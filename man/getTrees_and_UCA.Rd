@@ -24,6 +24,8 @@ getTrees_and_UCA(
 )
 }
 \arguments{
+\item{clones}{AIRR-table containing sequences \link{formatClones}}
+
 \item{dir}{The file path of the directory of where data is saved. NULL is default.}
 
 \item{build}{Name of the tree building method}
@@ -53,8 +55,6 @@ getTrees_and_UCA(
 \item{hotness}{Hotness parameters to estimate (see IgPhyMl docs)}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
-
-\item{data}{AIRR-table containing sequences \link{formatClones}}
 }
 \value{
 An \code{airrClone} object with trees and the inferred UCA

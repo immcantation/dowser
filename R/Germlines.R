@@ -889,9 +889,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     if(test_cdr3[1] != "C"){
       # replace with the most likely "C" from the tree
       codon_site <- which(sapply(groupedList, function(group) min(cdr3_index) %in% group))
-      sub_tree_df <- dplyr::filter(tree_df, site == codon_site)
+      sub_tree_df <- dplyr::filter(tree_df, !!rlang::sym("site") == codon_site)
       sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
-      sub_tree_df <- dplyr::filter(sub_tree_df, aa == "C")
+      sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") == "C")
       sub_tree_df$value <- sub_tree_df$partial_likelihood * sub_tree_df$equilbrium
       value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
       mrcacdr3 <- paste0(value[1], substring(mrcacdr3, 4, nchar(mrcacdr3)))
@@ -899,9 +899,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     if(!test_cdr3[length(test_cdr3)] %in% c("F", "W")){
       # replace with the most likely "F" or "W" from the tree
       codon_site <- which(sapply(groupedList, function(group) max(cdr3_index) %in% group))
-      sub_tree_df <- dplyr::filter(tree_df, site == codon_site)
+      sub_tree_df <- dplyr::filter(tree_df, !!rlang::sym("site") == codon_site)
       sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
-      sub_tree_df <- dplyr::filter(sub_tree_df, aa %in% c("W", "F"))
+      sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") %in% c("W", "F"))
       sub_tree_df$value <- sub_tree_df$partial_likelihood * sub_tree_df$equilbrium
       value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
       mrcacdr3 <- paste0(substring(mrcacdr3, 1, nchar(mrcacdr3)-3), value[1])
@@ -979,7 +979,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 }
 
 #' \link{getTrees_and_UCA} Construct trees and infer the UCA
-#' @param data          AIRR-table containing sequences \link{formatClones}
+#' @param clones        AIRR-table containing sequences \link{formatClones}
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method
 #' @param exec          File path to the tree building executable
@@ -1014,7 +1014,7 @@ getTrees_and_UCA <- function(clones, dir = NULL, build, exec, model_folder, uca_
       dir.create(dir)
     }
   }else{
-    dir <- alakazam::makeTempDir(name)
+    dir <- alakazam::makeTempDir(id)
   }
   
   if(rm_temp){

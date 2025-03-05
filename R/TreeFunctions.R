@@ -518,6 +518,7 @@ readLineages <- function(file, states=NULL, palette=NULL,
 #' @param    partition how to partition omegas
 #' @param    heavy     name of heavy chain locus
 #' @param    empty     output uninformative sequences?
+#' @param    ...       additional arguments to be passed
 #' @return   Name of created lineage file.
 #' @export
 writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL, 
