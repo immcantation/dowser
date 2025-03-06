@@ -973,12 +973,14 @@ updateClone <- function(clones, dir, id, nproc = 1){
     clone <- readRDS(file.path(dir, paste0(id, "_", clones$clone_id[x]), "clone.rds"))
     uca <- read.table(file.path(dir, paste0(id, "_", clones$clone_id[x]), "UCA.txt"), sep = "\t")[[1]]
     clone$data[[1]]@data$UCA <- uca
+    germline_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
+    clone$trees[[1]]$nodes[[germline_node]]$sequence <- uca
     return(clone)
   }, mc.cores = nproc))
   return(updated_clones)
 }
 
-#' \link{getTrees_and_UCA} Construct trees and infer the UCA
+#' \link{getTreesAndUCA} Construct trees and infer the UCA
 #' @param clones        AIRR-table containing sequences \link{formatClones}
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method
@@ -1003,7 +1005,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTrees_and_UCA <- function(clones, dir = NULL, build, exec, model_folder, uca_script, id = "sample", 
+getTreesAndUCA <- function(clones, dir = NULL, build, exec, model_folder, uca_script, id = "sample", 
                              max_iters = 100, nproc = 1, rm_temp = TRUE,
                              quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
                              hotness = "e,e,e,e,e,e", ...){

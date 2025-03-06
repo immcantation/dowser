@@ -43,7 +43,6 @@ Imports:
     ggtree,
     graphics,
     gridExtra,
-    lifecycle,
     markdown,
     methods,
     phangorn (>= 2.7.1),
