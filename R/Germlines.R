@@ -930,16 +930,19 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
 # @param quiet      Amount of noise to print out
 #
 
-callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_folder,
-                     quiet){
+callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, quiet,
+                     model_params, model_marginals, v_anchors, j_anchors){
   args <- c(
     "--clone_ids", clone_ids, 
     "--directory", dir, 
     "--max_iters", max_iters,
     "--nproc", nproc, 
     "--id", id, 
-    "--model_folder", model_folder,
-    "--quiet", quiet
+    "--quiet", quiet,
+    "--model_params", model_params, 
+    "--model_marginals", model_marginals,
+    "--v_anchors", v_anchors, 
+    "--j_anchors", j_anchors
   )
   #call_olga <- paste("python", args = c(uca_script, args))
   system2("python", args = c(uca_script, args))
@@ -971,7 +974,10 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method
 #' @param exec          File path to the tree building executable
-#' @param model_folder  The file path to the model parameters provide by OLGA
+#' @param model_params  The file path to the OLGA model_params.txt file
+#' @param model_marginals The file path to the OGLA model_marginals.txt file
+#' @param v_anchors     The file path to the OLGA V_gene_CDR3_anchors.csv
+#' @param j_anchors     The file path to the OLGA J_gene_CDR3_anchors.csv 
 #' @param uca_script    The file path to the UCA python script
 #' @param id            The run ID
 #' @param max_iters     The maximum number of iterations to run before ending
@@ -991,10 +997,11 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCA <- function(clones, dir = NULL, build, exec, model_folder, uca_script, id = "sample", 
-                             max_iters = 100, nproc = 1, rm_temp = TRUE,
-                             quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
-                             hotness = "e,e,e,e,e,e", ...){
+getTreesAndUCA <- function(clones, dir = NULL, build, exec, model_params, model_marginals, 
+                           v_anchors, j_anchors, uca_script, id = "sample", 
+                           max_iters = 100, nproc = 1, rm_temp = TRUE,
+                           quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
+                           hotness = "e,e,e,e,e,e", ...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -1024,8 +1031,9 @@ getTreesAndUCA <- function(clones, dir = NULL, build, exec, model_folder, uca_sc
     print("running UCA analysis")
   }
   clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
-  callOlga(clone_ids = clone_ids_str, dir = dir, uca_script = uca_script,
-           max_iters = max_iters, nproc = nproc, id = id, model_folder = model_folder, 
+  callOlga(clone_ids = clone_ids_str, dir = dir, model_params = model_params,
+           model_marginals = model_marginals, v_anchors = v_anchors, j_anchors = j_anchors,
+           uca_script = uca_script, max_iters = max_iters, nproc = nproc, id = id, 
            quiet = quiet)
   
   # read in the clones to make the base clones object again with the UCA in the data table
