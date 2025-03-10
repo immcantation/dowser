@@ -9,7 +9,10 @@ getTreesAndUCA(
   dir = NULL,
   build,
   exec,
-  model_folder,
+  model_params,
+  model_marginals,
+  v_anchors,
+  j_anchors,
   uca_script,
   id = "sample",
   max_iters = 100,
@@ -32,7 +35,13 @@ getTreesAndUCA(
 
 \item{exec}{File path to the tree building executable}
 
-\item{model_folder}{The file path to the model parameters provide by OLGA}
+\item{model_params}{The file path to the OLGA model_params.txt file}
+
+\item{model_marginals}{The file path to the OGLA model_marginals.txt file}
+
+\item{v_anchors}{The file path to the OLGA V_gene_CDR3_anchors.csv}
+
+\item{j_anchors}{The file path to the OLGA J_gene_CDR3_anchors.csv}
 
 \item{uca_script}{The file path to the UCA python script}
 
