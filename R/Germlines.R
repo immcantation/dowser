@@ -842,14 +842,15 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     dir.create(subDir, recursive = T)
   }
   sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                  omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, ...)
+                  omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
+                  asrp = TRUE, ...)
   saveRDS(sub, file.path(subDir, "clone.rds"))
   # now make the system call to get the likelihood dataframe -- needs to be able to parse '...' inputs for the tree
-  repfile <- paste0(subDir, "/", id, "/", id, "_lineages_sample_pars.tsv_gyrep")
+  #repfile <- paste0(subDir, "/", id, "/", id, "_lineages_sample_pars.tsv_gyrep")
   
-  call <- paste(exec, "--repfile", repfile, "--threads 1 --omega", omega, "-o", optimize, 
-                "--motifs", motifs, "--hotness", hotness, "-m HLP --run_id hlp --oformat tab --ASRp")
-  system(call)
+  #call <- paste(exec, "--repfile", repfile, "--threads 1 --omega", omega, "-o", optimize, 
+  #              "--motifs", motifs, "--hotness", hotness, "-m HLP --run_id hlp --oformat tab --ASRp")
+  #system(call)
   
   # TODO resolve V and J 
   # get the MRCA for the UCA input -- and the input germline 
@@ -860,22 +861,10 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   
   mrcaseq <- sub$trees[[1]]$nodes[[mrca]]$sequence
   mrcaseq <- strsplit(mrcaseq, split = "")[[1]]
-  if (sum(c("Y", "R", "K", "M", "S", "W", "B", "D", "H", "V") %in% mrcaseq) > 0) {
-    values <- c("Y", "R", "K", "M", "S", "W", "B", "D", "H", "V")[c("Y", "R", "K", "M", "S", "W", "B", "D", "H", "V") %in% mrcaseq]
-    for (value in values) {
-      mrcaseq <- gsub(value, "N", mrcaseq)
-    }
+  if(sum(!mrcaseq %in% c("A", "T", "C", "G", "N")) != 0){
+    mrcaseq[!mrcaseq %in%c("A", "T", "C", "G", "N")] <- "N"
   }
-  mrcacdr3 <- mrcaseq[cdr3_index]
-  if (sum(!mrcacdr3 %in% c("A", "T", "C", "G", "N")) != 0) {
-    warning(paste(sum(!mrcacdr3 %in% c("A", "T", "C", "G")),
-                  " non ATCG characters in MRCA -- replacing with N"))
-    chars <- c("A", "T", "C", "G")
-    mrcacdr3[!mrcacdr3 %in% c("A", "T", "C", "G")] <-
-      sample(chars, size = sum(!mrcacdr3 %in% c("A", "T", "C", "G")),
-             replace = TRUE)
-  }
-  mrcacdr3 <- paste0(mrcacdr3, collapse = "")
+  mrcacdr3 <- paste0(mrcaseq[cdr3_index], collapse = "")
   
   # double check that the sequence starts with C and ends with F/W
   tree_df <- suppressWarnings(read.table(file = file.path(subDir, id, 
@@ -920,14 +909,11 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   # pu it all together 
   v_cdr3 <- paste0(v, paste0(mrcacdr3, collapse = ""), collapse = "")
   starting_germ <- paste0(v_cdr3, j, collapse = "")
-  
-  sink(file.path(subDir, paste("olga_testing_germline.txt")))
-  cat(paste0(starting_germ, collapse = ""))
-  sink()
-  
-  sink(file.path(subDir, paste("olga_testing_germline_cdr3.txt")))
-  cat(mrcacdr3)
-  sink()
+  file_path_germline <- file.path(subDir, paste("olga_testing_germline.txt"))
+  file_path_junction <- file.path(subDir, paste("olga_testing_germline_cdr3.txt"))
+  writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
+  writeLines(paste0(mrcacdr3, collapse = ""), con = file_path_junction)
+  return(sub)
 }
 
 # Runs clones through a UCA inference. 
@@ -970,9 +956,9 @@ callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_fol
 
 updateClone <- function(clones, dir, id, nproc = 1){
   updated_clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
-    clone <- readRDS(file.path(dir, paste0(id, "_", clones$clone_id[x]), "clone.rds"))
-    uca <- read.table(file.path(dir, paste0(id, "_", clones$clone_id[x]), "UCA.txt"), sep = "\t")[[1]]
-    clone$data[[1]]@data$UCA <- uca
+    clone <- clones[x,]
+    uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"), sep = "\t")[[1]]
+    clone$UCA <- uca
     germline_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
     clone$trees[[1]]$nodes[[germline_node]]$sequence <- uca
     return(clone)
@@ -1029,10 +1015,10 @@ getTreesAndUCA <- function(clones, dir = NULL, build, exec, model_folder, uca_sc
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
-  invisible(parallel::mclapply(unique(clones$clone_id), function(x)
+  clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones$clone_id), function(x)
     processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
                          exec = exec, id = id, omega = omega, optimize = optimize, 
-                         motifs = motifs, hotness = hotness, ...), mc.cores = nproc))
+                         motifs = motifs, hotness = hotness, ...), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")

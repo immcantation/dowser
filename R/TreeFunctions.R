@@ -1066,6 +1066,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #'                      get a separate rate (e.g. omega=e,e rates=0,1).
 #' @param    asrc       Intermediate sequence cutoff probability
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
+#' @param    asrp       Run ASRp?
 #' @param    ...        Additional arguments (not currently used)
 #'
 #' @details Partition options in rate order:
@@ -1085,7 +1086,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
                          partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
                          omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
-                         rates=NULL, asrc=0.95, splitfreqs=FALSE, ...){
+                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE,...){
   warning("Dowser igphyml doesn't mask split codons!")
   partition <- match.arg(partition)
   
@@ -1106,7 +1107,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
     os <- NULL
   }
   file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
-                           partition=partition, ...)
+                           partition=partition)
   if(length(os) != 2 && (partition == "cf" | partition == "hl")){
     warning("Omega parameter incompatible with partition, setting to e,e")
     omega = "e,e"
@@ -1219,6 +1220,33 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       cat(paste(readLines(logfile),"\n"))
       stop()
     })
+  }
+  
+  # CGJ 3/10/25
+  if(asrp){
+    command <- paste("--repfile", gyrep,
+                     "--threads 1 --omega", omega,
+                     "-o", optimize, 
+                     "--motifs", motifs, 
+                     "--hotness", hotness,
+                     "-m HLP --run_id hlp --oformat tab --ASRp")
+    params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
+    if(quiet > 2){
+      print(paste(params,collapse=" "))
+    }
+    status <- tryCatch(do.call(base::system2, params), error=function(e){
+      print(paste("igphyml error, trying again: ",e));
+      cat(paste(readLines(logfile),"\n"))
+      return(e)
+    }, warning=function(w){
+      print(paste("igphyml warnings, trying again: ",w));
+      cat(paste(readLines(logfile),"\n"))
+      return(w)
+    })
+    root_probs <- paste0(gsub(".tsv", "", file), "_hlp_rootprobs.txt")
+    if(!file.exists(root_probs)){
+      stop("root probabilities not found")
+    }
   }
   #trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
   ofile <- file.path(temp_path,paste0(id,"_lineages_",id,
