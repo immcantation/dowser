@@ -845,13 +845,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
                   omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
                   asrp = TRUE, ...)
   saveRDS(sub, file.path(subDir, "clone.rds"))
-  # now make the system call to get the likelihood dataframe -- needs to be able to parse '...' inputs for the tree
-  #repfile <- paste0(subDir, "/", id, "/", id, "_lineages_sample_pars.tsv_gyrep")
-  
-  #call <- paste(exec, "--repfile", repfile, "--threads 1 --omega", omega, "-o", optimize, 
-  #              "--motifs", motifs, "--hotness", hotness, "-m HLP --run_id hlp --oformat tab --ASRp")
-  #system(call)
-  
   # TODO resolve V and J 
   # get the MRCA for the UCA input -- and the input germline 
   mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
@@ -867,9 +860,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   mrcacdr3 <- paste0(mrcaseq[cdr3_index], collapse = "")
   
   # double check that the sequence starts with C and ends with F/W
-  tree_df <- suppressWarnings(read.table(file = file.path(subDir, id, 
-                                                          paste0(id, "_lineages_", id, "_pars_hlp_rootprobs.txt")), 
-                                         header = F, sep = "\t"))
+  tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample",
+                              "sample_lineages_sample_pars_hlp_rootprobs.txt"), 
+                               header = F, sep = "\t"))
   colnames(tree_df) = c("site", "codon", "partial_likelihood", "nope", "nada", "no", "equilbrium")
   test_cdr3 <- strsplit(alakazam::translateDNA(mrcacdr3), "")[[1]]
   if(test_cdr3[1] != "C" || !test_cdr3[length(test_cdr3)] %in% c("F", "W")){
