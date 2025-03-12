@@ -932,8 +932,8 @@ callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_fol
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline_cdr3.txt"))
   })), collapse = ",")
   tree_tables <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
-    value <- path.expand(file.path(dir, paste0(id, "_", z), id, paste0(id, "_lineages_", id, 
-                                                                       "_pars_hlp_rootprobs.txt")))
+    value <- path.expand(file.path(dir, paste0(id, "_", z), "sample", 
+                                   "sample_lineages_sample_pars_hlp_rootprobs.txt"))
   })), collapse = ",")
   
   args <- c(
