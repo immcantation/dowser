@@ -9,10 +9,7 @@ getTreesAndUCA(
   dir = NULL,
   build,
   exec,
-  model_params,
-  model_marginals,
-  v_anchors,
-  j_anchors,
+  model_folder,
   uca_script,
   id = "sample",
   max_iters = 100,
@@ -35,6 +32,8 @@ getTreesAndUCA(
 
 \item{exec}{File path to the tree building executable}
 
+\item{model_folder}{The file path to the OLGA default model files}
+
 \item{uca_script}{The file path to the UCA python script}
 
 \item{id}{The run ID}
@@ -56,8 +55,6 @@ getTreesAndUCA(
 \item{hotness}{Hotness parameters to estimate (see IgPhyMl docs)}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
-
-\item{model_folder}{The file path to the OLGA default model files}
 }
 \value{
 An \code{airrClone} object with trees and the inferred UCA

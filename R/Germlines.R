@@ -1005,9 +1005,8 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCA <- function(clones, dir = NULL, build, exec, model_params, model_marginals, 
-                           v_anchors, j_anchors, uca_script, id = "sample", 
-                           max_iters = 100, nproc = 1, rm_temp = TRUE,
+getTreesAndUCA <- function(clones, dir = NULL, build, exec,  model_folder, uca_script,
+                           id = "sample", max_iters = 100, nproc = 1, rm_temp = TRUE,
                            quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
                            hotness = "e,e,e,e,e,e", ...){
   if(!is.null(dir)){
