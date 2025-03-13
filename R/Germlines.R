@@ -874,7 +874,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
       sub_tree_df <- dplyr::filter(tree_df, !!rlang::sym("site") == codon_site)
       sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
       sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") == "C")
-      sub_tree_df$value <- sub_tree_df$partial_likelihood * sub_tree_df$equilbrium
+      sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
       value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
       mrcacdr3 <- paste0(value[1], substring(mrcacdr3, 4, nchar(mrcacdr3)))
     }
@@ -884,7 +884,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
       sub_tree_df <- dplyr::filter(tree_df, !!rlang::sym("site") == codon_site)
       sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
       sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") %in% c("W", "F"))
-      sub_tree_df$value <- sub_tree_df$partial_likelihood * sub_tree_df$equilbrium
+      sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
       value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
       mrcacdr3 <- paste0(substring(mrcacdr3, 1, nchar(mrcacdr3)-3), value[1])
     }
@@ -903,9 +903,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   v_cdr3 <- paste0(v, paste0(mrcacdr3, collapse = ""), collapse = "")
   starting_germ <- paste0(v_cdr3, j, collapse = "")
   file_path_germline <- file.path(subDir, paste("olga_testing_germline.txt"))
-  file_path_junction <- file.path(subDir, paste("olga_testing_germline_cdr3.txt"))
+  file_path_junction_position <- file.path(subDir, paste("olga_junction_positions.txt"))
   writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
-  writeLines(paste0(mrcacdr3, collapse = ""), con = file_path_junction)
+  writeLines(paste(min(cdr3_index)-1, max(cdr3_index)), con = file_path_junction_position)
   return(sub)
 }
 
@@ -928,8 +928,11 @@ callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_fol
   starting_germlines <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline.txt"))
   })), collapse = ",")
-  starting_cdr3 <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
-    value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline_cdr3.txt"))
+  #starting_cdr3 <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
+  #  value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline_cdr3.txt"))
+  #})), collapse = ",")
+  junction_location <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
+    value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions.txt"))
   })), collapse = ",")
   tree_tables <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "sample", 
@@ -942,13 +945,12 @@ callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_fol
     "--max_iters", max_iters,
     "--nproc", nproc, 
     "--id", id, 
-    "--model_folder", model_folder,
+    "--model_folder", path.expand(model_folder),
     "--quiet", quiet,
     "--starting_germlines", starting_germlines,
-    "--starting_junctions", starting_cdr3,
+    "--junction_locations", junction_location,
     "--tree_tables", tree_tables
   )
-  #call_olga <- paste("python", args = c(uca_script, args))
   system2("python", args = c(uca_script, args))
 }
 
@@ -973,7 +975,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
   return(updated_clones)
 }
 
-#' \link{getTreesAndUCA} Construct trees and infer the UCA
+#' \link{getTreesAndUCAs} Construct trees and infer the UCA
 #' @param clones        AIRR-table containing sequences \link{formatClones}
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method
@@ -998,7 +1000,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCA <- function(clones, dir = NULL, build, exec,  model_folder, uca_script,
+getTreesAndUCAs <- function(clones, dir = NULL, build, exec,  model_folder, uca_script,
                            id = "sample", max_iters = 100, nproc = 1, rm_temp = TRUE,
                            quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
                            hotness = "e,e,e,e,e,e", ...){
@@ -1018,7 +1020,6 @@ getTreesAndUCA <- function(clones, dir = NULL, build, exec,  model_folder, uca_s
     rm_dir = NULL
   }
 
-  # create the trees for each clone -- save the data 
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
