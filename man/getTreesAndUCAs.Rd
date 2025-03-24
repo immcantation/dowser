@@ -6,11 +6,13 @@
 \usage{
 getTreesAndUCAs(
   clones,
+  data = NULL,
   dir = NULL,
   build,
   exec,
   model_folder,
   uca_script,
+  python = "python",
   id = "sample",
   max_iters = 100,
   nproc = 1,
@@ -20,11 +22,17 @@ getTreesAndUCAs(
   optimize = "lr",
   motifs = "FCH",
   hotness = "e,e,e,e,e,e",
+  resolve_v = FALSE,
+  resolve_j = FALSE,
+  references = NULL,
+  clone = "clone_id",
   ...
 )
 }
 \arguments{
 \item{clones}{AIRR-table containing sequences \link{formatClones}}
+
+\item{data}{The AIRR-table that was used to make the clones object. Required for resolve_v.}
 
 \item{dir}{The file path of the directory of where data is saved. NULL is default.}
 
@@ -35,6 +43,10 @@ getTreesAndUCAs(
 \item{model_folder}{The file path to the OLGA default model files}
 
 \item{uca_script}{The file path to the UCA python script}
+
+\item{python}{Specify the python call for your system. This is the call
+on command line that issues the python you want to use. 
+"python" by default.}
 
 \item{id}{The run ID}
 
@@ -52,7 +64,15 @@ getTreesAndUCAs(
 
 \item{motifs}{Motifs to consider (see IgPhyMl docs)}
 
-\item{hotness}{Hotness parameters to estimate (see IgPhyMl docs)}
+\item{hotness}{Hotness parameters to estimate (see IgPhyML docs)}
+
+\item{resolve_v}{Resolve the V gene as well}
+
+\item{resolve_j}{Resolve the J gene as well}
+
+\item{references}{Reference genes. See \link{readIMGT}}
+
+\item{clone}{The name of the clone id column used in \link{formatClones}}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }

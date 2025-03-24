@@ -832,14 +832,23 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
 # @param optimize   Optimize HLP rates (r), lengths (l), and/or topology (r)
 # @param motifs     Motifs to consider (see IgPhyMl docs)
 # @param hotness    Hotness parameters to estimate (see IgPhyMl docs)
+# @param resolve_v  Resolve the V gene as well?
+# @param all_germlines The output of createAllGermlines. Only needed if resolve_genes = TRUE.
+# @param resolve_j  Resolve the J gene in addition to the V gene?
+# @param quiet      How much noise to print out
 #
 processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc = 1,
                                  omega = NULL, optimize = "lr", motifs = "FCH", 
-                                 hotness = "e,e,e,e,e,e", ...){
+                                 hotness = "e,e,e,e,e,e", resolve_v = FALSE, 
+                                 all_germlines = NULL, resolve_j = FALSE, 
+                                 quiet = 0, ...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
     dir.create(subDir, recursive = T)
+  }
+  if(quiet > 0){
+    print(paste("constructing tree for", clone_ids))
   }
   sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
                   omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
@@ -894,12 +903,102 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   v <- substring(imgt_germline, 1, v_len - 1)
   j_start <- length(r[!r %in% "fwr4"]) + 4
   j <- substr(imgt_germline, j_start, nchar(imgt_germline))
-  # j_len <- nchar(j)
-  # padded <- stringr::str_count(substring(j, j_len -2, j_len), "N")
+  j_len <- nchar(j)
+  padded <- stringr::str_count(substring(j, j_len -2, j_len), "N")
+  if(quiet > 0){
+    print(paste("sucessfully obtained MRCA junction for", clone_ids))
+  }
   
-  # this is where resolving the V and J should go 
-  
-  # pu it all together 
+  if(resolve_v){
+    if(quiet > 0){
+      print(paste("resolving genes for", clone_ids))
+    }
+    has_multiple <- all_germlines[all_germlines$clone_id == clone_ids,]
+    saveRDS(has_multiple, file.path(subDir, "all_germlines.rds"))
+    germlines <- do.call(rbind, lapply(1:nrow(has_multiple), function(z){
+      value <- has_multiple$ungapped[z]
+      v_alt <- substring(value, 1, v_len-1)
+      j_alt <- substring(value, (nchar(v_alt) + nchar(mrcacdr3) - 1), 
+                         (nchar(v_alt) + nchar(mrcacdr3) - 1) + j_len)
+      v_stop <- nchar(v)/3
+      j_start_new <- nchar(j)/3
+      sub_df <- dplyr::filter(tree_df, !!rlang::sym("site") %in% c(0:(v_stop-1)) | 
+        !!rlang::sym("site") %in% c((v_stop + nchar(mrcacdr3)/3 -1): ((v_stop + nchar(mrcacdr3)/3 -1) + j_len/3)))
+      vj <- paste0(v_alt, j_alt, collapse = "")
+      gene_list <- strsplit(vj, "")[[1]]
+      groupedSeq <- split(gene_list, ceiling(seq_along(gene_list) / 3))
+      if("N" %in% groupedSeq[[length(groupedSeq)]]){
+        # add the N option to the J
+        df_row <- sub_df[sub_df$site == max(sub_df$site),]
+        df_row$value <- df_row$partial_likelihood + log(df_row$equilbrium)
+        value <- sum(df_row$value)
+        new_row <- sub_df[1,]
+        new_row$site <- max(sub_df$site)
+        new_row$codon <- paste0(groupedSeq[[length(groupedSeq)]], collapse = "")
+        new_row$partial_likelihood <- value
+        sub_df <- rbind(sub_df, new_row)
+      }
+      likelihood <- unlist(lapply(1:length(groupedSeq), function(i){
+        codon <- paste0(groupedSeq[[i]], collapse = "")
+        sitedf <- sub_df[sub_df$site == unique(sub_df$site)[i],]
+        return(sitedf$partial_likelihood[sitedf$codon == codon])
+      }))
+      likelihood <- sum(likelihood)
+      if(padded != 0 & nchar(j_alt) < j_len){
+        j_alt <- paste0(j_alt, paste(rep("N", padded), collapse = ""))
+      }
+      temp <- data.frame(clone_id = z, likelihood = likelihood, v = v_alt, j = j_alt,
+                         v_call = has_multiple$v_call[z], 
+                         j_call = has_multiple$j_call[z])
+      return(temp)
+    }))
+    index <- which(germlines$likelihood == max(germlines$likelihood, na.rm = TRUE))[1]
+    germlines <- germlines[index,]
+    if("N" %in% strsplit(germlines$v, "")[[1]]){
+      stop(paste("There is a N found in resolved V gene for clone", clone_ids))
+    }
+    # make sure that the j lengths are the same -- aka that the new sequence is 
+    # the same length as the old sequence 
+    if(nchar(germlines$v) + nchar(mrcacdr3) + nchar(germlines$j) == nchar(imgt_germline)){
+      if(quiet > 0){
+        print(paste("sucessfully matched both V and J gene length in clone", clone_ids))
+      }
+      v <- germlines$v
+      j <- germlines$j
+    } else{
+      if(nchar(germlines$j) == nchar(j)){
+        j <- germlines$j
+      } else{
+        germlines$j_alt <- substring(germlines$j, 1, nchar(j))
+        if(nchar(germlines$v) + nchar(mrcacdr3) + nchar(germlines$j_alt) == nchar(imgt_germline)){
+          if(quiet > 0){
+            print(paste("sucessfully matched J gene length in clone", clone_ids))
+          }
+          v <- germlines$v
+          j <- germlines$j_alt
+        } else{
+          # shorten the v too -- this has yet to happen due to imgt numbering scheme
+          germlines$v_alt <- substring(germlines$v, 1, nchar(v))
+          if(nchar(germlines$v_alt) + nchar(mrcacdr3) + nchar(germlines$j_alt) == nchar(imgt_germline)){
+            if(quiet > 0){
+              print(paste("sucessfully matched V gene length in clone", clone_ids))
+            }
+            v <- germlines$v_alt
+            j <- germlines$j_alt
+          } else{
+            stop(paste("unable to proper resolve V/J genes on clone", clone_ids))
+          }
+        }
+      }
+    }
+    sub$data[[1]]@data$v <- v
+    sub$data[[1]]@data$v_call_new <- germlines$v_call
+    if(resolve_j){
+      sub$data[[1]]@data$j <- j
+      sub$data[[1]]@data$j_call_new <- germlines$j_call
+    }
+  }
+  # put it all together 
   v_cdr3 <- paste0(v, paste0(mrcacdr3, collapse = ""), collapse = "")
   starting_germ <- paste0(v_cdr3, j, collapse = "")
   file_path_germline <- file.path(subDir, paste("olga_testing_germline.txt"))
@@ -916,6 +1015,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
 # @param clone_ids  A string that contains comma separated clone ids for the clones object. 
 # @param dir        The directory where data should be saved to 
 # @param uca_script The file path to the UCA python script
+# @param python     The call used to launch python from command line
 # @param max_iters  The maximum number of iterations to run before ending
 # @param nproc      The number of cores to use 
 # @param id         The run id
@@ -923,14 +1023,11 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
 # @param quiet      Amount of noise to print out
 #
 
-callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_folder,
+callOlga <- function(clone_ids, dir, uca_script, python, max_iters, nproc, id, model_folder,
                      quiet){
   starting_germlines <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline.txt"))
   })), collapse = ",")
-  #starting_cdr3 <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
-  #  value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline_cdr3.txt"))
-  #})), collapse = ",")
   junction_location <- paste0(unlist(lapply(strsplit(clone_ids, ",")[[1]], function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions.txt"))
   })), collapse = ",")
@@ -951,7 +1048,13 @@ callOlga <- function(clone_ids, dir, uca_script, max_iters, nproc, id, model_fol
     "--junction_locations", junction_location,
     "--tree_tables", tree_tables
   )
-  system2("python", args = c(uca_script, args))
+  
+  olga_check <- tryCatch(system2(python, args = c(uca_script, args)), error=function(e)e)
+  if("error" %in% class(olga_check)){
+      stop("there was an error running the get_UCA script. This is likely due to 
+           not having the required python packages installed for the python version found
+           at", path.expand(Sys.which(python)))
+  }
 }
 
 # Adds the UCA to the clones object 
@@ -968,6 +1071,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
     clone <- clones[x,]
     uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"), sep = "\t")[[1]]
     clone$UCA <- uca
+    clone$AA_UCA <- alakazam::translateDNA(uca)
     germline_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
     clone$trees[[1]]$nodes[[germline_node]]$sequence <- uca
     return(clone)
@@ -977,11 +1081,15 @@ updateClone <- function(clones, dir, id, nproc = 1){
 
 #' \link{getTreesAndUCAs} Construct trees and infer the UCA
 #' @param clones        AIRR-table containing sequences \link{formatClones}
+#' @param data          The AIRR-table that was used to make the clones object. Required for resolve_v.
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method
 #' @param exec          File path to the tree building executable
 #' @param model_folder  The file path to the OLGA default model files
 #' @param uca_script    The file path to the UCA python script
+#' @param python        Specify the python call for your system. This is the call
+#'                      on command line that issues the python you want to use. 
+#'                      "python" by default. 
 #' @param id            The run ID
 #' @param max_iters     The maximum number of iterations to run before ending
 #' @param nproc         The number of cores to use 
@@ -990,7 +1098,11 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param omega         Omega parameters to estimate (see IgPhyMl docs)
 #' @param optimize      Optimize HLP rates (r), lengths (l), and/or topology (r)
 #' @param motifs        Motifs to consider (see IgPhyMl docs)
-#' @param hotness       Hotness parameters to estimate (see IgPhyMl docs)
+#' @param hotness       Hotness parameters to estimate (see IgPhyML docs)
+#' @param resolve_v     Resolve the V gene as well 
+#' @param resolve_j     Resolve the J gene as well  
+#' @param references    Reference genes. See \link{readIMGT}
+#' @param clone         The name of the clone id column used in \link{formatClones}
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:
@@ -1000,10 +1112,11 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCAs <- function(clones, dir = NULL, build, exec,  model_folder, uca_script,
-                           id = "sample", max_iters = 100, nproc = 1, rm_temp = TRUE,
-                           quiet = 0, omega = NULL, optimize = "lr", motifs = "FCH", 
-                           hotness = "e,e,e,e,e,e", ...){
+getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model_folder, uca_script,
+                           python = "python", id = "sample", max_iters = 100, nproc = 1,
+                           rm_temp = TRUE, quiet = 0, omega = NULL, optimize = "lr",
+                           motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
+                         resolve_j = FALSE, references = NULL, clone = "clone_id", ...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -1019,22 +1132,47 @@ getTreesAndUCAs <- function(clones, dir = NULL, build, exec,  model_folder, uca_
   } else{
     rm_dir = NULL
   }
+  
+  if(file.access(path.expand(Sys.which(python)), mode = 1) == -1){
+    stop("The python executable found at", path.expand(Sys.which(python)), " cannot be executed.")
+  }
+  
+  if(!file.exists(path.expand(uca_script))){
+    stop("The file", path.expand(uca_script), " cannot be executed.")
+  }
+  
+  if(resolve_v | resolve_j){
+    if(is.null(data)){
+      stop("The data object is required to resolve the V gene")
+    }
+    if(is.null(references)){
+      stop("References must be supplied to resolve the V gene")
+    }
 
+    all_germlines <- createAllGermlines(data = data, references = references,
+                                        nproc = nproc, clone = clone, trim_lengths = TRUE)
+    clones <- maskAmbigousSites(clones = clones, all_germlines = all_germlines,
+                                nproc = nproc, clone = clone, mask_v = resolve_v,
+                                mask_j = resolve_j)
+  }
+  
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
   clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones$clone_id), function(x)
     processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
                          exec = exec, id = id, omega = omega, optimize = optimize, 
-                         motifs = motifs, hotness = hotness, ...), mc.cores = nproc)))
+                         motifs = motifs, hotness = hotness,
+                         resolve_v = resolve_v,
+                         all_germlines = all_germlines, ...), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")
   }
   clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
   callOlga(clone_ids = clone_ids_str, dir = dir, model_folder = model_folder,
-           uca_script = uca_script, max_iters = max_iters, nproc = nproc, id = id, 
-           quiet = quiet)
+           uca_script = uca_script, python = python, max_iters = max_iters, 
+           nproc = nproc, id = id, quiet = quiet)
   
   # read in the clones to make the base clones object again with the UCA in the data table
   if(quiet > 0){
@@ -1045,4 +1183,510 @@ getTreesAndUCAs <- function(clones, dir = NULL, build, exec,  model_folder, uca_
   # unlink if desired 
   unlink(rm_dir,recursive=TRUE)
   return(clones)
+}
+
+#' \link{createAllGermlines} Creates all possible germlines for a clone
+#' @param data          AIRR-table containing sequences from one clone
+#' @param references    Full list of reference segments, see \link{readIMGT}
+#' @param locus         Name of the locus column in the input data
+#' @param trim_lengths  Remove trailing Ns from \code{seq} column if length different from germline?
+#' @param force_trim    Remove all characters from sequence if different from germline? (not recommended)
+#' @param nproc         Number of cores to use
+#' @param na.rm         Remove clones with failed germline reconstruction?
+#' @param seq           Column name for sequence alignment
+#' @param id            Column name for sequence ID
+#' @param clone         Column name for clone ID
+#' @param v_call        Column name for V gene segment gene call
+#' @param d_call        Column name for D gene segment gene call
+#' @param j_call        Column name for J gene segment gene call
+#' @param v_germ_start  Column name of index of V segment start within germline
+#' @param v_germ_end    Column name of index of V segment end within germline
+#' @param v_germ_length Column name of index of V segment length within germline
+#' @param d_germ_start  Column name of index of D segment start within germline
+#' @param d_germ_end    Column name of index of D segment end within germline
+#' @param d_germ_length Column name of index of D segment length within germline
+#' @param j_germ_start  Column name of index of J segment start within germline
+#' @param j_germ_end    Column name of index of J segment end within germline
+#' @param j_germ_length Column name of index of J segment length within germline
+#' @param np1_length    Column name in receptor specifying np1 segment length 
+#' @param np2_length    Column name in receptor specifying np2 segment length
+#' @param amino_acid    Perform reconstruction on amino acid sequence (experimental)
+#' @param fields        Character vector of additional columns to use for grouping. 
+#'                      Sequences with disjoint values in the specified fields 
+#'                      will be considered as separate clones.
+#' @param verbose       amount of rubbish to print
+#' @param ...           Additional arguments passed to \link{buildGermline}
+#' @return A data frame with all possible reconstructed germlines
+#' @details Return object adds/edits following columns:
+#' \itemize{
+#'   \item  \code{seq}:  Sequences potentially padded  same length as germline
+#'   \item  \code{germline_alignment}: Full length germline
+#'   \item  \code{germline_alignment_d_mask}: Full length, D region masked
+#'   \item  \code{vonly}:   V gene segment of germline if vonly=TRUE
+#'   \item  \code{regions}: String of VDJ segment in position if use_regions=TRUE
+#' }
+#' @seealso \link{createGermlines} \link{buildAllClonalGermlines}, \link{stitchVDJ}
+#' @export
+#' 
+createAllGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
+                               force_trim=FALSE, nproc=1, seq="sequence_alignment",
+                               v_call="v_call", d_call="d_call", j_call="j_call",
+                               amino_acid=FALSE, id="sequence_id", clone="clone_id",
+                               v_germ_start="v_germline_start", v_germ_end="v_germline_end",
+                               v_germ_length="v_germline_length", d_germ_start="d_germline_start",
+                               d_germ_end="d_germline_end", d_germ_length="d_germline_length",
+                               j_germ_start="j_germline_start", j_germ_end="j_germline_end",
+                               j_germ_length="j_germline_length", np1_length="np1_length",
+                               np2_length="np2_length", na.rm=TRUE, fields=NULL,
+                               verbose=0, ...){
+  if(nrow(data) == 0){
+    warning("No data provided!")
+    return(data)
+  }
+  
+  if(locus %in% c("IGH", "IGK", "IGL")){
+    stop(paste0("locus option now indicates locus column name, not value. Sorry for the change!",
+                " createGermlines now does all loci at once, so no need to separate by locus."))
+  }
+  
+  if(!locus %in% names(data)){
+    warning(paste0(locus, " column not found, attempting to extract locus from V call"))
+    data[[locus]] = substr(data[[v_call]],1,3)
+    warning(paste("Loci found:",unique(data[[locus]])))
+  }
+  required <- c(seq, id, clone, 
+                np1_length, np1_length, 
+                v_call, d_call, j_call,
+                v_germ_start, v_germ_end,
+                d_germ_start, d_germ_end,
+                j_germ_start, j_germ_end, locus, fields)
+  if(sum(!required %in% names(data)) != 0){
+    stop(paste("Required columns not found in data:",
+               paste(required[!required %in% names(data)],collapse=", ")))
+  }
+  if(sum(is.na(data[[clone]])) > 0){
+    stop("NA values in clone id column found, please remove.")
+  }
+  
+  # check if there are "" in the d_call column instead of NAs CGJ 11/1/23
+  data[[d_call]][data[[d_call]] == ""] <- NA
+  has_dup_ids <- max(table(data %>% select(!!!rlang::syms(c(id, fields))))) != 1
+  if (has_dup_ids){
+    stop("Sequence IDs are not unique!")
+  }
+  
+  if(!v_germ_length %in% names(data)){
+    data[[v_germ_length]] <- data[[v_germ_end]] - data[[v_germ_start]] + 1
+  }
+  if(!d_germ_length %in% names(data)){
+    data[[d_germ_length]] <- data[[d_germ_end]] - data[[d_germ_start]] + 1
+  }
+  if(!j_germ_length %in% names(data)){
+    data[[j_germ_length]] <- data[[j_germ_end]] - data[[j_germ_start]] + 1
+  }
+  if(sum(is.na(data[[v_germ_length]])) > 0){
+    data[[v_germ_length]][is.na(data[[v_germ_length]])] = 
+      data[[v_germ_end]][is.na(data[[v_germ_length]])] -
+      data[[v_germ_start]][is.na(data[[v_germ_length]])] + 1
+  }
+  if(sum(is.na(data[[d_germ_length]])) > 0){
+    data[[d_germ_length]][is.na(data[[d_germ_length]])] = 
+      data[[d_germ_end]][is.na(data[[d_germ_length]])] -
+      data[[d_germ_start]][is.na(data[[d_germ_length]])] + 1
+  }
+  if(sum(is.na(data[[j_germ_length]])) > 0){
+    data[[j_germ_length]][is.na(data[[j_germ_length]])] = 
+      data[[j_germ_end]][is.na(data[[j_germ_length]])] -
+      data[[j_germ_start]][is.na(data[[j_germ_length]])] + 1
+  }
+  
+  if(sum(is.na(data[[v_germ_length]])) > 0 | 
+     sum(is.na(data[[j_germ_length]])) > 0){
+    stop("Missing values in v_germ_length or j_germ_length")
+  }
+  
+  
+  # check if sequence_alignments contain trailing Ns and trim if desired
+  # trailing Ns frequently cause length errors downstream
+  # KBH 8/5/24
+  g_lengths <- sapply(1:nrow(data), function(x)sum(data[[v_germ_length]][x], data[[np1_length]][x], 
+                                                   data[[d_germ_length]][x], data[[np2_length]][x], data[[j_germ_length]][x], na.rm=TRUE))
+  g_diffs <- nchar(data[[seq]]) - g_lengths
+  if(sum(g_diffs > 0) > 0){
+    if(!trim_lengths && !force_trim){
+      warning(sum(g_diffs)," sequence lengths longer than predicted germlines, consider setting ",
+              "trim_lengths=TRUE if germlines fail")
+    }else{
+      too_short <- data[g_diffs > 0,]
+      too_short_diffs <- g_diffs[g_diffs > 0]
+      too_short_starts <- nchar(too_short[[seq]]) - too_short_diffs
+      # short_seqs <- strsplit(too_short[[seq]], split="")
+      to_cut <- sapply(1:nrow(too_short), function(x){
+        substr(too_short[[seq]][x],too_short_starts[x] + 1, nchar(too_short[[seq]][x]))
+      })
+      atcg <- grepl("[ATCG]",to_cut)
+      too_short[[seq]][!atcg] <- sapply(1:nrow(too_short[!atcg,]), function(x){
+        substr(too_short[[seq]][!atcg][x], 1, too_short_starts[!atcg][x])
+      })
+      cat("Trimmed ",sum(!atcg),
+          "sequences that differed from predicted germline only by non-ATCG characters.",
+          sum(atcg), "differed by ATCG characters.\n")
+      if(sum(atcg) > 0 && !force_trim){
+        cat("Can remove ATCG characters if force_trim=TRUE, but this may indicate misalignment of you data.\n")
+      }
+      if(force_trim){
+        cat("Forcibly removing ATCG characters from", sum(atcg), "sequences\n")
+        too_short[[seq]][atcg] <- sapply(1:nrow(too_short[atcg,]), function(x){
+          substr(too_short[[seq]][atcg][x], 1, too_short_starts[atcg][x])
+        })
+      }
+      m <- match(data[[id]], too_short[[id]])
+      seqs <- too_short[[seq]][m]
+      seqs[is.na(m)] <- data[[seq]][is.na(m)]
+      data[[seq]] <- seqs
+    }
+  }
+  unique_clones <- unique(data[,unique(c(clone,fields)),drop=F])
+  germlines <- do.call(rbind, parallel::mclapply(1:nrow(unique_clones), function(x){
+    sub <- dplyr::right_join(data, unique_clones[x,,drop=F], by=c(clone,fields))
+    if(verbose > 0){
+      print(x)
+    }
+    sub_germlines <- do.call(rbind, lapply(unique(sub[[locus]]), function(l){
+      buildAllClonalGermlines(
+        receptors = sub[sub[[locus]] == l,],
+        references = references,
+        chain = l, 
+        seq = seq, 
+        v_call = v_call, 
+        d_call = d_call,
+        j_call = j_call, 
+        amino_acid = amino_acid,
+        id = id, 
+        clone = clone, 
+        v_germ_start = v_germ_start,
+        v_germ_end = v_germ_end,
+        v_germ_length = v_germ_length,
+        d_germ_start = d_germ_start, 
+        d_germ_end = d_germ_end, 
+        d_germ_length = d_germ_length, 
+        j_germ_start = j_germ_start, 
+        j_germ_end = j_germ_end, 
+        j_germ_length = j_germ_length,
+        np1_length = np1_length, 
+        np2_length = np2_length, ...)
+    }))
+  }, mc.cores = nproc))
+  return(germlines)
+}
+
+#' \code{buildAllClonalGermlines} Determines and builds all possible germlines for a clone
+#' @param receptors        AIRR-table containing sequences from one clone
+#' @param references       Full list of reference segments, see \link{readIMGT}
+#' @param chain            chain in \code{references} being analyzed
+#' @param use_regions       Return string of VDJ regions? (optional)
+#' @param vonly            Return germline of only v segment?
+#' @param seq              Column name for sequence alignment
+#' @param id               Column name for sequence ID
+#' @param clone            Column name for clone ID
+#' @param v_call           Column name for V gene segment gene call
+#' @param j_call           Column name for J gene segment gene call
+#' @param v_germ_start     Column name of index of V segment start within germline
+#' @param v_germ_end       Column name of index of V segment end within germline
+#' @param v_germ_length    Column name of index of V segment length within germline
+#' @param d_germ_start     Column name of index of D segment start within germline
+#' @param d_germ_end       Column name of index of D segment end within germline
+#' @param d_germ_length    Column name of index of D segment length within germline
+#' @param j_germ_start     Column name of index of J segment start within germline
+#' @param j_germ_end       Column name of index of J segment end within germline
+#' @param j_germ_length    Column name of index of J segment length within germline
+#' @param np1_length       Column name in receptor specifying np1 segment length 
+#' @param np2_length       Column name in receptor specifying np2 segment length
+#' @param j_germ_aa_length Column name of J segment amino acid length (if amino_acid=TRUE)
+#' @param amino_acid       Perform reconstruction on amino acid sequence (experimental)
+#' @param threshold        The maximum germline length difference within a clone. Default is 3. 
+#' @param ...              Additional arguments passed to \link{buildGermline}
+#' @return A data frame with all possible reconstructed germlines
+#' @seealso \link{createAllGermlines} \link{buildGermline}, \link{stitchVDJ}
+#' @export
+#' 
+buildAllClonalGermlines <- function(receptors, references, 
+                                    chain="IGH", use_regions=FALSE, vonly=FALSE,
+                                    seq="sequence_alignment", id="sequence_id", clone="clone_id",
+                                    v_call="v_call", j_call="j_call",  v_germ_start="v_germline_start",
+                                    v_germ_end="v_germline_end", v_germ_length="v_germline_length", 
+                                    d_germ_start="d_germline_start", d_germ_end="d_germline_end", 
+                                    d_germ_length="d_germline_length", j_germ_start="j_germline_start", 
+                                    j_germ_end="j_germline_end", j_germ_length="j_germline_length", 
+                                    np1_length="np1_length", np2_length="np2_length",
+                                    j_germ_aa_length= "j_germline_aa_length", amino_acid=FALSE, 
+                                    threshold = 3, ...){
+
+  if(amino_acid){
+    stop("Amino acid mode not yet supported")
+  }
+  
+  # Create dictionaries to count observed V/J calls
+  v_dict <- c()
+  j_dict <- c()
+  
+  # Amino acid settings
+  if(amino_acid){
+    pad_char <- 'X'
+  }else{
+    pad_char <- "N"
+  }
+  
+  # TODO add in code for finding what would be the consensus sequence gerlmine stats
+  # and update the receptors table to ONLY have those stats 
+  
+  v_dict <- unlist(lapply(receptors[[v_call]],function(x)
+    alakazam::getAllele(x, strip_d=FALSE, first = FALSE)))
+  v_all <- unique(unlist(strsplit(v_dict, ",")))
+  j_dict <- unlist(lapply(receptors[[j_call]],function(x)
+    alakazam::getAllele(x, strip_d=FALSE, first = FALSE)))
+  j_all <- unique(unlist(strsplit(j_dict, ",")))
+  seq_len <- unlist(lapply(receptors[[seq]],function(x)
+    nchar(x)))
+  
+  # Consensus V and J having most observations
+  vcounts <- table(v_dict)
+  jcounts <- table(j_dict)
+  v_cons <- names(vcounts)[vcounts == max(vcounts)]
+  j_cons <- names(jcounts)[jcounts == max(jcounts)]
+  max_len <- max(seq_len)
+  
+  # Consensus sequence(s) with consensus V/J calls and longest sequence
+  cons_index <- v_dict %in% v_cons & j_dict %in% j_cons & seq_len == max_len
+  
+  # Consensus sequence(s) with consensus V/J calls but not the longest sequence
+  if(sum(cons_index) == 0){
+    cons_index <- v_dict == v_cons & j_dict == j_cons
+  }
+  
+  cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
+  cons <- receptors[receptors[[id]] == cons_id,]
+
+  # receptors[[v_germ_start]] <- cons[[v_germ_start]]
+  # receptors[[v_germ_end]] <- cons[[v_germ_end]]
+  # receptors[[v_germ_length]] <- cons[[v_germ_length]]
+  # receptors[[d_germ_start]] <- cons[[d_germ_start]]
+  # receptors[[d_germ_end]] <- cons[[d_germ_end]]
+  # receptors[[d_germ_length]] <- cons[[d_germ_length]]
+  # receptors[[j_germ_start]] <- cons[[j_germ_start]]
+  # receptors[[j_germ_end]] <- cons[[j_germ_end]]
+  # receptors[[j_germ_length]] <- cons[[j_germ_length]]
+  # receptors[[np1_length]] <- cons[[np1_length]]
+  # receptors[[np2_length]] <- cons[[np2_length]]
+
+  combinations <- expand.grid(v_all, j_all)
+  combo_in_data <- unlist(lapply(1:nrow(combinations), function(x){
+    v_loc <- unlist(lapply(1:length(strsplit(receptors[[v_call]], ",")), function(z){
+      if(combinations$Var1[x] %in% strsplit(receptors[[v_call]], ",")[[z]]){
+        return(z)
+      }
+    }))
+    j_loc <- unlist(lapply(1:length(strsplit(receptors[[j_call]], ",")), function(z){
+      if(combinations$Var2[x] %in% strsplit(receptors[[j_call]], ",")[[z]]){
+        return(z)
+      }
+    }))
+    common_rows <- intersect(v_loc, j_loc)
+    if(length(common_rows) == 0){
+      return(FALSE)
+    }else{
+      return(TRUE)
+    }
+  }))
+  combinations <- combinations[combo_in_data,]
+  
+  all_germlines <- c()
+  for(x in 1:nrow(combinations)){
+    v_cons <- as.character(combinations[x, 1])
+    j_cons <- as.character(combinations[x, 2])
+    v_match <- unlist(lapply(1:length(v_dict), function(z){
+      dict_value <- v_dict[z]
+      dict_value <- strsplit(dict_value, ",")[[1]]
+      return(v_cons %in% dict_value)
+    }))
+    j_match <- unlist(lapply(1:length(j_dict), function(z){
+      dict_value <- j_dict[z]
+      dict_value <- strsplit(dict_value, ",")[[1]]
+      return(j_cons %in% dict_value)
+    }))
+    cons_index <- v_match & j_match & seq_len == max_len
+    if(sum(cons_index) == 0){
+      cons_index <- v_match & j_match
+    }
+    # return without germline if no consensus can be found 
+    if(sum(cons_index) == 0){
+      next
+    }
+    
+    cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
+    cons <- receptors[receptors[[id]] == cons_id,]
+    
+    # Pad end of consensus sequence with gaps to make it the max length
+    gap_length <- max_len - nchar(cons[[seq]])
+    if(gap_length > 0){
+      if(amino_acid){
+        cons[[j_germ_aa_length]] <- cons[[j_germ_aa_length]] + gap_length  
+      }else{
+        cons[[j_germ_length]] <- cons[[j_germ_length]] + gap_length
+      }  
+      cons[[seq]] <- paste0(cons[[seq]],
+                            paste0(rep(pad_char,gap_length),collapse=""))
+    }
+    
+    sub_db <- references[[chain]]
+    
+    if(length(sub_db) == 0){
+      stop(paste("Reference database for",chain,"is empty"))
+    }
+    
+    germlines <- tryCatch(buildGermline(cons, references=sub_db, seq=seq, 
+                                        v_call=v_call, j_call=j_call, j_germ_length=j_germ_length,
+                                        amino_acid=amino_acid),error=function(e)e)
+    if("error" %in% class(germlines)){
+      warning(paste("Clone",unique(receptors[[clone]]),"with v and j genes:", v_cons, j_cons),
+                    "germline reconstruction error.\n",
+                    germlines)
+      temp <- data.frame(clone_id = unique(receptors[[clone]]),
+                         clone_id_unique = paste0(unique(receptors[[clone]]), "_", x),
+                         v_call = v_cons,
+                         j_call = j_cons, 
+                         max_seq = max_len, 
+                         germline = NA,
+                         germline_d_mask = NA, 
+                         regions = NA)
+      all_germlines <- rbind(all_germlines, temp)
+      next
+    }
+    
+    temp <- data.frame(clone_id = unique(receptors[[clone]]),
+                       clone_id_unique = paste0(unique(receptors[[clone]]), "_", x),
+                       v_call = v_cons,
+                       j_call = j_cons, 
+                       max_seq = max_len, 
+                       germline = germlines$full,
+                       germline_d_mask = germlines$dmask, 
+                       regions = germlines$regions)
+    all_germlines <- rbind(all_germlines, temp)
+  }
+  
+  if(sum(is.na(all_germlines$germline)) > 0){
+    all_germlines <- all_germlines[-which(is.na(all_germlines$germline)),]
+  }
+  all_germlines$ungapped <- gsub("\\.", "", all_germlines$germline)
+  all_germlines$nchar <- nchar(all_germlines$ungapped)
+  if(max(all_germlines$nchar) - min(all_germlines$nchar) >= threshold){
+    all_germlines <- all_germlines[-which(all_germlines$nchar < max(all_germlines$nchar - threshold)),]
+  }
+  return(all_germlines)
+}
+
+#' \code{maskAmbigousSites} Masks ambiguous sites on V and J genes where references differ
+#'
+#' This function masks ambiguous sites in the germline sequences of V and J genes
+#' where references differ. It updates the clones object with masked germlines.
+#'
+#' @param clones AIRR-table that is the output of \link{formatClones}.
+#' @param all_germlines A data frame with all possible reconstructed germlines.
+#' @param clone Column name for the clone ID.
+#' @param mask_v Logical. Mask ambiguous germline sites in the V gene? Default is TRUE.
+#' @param mask_j Logical. Mask ambiguous germline sites in the J gene? Default is FALSE.
+#' @param mask_junc Logical. Mask ambiguous germline sites in the junction? Default is FALSE.
+#' @param nproc Number of cores to use for parallel processing. Default is 1.
+#' @return An updated clones object with masked germlines.
+#' @export
+#' @examples
+#' \dontrun{
+#' # Example usage:
+#' clones <- maskAmbigousSites(clones, all_germlines)
+#' }
+
+maskAmbigousSites <- function(clones, all_germlines, clone = "clone_id", mask_v = TRUE, 
+                              mask_j = FALSE, mask_junc = FALSE, nproc = 1){
+  updated_clones <- do.call(rbind, parallel::mclapply(clones[[clone]], function(x){
+    print(x)
+    sub <- clones[which(clones$clone_id == x),]
+    sub_germs <- all_germlines[all_germlines[[clone]] == x,]
+    if(nrow(sub_germs) %in% c(1,0)){
+      return(sub)
+    }
+    comp_df <- do.call(cbind, lapply(1:nrow(sub_germs), function(z){
+      temp <- data.frame(strsplit(sub_germs$germline[z], "")[[1]])
+    }))
+    colnames(comp_df) <- sub_germs$clone_id_unique
+    comp_df$diff <- apply(comp_df, 1, function(row) length(unique(row)) > 1)
+    if(nrow(comp_df) %% 3 > 0){
+      padding <- 3 - (nrow(comp_df) %% 3)
+      for(i in 1:padding){
+        temp <- comp_df[1,]
+        temp[1,] <- "N"
+        temp$diff <- FALSE
+        comp_df <- rbind(comp_df, temp)
+      }
+    }
+    
+    numbers <- sub$data[[1]]@numbers
+    clone_germ <- strsplit(sub$data[[1]]@germline, "")[[1]]
+    regions <- sub$data[[1]]@region
+    for(pos in dplyr::setdiff(1:nrow(comp_df), numbers)){
+      clone_germ <- append(clone_germ, ".", after = pos - 1)
+    }
+    clone_germ <- paste(clone_germ, collapse = "")
+    for (pos in dplyr::setdiff(1:nrow(comp_df), numbers)) {
+      if (pos == 1) {
+        # Use "fwr1" if the missing position is 1
+        regions <- append(regions, "fwr1", after = pos - 1)
+      } else {
+        # Use the value from the target vector right before the missing position
+        regions <- append(regions, regions[pos - 1], after = pos - 1)
+      }
+    }
+    comp_df$regions <- regions
+    masked_sites <- which(comp_df$diff)
+    
+    if(mask_v){
+      result <- regions[masked_sites] %in% c("fwr1", "cdr1", "fwr2", "cdr2")
+      if(any(result)){
+        ambig_v <- masked_sites[which(result == TRUE)]
+        clone_germ <- strsplit(clone_germ, "")[[1]]
+        clone_germ[ambig_v] <- "N"
+        clone_germ <- paste(clone_germ, collapse = "")
+      }
+    }
+    
+    if(mask_j){
+      result <- regions[masked_sites] %in% c("fwr4")
+      if(any(result)){
+        ambig_v <- masked_sites[which(result == TRUE)]
+        clone_germ <- strsplit(clone_germ, "")[[1]]
+        clone_germ[ambig_v] <- "N"
+        clone_germ <- paste(clone_germ, collapse = "")
+      }
+    }
+    
+    if(mask_junc){
+      result <- regions[masked_sites] %in% c("cdr3")
+      if(any(result)){
+        ambig_v <- masked_sites[which(result == TRUE)]
+        clone_germ <- strsplit(clone_germ, "")[[1]]
+        clone_germ[ambig_v] <- "N"
+        clone_germ <- paste(clone_germ, collapse = "")
+      }
+    }
+    sub$data[[1]]@germline <- gsub("\\.", "", clone_germ)
+    
+    # test the length of the new germline vs the length of the sequences 
+    if(nchar(sub$data[[1]]@germline) > unique(nchar(sub$data[[1]]@data$sequence))){
+      padding <- nchar(clone_germ) - unique(nchar(sub$data[[1]]@data$sequence))
+      sub$data[[1]]@data$sequence <- paste0(sub$data[[1]]@data$sequence, 
+                                            paste0(rep("N", padding), collapse = ""),
+                                            collapse = "")
+    }
+    return(sub)
+  }, mc.cores = nproc))
+  return(updated_clones)
 }
