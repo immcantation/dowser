@@ -1079,112 +1079,6 @@ updateClone <- function(clones, dir, id, nproc = 1){
   return(updated_clones)
 }
 
-#' \link{getTreesAndUCAs} Construct trees and infer the UCA
-#' @param clones        AIRR-table containing sequences \link{formatClones}
-#' @param data          The AIRR-table that was used to make the clones object. Required for resolve_v.
-#' @param dir           The file path of the directory of where data is saved. NULL is default.
-#' @param build         Name of the tree building method
-#' @param exec          File path to the tree building executable
-#' @param model_folder  The file path to the OLGA default model files
-#' @param uca_script    The file path to the UCA python script
-#' @param python        Specify the python call for your system. This is the call
-#'                      on command line that issues the python you want to use. 
-#'                      "python" by default. 
-#' @param id            The run ID
-#' @param max_iters     The maximum number of iterations to run before ending
-#' @param nproc         The number of cores to use 
-#' @param rm_temp       Remove the generated files?
-#' @param quiet         Amount of noise to print out
-#' @param omega         Omega parameters to estimate (see IgPhyMl docs)
-#' @param optimize      Optimize HLP rates (r), lengths (l), and/or topology (r)
-#' @param motifs        Motifs to consider (see IgPhyMl docs)
-#' @param hotness       Hotness parameters to estimate (see IgPhyML docs)
-#' @param resolve_v     Resolve the V gene as well 
-#' @param resolve_j     Resolve the J gene as well  
-#' @param references    Reference genes. See \link{readIMGT}
-#' @param clone         The name of the clone id column used in \link{formatClones}
-#' @param ...           Additional arguments passed to \link{buildGermline}
-#' @return An \code{airrClone} object with trees and the inferred UCA
-#' @details Return object adds/edits following columns:
-#' \itemize{
-#'   \item  \code{trees}:  The phylogenies associated with each clone
-#'   \item  \code{UCA}:    The inferred UCA
-#' }
-#' @seealso \link{getTrees} 
-#' @export
-getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model_folder, uca_script,
-                           python = "python", id = "sample", max_iters = 100, nproc = 1,
-                           rm_temp = TRUE, quiet = 0, omega = NULL, optimize = "lr",
-                           motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
-                         resolve_j = FALSE, references = NULL, clone = "clone_id", ...){
-  if(!is.null(dir)){
-    dir <- path.expand(dir)
-    dir <- file.path(dir, paste0("all_", id))
-    if(!dir.exists(dir)){
-      dir.create(dir)
-    }
-  }else{
-    dir <- alakazam::makeTempDir(id)
-  }
-  
-  if(rm_temp){
-    rm_dir = dir
-  } else{
-    rm_dir = NULL
-  }
-  
-  if(file.access(path.expand(Sys.which(python)), mode = 1) == -1){
-    stop("The python executable found at", path.expand(Sys.which(python)), " cannot be executed.")
-  }
-  
-  if(!file.exists(path.expand(uca_script))){
-    stop("The file", path.expand(uca_script), " cannot be executed.")
-  }
-  
-  if(resolve_v | resolve_j){
-    if(is.null(data)){
-      stop("The data object is required to resolve the V gene")
-    }
-    if(is.null(references)){
-      stop("References must be supplied to resolve the V gene")
-    }
-
-    all_germlines <- createAllGermlines(data = data, references = references,
-                                        nproc = nproc, clone = clone, trim_lengths = TRUE)
-    clones <- maskAmbigousSites(clones = clones, all_germlines = all_germlines,
-                                nproc = nproc, clone = clone, mask_v = resolve_v,
-                                mask_j = resolve_j)
-  }
-  
-  if(quiet > 0){
-    print("preparing the clones for UCA analysis")
-  }
-  clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones$clone_id), function(x)
-    processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
-                         exec = exec, id = id, omega = omega, optimize = optimize, 
-                         motifs = motifs, hotness = hotness,
-                         resolve_v = resolve_v,
-                         all_germlines = all_germlines, ...), mc.cores = nproc)))
-  # run the UCA
-  if(quiet > 0){
-    print("running UCA analysis")
-  }
-  clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
-  callOlga(clone_ids = clone_ids_str, dir = dir, model_folder = model_folder,
-           uca_script = uca_script, python = python, max_iters = max_iters, 
-           nproc = nproc, id = id, quiet = quiet)
-  
-  # read in the clones to make the base clones object again with the UCA in the data table
-  if(quiet > 0){
-    print("updating clones")
-  }
-  clones <- updateClone(clones, dir, id, nproc)
-  
-  # unlink if desired 
-  unlink(rm_dir,recursive=TRUE)
-  return(clones)
-}
-
 #' \link{createAllGermlines} Creates all possible germlines for a clone
 #' @param data          AIRR-table containing sequences from one clone
 #' @param references    Full list of reference segments, see \link{readIMGT}
@@ -1380,7 +1274,7 @@ createAllGermlines <- function(data, references, locus="locus", trim_lengths=FAL
   return(germlines)
 }
 
-#' \code{buildAllClonalGermlines} Determines and builds all possible germlines for a clone
+#' \link{buildAllClonalGermlines} Determines and builds all possible germlines for a clone
 #' @param receptors        AIRR-table containing sequences from one clone
 #' @param references       Full list of reference segments, see \link{readIMGT}
 #' @param chain            chain in \code{references} being analyzed
@@ -1466,18 +1360,6 @@ buildAllClonalGermlines <- function(receptors, references,
   
   cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
   cons <- receptors[receptors[[id]] == cons_id,]
-
-  # receptors[[v_germ_start]] <- cons[[v_germ_start]]
-  # receptors[[v_germ_end]] <- cons[[v_germ_end]]
-  # receptors[[v_germ_length]] <- cons[[v_germ_length]]
-  # receptors[[d_germ_start]] <- cons[[d_germ_start]]
-  # receptors[[d_germ_end]] <- cons[[d_germ_end]]
-  # receptors[[d_germ_length]] <- cons[[d_germ_length]]
-  # receptors[[j_germ_start]] <- cons[[j_germ_start]]
-  # receptors[[j_germ_end]] <- cons[[j_germ_end]]
-  # receptors[[j_germ_length]] <- cons[[j_germ_length]]
-  # receptors[[np1_length]] <- cons[[np1_length]]
-  # receptors[[np2_length]] <- cons[[np2_length]]
 
   combinations <- expand.grid(v_all, j_all)
   combo_in_data <- unlist(lapply(1:nrow(combinations), function(x){
@@ -1585,27 +1467,16 @@ buildAllClonalGermlines <- function(receptors, references,
   return(all_germlines)
 }
 
-#' \code{maskAmbigousSites} Masks ambiguous sites on V and J genes where references differ
-#'
-#' This function masks ambiguous sites in the germline sequences of V and J genes
-#' where references differ. It updates the clones object with masked germlines.
-#'
-#' @param clones AIRR-table that is the output of \link{formatClones}.
-#' @param all_germlines A data frame with all possible reconstructed germlines.
-#' @param clone Column name for the clone ID.
-#' @param mask_v Logical. Mask ambiguous germline sites in the V gene? Default is TRUE.
-#' @param mask_j Logical. Mask ambiguous germline sites in the J gene? Default is FALSE.
-#' @param mask_junc Logical. Mask ambiguous germline sites in the junction? Default is FALSE.
-#' @param nproc Number of cores to use for parallel processing. Default is 1.
-#' @return An updated clones object with masked germlines.
-#' @export
-#' @examples
-#' \dontrun{
-#' # Example usage:
-#' clones <- maskAmbigousSites(clones, all_germlines)
-#' }
-
-maskAmbigousSites <- function(clones, all_germlines, clone = "clone_id", mask_v = TRUE, 
+# \link{maskAmbigousReferenceSites} Determines and builds all possible germlines for a clone
+# @param clones AIRR-table that is the output of \link{formatClones}.
+# @param all_germlines A data frame with all possible reconstructed germlines.
+# @param clone Column name for the clone ID.
+# @param mask_v Logical. Mask ambiguous germline sites in the V gene? Default is TRUE.
+# @param mask_j Logical. Mask ambiguous germline sites in the J gene? Default is FALSE.
+# @param mask_junc Logical. Mask ambiguous germline sites in the junction? Default is FALSE.
+# @param nproc Number of cores to use for parallel processing. Default is 1.
+# @return A data frame with all possible reconstructed germlines.
+maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id", mask_v = TRUE, 
                               mask_j = FALSE, mask_junc = FALSE, nproc = 1){
   updated_clones <- do.call(rbind, parallel::mclapply(clones[[clone]], function(x){
     print(x)
@@ -1689,4 +1560,110 @@ maskAmbigousSites <- function(clones, all_germlines, clone = "clone_id", mask_v 
     return(sub)
   }, mc.cores = nproc))
   return(updated_clones)
+}
+
+#' \link{getTreesAndUCAs} Construct trees and infer the UCA
+#' @param clones        AIRR-table containing sequences \link{formatClones}
+#' @param data          The AIRR-table that was used to make the clones object. Required for resolve_v.
+#' @param dir           The file path of the directory of where data is saved. NULL is default.
+#' @param build         Name of the tree building method
+#' @param exec          File path to the tree building executable
+#' @param model_folder  The file path to the OLGA default model files
+#' @param uca_script    The file path to the UCA python script
+#' @param python        Specify the python call for your system. This is the call
+#'                      on command line that issues the python you want to use. 
+#'                      "python" by default. 
+#' @param id            The run ID
+#' @param max_iters     The maximum number of iterations to run before ending
+#' @param nproc         The number of cores to use 
+#' @param rm_temp       Remove the generated files?
+#' @param quiet         Amount of noise to print out
+#' @param omega         Omega parameters to estimate (see IgPhyMl docs)
+#' @param optimize      Optimize HLP rates (r), lengths (l), and/or topology (r)
+#' @param motifs        Motifs to consider (see IgPhyMl docs)
+#' @param hotness       Hotness parameters to estimate (see IgPhyML docs)
+#' @param resolve_v     Resolve the V gene as well 
+#' @param resolve_j     Resolve the J gene as well  
+#' @param references    Reference genes. See \link{readIMGT}
+#' @param clone         The name of the clone id column used in \link{formatClones}
+#' @param ...           Additional arguments passed to \link{buildGermline}
+#' @return An \code{airrClone} object with trees and the inferred UCA
+#' @details Return object adds/edits following columns:
+#' \itemize{
+#'   \item  \code{trees}:  The phylogenies associated with each clone
+#'   \item  \code{UCA}:    The inferred UCA
+#' }
+#' @seealso \link{getTrees} 
+#' @export
+getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model_folder, uca_script,
+                           python = "python", id = "sample", max_iters = 100, nproc = 1,
+                           rm_temp = TRUE, quiet = 0, omega = NULL, optimize = "lr",
+                           motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
+                         resolve_j = FALSE, references = NULL, clone = "clone_id", ...){
+  if(!is.null(dir)){
+    dir <- path.expand(dir)
+    dir <- file.path(dir, paste0("all_", id))
+    if(!dir.exists(dir)){
+      dir.create(dir)
+    }
+  }else{
+    dir <- alakazam::makeTempDir(id)
+  }
+  
+  if(rm_temp){
+    rm_dir = dir
+  } else{
+    rm_dir = NULL
+  }
+  
+  if(file.access(path.expand(Sys.which(python)), mode = 1) == -1){
+    stop("The python executable found at", path.expand(Sys.which(python)), " cannot be executed.")
+  }
+  
+  if(!file.exists(path.expand(uca_script))){
+    stop("The file", path.expand(uca_script), " cannot be executed.")
+  }
+  
+  if(resolve_v | resolve_j){
+    if(is.null(data)){
+      stop("The data object is required to resolve the V gene")
+    }
+    if(is.null(references)){
+      stop("References must be supplied to resolve the V gene")
+    }
+
+    all_germlines <- createAllGermlines(data = data, references = references,
+                                        nproc = nproc, clone = clone, trim_lengths = TRUE)
+    clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
+                                nproc = nproc, clone = clone, mask_v = resolve_v,
+                                mask_j = resolve_j)
+  }
+  
+  if(quiet > 0){
+    print("preparing the clones for UCA analysis")
+  }
+  clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones$clone_id), function(x)
+    processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
+                         exec = exec, id = id, omega = omega, optimize = optimize, 
+                         motifs = motifs, hotness = hotness,
+                         resolve_v = resolve_v,
+                         all_germlines = all_germlines, ...), mc.cores = nproc)))
+  # run the UCA
+  if(quiet > 0){
+    print("running UCA analysis")
+  }
+  clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
+  callOlga(clone_ids = clone_ids_str, dir = dir, model_folder = model_folder,
+           uca_script = uca_script, python = python, max_iters = max_iters, 
+           nproc = nproc, id = id, quiet = quiet)
+  
+  # read in the clones to make the base clones object again with the UCA in the data table
+  if(quiet > 0){
+    print("updating clones")
+  }
+  clones <- updateClone(clones, dir, id, nproc)
+  
+  # unlink if desired 
+  unlink(rm_dir,recursive=TRUE)
+  return(clones)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Germlines.R
 \name{buildAllClonalGermlines}
 \alias{buildAllClonalGermlines}
-\title{\code{buildAllClonalGermlines} Determines and builds all possible germlines for a clone}
+\title{\link{buildAllClonalGermlines} Determines and builds all possible germlines for a clone}
 \usage{
 buildAllClonalGermlines(
   receptors,
@@ -87,7 +87,7 @@ buildAllClonalGermlines(
 A data frame with all possible reconstructed germlines
 }
 \description{
-\code{buildAllClonalGermlines} Determines and builds all possible germlines for a clone
+\link{buildAllClonalGermlines} Determines and builds all possible germlines for a clone
 }
 \seealso{
 \link{createAllGermlines} \link{buildGermline}, \link{stitchVDJ}

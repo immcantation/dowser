@@ -53,6 +53,7 @@ pages:
     - topics/colorTrees.md
     - topics/condenseTrees.md
     - topics/correlationTest.md
+    - topics/createAllGermlines.md
     - topics/createGermlines.md
     - topics/downsampleClone.md
     - topics/dowser-package.md
@@ -73,6 +74,7 @@ pages:
     - topics/getSubclones.md
     - topics/getSubTaxa.md
     - topics/getTrees.md
+    - topics/getTreesAndUCAs.md
     - topics/IsotypeTrees.md
     - topics/makeAirrClone.md
     - topics/makeModelFile.md
