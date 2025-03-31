@@ -23,7 +23,9 @@ markdown_extensions:
       permalink: True
 extra_javascript:
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
-pages:
+  - path: js/custom.js
+    defer: true  
+nav:
   - 'About':
     - 'Introduction': index.md
     - 'Package Overview': topics/dowser.md
