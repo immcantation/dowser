@@ -853,8 +853,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
                   omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
                   asrp = TRUE, ...)
-  saveRDS(sub, file.path(subDir, "clone.rds"))
-  # TODO resolve V and J 
   # get the MRCA for the UCA input -- and the input germline 
   mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
   imgt_germline <- sub$data[[1]]@germline
@@ -899,12 +897,12 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     }
   }
   
-  v_len <- length(r[!r %in% c("cdr3", "fwr4")]) - 2
-  v <- substring(imgt_germline, 1, v_len - 1)
-  j_start <- length(r[!r %in% "fwr4"]) + 4
-  j <- substr(imgt_germline, j_start, nchar(imgt_germline))
+  v_len <- min(cdr3_index)-1
+  v <- substring(imgt_germline, 1, v_len)
+  j_start <- nchar(paste0(v, mrcacdr3, collapse = "")) +1
+  j <- substring(imgt_germline, j_start, nchar(imgt_germline))
   j_len <- nchar(j)
-  padded <- stringr::str_count(substring(j, j_len -2, j_len), "N")
+  padded <- nchar(stringr::str_extract(j, "N+$"))
   if(quiet > 0){
     print(paste("sucessfully obtained MRCA junction for", clone_ids))
   }
@@ -914,16 +912,38 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
       print(paste("resolving genes for", clone_ids))
     }
     has_multiple <- all_germlines[all_germlines$clone_id == clone_ids,]
+    # add the padding to the ungapped
+    has_multiple$ungapped <- unlist(parallel::mclapply(1:nrow(has_multiple), function(y){
+      current <- has_multiple$ungapped[y]
+      if(padded > 0 & !is.na(padded)){
+        current <- paste0(current, paste0(rep("N", padded), collapse = ""))
+      }
+      return(current)
+    }))
     saveRDS(has_multiple, file.path(subDir, "all_germlines.rds"))
     germlines <- do.call(rbind, lapply(1:nrow(has_multiple), function(z){
       value <- has_multiple$ungapped[z]
-      v_alt <- substring(value, 1, v_len-1)
-      j_alt <- substring(value, (nchar(v_alt) + nchar(mrcacdr3) - 1), 
-                         (nchar(v_alt) + nchar(mrcacdr3) - 1) + j_len)
+      v_alt <- substring(value, 1, v_len)
+      j_alt <- substring(value, sum(nchar(mrcacdr3), v_len) + 1, 
+                         nchar(value))
+      j_alt <- substring(j_alt, 1, nchar(j))
       v_stop <- nchar(v)/3
       j_start_new <- nchar(j)/3
       sub_df <- dplyr::filter(tree_df, !!rlang::sym("site") %in% c(0:(v_stop-1)) | 
-        !!rlang::sym("site") %in% c((v_stop + nchar(mrcacdr3)/3 -1): ((v_stop + nchar(mrcacdr3)/3 -1) + j_len/3)))
+                                !!rlang::sym("site") %in% c((v_stop + nchar(mrcacdr3)/3): max(tree_df$site)))
+      # if(nchar(j_alt) > nchar(j)){
+      #   # add a base of whatever is left to the end with only at the newest last site in subdf
+      #   diff <- nchar(j_alt) - nchar(j)
+      #   new_codon <- substring(j_alt, nchar(j_alt) - diff + 1, nchar(j_alt))
+      #   if(nchar(new_codon) < 3){
+      #     diff_padding <- 3 - nchar(new_codon)
+      #     new_codon <- paste0(new_codon, paste0(rep("N", diff_padding), collapse = ""))
+      #   }
+      #   temp <- data.frame(site = max(sub_df$site)+1, codon = new_codon, 
+      #                     partial_likelihood = 0, nope = NA, nada = NA, 
+      #                     no = NA, equilbrium = 0)
+      #   sub_df <- rbind(sub_df, temp)
+      # }
       vj <- paste0(v_alt, j_alt, collapse = "")
       gene_list <- strsplit(vj, "")[[1]]
       groupedSeq <- split(gene_list, ceiling(seq_along(gene_list) / 3))
@@ -944,9 +964,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
         return(sitedf$partial_likelihood[sitedf$codon == codon])
       }))
       likelihood <- sum(likelihood)
-      if(padded != 0 & nchar(j_alt) < j_len){
-        j_alt <- paste0(j_alt, paste(rep("N", padded), collapse = ""))
-      }
       temp <- data.frame(clone_id = z, likelihood = likelihood, v = v_alt, j = j_alt,
                          v_call = has_multiple$v_call[z], 
                          j_call = has_multiple$j_call[z])
@@ -957,54 +974,51 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     if("N" %in% strsplit(germlines$v, "")[[1]]){
       stop(paste("There is a N found in resolved V gene for clone", clone_ids))
     }
-    # make sure that the j lengths are the same -- aka that the new sequence is 
-    # the same length as the old sequence 
-    if(nchar(germlines$v) + nchar(mrcacdr3) + nchar(germlines$j) == nchar(imgt_germline)){
-      if(quiet > 0){
-        print(paste("sucessfully matched both V and J gene length in clone", clone_ids))
-      }
-      v <- germlines$v
-      j <- germlines$j
-    } else{
-      if(nchar(germlines$j) == nchar(j)){
-        j <- germlines$j
-      } else{
-        germlines$j_alt <- substring(germlines$j, 1, nchar(j))
-        if(nchar(germlines$v) + nchar(mrcacdr3) + nchar(germlines$j_alt) == nchar(imgt_germline)){
-          if(quiet > 0){
-            print(paste("sucessfully matched J gene length in clone", clone_ids))
-          }
-          v <- germlines$v
-          j <- germlines$j_alt
-        } else{
-          # shorten the v too -- this has yet to happen due to imgt numbering scheme
-          germlines$v_alt <- substring(germlines$v, 1, nchar(v))
-          if(nchar(germlines$v_alt) + nchar(mrcacdr3) + nchar(germlines$j_alt) == nchar(imgt_germline)){
-            if(quiet > 0){
-              print(paste("sucessfully matched V gene length in clone", clone_ids))
-            }
-            v <- germlines$v_alt
-            j <- germlines$j_alt
-          } else{
-            stop(paste("unable to proper resolve V/J genes on clone", clone_ids))
-          }
-        }
-      }
-    }
-    sub$data[[1]]@data$v <- v
+    # see if the J needs padding now that likelihood calcs are done
+    # if(nchar(germlines$j) %% 3 > 0){
+    #   padding <- 3 - nchar(germlines$j) %% 3
+    #   germlines$j <- paste0(germlines$j, paste0(rep("N", padding), collapse = ""))
+    # }
+    # if(nchar(j) < nchar(germlines$j)){
+    #   germlines$j_full <- germlines$j
+    #   
+    # }
+    sub$data[[1]]@data$v <- germlines$v
     sub$data[[1]]@data$v_call_new <- germlines$v_call
     if(resolve_j){
-      sub$data[[1]]@data$j <- j
+      sub$data[[1]]@data$j <- germlines$j
       sub$data[[1]]@data$j_call_new <- germlines$j_call
     }
   }
+  saveRDS(sub, file.path(subDir, "clone.rds"))
   # put it all together 
-  v_cdr3 <- paste0(v, paste0(mrcacdr3, collapse = ""), collapse = "")
-  starting_germ <- paste0(v_cdr3, j, collapse = "")
+  v_cdr3 <- paste0(germlines$v, paste0(mrcacdr3, collapse = ""), collapse = "")
+  starting_germ <- paste0(v_cdr3, germlines$j, collapse = "")
   file_path_germline <- file.path(subDir, paste("olga_testing_germline.txt"))
   file_path_junction_position <- file.path(subDir, paste("olga_junction_positions.txt"))
   writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
   writeLines(paste(min(cdr3_index)-1, max(cdr3_index)), con = file_path_junction_position)
+  
+  # check to see if a new site needs to be added for 'best' V/J combo
+  # if(nchar(paste0(germlines$v, mrcacdr3, germlines$j)) > nchar(imgt_germline)){
+  #   # find the number of codons added -- it should only be 1
+  #   n_new_codons <- nchar(paste0(germlines$v, mrcacdr3, germlines$j)) - nchar(imgt_germline)
+  #   n_new_codons <- n_new_codons/3
+  #   groups <- substring(paste0(germlines$v, mrcacdr3, germlines$j),
+  #                       seq(1, nchar(paste0(germlines$v, mrcacdr3, germlines$j)), by = 3),
+  #                       seq(3, nchar(paste0(germlines$v, mrcacdr3, germlines$j)) + 2, by = 3))
+  #   for(i in 1:n_new_codons){
+  #     temp <- data.frame(site = max(tree_df$site)+1, codon = groups[length(groups) - (i - 1)], 
+  #                        partial_likelihood = 0, nope = NA, nada = NA, 
+  #                        no = NA, equilbrium = 0)
+  #     tree_df <- rbind(tree_df, temp)
+  #   }
+  #   # Write the table to a text file
+  #   write.table(tree_df, file = file.path(subDir, "sample",
+  #                                         "sample_lineages_sample_pars_hlp_rootprobs.txt"),
+  #               sep = "\t", row.names = FALSE, quote = FALSE, col.names = FALSE)
+  # }
+  
   return(sub)
 }
 
@@ -1278,7 +1292,7 @@ createAllGermlines <- function(data, references, locus="locus", trim_lengths=FAL
 #' @param receptors        AIRR-table containing sequences from one clone
 #' @param references       Full list of reference segments, see \link{readIMGT}
 #' @param chain            chain in \code{references} being analyzed
-#' @param use_regions       Return string of VDJ regions? (optional)
+#' @param use_regions      Return string of VDJ regions? (optional)
 #' @param vonly            Return germline of only v segment?
 #' @param seq              Column name for sequence alignment
 #' @param id               Column name for sequence ID
@@ -1304,7 +1318,7 @@ createAllGermlines <- function(data, references, locus="locus", trim_lengths=FAL
 #' @seealso \link{createAllGermlines} \link{buildGermline}, \link{stitchVDJ}
 #' @export
 #' 
-buildAllClonalGermlines <- function(receptors, references, 
+buildAllClonalGermlines <- function(receptors, references,
                                     chain="IGH", use_regions=FALSE, vonly=FALSE,
                                     seq="sequence_alignment", id="sequence_id", clone="clone_id",
                                     v_call="v_call", j_call="j_call",  v_germ_start="v_germline_start",
@@ -1330,9 +1344,6 @@ buildAllClonalGermlines <- function(receptors, references,
   }else{
     pad_char <- "N"
   }
-  
-  # TODO add in code for finding what would be the consensus sequence gerlmine stats
-  # and update the receptors table to ONLY have those stats 
   
   v_dict <- unlist(lapply(receptors[[v_call]],function(x)
     alakazam::getAllele(x, strip_d=FALSE, first = FALSE)))
@@ -1422,6 +1433,8 @@ buildAllClonalGermlines <- function(receptors, references,
     
     sub_db <- references[[chain]]
     
+    positions <- as.numeric(gregexpr("\\.", cons[[seq]])[[1]])
+    
     if(length(sub_db) == 0){
       stop(paste("Reference database for",chain,"is empty"))
     }
@@ -1440,7 +1453,8 @@ buildAllClonalGermlines <- function(receptors, references,
                          max_seq = max_len, 
                          germline = NA,
                          germline_d_mask = NA, 
-                         regions = NA)
+                         regions = NA, 
+                         positions = paste0(positions, collapse = ","))
       all_germlines <- rbind(all_germlines, temp)
       next
     }
@@ -1452,14 +1466,22 @@ buildAllClonalGermlines <- function(receptors, references,
                        max_seq = max_len, 
                        germline = germlines$full,
                        germline_d_mask = germlines$dmask, 
-                       regions = germlines$regions)
+                       regions = germlines$regions, 
+                       positions = paste0(positions, collapse = ","))
     all_germlines <- rbind(all_germlines, temp)
   }
   
   if(sum(is.na(all_germlines$germline)) > 0){
     all_germlines <- all_germlines[-which(is.na(all_germlines$germline)),]
   }
-  all_germlines$ungapped <- gsub("\\.", "", all_germlines$germline)
+  
+  all_germlines$ungapped <- unlist(lapply(1:nrow(all_germlines), function(x){
+    numbers <- as.numeric(strsplit(all_germlines$positions[x], ",")[[1]])
+    germ <- strsplit(all_germlines$germline[x], "")[[1]]
+    germ <- germ[-numbers]
+    germ <- paste0(germ, collapse = "")
+    return(germ)
+  }))
   all_germlines$nchar <- nchar(all_germlines$ungapped)
   if(max(all_germlines$nchar) - min(all_germlines$nchar) >= threshold){
     all_germlines <- all_germlines[-which(all_germlines$nchar < max(all_germlines$nchar - threshold)),]
@@ -1631,7 +1653,6 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
     if(is.null(references)){
       stop("References must be supplied to resolve the V gene")
     }
-
     all_germlines <- createAllGermlines(data = data, references = references,
                                         nproc = nproc, clone = clone, trim_lengths = TRUE)
     clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
@@ -1646,7 +1667,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
     processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
                          exec = exec, id = id, omega = omega, optimize = optimize, 
                          motifs = motifs, hotness = hotness,
-                         resolve_v = resolve_v,
+                         resolve_v = resolve_v, resolve_j = resolve_j,
                          all_germlines = all_germlines, ...), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
