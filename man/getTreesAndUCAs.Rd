@@ -11,6 +11,8 @@ getTreesAndUCAs(
   build,
   exec,
   model_folder,
+  model_folder_igk = NULL,
+  model_folder_igl = NULL,
   uca_script,
   python = "python",
   id = "sample",
@@ -18,6 +20,7 @@ getTreesAndUCAs(
   nproc = 1,
   rm_temp = TRUE,
   quiet = 0,
+  chain = "H",
   omega = NULL,
   optimize = "lr",
   motifs = "FCH",
@@ -40,7 +43,11 @@ getTreesAndUCAs(
 
 \item{exec}{File path to the tree building executable}
 
-\item{model_folder}{The file path to the OLGA default model files}
+\item{model_folder}{The file path to the OLGA default model files for heavy chains}
+
+\item{model_folder_igk}{The file path to the OLGA default model files for IGK}
+
+\item{model_folder_igl}{The file path to the OLGA default model files for IGL}
 
 \item{uca_script}{The file path to the UCA python script}
 
@@ -57,6 +64,8 @@ on command line that issues the python you want to use.
 \item{rm_temp}{Remove the generated files?}
 
 \item{quiet}{Amount of noise to print out}
+
+\item{chain}{Set to HL to use both heavy and light chain sequences}
 
 \item{omega}{Omega parameters to estimate (see IgPhyMl docs)}
 
