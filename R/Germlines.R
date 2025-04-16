@@ -855,6 +855,16 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
                   omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
                   asrp = TRUE, chain = chain, ...)
   saveRDS(sub, file.path(subDir, "clone.rds"))
+  
+  if(sub$data[[1]]@phylo_seq == "hlsequence"){
+    # check to see if the lgermline and hlgermline LC are the same
+    test_hl <- paste0(strsplit(sub$data[[1]]@hlgermline, "")[[1]][(nchar(sub$data[[1]]@germline) + 1):
+                                                             nchar(sub$data[[1]]@hlgermline)], collapse = "")
+    if(nchar(test_hl) > nchar(sub$data[[1]]@lgermline)){
+      sub$data[[1]]@lgermline <- test_hl
+    }
+  }
+  
   # get the MRCA for the UCA input -- and the input germline 
   mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
   imgt_germline <- sub$data[[1]]@germline
@@ -954,6 +964,8 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     }
     if(sub$data[[1]]@phylo_seq == "sequence"){
       has_multiple <- all_germlines[all_germlines$clone_id == clone_ids,]
+      heavy_indx <- grepl("^IGH", has_multiple$v_call)
+      has_multiple <- has_multiple[heavy_indx,]
     }
     # add the padding to the ungapped
     has_multiple$ungapped <- unlist(parallel::mclapply(1:nrow(has_multiple), function(y){
@@ -1006,7 +1018,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     }))
     index <- which(germlines$likelihood == max(germlines$likelihood, na.rm = TRUE))[1]
     germlines <- germlines[index,]
-    if("N" %in% strsplit(germlines$v, "")[[1]]){
+    if("N" %in% strsplit(germlines$v, "")[[1]] || "." %in% strsplit(germlines$v, "")[[1]]){
       stop(paste("There is a N found in resolved V gene for clone", clone_ids))
     }
     sub$data[[1]]@data$v <- germlines$v

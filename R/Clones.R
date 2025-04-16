@@ -544,10 +544,10 @@ cleanAlignment <- function(clone){
   }
   if(seq == "hlsequence"){
     sk <- strsplit(clone@data[[seq]],split="")
-    sites <- seq(1,length(g)-3,by=3)
+    sites <- seq(1,length(g),by=3)
     sk_h <- strsplit(clone@data$sequence,split="")
     sk_l <- strsplit(clone@data$lsequence,split="")
-    h_sites <- seq(1,length(hg)-3,by=3)
+    h_sites <- seq(1,length(hg),by=3)
     l_sites <- seq(1,length(lg)-3,by=3)
     ns <- c()
     for(i in sites){ #for each codon site, tally number of NNN codons
