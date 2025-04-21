@@ -842,7 +842,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
                                  omega = NULL, optimize = "lr", motifs = "FCH", 
                                  hotness = "e,e,e,e,e,e", resolve_v = FALSE, 
                                  all_germlines = NULL, resolve_j = FALSE, 
-                                 quiet = 0, chain = chain, ...){
+                                 quiet = 0, chain = chain,...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
@@ -866,7 +866,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   }
   
   # get the MRCA for the UCA input -- and the input germline 
-  mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
+  # mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
   imgt_germline <- sub$data[[1]]@germline
   r <- sub$data[[1]]@region
   if(sub$data[[1]]@phylo_seq == "sequence"){
@@ -877,22 +877,35 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     light_r <- r[(nchar(sub$data[[1]]@germline) + 1): length(r)]
     cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
   }
-  mrcaseq <- sub$trees[[1]]$nodes[[mrca]]$sequence
-  mrcaseq <- strsplit(mrcaseq, split = "")[[1]]
-  if(sum(!mrcaseq %in% c("A", "T", "C", "G", "N")) != 0){
-    mrcaseq[!mrcaseq %in%c("A", "T", "C", "G", "N")] <- "N"
-  }
-  mrcacdr3 <- paste0(mrcaseq[cdr3_index], collapse = "")
+  #mrcaseq <- sub$trees[[1]]$nodes[[mrca]]$sequence
+  #mrcaseq <- strsplit(mrcaseq, split = "")[[1]]
+  #if(sum(!mrcaseq %in% c("A", "T", "C", "G", "N")) != 0){
+  #  mrcaseq[!mrcaseq %in%c("A", "T", "C", "G", "N")] <- "N"
+  #}
+  #mrcacdr3 <- paste0(mrcaseq[cdr3_index], collapse = "")
   # double check that the sequence starts with C and ends with F/W
   tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample",
                               "sample_lineages_sample_pars_hlp_rootprobs.txt"), 
                                header = F, sep = "\t"))
   colnames(tree_df) = c("site", "codon", "partial_likelihood", "nope", "nada", "no", "equilbrium")
+  tree_df$value <- tree_df$partial_likelihood + log(tree_df$equilbrium)
+  
+  tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
+    sub <- tree_df[tree_df$site == x,]
+    sub_indx <- which(sub$value == max(sub$value))[1]
+    sub$codon[sub_indx]
+  })), collapse = "")
+  
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     nsite_heavy <- nchar(sub$data[[1]]@germline)/3
     tree_df_light <- tree_df[tree_df$site >= nsite_heavy,]
     tree_df_light$new_site <- tree_df_light$site - min(tree_df_light$site) + 1
     tree_df <- tree_df[tree_df$site < nsite_heavy,]
+    mrca <- substring(tree_seq, 1, nchar(sub$data[[1]]@germline))
+    mrcacdr3 <- paste0(strsplit(mrca, "")[[1]][cdr3_index], collapse = "")
+    mrca_light <- substring(tree_seq, nchar(sub$data[[1]]@germline) + 1, nchar(tree_seq))
+  }else if(sub$data[[1]]@phylo_seq == "sequence"){
+    mrcacdr3 <- paste0(strsplit(tree_seq, "")[[1]][cdr3_index], collapse = "")
   }
   test_cdr3 <- strsplit(alakazam::translateDNA(mrcacdr3), "")[[1]]
   if(test_cdr3[1] != "C" || !test_cdr3[length(test_cdr3)] %in% c("F", "W")){
@@ -1032,46 +1045,21 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   }
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     regions <- sub$data[[1]]@region[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@region)]
-    numbers <- dplyr::setdiff(1:max(sub$data[[1]]@numbers[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@numbers)]), 
-                                    sub$data[[1]]@numbers[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@numbers)])
+    #numbers <- dplyr::setdiff(1:max(sub$data[[1]]@numbers[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@numbers)]), 
+                                    #sub$data[[1]]@numbers[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@numbers)])
     v_light <- substring(sub$data[[1]]@lgermline, 1, sum(regions %in% c("cdr1", "cdr2", "fwr1", "fwr2", "fwr3")))
-    nps_light <- substring(sub$data[[1]]@lgermline, nchar(v_light) + 1, nchar(v_light) + sum(regions == "cdr3"))
-    j_light <- substring(sub$data[[1]]@lgermline, nchar(v_light) + nchar(nps_light) + 1, nchar(sub$data[[1]]@lgermline))
+    light_cdr3 <- substring(sub$data[[1]]@lgermline, nchar(v_light) + 1, nchar(v_light) + sum(regions == "cdr3"))
+    j_light <- substring(sub$data[[1]]@lgermline, nchar(v_light) + nchar(light_cdr3) + 1, nchar(sub$data[[1]]@lgermline))
     
-    # the last codon of v_light needs to be added to nps_light as does the first codon of j_light to nps_light
     last_v_codon <- substring(v_light, nchar(v_light)-2, nchar(v_light))
     first_j_codon <- substring(j_light, 1, 3)
-    nps_light <- paste0(last_v_codon, nps_light, first_j_codon)
+    light_cdr3 <- paste0(last_v_codon, light_cdr3, first_j_codon)
     v_light <- substring(v_light, 1, nchar(v_light)-3)
     j_light <- substring(j_light, 4, nchar(j_light))
-    # # make it so translateDNA works with a whole sequence -- may need to move around the NPs
-    # # 1
-    # if(nchar(v_light) %% 3 != 0){
-    #   from_nps <- 3 - nchar(v_light) %% 3
-    #   v_light <- paste0(v_light, substring(nps_light, 1, from_nps))
-    #   nps_light <- substring(nps_light, from_nps + 1, nchar(nps_light))
-    # }
-    # # 2
-    # if(nchar(j_light) %% 3 != 0){
-    #   from_nps <- 3 - nchar(j_light) %% 3
-    #   j_light <- paste0(substring(nps_light, nchar(nps_light)-from_nps + 1, nchar(nps_light)), j_light)
-    #   nps_light <- substring(nps_light, 1, nchar(nps_light)- from_nps)
-    # }
-    # # find the conserved site in the V -- C
-    # v_positions <- gregexpr("C", alakazam::translateDNA(v_light))[[1]]
-    # v_conserved <- max(v_positions) - 1
-    # # update v_light and nps_light
-    # nps_light <- paste0(substring(v_light, ((v_conserved + 1)*3 + 1), nchar(v_light)), nps_light)
-    # v_light <- substring(v_light, 1, (v_conserved*3) + 3)
-    # 
-    # # find the conserved site in the J -- F or W
-    # j_conserved <- regexpr("[FW]", alakazam::translateDNA(j_light))[[1]]
-    # nps_light <- paste0(nps_light, substring(j_light, 1, j_conserved*3))
-    # j_light <- substring(j_light, (j_conserved*3 + 1), nchar(j_light))
     
     # fill the nps with mrca but make sure conserved sites are still there 
-    mrcaseq <- paste0(mrcaseq[(nchar(sub$data[[1]]@germline) + 1): length(mrcaseq)], collapse = "")
-    light_cdr3 <- substring(mrcaseq, nchar(v_light)+1, nchar(v_light) + nchar(nps_light))
+    #mrcaseq <- paste0(mrcaseq[(nchar(sub$data[[1]]@germline) + 1): length(mrcaseq)], collapse = "")
+    # light_cdr3 <- substring(mrcaseq, nchar(v_light)+1, nchar(v_light) + nchar(mrca_light))
     light_cdr3_test <- strsplit(alakazam::translateDNA(light_cdr3), "")[[1]]
     
     if(light_cdr3_test[1] != "C" || !light_cdr3_test[length(light_cdr3_test)] %in% c("F", "W")){
@@ -1160,6 +1148,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     file_path_junction_position <- file.path(subDir, paste("olga_junction_positions_light.txt"))
     writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
     writeLines(paste(nchar(v_light), nchar(v_cdr3)), con = file_path_junction_position)
+    tree_df <- tree_df[, !names(tree_df) %in% c("value")]
     write.table(tree_df, file.path(subDir, "sample", "heavy_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
     tree_df_light <- tree_df_light[, !names(tree_df_light) %in% c("new_site", "value")]
@@ -1847,7 +1836,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
     stop("The file", path.expand(uca_script), " cannot be executed.")
   }
   
-  if(resolve_v | resolve_j | chain == "HL"){
+  if(resolve_v | resolve_j){
     if(is.null(data)){
       stop("The data object is required to resolve the V gene")
     }
