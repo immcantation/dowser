@@ -20,12 +20,12 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Cole Jensen \email{cole.jensen@yale.edu}
   \item Steven Kleinstein \email{steven.kleinstein@yale.edu} [copyright holder]
 }
 
 Other contributors:
 \itemize{
-  \item Cole Jensen \email{cole.jensen@yale.edu} [contributor]
   \item Susanna Marquez \email{susanna.marquez@yale.edu} [contributor]
   \item Jason Vander Heiden \email{jason.vanderheiden@gmail.com} [contributor]
 }

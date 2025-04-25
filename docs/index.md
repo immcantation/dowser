@@ -41,7 +41,7 @@ or use the [issue tracker](https://github.com/immcantation/dowser/issues?q=is%3A
 ## Authors
 
 [Kenneth Hoehn](mailto:kenneth.b.hoehn@dartmouth.edu) (aut, cre)  
-[Cole Jensen](mailto:cole.jensen@yale.edu) (ctb)  
+[Cole Jensen](mailto:cole.jensen@yale.edu) (aut)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
