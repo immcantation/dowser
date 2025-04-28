@@ -1836,7 +1836,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
     stop("The file", path.expand(uca_script), " cannot be executed.")
   }
   
-  if(resolve_v | resolve_j){
+  if(resolve_v | resolve_j | chain == "HL"){
     if(is.null(data)){
       stop("The data object is required to resolve the V gene")
     }
