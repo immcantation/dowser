@@ -31,14 +31,14 @@ nav:
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
   - 'Vignettes':
-    - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md
-    - 'Discrete Trait Analysis': vignettes/Discrete-Trait-Vignette.md
-    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
-    - 'Measurable evolution': vignettes/Measurable-Evolution.md
-    - 'Plotting Lineage Trees': vignettes/Plotting-Trees-Vignette.md
     - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Building trees with paired heavy and light chain data': vignettes/Resolve-Light-Chains-Vignette.md
+    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
+    - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md
+    - 'Paired Heavy and Light Chain Trees': vignettes/Resolve-Light-Chains-Vignette.md
+    - 'Plot Lineage Trees': vignettes/Plotting-Trees-Vignette.md
     - 'Reconstruct Intermediate Sequences': vignettes/Sequences-Vignette.md
+    - 'Migration, Differentiation, Class-switching Analysis': vignettes/Discrete-Trait-Vignette.md
+    - 'Timed-based Longitudinal Analysis': vignettes/Measurable-Evolution.md
   - 'Help Topics':
     - topics/airrClone-class.md
     - topics/BiopsyTrees.md
