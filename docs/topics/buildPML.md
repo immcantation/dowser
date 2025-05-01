@@ -20,6 +20,7 @@ tree = NULL,
 data_type = "DNA",
 optNni = TRUE,
 optQ = TRUE,
+optEdge = TRUE,
 verbose = FALSE,
 resolve_random = TRUE,
 quiet = 0,
@@ -59,6 +60,9 @@ optNni
 
 optQ
 :   Optimize Q matrix
+
+optEdge
+:   Optimize edge lengths
 
 verbose
 :   Print error messages as they happen?

@@ -11,9 +11,9 @@ Usage
 ```
 buildRAxML(
 clone,
-seq = "sequence",
 exec,
-model = "GTR",
+seq = "sequence",
+sub_model = "GTR",
 partition = NULL,
 rseed = 28,
 name = "run",
@@ -35,13 +35,13 @@ Arguments
 clone
 :   list of `airrClone` objects
 
-seq
-:   the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"
-
 exec
 :   RAxML-ng executable
 
-model
+seq
+:   the phylo_seq option does this clone uses. Possible options are "sequence", "hlsequence", or "lsequence"
+
+sub_model
 :   The DNA model to be used. GTR is the default.
 
 partition

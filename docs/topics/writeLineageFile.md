@@ -18,7 +18,8 @@ rep = NULL,
 trait = NULL,
 empty = TRUE,
 partition = "single",
-heavy = "IGH"
+heavy = "IGH",
+...
 )
 ```
 
@@ -51,6 +52,9 @@ partition
 
 heavy
 :   name of heavy chain locus
+
+...
+:   additional arguments to be passed
 
 
 

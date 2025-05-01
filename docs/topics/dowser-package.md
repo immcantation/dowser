@@ -20,7 +20,7 @@ See also
 Useful links:
 
 +  [https://dowser.readthedocs.io](https://dowser.readthedocs.io)
-+  Report bugs at [https://github.com/immcantation/dowser/issues](https://github.com/immcantation/dowser/issues?q=is%3Aissue+is%3Aopen+)
++  Report bugs at [https://github.com/immcantation/dowser/issues](https://github.com/immcantation/dowser/issues)
 
 
 
@@ -33,12 +33,12 @@ Author
 
 Authors:
 
++  Cole Jensen [cole.jensen@yale.edu](cole.jensen@yale.edu)
 +  Steven Kleinstein [steven.kleinstein@yale.edu](steven.kleinstein@yale.edu) [copyright holder]
 
 
 Other contributors:
 
-+  Cole Jensen [cole.jensen@yale.edu](cole.jensen@yale.edu) [contributor]
 +  Susanna Marquez [susanna.marquez@yale.edu](susanna.marquez@yale.edu) [contributor]
 +  Jason Vander Heiden [jason.vanderheiden@gmail.com](jason.vanderheiden@gmail.com) [contributor]
 

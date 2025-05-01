@@ -28,6 +28,7 @@ hotness = "e,e,e,e,e,e",
 rates = NULL,
 asrc = 0.95,
 splitfreqs = FALSE,
+asrp = FALSE,
 ...
 )
 ```
@@ -89,6 +90,9 @@ asrc
 
 splitfreqs
 :   Calculate codon frequencies on each partition separately?
+
+asrp
+:   Run ASRp?
 
 ...
 :   Additional arguments (not currently used)

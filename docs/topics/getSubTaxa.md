@@ -39,7 +39,6 @@ Examples
 data(BiopsyTrees)
 tree <- BiopsyTrees$trees[[8]]
 all_subtrees <- lapply(1:length(tree$nodes), function(x)getSubTaxa(x, tree))
-
 ```
 
 

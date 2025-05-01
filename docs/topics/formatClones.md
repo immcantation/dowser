@@ -43,7 +43,7 @@ dup_singles = FALSE,
 nproc = 1,
 chain = "H",
 heavy = "IGH",
-filterstop = FALSE,
+filterstop = TRUE,
 minseq = 2,
 split_light = FALSE,
 light_traits = FALSE,
@@ -203,7 +203,6 @@ data(ExampleAirr)
 # Select two clones, for demonstration purpose
 sel <- c("3170", "3184")
 clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
-
 ```
 
 

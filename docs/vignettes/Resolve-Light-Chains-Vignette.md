@@ -2,6 +2,8 @@
 
 With the advances in sequencing, single cell datasets can now pair heavy and light chain sequences from the same B cell. However, B cells clones defined by heavy chains can have cells with distinct light chain rearrangements that don't descend from the same light chain VJ rearrangement. This can cause issues with multiple sequence alignments that include light chains. Dowser can identify these different light chain VJ rearrangements within a clone, assigning each distinct light chain VJ rearrangement subgroup a numerical value called a clone_subgroup. More specifically, subgroups are defined by light chain V gene, J gene, and junction length. This step must be done before formatting clones and building trees. 
 
+[Full published details on these methods is available here](https://doi.org/10.4049/jimmunol.2300851)
+
 ## Resolve light chains 
 
 To resolve the light chains within a clone, use the `resolveLightChains` function. This function will:

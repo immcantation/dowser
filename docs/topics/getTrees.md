@@ -26,6 +26,7 @@ rm_temp = TRUE,
 palette = NULL,
 seq = NULL,
 collapse = FALSE,
+check_divergence = TRUE,
 ...
 )
 ```
@@ -82,6 +83,9 @@ seq
 collapse
 :   Collapse internal nodes with identical sequences?
 
+check_divergence
+:   run [checkDivergence](checkDivergence.md) on trees?
+
 ...
 :   Additional arguments passed to tree building programs
 
@@ -136,7 +140,6 @@ data(ExampleClones)
 # trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
 # id="temp",dir="temp", trait="sample_id")
 # plotTrees(trees)[[1]]
-
 ```
 
 

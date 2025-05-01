@@ -1,15 +1,15 @@
-**createGermlines** - *[createGermlines](createGermlines.md) Determine consensus clone sequence and create germline for clone*
+**createAllGermlines** - *[createAllGermlines](createAllGermlines.md) Creates all possible germlines for a clone*
 
 Description
 --------------------
 
-[createGermlines](createGermlines.md) Determine consensus clone sequence and create germline for clone
+[createAllGermlines](createAllGermlines.md) Creates all possible germlines for a clone
 
 
 Usage
 --------------------
 ```
-createGermlines(
+createAllGermlines(
 data,
 references,
 locus = "locus",
@@ -136,7 +136,7 @@ verbose
 Value
 -------------------
 
-Tibble with reconstructed germlines
+A data frame with all possible reconstructed germlines
 
 
 Details
@@ -153,32 +153,11 @@ Return object adds/edits following columns:
 
 
 
-Examples
--------------------
-
-```R
-vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
-imgt <- readIMGT(vdj_dir)
-
-```
-
-
-```
-[1] "Read in 3 from 3 fasta files"
-
-```
-
-
-```R
-db <- createGermlines(ExampleAirr[1,], imgt)
-```
-
-*Warning*:locus column not found, attempting to extract locus from V call*Warning*:Loci found: IGH*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-13*01 is not in the provided germline database.*Warning*:Removing 1 failed clonal germlines. Clones: 3128
 
 See also
 -------------------
 
-[createGermlines](createGermlines.md) [buildGermline](buildGermline.md), [stitchVDJ](stitchVDJ.md)
+[createGermlines](createGermlines.md) [buildAllClonalGermlines](buildAllClonalGermlines.md), [stitchVDJ](stitchVDJ.md)
 
 
 
