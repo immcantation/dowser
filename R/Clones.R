@@ -1645,4 +1645,85 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones
 }
 
+#'\code{sampleClone} Down-sample clone to specified size
+#' @param    clone       an \link{airrClone} object
+#' @param    size        target size
+#' @param    weight      column for weighting sample probability
+#' @param    group       column to sample evenly among groups
+#' @return   a down-sampled airrClone object
+# @export
+sampleClone = function(clone, size, weight=NULL, group=NULL){
+  if(size > nrow(clone@data)){
+    return(clone)
+  }
+  if(sum(!group %in% names(clone@data)) != 0){
+    stop(paste("grouping columns not found in clone data"))
+  }
+
+  if(is.null(group)){
+    if(is.null(weight)){
+      sd = sample(clone@data$sequence_id, size=size)
+    }else{
+      sd = sample(clone@data$sequence_id, size=size, prob=clone@data[[weight]])
+    }
+  }else{
+    groups = unique(clone@data[[group]])
+    groups = sample(groups, size=length(groups))
+    ngroups = length(groups)
+    group_list = lapply(groups, function(x){
+      temp = clone@data[clone@data[[group]] == x,]
+      if(is.null(weight)){
+        sample(temp$sequence_id, size=nrow(temp))
+      }else{
+        sample(temp$sequence_id, size=nrow(temp), prob=temp[[weight]])
+      }
+    })
+    group_sizes = sapply(group_list, function(x)length(x))
+
+    sd = c()
+    grops = c()
+    sd_index = 1 #index in sd return vector
+    group_index = 1 #index in group_list (1->ngroups)
+    counters = rep(1, ngroups)
+    while(sd_index <= size){
+      # if not enough left in group, move to next one
+      while(counters[group_index] > group_sizes[group_index]){
+        group_index = group_index + 1
+        if(group_index > ngroups){
+          group_index = 1
+        }
+      }
+      # get next element in group
+      #print(paste(sd_index, group_index, paste(counters,collapse=",")))
+      sd[sd_index] = group_list[[group_index]][counters[group_index]]
+      #grops = c(grops, group_index)
+      sd_index = sd_index + 1
+      # increase counter
+      counters[group_index] = counters[group_index] + 1
+      group_index = group_index + 1
+      if(group_index > ngroups){
+        group_index = 1
+      }
+    }
+  }
+
+  clone@data = clone@data[clone@data$sequence_id %in% sd,]
+  return(clone)
+}
+
+#'\code{sampleClones} Down-sample clones to specified size
+#' @param    clones      a tibble of \link{airrClone} objects
+#' @param    size        target size
+#' @param    weight      column for weighting sample probability
+#' @param    group       column to sample evenly among groups
+#' @return   The input object with sequences down-sampled
+#' @export
+sampleClones = function(clones, size, weight=NULL, group=NULL){
+  clones$data <- lapply(clones$data, function(x) sampleClone(x, size, weight, group))
+  clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
+  return(clones)
+}
+
+
+
 
