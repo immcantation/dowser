@@ -43,6 +43,8 @@ Try checking error messages and installing any failed dependencies individually.
 You may need to upgrade to the latest version of R. If you have questions, you 
 can email the [Immcantation Group](mailto:immcantation@googlegroups.com).
 
+You can also check [Posit Public Package Manager](https://packagemanager.posit.co/client/#/) to identify and install missing dependencies. 
+
 Building Development Versions
 -------------------------------------------------------------------------------
 
@@ -71,3 +73,4 @@ document()
 build()
 install()
 ```
+
