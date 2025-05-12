@@ -877,12 +877,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     light_r <- r[(nchar(sub$data[[1]]@germline) + 1): length(r)]
     cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
   }
-  #mrcaseq <- sub$trees[[1]]$nodes[[mrca]]$sequence
-  #mrcaseq <- strsplit(mrcaseq, split = "")[[1]]
-  #if(sum(!mrcaseq %in% c("A", "T", "C", "G", "N")) != 0){
-  #  mrcaseq[!mrcaseq %in%c("A", "T", "C", "G", "N")] <- "N"
-  #}
-  #mrcacdr3 <- paste0(mrcaseq[cdr3_index], collapse = "")
   # double check that the sequence starts with C and ends with F/W
   tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample",
                               "sample_lineages_sample_pars_hlp_rootprobs.txt"), 
@@ -940,7 +934,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     j_start <- nchar(paste0(v, mrcacdr3, collapse = "")) +1
     j <- substring(imgt_germline, j_start, nchar(imgt_germline))
     j_len <- nchar(j)
-    #padded <- nchar(stringr::str_extract(j, "N+$"))
   } else if(sub$data[[1]]@phylo_seq == "hlsequence"){
     # get the heavy chain V and associated stats
     v_len <- min(cdr3_index)-1
@@ -949,7 +942,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     j_start <- nchar(paste0(v, mrcacdr3, collapse = "")) +1
     j <- substring(sub$data[[1]]@germline, j_start, nchar(sub$data[[1]]@germline))
     j_len <- nchar(j)
-    #padded <- nchar(stringr::str_extract(j, "N+$"))
   }
   if(quiet > 0){
     print(paste("sucessfully obtained MRCA junction for", clone_ids))
@@ -1025,8 +1017,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
       }))
       likelihood <- sum(likelihood)
       temp <- data.frame(clone_id = z, likelihood = likelihood, v = v_alt, j = j_alt,
-                         v_call = has_multiple$v_call[z], 
-                         j_call = has_multiple$j_call[z])
+                         v_call = has_multiple$v_call[z], j_call = has_multiple$j_call[z])
       return(temp)
     }))
     index <- which(germlines$likelihood == max(germlines$likelihood, na.rm = TRUE))[1]
@@ -1034,19 +1025,23 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     if("N" %in% strsplit(germlines$v, "")[[1]] || "." %in% strsplit(germlines$v, "")[[1]]){
       stop(paste("There is a N found in resolved V gene for clone", clone_ids))
     }
-    sub$data[[1]]@data$v <- germlines$v
+    #sub$data[[1]]@data$v <- germlines$v
     v <- germlines$v
-    sub$data[[1]]@data$v_call_new <- germlines$v_call
+    #sub$data[[1]]@data$v_call <- germlines$v_call
+    #sub$data[[1]]@data$d_call <- germlines$d_call
+    #sub$data[[1]]@data$v_len <- germlines$v_len
+    #sub$data[[1]]@data$np1_len <- germlines$np1_len
+    #sub$data[[1]]@data$d_len <- germlines$d_len
+    #sub$data[[1]]@data$np2_len <- germlines$np2_len
     if(resolve_j){
-      sub$data[[1]]@data$j <- germlines$j
+      #sub$data[[1]]@data$j <- germlines$j
       j <- germlines$j
-      sub$data[[1]]@data$j_call_new <- germlines$j_call
+      #sub$data[[1]]@data$j_call <- germlines$j_call
+      #sub$data[[1]]@data$j_len <- germlines$j_len
     }
   }
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     regions <- sub$data[[1]]@region[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@region)]
-    #numbers <- dplyr::setdiff(1:max(sub$data[[1]]@numbers[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@numbers)]), 
-                                    #sub$data[[1]]@numbers[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@numbers)])
     v_light <- substring(sub$data[[1]]@lgermline, 1, sum(regions %in% c("cdr1", "cdr2", "fwr1", "fwr2", "fwr3")))
     light_cdr3 <- substring(sub$data[[1]]@lgermline, nchar(v_light) + 1, nchar(v_light) + sum(regions == "cdr3"))
     j_light <- substring(sub$data[[1]]@lgermline, nchar(v_light) + nchar(light_cdr3) + 1, nchar(sub$data[[1]]@lgermline))
@@ -1058,8 +1053,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     j_light <- substring(j_light, 4, nchar(j_light))
     
     # fill the nps with mrca but make sure conserved sites are still there 
-    #mrcaseq <- paste0(mrcaseq[(nchar(sub$data[[1]]@germline) + 1): length(mrcaseq)], collapse = "")
-    # light_cdr3 <- substring(mrcaseq, nchar(v_light)+1, nchar(v_light) + nchar(mrca_light))
     light_cdr3_test <- strsplit(alakazam::translateDNA(light_cdr3), "")[[1]]
     
     if(light_cdr3_test[1] != "C" || !light_cdr3_test[length(light_cdr3_test)] %in% c("F", "W")){
@@ -1114,8 +1107,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
         }))
         likelihood <- sum(likelihood)
         temp <- data.frame(clone_id = x, likelihood = likelihood, v = v_alt, j = j_alt,
-                           v_call = has_multiple$v_call[x], 
-                           j_call = has_multiple$j_call[x])
+                           v_call = has_multiple_light$v_call[x], j_call = has_multiple_light$j_call[x])
         return(temp)
       }, mc.cores = nproc))
       index <- which(germlines_light$likelihood == max(germlines_light$likelihood, na.rm = TRUE))[1]
@@ -1123,13 +1115,19 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
       if("N" %in% strsplit(germlines_light$v, "")[[1]]){
         stop(paste("There is a N found in resolved V gene for clone", clone_ids))
       }
-      sub$data[[1]]@data$v_light <- germlines_light$v
+      #sub$data[[1]]@data$v_light <- germlines_light$v
       v_light <- germlines_light$v
-      sub$data[[1]]@data$v_call_light_new <- germlines_light$v_call
+      #sub$data[[1]]@data$v_call_light <- germlines_light$v_call
+      #sub$data[[1]]@data$d_call_light <- germlines_light$d_call
+      #sub$data[[1]]@data$v_len_light <- germlines_light$v_len
+      #sub$data[[1]]@data$np1_len_light <- germlines_light$np1_len
+      #sub$data[[1]]@data$d_len_light <- germlines_light$d_len
+      #sub$data[[1]]@data$np2_len_light <- germlines_light$np2_len
       if(resolve_j){
-        sub$data[[1]]@data$j_light <- germlines_light$j
+        #sub$data[[1]]@data$j_light <- germlines_light$j
         j_light <- germlines_light$j
-        sub$data[[1]]@data$j_call_light_new <- germlines_light$j_call
+        #sub$data[[1]]@data$j_call_light <- germlines_light$j_call
+        #sub$data[[1]]@data$j_len_light <- germlines_light$j_len
       }
     } 
   }
@@ -1174,10 +1172,11 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
 # @param model_folder_igk The file path to the model parameters for IGK provide by OLGA
 # @param model_folder_igl The file path to the model parameters for IGL provide by OLGA
 # @param quiet      Amount of noise to print out
+# @param method     The method to use with OLGA. Options are ML (maximum likelihood) or MCMC
 #
 
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
-                     model_folder_igk, model_folder_igl, quiet){
+                     model_folder_igk, model_folder_igl, quiet, method){
   clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- z
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -1228,7 +1227,8 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     "--starting_germlines", starting_germlines,
     "--junction_locations", junction_location,
     "--tree_tables", tree_tables,
-    "--chains", chains
+    "--chains", chains,
+    "--method", method
   )
   
   olga_check <- tryCatch(system2(python, args = c(uca_script, args)),
@@ -1261,6 +1261,13 @@ updateClone <- function(clones, dir, id, nproc = 1){
     clone$AA_UCA <- alakazam::translateDNA(uca)
     germline_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
     clone$trees[[1]]$nodes[[germline_node]]$sequence <- uca
+    if(clone$data[[1]]@phylo_seq == "hlsequence"){
+      UCA_heavy <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
+      UCA_light <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[2]
+      clone$UCA_IMGT <- paste0(UCA_heavy, UCA_light)
+    } else if(clone$data[[1]]@phylo_seq == "sequence"){
+      clone$UCA_IMGT <-getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
+    }
     return(clone)
   }, mc.cores = nproc))
   return(updated_clones)
@@ -1622,7 +1629,13 @@ buildAllClonalGermlines <- function(receptors, references,
       temp <- data.frame(clone_id = unique(receptors[[clone]]),
                          clone_id_unique = paste0(unique(receptors[[clone]]), "_", x),
                          v_call = v_cons,
+                         d_call = cons$d_call,
                          j_call = j_cons, 
+                         v_len = cons$v_germline_length,
+                         np1_len = cons$np1_length,
+                         d_len = cons$d_germline_length,
+                         np2_len = cons$np2_length, 
+                         j_len = cons$j_germline_length,
                          max_seq = max_len, 
                          germline = NA,
                          germline_d_mask = NA, 
@@ -1635,7 +1648,13 @@ buildAllClonalGermlines <- function(receptors, references,
     temp <- data.frame(clone_id = unique(receptors[[clone]]),
                        clone_id_unique = paste0(unique(receptors[[clone]]), "_", x),
                        v_call = v_cons,
+                       d_call = cons$d_call,
                        j_call = j_cons, 
+                       v_len = cons$v_germline_length,
+                       np1_len = cons$np1_length,
+                       d_len = cons$d_germline_length,
+                       np2_len = cons$np2_length, 
+                       j_len = cons$j_germline_length,
                        max_seq = max_len, 
                        germline = germlines$full,
                        germline_d_mask = germlines$dmask, 
@@ -1649,15 +1668,6 @@ buildAllClonalGermlines <- function(receptors, references,
   }
   
   all_germlines$ungapped <- unlist(lapply(1:nrow(all_germlines), function(x){
-    # numbers <- as.numeric(strsplit(all_germlines$positions[x], ",")[[1]])
-    # # make sure that the numbers are in groups of three -- if only one ignore
-    # result <- rep(FALSE, length(numbers))
-    # for (i in 1:(length(numbers) - 2)) {
-    #   if (numbers[i + 1] == numbers[i] + 1 && numbers[i + 2] == numbers[i] + 2) {
-    #     result[i:(i + 2)] <- TRUE
-    #   }
-    # }
-    # numbers <- numbers[result]
     numbers <- which(strsplit(cons_normal[[seq]], "")[[1]] == ".")
     germ <- strsplit(all_germlines$germline_d_mask[x], "")[[1]]
     germ <- germ[-numbers]
@@ -1796,6 +1806,7 @@ maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id"
 #' @param resolve_j     Resolve the J gene as well  
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
+#' @param method        The method to find the UCA with. Options are ML (maximum likelihood) or MCMC.
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:
@@ -1811,7 +1822,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
                            rm_temp = TRUE, quiet = 0, chain = "H", omega = NULL, optimize = "lr",
                            motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
                            resolve_j = FALSE, references = NULL, clone = "clone_id",
-                           ...){
+                           method = "ML",...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -1838,16 +1849,18 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   
   if(resolve_v | resolve_j | chain == "HL"){
     if(is.null(data)){
-      stop("The data object is required to resolve the V gene")
+      stop("The data object is required with current settings")
     }
     if(is.null(references)){
-      stop("References must be supplied to resolve the V gene")
+      stop("References must be supplied with current settings")
     }
     all_germlines <- createAllGermlines(data = data, references = references,
                                         nproc = nproc, clone = clone, trim_lengths = TRUE)
     saveRDS(all_germlines, file.path(dir, "all_germlines.rds"))
-    clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
-                                nproc = nproc, clone = clone, chain = chain)
+    if(resolve_v | resolve_j){
+      clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
+                                           nproc = nproc, clone = clone, chain = chain)
+    }
   }
   
   if(quiet > 0){
@@ -1867,7 +1880,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
            uca_script = uca_script, python = python, max_iters = max_iters, 
-           nproc = nproc, id = id, quiet = quiet)
+           nproc = nproc, id = id, quiet = quiet, method = method)
   
   # read in the clones to make the base clones object again with the UCA in the data table
   if(quiet > 0){
