@@ -1888,11 +1888,12 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 #' @param   germline  ID of the tree's predicted germline sequence
 #' @param   threshold Minimum allowed value of divergence minus Hamming distance
 #' @param   verbose   Print whether all trees passed
+#' @param   data_type The type of data being used. Either "DNA" (default) or "AA"
 #' @return  \code{tibble} showing the clone_id, sequence_id, as well as tree-based
 #' divergence, hamming distance, and difference between the two.
 #' 
 #' @export
-checkDivergence <- function(clones, threshold=-1, verbose=TRUE, germline="Germline"){
+checkDivergence <- function(clones, threshold=-1, verbose=TRUE, germline="Germline", data_type="DNA"){
   if(!"trees" %in% names(clones)){
     stop("trees column not found in input object!")
   }
@@ -1913,7 +1914,13 @@ checkDivergence <- function(clones, threshold=-1, verbose=TRUE, germline="Germli
     divs <- ape::dist.nodes(phy)[,gnode]
     seqs <- unlist(lapply(phy$nodes, function(x)x$sequence))
     uca <- seqs[gnode]
-    hamming <- sapply(1:length(seqs), function(x)alakazam::seqDist(uca, seqs[x]))
+    if(data_type == "DNA"){
+      hamming <- sapply(1:length(seqs), function(x)alakazam::seqDist(uca, seqs[x]))
+    } else{
+      hamming <- sapply(1:length(seqs), function(x)alakazam::seqDist(uca, seqs[x], 
+                                                                     dist_mat = alakazam::getAAMatrix()))
+    }
+    
     div_v_dist <- dplyr::bind_cols(clone=scaled$clone_id[i],
       hamming=hamming, divergence=divs, diff=divs - hamming, node=1:length(seqs))
 
@@ -2188,7 +2195,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                           exec = exec,
                           rm_files = rm_temp,
                           dir=dir,
-                          starting_tree=trees[[x]],...),error=function(e)e),
+                          name =id,
+                          starting_tree=trees[[x]], ...),error=function(e)e),
       mc.cores=nproc)
   } else{
     stop("build specification ", build, " not recognized")
