@@ -12,3 +12,4 @@ bitbucket-pipelines.yml
 site
 requirements.txt
 .readthedocs.yaml
+announcements.html
