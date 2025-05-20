@@ -28,6 +28,7 @@ extra_javascript:
 nav:
   - 'About':
     - 'Introduction': index.md
+    - 'Contributing': contributing.md
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
   - 'Vignettes':
