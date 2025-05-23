@@ -30,6 +30,7 @@ getTreesAndUCAs(
   references = NULL,
   clone = "clone_id",
   method = "ML",
+  rscript = NULL,
   ...
 )
 }
@@ -84,7 +85,9 @@ on command line that issues the python you want to use.
 
 \item{clone}{The name of the clone id column used in \link{formatClones}}
 
-\item{method}{The method to find the UCA with. Options are ML (maximum likelihood) or MCMC.}
+\item{method}{The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.}
+
+\item{rscript}{The fiile path to the rscript with get_UCA.py}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }

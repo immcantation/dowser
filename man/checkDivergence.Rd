@@ -9,7 +9,13 @@ A threshold of -1 is used to represent
 1 full mutation difference. The function will throw a warning if any trees
 cross this threshold}
 \usage{
-checkDivergence(clones, threshold = -1, verbose = TRUE, germline = "Germline")
+checkDivergence(
+  clones,
+  threshold = -1,
+  verbose = TRUE,
+  germline = "Germline",
+  data_type = "DNA"
+)
 }
 \arguments{
 \item{clones}{a tibble of clones and trees, output from \link{getTrees}}
@@ -19,6 +25,8 @@ checkDivergence(clones, threshold = -1, verbose = TRUE, germline = "Germline")
 \item{verbose}{Print whether all trees passed}
 
 \item{germline}{ID of the tree's predicted germline sequence}
+
+\item{data_type}{The type of data being used. Either "DNA" (default) or "AA"}
 }
 \value{
 \code{tibble} showing the clone_id, sequence_id, as well as tree-based

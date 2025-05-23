@@ -24,6 +24,7 @@ buildIgphyml(
   asrc = 0.95,
   splitfreqs = FALSE,
   asrp = FALSE,
+  make_gyrep = TRUE,
   ...
 )
 }
@@ -66,6 +67,8 @@ get a separate rate (e.g. omega=e,e rates=0,1).}
 \item{splitfreqs}{Calculate codon frequencies on each partition separately?}
 
 \item{asrp}{Run ASRp?}
+
+\item{make_gyrep}{Create the grep file?}
 
 \item{...}{Additional arguments (not currently used)}
 }

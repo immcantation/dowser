@@ -1188,7 +1188,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       })
     }
   } else{
-    gyrep <- path.expand(file.path(dir, id, paste0(id, "_lineages_sample_pars.tsv_gyrep")))
+    gyrep <- path.expand(file.path(temp_path, paste0(id, "_lineages_sample_pars.tsv_gyrep")))
   }
   
   if(splitfreqs){

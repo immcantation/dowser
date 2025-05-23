@@ -1025,24 +1025,13 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     if("N" %in% strsplit(germlines$v, "")[[1]] || "." %in% strsplit(germlines$v, "")[[1]]){
       stop(paste("There is a N found in resolved V gene for clone", clone_ids))
     }
-    #sub$data[[1]]@data$v <- germlines$v
     v <- germlines$v
-    #sub$data[[1]]@data$v_call <- germlines$v_call
-    #sub$data[[1]]@data$d_call <- germlines$d_call
-    #sub$data[[1]]@data$v_len <- germlines$v_len
-    #sub$data[[1]]@data$np1_len <- germlines$np1_len
-    #sub$data[[1]]@data$d_len <- germlines$d_len
-    #sub$data[[1]]@data$np2_len <- germlines$np2_len
     if(resolve_j){
-      #sub$data[[1]]@data$j <- germlines$j
       j <- germlines$j
-      #sub$data[[1]]@data$j_call <- germlines$j_call
-      #sub$data[[1]]@data$j_len <- germlines$j_len
     }
   }
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
-    regions <- sub$data[[1]]@region[(nchar(sub$data[[1]]@germline)+1):length(sub$data[[1]]@region)]
-    v_light <- substring(sub$data[[1]]@lgermline, 1, sum(regions %in% c("cdr1", "cdr2", "fwr1", "fwr2", "fwr3")))
+    v_light <- substring(sub$data[[1]]@lgermline, 1, sum(light_r %in% c("cdr1", "cdr2", "fwr1", "fwr2", "fwr3")))
     light_cdr3 <- substring(sub$data[[1]]@lgermline, nchar(v_light) + 1, nchar(v_light) + sum(regions == "cdr3"))
     j_light <- substring(sub$data[[1]]@lgermline, nchar(v_light) + nchar(light_cdr3) + 1, nchar(sub$data[[1]]@lgermline))
     
@@ -1115,19 +1104,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
       if("N" %in% strsplit(germlines_light$v, "")[[1]]){
         stop(paste("There is a N found in resolved V gene for clone", clone_ids))
       }
-      #sub$data[[1]]@data$v_light <- germlines_light$v
       v_light <- germlines_light$v
-      #sub$data[[1]]@data$v_call_light <- germlines_light$v_call
-      #sub$data[[1]]@data$d_call_light <- germlines_light$d_call
-      #sub$data[[1]]@data$v_len_light <- germlines_light$v_len
-      #sub$data[[1]]@data$np1_len_light <- germlines_light$np1_len
-      #sub$data[[1]]@data$d_len_light <- germlines_light$d_len
-      #sub$data[[1]]@data$np2_len_light <- germlines_light$np2_len
       if(resolve_j){
-        #sub$data[[1]]@data$j_light <- germlines_light$j
         j_light <- germlines_light$j
-        #sub$data[[1]]@data$j_call_light <- germlines_light$j_call
-        #sub$data[[1]]@data$j_len_light <- germlines_light$j_len
       }
     } 
   }
@@ -1173,10 +1152,13 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
 # @param model_folder_igl The file path to the model parameters for IGL provide by OLGA
 # @param quiet      Amount of noise to print out
 # @param method     The method to use with OLGA. Options are ML (maximum likelihood) or MCMC
+# @param tree_specs A string that contains the igphyml exec, rate, motif, hotness, and omega values used for tree building separated by ;
+# @param rscript    The file path to rsrcipt needed to rebuild trees for ML_tree. 
 #
 
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
-                     model_folder_igk, model_folder_igl, quiet, method){
+                     model_folder_igk, model_folder_igl, quiet, method, tree_specs, 
+                     rscript = NULL){
   clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- z
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -1228,11 +1210,19 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     "--junction_locations", junction_location,
     "--tree_tables", tree_tables,
     "--chains", chains,
-    "--method", method
+    "--method", method, 
+    "--tree_specs", tree_specs,
+    "--rscript", ifelse(is.null(rscript), "NULL", path.expand(rscript))
   )
-  
-  olga_check <- tryCatch(system2(python, args = c(uca_script, args)),
-                         error=function(e)e)
+  # olga_check <- tryCatch(system2(python, args = c(uca_script, args), stdout = TRUE,
+  #                                stderr = TRUE, wait = TRUE, env = character()),
+  #                        error=function(e)e)
+  cmd <- paste(
+    shQuote(python), 
+    shQuote(uca_script), 
+    paste(shQuote(args), collapse=" ")
+  )
+  olga_check <- tryCatch(system(cmd), error=function(e)e)
   if("error" %in% class(olga_check)){
       stop("there was an error running the get_UCA script. This is likely due to 
            not having the required python packages installed for the python version found
@@ -1806,7 +1796,8 @@ maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id"
 #' @param resolve_j     Resolve the J gene as well  
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
-#' @param method        The method to find the UCA with. Options are ML (maximum likelihood) or MCMC.
+#' @param method        The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.
+#' @param rscript       The fiile path to the rscript with get_UCA.py
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:
@@ -1822,7 +1813,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
                            rm_temp = TRUE, quiet = 0, chain = "H", omega = NULL, optimize = "lr",
                            motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
                            resolve_j = FALSE, references = NULL, clone = "clone_id",
-                           method = "ML",...){
+                           method = "ML", rscript = NULL,...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -1846,6 +1837,15 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   if(!file.exists(path.expand(uca_script))){
     stop("The file", path.expand(uca_script), " cannot be executed.")
   }
+  
+  # make the tree_specs value 
+  tree_specs <- paste0(
+    if (is.null(exec)) "NULL" else exec, ";",
+    if (is.null(optimize)) "NULL" else optimize, ";",
+    if (is.null(motifs)) "NULL" else motifs, ";",
+    if (is.null(hotness)) "NULL" else hotness, ";",
+    if (is.null(omega)) "NULL" else omega
+  )
   
   if(resolve_v | resolve_j | chain == "HL"){
     if(is.null(data)){
@@ -1879,8 +1879,8 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   #clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
-           uca_script = uca_script, python = python, max_iters = max_iters, 
-           nproc = nproc, id = id, quiet = quiet, method = method)
+           uca_script = uca_script, python = python, max_iters = max_iters, nproc = nproc,
+           id = id, quiet = quiet, method = method, tree_specs = tree_specs, rscript = rscript)
   
   # read in the clones to make the base clones object again with the UCA in the data table
   if(quiet > 0){
