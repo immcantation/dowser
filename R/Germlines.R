@@ -1032,7 +1032,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   }
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     v_light <- substring(sub$data[[1]]@lgermline, 1, sum(light_r %in% c("cdr1", "cdr2", "fwr1", "fwr2", "fwr3")))
-    light_cdr3 <- substring(sub$data[[1]]@lgermline, nchar(v_light) + 1, nchar(v_light) + sum(regions == "cdr3"))
+    light_cdr3 <- substring(sub$data[[1]]@lgermline, nchar(v_light) + 1, nchar(v_light) + sum(light_r == "cdr3"))
     j_light <- substring(sub$data[[1]]@lgermline, nchar(v_light) + nchar(light_cdr3) + 1, nchar(sub$data[[1]]@lgermline))
     
     last_v_codon <- substring(v_light, nchar(v_light)-2, nchar(v_light))
@@ -1154,37 +1154,38 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
 # @param method     The method to use with OLGA. Options are ML (maximum likelihood) or MCMC
 # @param tree_specs A string that contains the igphyml exec, rate, motif, hotness, and omega values used for tree building separated by ;
 # @param rscript    The file path to rsrcipt needed to rebuild trees for ML_tree. 
+# @param clone      The column name for the clone identifier 
 #
 
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
                      model_folder_igk, model_folder_igl, quiet, method, tree_specs, 
-                     rscript = NULL){
-  clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
+                     rscript = NULL, clone = "clone_id"){
+  clone_ids <- paste0(unlist(lapply(clones[[clone]], function(z){
     value <- z
-    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
+    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
       value <- append(value, z)
     }
     return(value)
   })), collapse = ",")
-  starting_germlines <- paste0(unlist(lapply(clones$clone_id, function(z){
+  starting_germlines <- paste0(unlist(lapply(clones[[clone]], function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline.txt"))
-    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
+    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
       value <- append(value, path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline_light.txt")))
     }
     return(value)
   })), collapse = ",")
-  junction_location <- paste0(unlist(lapply(clones$clone_id, function(z){
+  junction_location <- paste0(unlist(lapply(clones[[clone]], function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions.txt"))
-    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
+    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
       value <- append(value, path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions_light.txt")))
     }
     return(value)
   })), collapse = ",")
-  tree_tables <- paste0(unlist(lapply(clones$clone_id, function(z){
-    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "sequence"){
+  tree_tables <- paste0(unlist(lapply(clones[[clone]], function(z){
+    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "sequence"){
       value <- path.expand(file.path(dir, paste0(id, "_", z), "sample", 
                                      "sample_lineages_sample_pars_hlp_rootprobs.txt"))
-    } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
+    } else if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
       value <- path.expand(file.path(dir, paste0(id, "_", z), "sample", 
                                      "heavy_table.txt"))
       value <- append(value, path.expand(file.path(dir, paste0(id, "_", z), "sample", 
@@ -1192,8 +1193,8 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     }
     return(value)
   })), collapse = ",")
-  chains <- paste0(unlist(lapply(clones$clone_id, function(z){
-    loci <- strsplit(clones$locus[which(clones$clone_id == z)], ",")[[1]]
+  chains <- paste0(unlist(lapply(clones[[clone]], function(z){
+    loci <- strsplit(clones$locus[which(clones[[clone]] == z)], ",")[[1]]
   })), collapse = ",")
   
   args <- c(
@@ -1681,7 +1682,7 @@ buildAllClonalGermlines <- function(receptors, references,
 maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id", 
                                        nproc = 1, chain = "H"){
   updated_clones <- do.call(rbind, parallel::mclapply(clones[[clone]], function(x){
-    sub <- clones[which(clones$clone_id == x),]
+    sub <- clones[which(clones[[clone]] == x),]
     sub_germs <- all_germlines[all_germlines[[clone]] == x,]
     if(nrow(sub_germs) %in% c(1,0) & chain == "H"| nrow(sub_germs) %in% c(2,0) & chain == "HL"){
       return(sub)
@@ -1866,12 +1867,12 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
-  clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones$clone_id), function(x)
+  clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones[[clone]]), function(x)
     processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
                          exec = exec, id = id, omega = omega, optimize = optimize, 
                          motifs = motifs, hotness = hotness, chain = chain,
                          resolve_v = resolve_v, resolve_j = resolve_j,
-                         all_germlines = all_germlines, ...), mc.cores = nproc)))
+                         all_germlines = all_germlines, quiet = quiet, ...), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")
@@ -1880,7 +1881,8 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
            uca_script = uca_script, python = python, max_iters = max_iters, nproc = nproc,
-           id = id, quiet = quiet, method = method, tree_specs = tree_specs, rscript = rscript)
+           id = id, quiet = quiet, method = method, tree_specs = tree_specs, rscript = rscript, 
+           clone = clone)
   
   # read in the clones to make the base clones object again with the UCA in the data table
   if(quiet > 0){
