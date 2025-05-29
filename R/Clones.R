@@ -1407,7 +1407,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       hd$clone_subgroup_id <- paste0(hd[[clone]],"_",hd[[subgroup]])
       hd$vj_cell <- sapply(1:nrow(hd), function(x){
         if(!is.na(hd$vj_alt_cell[x])){
-          paste(hd$vj_gene[x],hd$vj_alt_cell[x],sep=",")        
+          paste(hd$vj_gene[x],hd$vj_alt_cell[x],sep=",")
         }else{
           hd$vj_gene[x]
         }
@@ -1416,7 +1416,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     }
     ltemp <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
     # CGJ 9/17/24
-    # make the gene level partiions be only gene level -- no allele
+    # make the gene level partitions be only gene level -- no allele
     ltemp$temp_v <- ltemp[[v_call]]
     ltemp$temp_j <- ltemp[[j_call]]
     ltemp[[v_call]] <- alakazam::getGene(ltemp[[v_call]])
@@ -1440,8 +1440,8 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       cells <- unique(ltemp[[cell]])
       cellcombos <- lapply(cells,function(x)
         unique(unlist(combos[ltemp[[cell]] == x])))
-      #lcounts <- table(unlist(lapply(cellcombos,function(x)x)))
-      lcounts <- table(unlist(cellcombos,function(x)x))
+      #lcounts <- table(unlist(cellcombos, function(x) x))
+      lcounts <- table(unlist(cellcombos))
       max <- names(lcounts)[which.max(lcounts)]
       cvs <- unlist(lapply(combos,function(x)max %in% x))
       ltemp[cvs,][[subgroup]] <- lclone
