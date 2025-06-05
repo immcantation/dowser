@@ -1347,8 +1347,9 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' @export
 resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
                                id="sequence_id", seq="sequence_alignment",
-                               clone="clone_id", cell="cell_id", v_call="v_call", j_call="j_call",
-                               junc_len="junction_length", nolight="missing", pad_ends=TRUE){
+                               clone="clone_id", cell="cell_id", v_call="v_call",
+                               j_call="j_call", junc_len="junction_length",
+                               nolight="missing", pad_ends=TRUE){
   
   subgroup <- "clone_subgroup"
 
@@ -1366,7 +1367,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
 
   scount <- table(heavy[[clone]])
   big <- names(scount)[scount >= minseq]
-  heavy <- dplyr::filter(heavy,(!!rlang::sym(clone) %in% big))
+  heavy <- heavy[heavy[[clone]] %in% big,]
   
   if(max(table(heavy[[id]])) > 1){
     stop("Sequence IDs in heavy dataframe must be unique!")
@@ -1382,9 +1383,8 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
   }
   
   # filter out light chains with missing cell IDs
-  missing_cell <- light[is.na(light[[cell]]),]
-  if(nrow(missing_cell) > 0){
-    warning(paste("removing",nrow(missing_cell),"light chains with missing cell IDs."))
+  if(nrow(light[is.na(light[[cell]]),]) > 0){
+    warning(paste("removing",nrow(light[is.na(light[[cell]]),]),"light chains with missing cell IDs."))
     light <- light[!is.na(light[[cell]]),]
   }
 
@@ -1396,12 +1396,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
   light[[subgroup]] <- 1
   light[[clone]] <- -1
   paired <- parallel::mclapply(unique(heavy[[clone]]),function(cloneid){
-    # Get heavy chains within a clone, and corresponding light chains
-    # separate heavy chains with (sc) and without (bulk) paired light chains
-    hd <- dplyr::filter(heavy,!!rlang::sym(clone) == cloneid)
-    ld <- dplyr::filter(light,!!rlang::sym(cell) %in% hd[[!!cell]])
-    ld <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
-    hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),] # added is.na(cell) catch
+    hd <- heavy[heavy[[clone]] == cloneid,]
+    ld <- light[light[[cell]] %in% hd[[cell]],]
+    ld <- ld[!is.na(ld[[cell]]),]
+    hd_sc <- hd[hd[[cell]] %in% ld[[cell]] & !is.na(hd[[cell]]),]
     hd_bulk <- hd[!hd[[cell]] %in% ld[[cell]] | is.na(hd[[cell]]),]
     if(nrow(ld) == 0){
       hd$clone_subgroup_id <- paste0(hd[[clone]],"_",hd[[subgroup]])
@@ -1414,7 +1412,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       })
       return(hd)
     }
-    ltemp <- dplyr::filter(ld, !is.na(!!rlang::sym(cell)))
+    ltemp <- ld[!is.na(ld[[cell]]),]
     # CGJ 9/17/24
     # make the gene level partitions be only gene level -- no allele
     ltemp$temp_v <- ltemp[[v_call]]
@@ -1422,7 +1420,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     ltemp[[v_call]] <- alakazam::getGene(ltemp[[v_call]])
     ltemp[[j_call]] <- alakazam::getGene(ltemp[[j_call]])
     ltemp[[clone]] <- -1
-    ld <- dplyr::tibble()
+    ld <- list()
     lclone <- 1
     while(nrow(ltemp) > 0){
       #expand ambiguous V/J calls
@@ -1486,10 +1484,11 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       rm_indx <- which(colnames(include) %in% c("temp_v", "temp_j"))
       include <- include[, -rm_indx]
       
-      ld <- dplyr::bind_rows(ld,include)
+      ld[[length(ld) + 1]] <- include
       ltemp <- dplyr::filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
       lclone <- lclone + 1
     }
+    ld <- dplyr::bind_rows(ld)
     ld[[clone]] <- cloneid
     for(cellname in unique(hd_sc[[cell]])){
       if(cellname %in% ld[[cell]]){
@@ -1508,34 +1507,34 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         # CGJ 8/6/24 -- updated to do the padding on the temp sequences
         rating <- unlist(lapply(1:nrow(hd_sc), function(x){
           temp <- rbind(hd_sc[x,], hd_bulk[sequence,])
-          if(nchar(temp[[seq]][1] != nchar(temp[[seq]][2]))){
+          if(nchar(temp[[seq]][1]) != nchar(temp[[seq]][2])){
             temp <- alakazam::padSeqEnds(temp[[seq]])
+            value <- alakazam::seqDist(temp[1], temp[2])
+          } else{
+            value <- alakazam::seqDist(temp[[seq]][1], temp[[seq]][2])
           }
-          value <- alakazam::seqDist(temp[1], temp[2])
           return(value)
         }))
         rating <- as.numeric(rating)
         # row number of heavy chain only df with lowest seq dist
         proper_index <- which(rating == min(rating))
+        # precomputed -- faster?
+        subgroup_tab <- table(hd_sc[[subgroup]])
         if(length(proper_index) > 1){
           # find the subgroups that belong to the lowest seq dists
           subgroups <- hd_sc[[subgroup]][proper_index]
-          if(length(unique(subgroups)) > 1){
+          uniq_subgroups <- unique(subgroups)
+          if(length(uniq_subgroups) > 1){
             # if there is more than one subgroup find the subgroup sizes of the 
             # subgroups being considered
-            subgroup_size <- data.frame(clone_subgroup = unique(subgroups))
-            subgroup_size$sizes <- unlist(lapply(1:nrow(subgroup_size), function(x){
-              nrow(hd_sc[hd_sc[[subgroup]] == subgroup_size$clone_subgroup[x],])
-            }))
+            subgroup_size <- as.integer(subgroup_tab[as.character(uniq_subgroups)])
+            max_subgroups <- uniq_subgroups[subgroup_size == max(subgroup_size)]
             # if there is one subgroup that is the largest use it
-            if(length(which(subgroup_size$sizes == max(subgroup_size$sizes))) == 1){
-              proper_index_value <- subgroup_size$clone_subgroup[
-                which(subgroup_size$sizes == max(subgroup_size$sizes))]
+            if(length(max_subgroups) == 1){
+              proper_index_value <- max_subgroups
             } else { 
               # if there are more than one subgroup with the same size use the lower number
-              potential_subgroups <- subgroup_size$clone_subgroup[
-                which(subgroup_size$sizes == max(subgroup_size$sizes))]
-              proper_index_value <- min(potential_subgroups)
+              proper_index_value <- min(max_subgroups)
             }
           } else{
             proper_index_value <- hd_sc[[subgroup]][proper_index[1]]
@@ -1550,28 +1549,21 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       comb <- dplyr::bind_rows(comb, hd_bulk)
     }
     comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
-    comb$vj_cell <- sapply(1:nrow(comb), function(x){
-      if(!is.na(comb$vj_alt_cell[x])){
-        paste(comb$vj_gene[x],comb$vj_alt_cell[x],sep=",")        
-      }else{
-        comb$vj_gene[x]
-      }
-    })
+    comb$vj_cell <- ifelse(
+      !is.na(comb$vj_alt_cell),
+      paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
+      comb$vj_gene
+    )
     
-    size <- c()
-    for(subgroups in sort(unique(comb[[subgroup]]))){
-      size <- append(size, nrow(comb[comb[[subgroup]] == subgroups,]))
-    }
+    size <- as.integer(table(comb[[subgroup]]))
     if(!all(diff(size) <= 0)){
       order_check <- data.frame(table(comb[[subgroup]]))
       colnames(order_check) <- c(subgroup, "size")
-      order_check <- order_check[order(-order_check$size),]
-      order_check$proper_subgroup <- 1:nrow(order_check)
-      comb$new_subgroup <- NA
-      for(i in unique(comb[[subgroup]])){
-        comb$new_subgroup[comb[[subgroup]] == i] <- order_check$proper_subgroup[order_check[[subgroup]] == i]
-      }
-      comb <- comb[, -which(names(comb) == subgroup)]
+      order_check <- order_check[order(-order_check$size), ]
+      order_check$proper_subgroup <- seq_len(nrow(order_check))
+      # Vectorized assignment using match
+      comb$new_subgroup <- order_check$proper_subgroup[match(comb[[subgroup]], order_check[[subgroup]])]
+      comb <- comb[, setdiff(names(comb), subgroup)]
       names(comb)[names(comb) == "new_subgroup"] <- subgroup
     }
     comb

@@ -2263,7 +2263,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else if(build=="pml"){
     trees <- parallel::mclapply(reps,function(x)
       tryCatch(buildPML(data[[x]],seq=seqs[x],
-                        tree=trees[[x]], dir = dir, 
+                        tree=trees[[x]], dir = dir,
                         id = id,...),error=function(e)e),
       mc.cores=nproc)
   } else if(build=="igphyml"){
