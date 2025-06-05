@@ -892,13 +892,17 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
 #' @param    resolve_random  randomly resolve polytomies?
 #' @param    quiet           amount of rubbish to print to console
 #' @param    rep             current bootstrap replicate (experimental)
+#' @param    dir        A directory to save the codon table
+#' @param    id         The identifier value 
+#' @param    asrp       Get the codon table?
 #'
 #' @return  \code{phylo} object created by phangorn::optim.pml with nodes
 #'          attribute containing reconstructed sequences.
 #' @export
 buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="seq", 
                      asr_thresh=0.05, tree=NULL, data_type="DNA", optNni=TRUE, optQ=TRUE, 
-                     optEdge=TRUE, verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL){
+                     optEdge=TRUE, verbose=FALSE, resolve_random=TRUE, quiet=0, rep=NULL, 
+                     dir=NULL, id = NULL, asrp=FALSE){
   seqs <- clone@data[[seq]]
   names <- clone@data$sequence_id
   if(length(seqs) < 2){
@@ -1039,6 +1043,87 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
   }
   tree <- rerootTree(tree,"Germline",verbose=0)
   tree$parameters <- fit
+  
+  # CGJ 6/3/25
+  # make the codon table 
+  if(asrp){
+    # make sure the dir is real and if not create it 
+    sub_dir <- file.path(dir, id)
+    if(!dir.exists(sub_dir)){
+      dir.create(sub_dir, recursive = TRUE)
+    }
+    
+    # update the rooted tree to get root node
+    object <- fit
+    object <- stats::update(object, tree)
+    # get partial lhood at each node 
+    # requires the modified phangorn 
+    result <- phangorn::ancestral.pml(object, type="lhood", return="prob")
+    # get lhoods of each nt site at root 
+    root <- ape::getMRCA(object$tree, tip=object$tree$tip.label)
+    rootpatterns <- t(subset(result, root)[[1]])
+    nts <- rootpatterns[,attr(result,"index")]
+    # get list of codons in appropriate order
+    codons = c()
+    codon_index = list()
+    nt = c("A","C","G","T")
+    counter = 1
+    for(n1 in 1:4){
+      for(n2 in 1:4){
+        for(n3 in 1:4){
+          codons = c(codons, paste0(nt[n1],nt[n2],nt[n3]))
+          codon_index[[counter]] = c(n1,n2,n3)
+          counter = counter + 1
+        }
+      }
+    }
+    stop = c("TAA", "TAG", "TGA")
+    codon_index = codon_index[!codons %in% stop]
+    codons = codons[!codons %in% stop]
+    ig_order = c("TTT","TTC","TTA","TTG","TCT","TCC","TCA","TCG","TAT","TAC","TGT",
+                 "TGC","TGG","CTT","CTC","CTA","CTG","CCT","CCC","CCA","CCG","CAT","CAC",
+                 "CAA","CAG","CGT","CGC","CGA","CGG","ATT","ATC","ATA","ATG","ACT","ACC",
+                 "ACA","ACG","AAT","AAC","AAA","AAG","AGT","AGC","AGA","AGG","GTT","GTC",
+                 "GTA","GTG","GCT","GCC","GCA","GCG","GAT","GAC","GAA","GAG","GGT","GGC",
+                 "GGA","GGG")
+    
+    # convert single nt lhoods into codon loglhoods table
+    ml = paste0(nt[apply(nts, 2, which.max)], collapse="")
+    codon_pos = seq(1, length=ncol(nts)/3, by=3)
+    codon_results = dplyr::tibble()
+    bf = object$bf #base frequencies
+    for(i in codon_pos){
+      pos = dplyr::tibble()
+      for(j in 1:length(codons)){
+        codon = codons[j]
+        lhood = 
+          log(nts[codon_index[[j]][1],i]) +
+          log(nts[codon_index[[j]][2],i+1]) +
+          log(nts[codon_index[[j]][3],i+2])
+        
+        cf = bf[codon_index[[j]][1]] * 
+          bf[codon_index[[j]][2]] * 
+          bf[codon_index[[j]][3]]
+        
+        res = dplyr::tibble(site=(i-1)/3, start=i, codon=codon, lhood=lhood, lhood2=lhood,
+                            site_lhood=NA, site_lhood2=NA, freq=cf)
+        pos = dplyr::bind_rows(pos, res)
+      }
+      m = match(ig_order, pos$codon)
+      pos = pos[m,]
+      codon_results = dplyr::bind_rows(codon_results, pos)
+    }
+    # check if ML codon sequence is same as ML nt sequence
+    max <- codon_results[ave(codon_results$lhood, codon_results$site, FUN = function(x) x == max(x)) == 1, ]
+    test <- substr(paste(max$codon, collapse=""),1,nchar(ml)) == ml
+    if(test){
+      write.table(dplyr::select(codon_results, -start), file=file.path(sub_dir, paste0(id, "_lineages_", id, 
+                                                                                "_pars_hlp_rootprobs.txt")),
+                  col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
+    } else{
+      stop("ASRP failed for clone ", clone@clone)
+    }
+  }
   return(tree)
 }
 
@@ -2178,7 +2263,8 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }else if(build=="pml"){
     trees <- parallel::mclapply(reps,function(x)
       tryCatch(buildPML(data[[x]],seq=seqs[x],
-                        tree=trees[[x]],...),error=function(e)e),
+                        tree=trees[[x]], dir = dir, 
+                        id = id,...),error=function(e)e),
       mc.cores=nproc)
   } else if(build=="igphyml"){
     if(rm_temp){

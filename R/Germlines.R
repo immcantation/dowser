@@ -851,9 +851,16 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   if(quiet > 0){
     print(paste("constructing tree for", clone_ids))
   }
-  sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                  omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
-                  asrp = TRUE, chain = chain, ...)
+  if(build == "igphyml"){
+    sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                    omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
+                    asrp = TRUE, chain = chain)
+  } else if(build == "pml"){
+    sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir,
+                    asrp = TRUE)
+  } else{
+    stop("the tree bulding method ", build, "is not supported")
+  }
   saveRDS(sub, file.path(subDir, "clone.rds"))
   
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
@@ -1215,12 +1222,9 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     "--tree_specs", tree_specs,
     "--rscript", ifelse(is.null(rscript), "NULL", path.expand(rscript))
   )
-  # olga_check <- tryCatch(system2(python, args = c(uca_script, args), stdout = TRUE,
-  #                                stderr = TRUE, wait = TRUE, env = character()),
-  #                        error=function(e)e)
   cmd <- paste(
     shQuote(python), 
-    shQuote(uca_script), 
+    shQuote(path.expand(uca_script)), 
     paste(shQuote(args), collapse=" ")
   )
   olga_check <- tryCatch(system(cmd), error=function(e)e)
@@ -1872,7 +1876,7 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
                          exec = exec, id = id, omega = omega, optimize = optimize, 
                          motifs = motifs, hotness = hotness, chain = chain,
                          resolve_v = resolve_v, resolve_j = resolve_j,
-                         all_germlines = all_germlines, quiet = quiet, ...), mc.cores = nproc)))
+                         all_germlines = all_germlines, quiet = quiet), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")

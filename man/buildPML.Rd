@@ -19,7 +19,10 @@ buildPML(
   verbose = FALSE,
   resolve_random = TRUE,
   quiet = 0,
-  rep = NULL
+  rep = NULL,
+  dir = NULL,
+  id = NULL,
+  asrp = FALSE
 )
 }
 \arguments{
@@ -52,6 +55,12 @@ buildPML(
 \item{quiet}{amount of rubbish to print to console}
 
 \item{rep}{current bootstrap replicate (experimental)}
+
+\item{dir}{A directory to save the codon table}
+
+\item{id}{The identifier value}
+
+\item{asrp}{Get the codon table?}
 }
 \value{
 \code{phylo} object created by phangorn::optim.pml with nodes

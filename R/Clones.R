@@ -877,7 +877,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       seq_fields=seq_fields, add_count=add_count, verbose=verbose, collapse=collapse,
       heavy=heavy, cell=cell, locus=locus, traits=traits, mod3=mod3, randomize=randomize,
       use_regions=use_regions, dup_singles=dup_singles,
-      clone=clone, chain=chain))
+      clone=clone, chain=chain, light_traits = light_traits))
   
   # remove NULL clone objects
   exclude_clones <- unlist(lapply(clones$data,function(x)is.null(x)))
