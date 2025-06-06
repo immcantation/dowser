@@ -585,6 +585,7 @@ cleanAlignment <- function(clone){
     linformative <- lns != length(sk_l)
     ll <- lapply(sk_l,function(x) x=paste(x[linformative],collapse=""))
     lgm <- paste(lg[linformative],collapse="")
+    gm <- paste0(hgm, lgm)
   }
   
   if(.hasSlot(clone,"locus")){
@@ -735,13 +736,12 @@ stopCodonCheck = function(sequences, nproc=1, check=TRUE){
 formatClones <- function(data, seq="sequence_alignment", clone="clone_id", 
     subgroup="clone_subgroup", id="sequence_id", 
     germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
-    junc_len="junction_length", mask_char="N",
-    max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, seq_fields=NULL,
-    add_count=TRUE, verbose=FALSE, collapse=TRUE,
-    cell="cell_id", locus="locus", traits=NULL, mod3=TRUE, randomize=TRUE,
-    use_regions=TRUE, dup_singles=FALSE, nproc=1, chain="H", heavy="IGH", 
-    filterstop=TRUE, minseq=2, split_light=FALSE, light_traits=FALSE, majoronly=FALSE,
-    columns=NULL){
+    junc_len="junction_length", mask_char="N", max_mask=0, pad_end=TRUE, 
+    text_fields=NULL, num_fields=NULL, seq_fields=NULL, add_count=TRUE, 
+    verbose=FALSE, collapse=TRUE, cell="cell_id", locus="locus", traits=NULL,
+    mod3=TRUE, randomize=TRUE, use_regions=TRUE, dup_singles=FALSE, nproc=1,
+    chain="H", heavy="IGH", filterstop=TRUE, minseq=2, split_light=FALSE,
+    light_traits=FALSE, majoronly=FALSE, columns=NULL){
   
   if(majoronly){
     if(!subgroup %in% names(data)){
