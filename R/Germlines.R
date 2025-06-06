@@ -853,11 +853,10 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   }
   if(build == "igphyml"){
     sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                    omega = omega, optimize = optimize, motifs = motifs, hotness = hotness, 
-                    asrp = TRUE, chain = chain)
+                    omega = omega, optimize = optimize, motifs = motifs, 
+                    hotness = hotness, asrp = TRUE, chain = chain)
   } else if(build == "pml"){
-    sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir,
-                    asrp = TRUE)
+    sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE)
   } else{
     stop("the tree bulding method ", build, "is not supported")
   }

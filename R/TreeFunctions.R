@@ -1048,7 +1048,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
   # make the codon table 
   if(asrp){
     # make sure the dir is real and if not create it 
-    sub_dir <- file.path(dir, id)
+    sub_dir <- file.path(dir, paste0(id, "_", clone@clone))
     if(!dir.exists(sub_dir)){
       dir.create(sub_dir, recursive = TRUE)
     }
