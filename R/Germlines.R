@@ -884,9 +884,21 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
   }
   # double check that the sequence starts with C and ends with F/W
-  tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample",
-                              "sample_lineages_sample_pars_hlp_rootprobs.txt"), 
-                               header = F, sep = "\t"))
+  if(build == "igphyml"){
+    tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample",
+                                                            "sample_lineages_sample_pars_hlp_rootprobs.txt"), 
+                                           header = F, sep = "\t"))
+  } else if(build == "pml"){
+    tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
+                                           header = F, sep = "\t"))
+    # make the sample folder and save a copy of the codon table as the sample...rootprobs.txt
+    if(!dir.exists(file.path(subDir, "sample"))){
+      dir.create(file.path(subDir, "sample"))
+    }
+    file.copy(file.path(subDir, "codon_table.txt"), 
+              file.path(subDir, "sample", "sample_lineages_sample_pars_hlp_rootprobs.txt"))
+  }
+
   colnames(tree_df) = c("site", "codon", "partial_likelihood", "nope", "nada", "no", "equilbrium")
   tree_df$value <- tree_df$partial_likelihood + log(tree_df$equilbrium)
   

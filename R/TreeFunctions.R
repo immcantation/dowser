@@ -1114,11 +1114,12 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
       codon_results = dplyr::bind_rows(codon_results, pos)
     }
     # check if ML codon sequence is same as ML nt sequence
-    max <- codon_results[ave(codon_results$lhood, codon_results$site, FUN = function(x) x == max(x)) == 1, ]
+    max <- codon_results[ave(codon_results$lhood, codon_results$site, 
+                             FUN = function(x) x == max(x)) == 1, ]
     test <- substr(paste(max$codon, collapse=""),1,nchar(ml)) == ml
     if(test){
-      write.table(dplyr::select(codon_results, -start), file=file.path(sub_dir, paste0(id, "_lineages_", id, 
-                                                                                "_pars_hlp_rootprobs.txt")),
+      write.table(dplyr::select(codon_results, -start), 
+                  file=file.path(sub_dir, "codon_table.txt"),
                   col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
     } else{
       stop("ASRP failed for clone ", clone@clone)
