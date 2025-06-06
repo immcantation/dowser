@@ -603,10 +603,13 @@ cleanAlignment <- function(clone){
     clone@germline=hgm
     clone@data$lsequence=unlist(ll)
     clone@data$sequence=unlist(hl)
+    l <- paste0(hl, ll)
   }else if(seq == "sequence"){
     clone@germline=gm
+    clone@hlgermline=gm
   }else if(seq == "lsequence"){
     clone@lgermline=gm
+    clone@hlgermline=gm
   }
   clone@data[[seq]]=unlist(l)
   return(clone)
