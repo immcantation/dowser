@@ -589,7 +589,14 @@ cleanAlignment <- function(clone){
   }
   
   if(.hasSlot(clone,"locus")){
-    clone@locus <- clone@locus[informative]
+    if(seq == "sequence"){
+      clone@locus <- clone@locus[informative]
+    } else if(seq == "hlsequence"){
+      clone@locus <- clone@locus[c(hinformative, linformative)]
+    } else if(seq == "lsequence"){
+      clone@locus <- clone@locus[informative]
+    }
+    
   }
   if(.hasSlot(clone,"region")){
     clone@region <- clone@region[informative]  
