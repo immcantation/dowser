@@ -533,8 +533,6 @@ cleanAlignment <- function(clone){
   seq <- clone@phylo_seq
   if(seq == "hlsequence"){
     g <- strsplit(clone@hlgermline[1],split="")[[1]]
-    lg <- strsplit(clone@lgermline[1],split="")[[1]]
-    hg <- strsplit(clone@germline[1],split="")[[1]]
   }else if(seq == "sequence"){
     g <- strsplit(clone@germline[1],split="")[[1]]
   }else if(seq == "lsequence"){
@@ -545,10 +543,18 @@ cleanAlignment <- function(clone){
   if(seq == "hlsequence"){
     sk <- strsplit(clone@data[[seq]],split="")
     sites <- seq(1,length(g),by=3)
-    sk_h <- strsplit(clone@data$sequence,split="")
-    sk_l <- strsplit(clone@data$lsequence,split="")
-    h_sites <- seq(1,length(hg),by=3)
-    l_sites <- seq(1,length(lg)-3,by=3)
+    sk_h <- lapply(1:length(sk), function(x){
+      temp <- sk[[x]][1:nchar(clone@data$sequence[1])]
+      return(temp)
+    })
+    sk_l <- lapply(1:length(sk), function(x){
+      temp <- sk[[x]][nchar(clone@data$sequence[1]) + 1:nchar(clone@data$lsequence[1])]
+      return(temp)
+    })
+    lg <- strsplit(clone@lgermline[1],split="")[[1]]
+    hg <- strsplit(clone@germline[1],split="")[[1]]
+    h_sites <- seq(1,length(g[1:length(sk_h[[1]])]),by=3)
+    l_sites <- seq(1,length(g[(length(sk_h[[1]]) + 1): length(g)]),by=3)
     ns <- c()
     for(i in sites){ #for each codon site, tally number of NNN codons
       l <- unlist(lapply(sk,function(x) paste(x[i:(i+2)],collapse="")=="NNN"))
@@ -592,7 +598,11 @@ cleanAlignment <- function(clone){
     if(seq == "sequence"){
       clone@locus <- clone@locus[informative]
     } else if(seq == "hlsequence"){
-      clone@locus <- clone@locus[c(hinformative, linformative)]
+      if(sum(informative) == nchar(gm)){
+        clone@locus <- clone@locus[informative]
+      }else{
+        clone@locus <- clone@locus[c(hinformative, linformative)]
+      }
     } else if(seq == "lsequence"){
       clone@locus <- clone@locus[informative]
     }
