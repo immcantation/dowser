@@ -3721,9 +3721,9 @@ writeCloneSequences <- function(clones, file){
 #'
 #' @seealso \link{formatClones}, \link{getTrees}, \link{readBEAST}
 #' @export
-getTimeTrees <- function(clones, template, beast, dir, mcmc_length=30000000, log_every="auto", 
-                    burnin=10, time=NULL, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, rm_temp=FALSE,
-                    include_germline=TRUE, seq="sequnece", ...){
+getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=30000000, log_every="auto", 
+                    burnin=10, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, 
+                    rm_temp=FALSE, include_germline=TRUE, seq="sequence", ...){
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
   }
@@ -3768,10 +3768,11 @@ getTimeTrees <- function(clones, template, beast, dir, mcmc_length=30000000, log
     warning("Some clones contain > 100 sequences, may be slow")
   }
 
-  if(is.null(time) & quiet < 1){
-    warning("time column not specified")
-  }else if(!time %in% names(data[[1]]@data)){
+  if(!time %in% names(data[[1]]@data)){
     stop(paste(time, "column not found in data"))
+  }
+  if(!"numeric" %in% class(data[[1]]@data[[time]])){
+    stop("time column must be numeric")
   }
   if(is.null(dir)){
     stop("dir must be specified when running BEAST")
