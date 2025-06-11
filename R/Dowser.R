@@ -52,6 +52,7 @@
 #'                          transmute rename
 #' @importFrom Biostrings   pairwiseAlignment
 #' @importFrom airr		    read_rearrangement
+#' @importFrom treeio       read.beast
 
 NULL
 

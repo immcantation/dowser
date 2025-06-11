@@ -54,7 +54,8 @@ Imports:
     stringr,
     tidyselect,
     tidyr,
-    utils
+    utils,
+    treeio
 Suggests:
     knitr,
     rmarkdown,
