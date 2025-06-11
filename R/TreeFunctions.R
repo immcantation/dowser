@@ -3740,6 +3740,9 @@ getTimeTrees <- function(clones, template, beast, dir, mcmc_length=30000000, log
   if(sum(clones$clone_id != sapply(clones$data, function(x)x@clone)) > 0){
     stop("clone_id and airrClone values not identical")
   }
+  if(!is.null(resume_clones) && !"trees" %in% names(clones)){
+    stop("trees column not found. resume_clones can only be used on data after at least one getTimeTrees run.")
+  }
 
   # make sure all sequences and germlines within a clone are the same length
   unlist(lapply(data, function(x){
@@ -3829,27 +3832,37 @@ getTimeTrees <- function(clones, template, beast, dir, mcmc_length=30000000, log
     stop("No trees left!")
   }
 
-  # make sure trees, data, and clone objects are in same order
-  tree_names <- unlist(lapply(trees, function(x)x@info$name))
-  data_names <- unlist(lapply(data, function(x)x@clone))
-  m <- match(tree_names, data_names)
-  data <- data[m]
-  m <- match(tree_names, clones$clone_id)
-  clones <- clones[m,]
+  if(is.null(resume_clones)){
+    # make sure trees, data, and clone objects are in same order
+    tree_names <- unlist(lapply(trees, function(x)x@info$name))
+    data_names <- unlist(lapply(data, function(x)x@clone))
+    m <- match(tree_names, data_names)
+    data <- data[m]
   
-  # Sanity checks
-  match <- unlist(lapply(1:length(data), function(x){
-    data[[x]]@clone == trees[[x]]@info$name
-  }))
-  if(sum(!match) > 0){
-    stop("Clone and tree names not in proper order!")
+    # Sanity check
+    match <- unlist(lapply(1:length(data), function(x){
+      data[[x]]@clone == trees[[x]]@info$name
+    }))
+    if(sum(!match) > 0){
+      stop("Clone and tree names not in proper order!")
+    }
+    m <- match(tree_names, clones$clone_id)
+    clones <- clones[m,]
+    clones$trees <- trees
+  }else{
+    tree_names <- unlist(lapply(trees, function(x)x@info$name))
+    m <- match(tree_names, clones$clone_id)
+    clones$trees[m] <- trees
   }
-  clones$trees <- trees
+
+  #Sanity check
   if(sum(clones$clone_id != 
-         unlist(lapply(trees,function(x)x@info$name))) > 0){
+         unlist(lapply(clones$trees,function(x)x@info$name))) > 0){
     stop("Tree column names don't match clone IDs")
   }
   clones$parameters <- lapply(clones$trees, function(x)x@info$parameters)
+  clones$ESS_100 = sapply(clones$parameters, function(x)sum(x$ESS < 100, na.rm=TRUE))
+  clones$ESS_200 = sapply(clones$parameters, function(x)sum(x$ESS < 200, na.rm=TRUE))
 
   clones
 }
@@ -3882,17 +3895,8 @@ getTimeTrees <- function(clones, template, beast, dir, mcmc_length=30000000, log
 #' @export
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
-                   log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, resume=NULL,
+                   log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE) {
-
-
-  if(!is.null(resume_clones)){
-    not_found = resume_clones[!resume %in% sapply(data, function(x)x@clone)]
-    if(length(not_found) > 0){
-      stop("Clones ", paste(not_found, collapse=","), " not in data")
-    }
-    cat("Re-running clones ", paste(resume, collapse=","), "\n")
-  }
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -3923,6 +3927,15 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
   if(!is.null(trait)){
     trait_list <- unique(unlist(lapply(data, function(x)x@data[[trait]])))
   }
+
+  if(!is.null(resume_clones)){
+    not_found = resume_clones[!resume_clones %in% sapply(data, function(x)x@clone)]
+    if(length(not_found) > 0){
+      stop("Clones ", paste(not_found, collapse=","), " not in data")
+    }
+    cat("Re-running clones", paste(resume_clones, collapse=","), "\n")
+    data <- data[sapply(data, function(x)x@clone %in% resume_clones)]
+  }
   
   # Create the XML file using the current template and include germline
   xml_filepath <- xml_writer_wrapper(data, 
@@ -3942,7 +3955,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
     y <- xml_filepath[x]
     overwrite <- "-overwrite"
     if(!is.null(resume_clones)){
-      overwrite <- "resume"
+      overwrite <- "-resume"
     }
 
     command <- paste0(
