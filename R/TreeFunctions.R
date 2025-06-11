@@ -3938,7 +3938,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 
   # Run BEAST on each tree sequentially
   # TODO: option to parallelize by tree?
-  capture <- lapply(1:length(xml_filepath), function(x) {
+  capture <- parallel::mclapply(1:length(xml_filepath), function(x) {
     y <- xml_filepath[x]
     overwrite <- "-overwrite"
     if(!is.null(resume_clones)){
@@ -3946,7 +3946,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
     }
 
     command <- paste0(
-      "\ ", "-threads\ ", nproc,
+      "\ ", "-threads\ ", 1,
       "\ ", "-working\ ", 
       "\ ",overwrite, "\ ", y)
 
@@ -3967,7 +3967,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
          return(w)
      })
     status
-    })
+    }, mc.cores=nproc)
 
   for(i in 1:length(capture)){
     if("error" %in% class(capture[[i]])){
