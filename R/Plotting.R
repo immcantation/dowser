@@ -268,21 +268,38 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             }
             tipstates = c(sort(tipstates),"Germline")
             if(is.null(names(palette))){
-              nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
-                unique(unlist(strsplit(x$state,split=",")))
-              ))))
-            } else{
+              if(!"treedata" %in% class(trees$trees[[1]])){
+                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                     unique(unlist(strsplit(x$state,split=",")))
+                    )))
+                }else{
+                    if(is.null(tips)){
+                        stop("`tips` option must be specified if nodes=TRUE with this tree type")
+                    }
+                    if(!tips %in% names(trees$trees[[1]]@data)){
+                        stop(paste(tips, "column not found in trees data object"))
+                    }
+                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                     unique(unlist(x@data[[tips]])))
+                    ))
+                }
+            }else{
               nodestates <- names(palette)
             }
             combpalette <- getPalette(unique(c(nodestates,tipstates)),palette)
-            trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
-            nodestates <- unlist(lapply(trees$trees,function(x){
-                colors <- x$node.color
-                names(colors) <- x$state
-                colors
-                }))
-            nodepalette <- nodestates[unique(names(nodestates))]
-            cols <- c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
+            combpalette["Germline"] = "grey"
+            if(!"treedata" %in% class(trees$trees[[1]])){
+                trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
+                nodestates <- unlist(lapply(trees$trees,function(x){
+                    colors <- x$node.color
+                    names(colors) <- x$state
+                    colors
+                    }))
+                nodepalette <- nodestates[unique(names(nodestates))]
+                cols <- c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
+            }else{
+                cols <- combpalette
+            }
         }else if(!is.null(tips)){
             # set up global tip palette
             if(!is.null(tips)){
@@ -309,9 +326,15 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }else if(nodes){
             # set up global node palette
             if(is.null(names(palette))){
-                nodestates <- unique(unlist(lapply(trees$trees,function(x)
-                    unique(unlist(strsplit(x$state,split=",")))
+                if(!"treedata" %in% class(trees$trees[[1]])){
+                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                     unique(unlist(strsplit(x$state,split=",")))
                     )))
+                }else{
+                    if(is.null(tips)){
+                        stop("`tips` option must be specified if nodes=TRUE with this tree type")
+                    }
+                }
                 statepalette <- getPalette(sort(nodestates),palette)
                 statepalette <- statepalette[!is.na(names(statepalette))]
             }else{
@@ -378,7 +401,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }
         p$data$bootstrap_score = scores[p$data$node]
     }
-    if(!is.null(data)){
+    if(!is.null(data) && !"treedata" %in% class(tree)){
         if(!is(data,"list")){
             data <- list(data)
         }
@@ -403,9 +426,15 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         data@data <- rbind(data@data,gl)
         p <- p %<+% data@data
     }
-    if(!is.null(tree$pars_recon)){
+    if(!"treedata" %in% class(tree)){
+        if(!is.null(tree$pars_recon)){
+            if(nodes){
+                p <- p + aes(color=tree$state)
+            }
+        }
+    }else{
         if(nodes){
-            p <- p + aes(color=tree$state)
+            p <- p + geom_nodepoint(aes(color=!!rlang::sym(tips)))
         }
     }
     if(!is.null(tips)){
