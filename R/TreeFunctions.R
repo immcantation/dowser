@@ -3940,6 +3940,8 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
   
   # Create the XML file using the current template and include germline
   xml_filepath <- xml_writer_wrapper(data, 
+      mcmc_length=mcmc_length,
+      log_every=log_every,
       id=id,
       outfile=file.path(dir, id), 
       time=time, 
@@ -4109,7 +4111,7 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
 
 # define an xml writer function
 xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL, 
-  trait_data_type=NULL, template=NULL, replacements=NULL, 
+  trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, ...) {
   
   kwargs <- list(...)
@@ -4120,6 +4122,9 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     template = "template.xml"
   }
   xml <- readLines(template)
+
+  xml <- gsub('chainLength="[^"]*"', paste0('chainLength="', format(mcmc_length, scientific=F), '"', sep=''), xml)
+  xml <- gsub('logEvery="[^"]*"', paste0('logEvery="', format(log_every, scientific=F), '"', sep=''), xml)
   
   data <- create_alignment(clone, id, include_germline_as_tip)
   # replace the ${DATA} placeholder with actual data
@@ -4188,7 +4193,6 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
       # replace spec="TreeLikelihood" with spec="rootfreqs.TreeLikelihood"
       xml <- gsub('spec="TreeLikelihood"', 'spec="rootfreqs.TreeLikelihood"', xml)
       # replace the ${ROOTFREQS} placeholder with the root frequencies
-      # TODO(jf): does this work with Ns??
       root_freqs <- create_root_freqs(clone, id)
     }
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
@@ -4214,7 +4218,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   return(file)
 }
 
-xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, outfile=NULL, replacements=NULL, trait_list=NULL, 
+xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, outfile=NULL, replacements=NULL, trait_list=NULL, mcmc_length=1000000, log_every=1000,
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, ...) {
   # iterate over the clones to first create trait data type if trait exists
   if (!is.null(trait)) {
@@ -4243,6 +4247,8 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, o
                      replacements=replacements, 
                      include_germline_as_root=include_germline_as_root,
                      include_germline_as_tip=include_germline_as_tip,
+                     mcmc_length=mcmc_length,
+                     log_every=log_every,
                      ...))
   }
   return(xmls)
