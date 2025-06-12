@@ -4198,11 +4198,34 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
   }
 
+  matches <- regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml))[[1]]
+  template_variables <- unique(sub("\\$\\{([^}]+)\\}", "\\1", matches))
+
+  for (var in template_variables) {
+    if (!var %in% names(kwargs)) {
+      stop(paste("Variable", var, "not provided but is required by the template."))
+    }
+    if (var %in% replacements) {
+      next # skip replacements, they are handled later
+    }
+
+    value <- kwargs[[var]]
+
+    # replace the ${VAR} placeholder with the value from kwargs
+    xml <- gsub(paste0("\\$\\{", var, "\\}"), value, xml)
+  }
+
+  # this is useful for e.g. GIBLE templates where we want to replace some variables later than others
   if (!is.null(replacements)) {
     for (replacement in replacements) {
-      xml <- gsub(paste0("\\$\\{", replacement, "\\}"), kwargs[[replacement]], xml)
+      value <- kwargs[[replacement]]
+
+      # replace the ${VAR} placeholder with the value from kwargs
+      xml <- gsub(paste0("\\$\\{", replacement, "\\}"), value, xml)
     }
   }
+
+  
   
   
   # open a connection to the file
