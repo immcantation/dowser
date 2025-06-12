@@ -3965,7 +3965,12 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       "\ ",overwrite, "\ ", y)
 
     console_out <- paste(gsub(".xml$","_console.log",y))
-    command <- paste0(command, " > ", console_out)
+    
+    if(!is.null(resume_clones)){  
+      command <- paste0(command, " > ", console_out)
+    }else{
+      command <- paste0(command, " >> ", console_out)
+    }
     
     if(quiet < 1){
       print(paste(beast_exec,command))
