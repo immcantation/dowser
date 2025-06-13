@@ -3926,7 +3926,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 
   trait_list <- NULL
   if(!is.null(trait)){
-    trait_list <- unique(unlist(lapply(data, function(x)x@data[[trait]])))
+    trait_list <- sort(unique(unlist(lapply(data, function(x)x@data[[trait]]))))
   }
 
   if(!is.null(resume_clones)){
@@ -4251,7 +4251,7 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, o
       for (i in 1:length(data)) {
         traits <- c(traits, unique(data[[i]]@data[[trait]]))
       }
-      trait_list <- unique(traits)
+      trait_list <- sort(unique(traits))
     }
     codeMap <- paste(trait_list, 0:(length(trait_list)-1), collapse=",\n", sep="=")
     codeMap <- paste0(codeMap, ",\n? = ", paste0(0:(length(trait_list)-1), collapse=" "))
