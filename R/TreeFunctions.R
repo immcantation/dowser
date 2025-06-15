@@ -3948,7 +3948,8 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       trait=trait, 
       trait_list=trait_list,
       template=template,
-      include_germline_as_root=include_germline)
+      include_germline_as_root=include_germline,
+      include_germline_as_tip=include_germline)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
@@ -4079,7 +4080,7 @@ create_MRCA_prior_germline <- function(clone, id) {
      id, "_", clone@clone, '">\n', '<taxonset id="germSet" spec="TaxonSet">\n', 
            taxa, 
            '\n</taxonset>\n',
-           '<Uniform id="Uniform.1:germ" name="distr" lower = "0.0" upper="10000"/>\n',
+           '<Uniform id="Uniform.1:germ" name="distr" lower = "-10000" upper="10000"/>\n',
            '</distribution>', sep="")
   return(distribution_xml)
 }
