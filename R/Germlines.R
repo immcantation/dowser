@@ -962,7 +962,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     j_len <- nchar(j)
   }
   if(quiet > 0){
-    print(paste("sucessfully obtained MRCA junction for", clone_ids))
+    print(paste("sucessfully obtained most likely junction for", clone_ids))
   }
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     has_multiple <- all_germlines[all_germlines$clone_id == clone_ids,]
