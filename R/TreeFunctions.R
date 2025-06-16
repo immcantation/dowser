@@ -4199,8 +4199,9 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
   }
 
-  matches <- regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml))[[1]]
+  matches <- unlist(regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml)))
   template_variables <- unique(sub("\\$\\{([^}]+)\\}", "\\1", matches))
+  # print(paste("Template variables found:", paste(template_variables, collapse=", ")))
 
   for (var in template_variables) {
     if (!var %in% names(kwargs)) {
