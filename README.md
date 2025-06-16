@@ -40,7 +40,7 @@ Dowser has 6 primary functions:
 Documentation and tutorials
 -------------------------------------------------------------------------------
 
-Full documention, including tutorials and vignettes: https://dowser.readthedocs.io
+Full documentation, including tutorials and vignettes: https://dowser.readthedocs.io
 
 
 Contact
@@ -48,4 +48,6 @@ Contact
 
 For help and questions please contact the [Immcantation Group](mailto:immcantation@googlegroups.com)
 or use the [issue tracker](https://github.com/immcantation/dowser/issues?q=is%3Aissue+is%3Aopen+).
+
+To receive alerts about Immcantation releases, news, events, and tutorials, join the [Immcantation News](https://groups.google.com/g/immcantation-news) Google Group. [Membership settings](https://groups.google.com/g/immcantation-news/membership) can be adjusted to change the frequency of email updates.
 
