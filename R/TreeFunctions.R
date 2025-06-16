@@ -779,7 +779,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
                              type="AA")
   }
   if(is.null(tree)){
-    tree <- tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
+    tree <- tryCatch(phangorn::pratchet(data,trace=0),warning=function(w)w)
     tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
     tree <- ape::unroot(tree)
     tree$edge.length <- tree$edge.length/nchar(germline)
