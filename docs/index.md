@@ -38,14 +38,17 @@ Dowser has 6 primary functions:
 Documentation and tutorials
 -------------------------------------------------------------------------------
 
-Full documention, including tutorials and vignettes: https://dowser.readthedocs.io
+Full documentation, including tutorials and vignettes: https://dowser.readthedocs.io
 
 
 Contact
 -------------------------------------------------------------------------------
 
-For help and questions please contact the [Immcantation Group](mailto:immcantation@googlegroups.com)
-or use the [issue tracker](https://github.com/immcantation/dowser/issues?q=is%3Aissue+is%3Aopen+).
+If you need help or have any questions, please contact the [Immcantation Group](mailto:immcantation@googlegroups.com).
+
+If you have discovered a bug or have a feature request, you can open an issue using the [issue tracker](https://github.com/immcantation/dowser/issues).
+
+To receive alerts about Immcantation releases, news, events, and tutorials, join the [Immcantation News](https://groups.google.com/g/immcantation-news) Google Group. [Membership settings](https://groups.google.com/g/immcantation-news/membership) can be adjusted to change the frequency of email updates.
 
 
 
@@ -69,39 +72,28 @@ or use the [issue tracker](https://github.com/immcantation/dowser/issues?q=is%3A
 
 To cite the dowser package in publications, please use
 
-  Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of
-  migration, differentiation, and class switching in B cells.” _PLoS
-  Computational Biology_. doi:10.1371/journal.pcbi.1009885
-  <https://doi.org/10.1371/journal.pcbi.1009885>,
-  <https://doi.org/10.1371/journal.pcbi.1009885>.
+  Hoehn K, Pybus O, Kleinstein S (2022). “Phylogenetic analysis of migration, differentiation, and class switching
+  in B cells.” _PLoS Computational Biology_. doi:10.1371/journal.pcbi.1009885
+  <https://doi.org/10.1371/journal.pcbi.1009885>, <https://doi.org/10.1371/journal.pcbi.1009885>.
 
-If you use the [correlationTest](vignettes/Measurable-Evolution.md)
-function for measurable evolution, please also cite
+If you use the [correlationTest](vignettes/Measurable-Evolution.md) function for measurable evolution, please also
+cite
 
-  Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein
-  S (2021). “Human B cell lineages associated with germinal centers
-  following influenza vaccination are measurably evolving.” _eLife_.
-  doi:10.7554/eLife.70873 <https://doi.org/10.7554/eLife.70873>,
-  <https://elifesciences.org/articles/70873>.
+  Hoehn K, Turner J, Miller F, Jiang R, Ellebedy A, Pybus O, Kleinstein S (2021). “Human B cell lineages associated
+  with germinal centers following influenza vaccination are measurably evolving.” _eLife_. doi:10.7554/eLife.70873
+  <https://doi.org/10.7554/eLife.70873>, <https://elifesciences.org/articles/70873>.
 
-If you construct [paired heavy and light chain
-trees](vignettes/Resolve-Light-Chains-Vignette.md), please also cite
+If you construct [paired heavy and light chain trees](vignettes/Resolve-Light-Chains-Vignette.md), please also cite
 
-  Jensen C, Sumner J, Kleinstein S, Hoehn K (2024). “Inferring B Cell
-  Phylogenies from Paired H and L Chain BCR Sequences with Dowser.”
-  _The Journal of Immunology_. doi:10.4049/jimmunol.2300851
-  <https://doi.org/10.4049/jimmunol.2300851>,
-  <https://doi.org/10.4049/jimmunol.2300851>.
+  Jensen C, Sumner J, Kleinstein S, Hoehn K (2024). “Inferring B Cell Phylogenies from Paired H and L Chain BCR
+  Sequences with Dowser.” _The Journal of Immunology_. doi:10.4049/jimmunol.2300851
+  <https://doi.org/10.4049/jimmunol.2300851>, <https://doi.org/10.4049/jimmunol.2300851>.
 
-If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for
-building trees please also cite
+If you additionally use [IgPhyML](https://igphyml.readthedocs.io) for building trees please also cite
 
-  Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S
-  (2019). “Repertoire-wide phylogenetic models of B cell molecular
-  evolution reveal evolutionary signatures of aging and vaccination.”
-  _PNAS_. doi:10.1073/pnas.1906020116
-  <https://doi.org/10.1073/pnas.1906020116>,
-  <https://doi.org/10.1073/pnas.1906020116>.
+  Hoehn K, Van der Heiden J, Zhou J, Lunter G, Pybus O, Kleinstein S (2019). “Repertoire-wide phylogenetic models
+  of B cell molecular evolution reveal evolutionary signatures of aging and vaccination.” _PNAS_.
+  doi:10.1073/pnas.1906020116 <https://doi.org/10.1073/pnas.1906020116>, <https://doi.org/10.1073/pnas.1906020116>.
 
 
 
