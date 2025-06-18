@@ -4083,7 +4083,6 @@ create_MRCA_prior_observed <- function(clone, id) {
 }
 
 create_MRCA_prior_germline <- function(clone, id, germline_range) {
-  print(germline_range)
   if(length(germline_range) != 2){
     stop("germline_range must be a vector of length 2")
   }
