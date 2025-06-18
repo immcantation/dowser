@@ -3822,7 +3822,9 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
                             nproc=nproc,
                             template=template,
                             include_germline=include_germline,
-                            resume_clones=resume_clones, ...
+                            resume_clones=resume_clones, 
+                            log_every=log_every,
+                            ...
                             ),error=function(e)e)
 
   if(inherits(trees, "error")){
