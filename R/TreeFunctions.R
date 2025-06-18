@@ -4055,7 +4055,9 @@ create_root_freqs <- function(clone, id) {
     freqs <- gsub("T", " 0,0,0,1;", freqs)
     freqs <- gsub("(^[[:space:]]+|[[:space:]]+$)", "", freqs)
     freqs <- substr(freqs, 1, nchar(freqs)-1)
-    root_freqs <- paste0('<rootfreqseq id="seq_Root', id, "_", clone@clone, '" spec="Sequence" taxon="Root', id, "_", clone@clone, '" uncertain="true"
+    root_freqs <- paste0('<rootfreqseq id="seq_Root', id, "_", clone@clone,
+     '" spec="Sequence" taxon="Root', 
+      id, "_", clone@clone, '" uncertain="true"
     totalcount="4" value="', freqs, '"/>', sep="")
     return(root_freqs)
   }
@@ -4067,7 +4069,8 @@ create_root_freqs <- function(clone, id) {
 create_MRCA_prior_observed <- function(clone, id) {
   taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
   distribution_xml <- 
-    paste0('<distribution id="obs.prior" spec="beast.base.evolution.tree.MRCAPrior" monophyletic="true" tree="@Tree.t:', id, "_", clone@clone, '">\n', 
+    paste0('<distribution id="obs.prior" spec="beast.base.evolution.tree.MRCAPrior" monophyletic="true" tree="@Tree.t:', 
+      id, "_", clone@clone, '">\n', 
            '<taxonset id="obs" spec="TaxonSet">\n', 
            taxa, 
            '\n</taxonset>\n',
@@ -4126,8 +4129,18 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   }
   xml <- readLines(template)
 
-  xml <- gsub('chainLength="[^"]*"', paste0('chainLength="', format(mcmc_length, scientific=F), '"', sep=''), xml)
-  xml <- gsub('logEvery="[^"]*"', paste0('logEvery="', format(log_every, scientific=F), '"', sep=''), xml)
+  xml <- gsub('chainLength="[^"]*"', 
+    paste0('chainLength="', format(mcmc_length, scientific=F), '"', sep=''), xml) 
+  
+  # log traited tree 10x less frequently than regular tree
+  trait_logger_index <- grepl("treeWithTraitLogger", xml)
+  xml[trait_logger_index] <- gsub('logEvery="[^"]*"', 
+    paste0('logEvery="', format(log_every*10, scientific=F), '"', sep=''), 
+    xml[trait_logger_index])
+  
+  xml[!trait_logger_index] <- gsub('logEvery="[^"]*"', 
+    paste0('logEvery="', format(log_every, scientific=F), '"', sep=''), 
+    xml[!trait_logger_index])
   
   data <- create_alignment(clone, id, include_germline_as_tip)
   # replace the ${DATA} placeholder with actual data
@@ -4245,8 +4258,10 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   return(file)
 }
 
-xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, outfile=NULL, replacements=NULL, trait_list=NULL, mcmc_length=1000000, log_every=1000,
-  include_germline_as_root=FALSE, include_germline_as_tip=FALSE, ...) {
+xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, 
+  outfile=NULL, replacements=NULL, trait_list=NULL, 
+  mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
+  include_germline_as_tip=FALSE, ...) {
   # iterate over the clones to first create trait data type if trait exists
   if (!is.null(trait)) {
     if (is.null(trait_list)) {
