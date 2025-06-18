@@ -4373,7 +4373,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
     command <- paste("-quiet -b", burnin, logfile, ">", outfile)
     
     if(quiet < 1){
-      print(paste(annotator_exec,command))
+      print(paste(analyser_exec,command))
     }
       
     params <- list(analyser_exec, command, stdout=TRUE, stderr=TRUE)
