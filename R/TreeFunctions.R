@@ -3723,7 +3723,9 @@ writeCloneSequences <- function(clones, file){
 #' @export
 getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=30000000, log_every="auto", 
                     burnin=10, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, 
-                    rm_temp=FALSE, include_germline=TRUE, seq="sequence", ...){
+                    rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
+                    germline_range=c(-10000,10000), ...){
+
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
   }
@@ -3824,6 +3826,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
                             include_germline=include_germline,
                             resume_clones=resume_clones, 
                             log_every=log_every,
+                            germline_range=germline_range,
                             ...
                             ),error=function(e)e)
 
@@ -3899,7 +3902,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
-                   burnin=10, low_ram=TRUE, ...) {
+                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -3951,7 +3954,8 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       trait_list=trait_list,
       template=template,
       include_germline_as_root=include_germline,
-      include_germline_as_tip=include_germline, ...)
+      include_germline_as_tip=include_germline, 
+      germline_range=germline_range, ...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
@@ -4078,14 +4082,18 @@ create_MRCA_prior_observed <- function(clone, id) {
   return(distribution_xml)
 }
 
-create_MRCA_prior_germline <- function(clone, id) {
+create_MRCA_prior_germline <- function(clone, id, germline_range) {
+  print(germline_range)
+  if(length(germline_range) != 2){
+    stop("germline_range must be a vector of length 2")
+  }
   taxa <- paste0('<taxon id="', 'Germ', '" spec="Taxon"/>', collapse="\n")
   distribution_xml <- 
     paste0('<distribution id="germ1.prior" spec="beast.base.evolution.tree.MRCAPrior" tipsonly="true" tree="@Tree.t:',
      id, "_", clone@clone, '">\n', '<taxonset id="germSet" spec="TaxonSet">\n', 
            taxa, 
            '\n</taxonset>\n',
-           '<Uniform id="Uniform.1:germ" name="distr" lower = "-10000" upper="10000"/>\n',
+           '<Uniform id="Uniform.1:germ" name="distr" lower = "',germline_range[1],'" upper="',germline_range[2],'"/>\n',
            '</distribution>', sep="")
   return(distribution_xml)
 }
@@ -4118,7 +4126,8 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
 # define an xml writer function
 xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL, 
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
-  include_germline_as_root=FALSE, include_germline_as_tip=FALSE, ...) {
+  include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
+  germline_range=c(-10000,10000), ...) {
   
   kwargs <- list(...)
   
@@ -4184,7 +4193,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     mrca_priors <- ""
     if (include_germline_as_tip) {
       mrca_priors <- paste0(create_MRCA_prior_observed(clone, id), 
-        create_MRCA_prior_germline(clone, id), sep="\n")
+        create_MRCA_prior_germline(clone, id, germline_range), sep="\n")
     }
     
     xml <- gsub("\\$\\{MRCA\\}", mrca_priors, xml)
@@ -4261,7 +4270,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
 xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, 
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
-  include_germline_as_tip=FALSE, ...) {
+  include_germline_as_tip=FALSE, germline_range=c(-10000,10000),...) {
   # iterate over the clones to first create trait data type if trait exists
   if (!is.null(trait)) {
     if (is.null(trait_list)) {
@@ -4291,6 +4300,7 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
                      include_germline_as_tip=include_germline_as_tip,
                      mcmc_length=mcmc_length,
                      log_every=log_every,
+                     germline_range=germline_range,
                      ...))
   }
   return(xmls)
