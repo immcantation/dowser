@@ -3822,7 +3822,9 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
                             nproc=nproc,
                             template=template,
                             include_germline=include_germline,
-                            resume_clones=resume_clones
+                            resume_clones=resume_clones, 
+                            log_every=log_every,
+                            ...
                             ),error=function(e)e)
 
   if(inherits(trees, "error")){
@@ -3897,7 +3899,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
-                   burnin=10, low_ram=TRUE) {
+                   burnin=10, low_ram=TRUE, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -3949,7 +3951,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       trait_list=trait_list,
       template=template,
       include_germline_as_root=include_germline,
-      include_germline_as_tip=include_germline)
+      include_germline_as_tip=include_germline, ...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
@@ -4199,8 +4201,9 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
   }
 
-  matches <- regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml))[[1]]
+  matches <- unlist(regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml)))
   template_variables <- unique(sub("\\$\\{([^}]+)\\}", "\\1", matches))
+  # print(paste("Template variables found:", paste(template_variables, collapse=", ")))
 
   for (var in template_variables) {
     if (!var %in% names(kwargs)) {
