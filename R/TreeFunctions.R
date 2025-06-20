@@ -4129,7 +4129,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   germline_range=c(-10000,10000), ...) {
   
   kwargs <- list(...)
-  
+
   # read in a template file
   if (is.null(template)) {
     # template <- system.file("extdata", "template.xml", package = "scoper")
