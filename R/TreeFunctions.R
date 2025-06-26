@@ -4037,8 +4037,8 @@ create_alignment <- function(clone, id, include_germline_as_tip) {
   
   if (include_germline_as_tip) {
     germline_sequence_xml <- 
-      paste0('\t<sequence id="seq_', 'Germ', 
-             '" spec="Sequence" taxon="', 'Germ', 
+      paste0('\t<sequence id="seq_', 'Germline', 
+             '" spec="Sequence" taxon="', 'Germline', 
              '" totalcount="4" value="', clone@germline, '" />\n')
     all_seqs <- paste0(all_seqs, germline_sequence_xml)
   }
@@ -4094,7 +4094,7 @@ create_MRCA_prior_germline <- function(clone, id, germline_range) {
   if(length(germline_range) != 2){
     stop("germline_range must be a vector of length 2")
   }
-  taxa <- paste0('<taxon id="', 'Germ', '" spec="Taxon"/>', collapse="\n")
+  taxa <- paste0('<taxon id="', 'Germline', '" spec="Taxon"/>', collapse="\n")
   distribution_xml <- 
     paste0('<distribution id="germ1.prior" spec="beast.base.evolution.tree.MRCAPrior" tipsonly="true" tree="@Tree.t:',
      id, "_", clone@clone, '">\n', '<taxonset id="germSet" spec="TaxonSet">\n', 
@@ -4111,7 +4111,7 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
   all_traits <- paste(clone@data$sequence_id, clone@data[[column]], 
     collapse=",\n", sep="=")
   if (include_germline_as_tip) {
-    all_traits <- paste(all_traits, paste0('Germ','=', '?'), sep=",\n")
+    all_traits <- paste(all_traits, paste0('Germline','=', '?'), sep=",\n")
   }
   tagname <- "trait" 
   if (isSet) {
@@ -4130,11 +4130,40 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
   return(traitset_xml)
 }
 
+create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
+  # create a starting tree in newick format
+  if (inherits(tree, "phylo")) {
+    ntips = length(tree$tip.label)
+    tree$node.label = (ntips + 1): (ntips + 1 + tree$Nnode - 1)
+    tree$edge.length <- NULL
+    if (!include_germline_as_tip) {
+      # remove the germline tip if it exists but after numbering the nodes
+      # so that the node numbers are correct
+      tree <- drop.tip(tree, "Germline")
+    }
+    newick <- ape::write.tree(tree)
+  } else if (inherits(tree, "character")) {
+    newick <- tree
+  } else {
+    stop("tree must be a phylo object or a character string in newick format")
+  }
+  
+  # create the starting tree XML
+  starting_tree_xml <- 
+    paste0('<init spec="beast.base.evolution.tree.TreeParser" id="NewickTree.t:', 
+           id, "_", clone@clone, '" initial="@Tree.t:', 
+           id, "_", clone@clone, '" taxa="@', 
+           id, "_", clone@clone, '" IsLabelledNewick="false" newick="', 
+           newick, '"/>')
+  
+  return(starting_tree_xml)
+}
+
 # define an xml writer function
 xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL, 
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
-  germline_range=c(-10000,10000), ...) {
+  germline_range=c(-10000,10000), tree=NULL, ...) {
   
   kwargs <- list(...)
 
@@ -4187,10 +4216,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   }
   if (any(grepl("\\$\\{NODES\\}", xml))) {
     # replace the ${NODES} placeholder with the number of nodes in this tree
-    tips <- nrow(clone@data)
-    if (include_germline_as_tip) {
-      tips <- tips + 1
-    }
+    tips <- nrow(clone@data) + 1 # node numbering includes germline as a tip
     nodes <- 2*tips-1
     xml <- gsub("\\$\\{NODES\\}", nodes, xml)
   }
@@ -4228,6 +4254,37 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
       root_freqs <- create_root_freqs(clone, id)
     }
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
+  }
+
+    if (!is.null(tree)) {
+    # replace the random tree with the provided tree in newick format
+    start_idx <- grep("<init", xml)
+    end_idx <- grep("</init>", xml)
+    if (length(start_idx) == 1 && length(end_idx) == 1 && start_idx < end_idx) {
+      xml <- c(
+        xml[1:(start_idx-1)],
+        c(create_starting_tree(clone, id, tree, include_germline_as_tip)),
+        xml[(end_idx+1):length(xml)]
+      )
+      # TODO: check if there are traits associated with the internal nodes
+      # if so, add the integer corresponding to each node's trait to an array
+      # such that starting_traits[i] is the trait for node i
+      tips <- nrow(clone@data) + 1 # node numbering includes germline as a tip
+      nodes <- 2*tips-1
+      starting_traits <- rep(0, nodes)
+      # replace the value of the traitCategories parameter with the starting traits
+      trait_categories_index <- grep("id='traitCategories'", xml)
+      if (length(trait_categories_index) > 0) {
+        xml[trait_categories_index] <- 
+          gsub('value="[^"]*"', 
+               paste0('value="', paste(starting_traits, collapse=" "), '"'), 
+               xml[trait_categories_index])
+      } else {
+        stop("Could not find traitCategories parameter in the template file")
+      }
+    } else {
+      stop("Could not find <init> tag in the template file")
+    }
   }
 
   matches <- unlist(regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml)))
@@ -4277,7 +4334,10 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
 xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, 
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
-  include_germline_as_tip=FALSE, germline_range=c(-10000,10000),...) {
+  include_germline_as_tip=FALSE, germline_range=c(-10000,10000), ...) {
+
+  kwargs <- list(...)
+
   # iterate over the clones to first create trait data type if trait exists
   if (!is.null(trait)) {
     if (is.null(trait_list)) {
@@ -4295,6 +4355,12 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
   }
   xmls = c()
   for (i in 1:length(data)){
+    if ("trees" %in% names(kwargs)) {
+      # if trees are provided, use them
+      tree <- kwargs$trees[[i]]
+    } else {
+      tree <- NULL
+    }
     xmls = c(xmls, xml_writer_clone(data[[i]], 
                      file=outfile, 
                      id=id, 
@@ -4308,6 +4374,7 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
                      mcmc_length=mcmc_length,
                      log_every=log_every,
                      germline_range=germline_range,
+                     tree=tree,
                      ...))
   }
   return(xmls)
