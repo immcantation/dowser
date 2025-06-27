@@ -4163,7 +4163,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
 xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL, 
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
-  germline_range=c(-10000,10000), tree=NULL, ...) {
+  germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10,...) {
   
   kwargs <- list(...)
 
@@ -4180,7 +4180,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   # log traited tree 10x less frequently than regular tree
   trait_logger_index <- grepl("treeWithTraitLogger", xml)
   xml[trait_logger_index] <- gsub('logEvery="[^"]*"', 
-    paste0('logEvery="', format(log_every*10, scientific=F), '"', sep=''), 
+    paste0('logEvery="', format(log_every*log_every_trait, scientific=F), '"', sep=''), 
     xml[trait_logger_index])
   
   xml[!trait_logger_index] <- gsub('logEvery="[^"]*"', 
@@ -4271,7 +4271,18 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
       # such that starting_traits[i] is the trait for node i
       tips <- nrow(clone@data) + 1 # node numbering includes germline as a tip
       nodes <- 2*tips-1
-      starting_traits <- rep(0, nodes)
+      if("state" %in% names(tree)){
+        states <- strsplit(tree$state, split=",")
+        starting_traits_all <- sapply(states, function(x)x[1])
+        starting_traits <- match(starting_traits_all, trait_list)-1
+        if(sum(is.na(starting_traits)) > 0){
+          print(trait_list)
+          stop(paste0("unknown state found", paste0(starting_traits_all, collapse=" ")))
+        }
+      }else{
+        warning("States not found in starting tree, setting to 0")
+        starting_traits <- rep(0, nodes)
+      }
       # replace the value of the traitCategories parameter with the starting traits
       trait_categories_index <- grep("id='traitCategories'", xml)
       if (length(trait_categories_index) > 0) {
@@ -4375,6 +4386,7 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
                      log_every=log_every,
                      germline_range=germline_range,
                      tree=tree,
+                     trait_list=trait_list,
                      ...))
   }
   return(xmls)
