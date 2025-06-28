@@ -4135,7 +4135,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
   if (inherits(tree, "phylo")) {
     ntips = length(tree$tip.label)
     tree$node.label = (ntips + 1): (ntips + 1 + tree$Nnode - 1)
-    tree$edge.length <- NULL
+    tree$edge.length <- rep(10, length(tree$edge.length)) # set all edge lengths to 10
     if (!include_germline_as_tip) {
       # remove the germline tip if it exists but after numbering the nodes
       # so that the node numbers are correct
@@ -4153,7 +4153,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
     paste0('<init spec="beast.base.evolution.tree.TreeParser" id="NewickTree.t:', 
            id, "_", clone@clone, '" initial="@Tree.t:', 
            id, "_", clone@clone, '" taxa="@', 
-           id, "_", clone@clone, '" IsLabelledNewick="false" newick="', 
+           id, "_", clone@clone, '" IsLabelledNewick="false" adjustTipHeights="true" newick="', 
            newick, '"/>')
   
   return(starting_tree_xml)
