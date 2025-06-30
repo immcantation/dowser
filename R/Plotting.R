@@ -241,7 +241,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     scale=0.01, palette="Dark2", base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
-    tip_palette=NULL, node_palette=NULL, guide_title=NULL){
+    tip_palette=NULL, node_palette=NULL, guide_title=NULL, branch_lengths=NULL){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
@@ -359,7 +359,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
             tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
-            bootstrap_scores=bootstrap_scores, guide_title=guide_title))
+            bootstrap_scores=bootstrap_scores, guide_title=guide_title, branch_lengths=branch_lengths))
         if(!is.null(tips) || nodes){
             if(!is.null(guide_title)){
                 gt <- guide_title
@@ -391,8 +391,12 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 
     tree <- trees$trees[[1]]
     data <- trees$data[[1]]
-    p <- ggtree::ggtree(tree,layout=layout)
 
+    if(!is.null(branch_lengths)){
+        p <- ggtree::ggtree(tree, layout=layout, branch.length=branch_lengths)
+    }else{
+        p <- ggtree::ggtree(tree, layout=layout)
+    }
     #add bootstrap scores to ggplot object
     if(bootstrap_scores){
         scores <- unlist(lapply(tree$nodes, function(x)x$bootstrap_value))
