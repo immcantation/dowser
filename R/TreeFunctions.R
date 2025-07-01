@@ -3727,7 +3727,7 @@ writeCloneSequences <- function(clones, file){
 getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=30000000, log_every="auto", 
                     burnin=10, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, 
                     rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
-                    germline_range=c(-10000,10000), java=TRUE, ...){
+                    germline_range=c(-10000,10000), java=TRUE, seed=NULL, ...){
 
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
@@ -3831,6 +3831,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
                             log_every=log_every,
                             germline_range=germline_range,
                             java=java,
+                            seed=seed,
                             ...
                             ),error=function(e)e)
 
@@ -3906,7 +3907,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
-                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, ...) {
+                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, seed=NULL, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -3976,12 +3977,18 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       "\ ", "-threads\ ", 1,
       "\ ", "-working\ ", 
       "\ ", "-java\ ", 
-      "\ ",overwrite, "\ ", y)
+      "\ ",overwrite, "\ ")
     }else{
       command <- paste0(
       "\ ", "-threads\ ", 1,
       "\ ", "-working\ ", 
-      "\ ",overwrite, "\ ", y)
+      "\ ",overwrite, "\ ")
+    }
+
+    if(is.null(seed)){
+      command <- paste0(command, y)
+    }else{
+      command <- paste0(command, "-seed ",seed, "\ ",y)
     }
 
     console_out <- paste(gsub(".xml$","_console.log",y))
