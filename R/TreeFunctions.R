@@ -4437,6 +4437,8 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
     stop("Input data type not supported")
   }
 
+  beast <- path.expand(beast)
+  
   annotator_exec <- file.path(beast,"treeannotator")
   if(file.access(annotator_exec, mode=1) == -1) {
     stop("The file ", annotator_exec, " cannot be executed.")
