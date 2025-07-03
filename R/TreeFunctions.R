@@ -3700,6 +3700,58 @@ writeCloneSequences <- function(clones, file){
 }
 
 
+#' Iteratively resume getTimeTrees until convergence
+#'
+#' \code{getTrees} Tree building function.
+#' @param    clones     a tibble of \code{airrClone} objects, the output of
+#'                      \link{formatClones}
+#' @param    iterations Maximum number of iterations
+#' @param    ess_cutoff Minimum number of ESS for all parameters
+#' @param    ignore     Vector of parameters to ignore for ESS calculation
+#' @param    quiet      quiet notifications if > 0
+#' @param    ...        Additional arguments for getTimeTrees
+#'
+#' @return   A list of \code{phylo} objects in the same order as \code{data}.
+#'
+#' @details
+#' For examples and vignettes, see https://dowser.readthedocs.io
+#'
+#' @seealso \link{formatClones}, \link{getTrees}, \link{readBEAST}
+#' @export
+getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
+  ignore = c("traitfrequencies"), quiet=0, ...){
+
+  resume = NULL
+  iter = 0
+  while((length(resume) > 0 || iter == 0 ) && iter < iterations){
+        
+        clones = getTimeTrees(clones, resume=resume, ...)
+
+        params = clones$parameters
+        for(regex in ignore){
+            params = lapply(params, function(x){
+                filter(x, !grepl(regex, item))
+                })
+        }
+        
+        clones$below_ESS = sapply(params, 
+          function(x)sum(x$ESS[!x$item %in% ignore] < ess_cutoff, na.rm=TRUE))
+        if(quiet < 1){
+          print(clones$below_ESS)
+          ess_items = unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
+          print(table(ess_items))
+        }
+    
+        resume = filter(clones, below_ESS > 0)$clone_id
+        iter = iter + 1
+    }
+    if(iter == iterations & length(resume) != 0){
+      warning(paste(paste(resume, collapse=","), "failed to converge after",
+        iterations, "iterations"))
+    }
+    return(clones)
+}
+
 #' Estimate lineage tree topologies, branch lengths,
 #' and internal node states if desired
 #'
