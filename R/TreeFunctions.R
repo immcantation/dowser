@@ -3727,7 +3727,7 @@ writeCloneSequences <- function(clones, file){
 getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=30000000, log_every="auto", 
                     burnin=10, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, 
                     rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
-                    germline_range=c(-10000,10000), java=TRUE, seed=NULL, ...){
+                    germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, ...){
 
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
@@ -3832,6 +3832,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
                             germline_range=germline_range,
                             java=java,
                             seed=seed,
+                            log_target=log_target,
                             ...
                             ),error=function(e)e)
 
@@ -3907,7 +3908,8 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
-                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, seed=NULL, ...) {
+                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, seed=NULL, 
+                   log_target=10000, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -3926,9 +3928,9 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
     stop("burnin must be between 0 and 100 (represents %)")
   }
 
-  # setting log_every to get 10000 samples given chain length
+  # setting log_every to get log_target samples given chain length
   if(log_every == "auto"){
-    log_every <- max(floor(mcmc_length/10000), 1)
+    log_every <- max(floor(mcmc_length/log_target), 1)
   }
   if(!grepl("2\\.7", beast_exec) && quiet < 1){
     warning("most templates only compatible with only beast 2.7")
