@@ -3700,9 +3700,11 @@ writeCloneSequences <- function(clones, file){
 }
 
 
-#' Iteratively resume getTimeTrees until convergence
+#' Iteratively resume getTimeTrees until convergence, as defined by 
+#' all parameters (except those in \code{ignore} vector) having ESS 
+#' greater than or equal to the specified ess_cutoff
 #'
-#' \code{getTrees} Tree building function.
+#' \code{getTimeTreesIterate} Iteratively resume getTimeTrees until convergence.
 #' @param    clones     a tibble of \code{airrClone} objects, the output of
 #'                      \link{formatClones}
 #' @param    iterations Maximum number of iterations
@@ -3711,12 +3713,12 @@ writeCloneSequences <- function(clones, file){
 #' @param    quiet      quiet notifications if > 0
 #' @param    ...        Additional arguments for getTimeTrees
 #'
-#' @return   A list of \code{phylo} objects in the same order as \code{data}.
+#' @return   A tibble of \code{tidytree} and \code{airrClone} objects
 #'
 #' @details
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'
-#' @seealso \link{formatClones}, \link{getTrees}, \link{readBEAST}
+#' @seealso \link{getTimeTrees}, \link{readBEAST}
 #' @export
 getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
   ignore = c("traitfrequencies"), quiet=0, ...){
@@ -3725,6 +3727,10 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
   iter = 0
   while((length(resume) > 0 || iter == 0 ) && iter < iterations){
         
+        if(quiet < 1){
+          print(paste("Starting iteration", iter))
+        }
+
         clones = getTimeTrees(clones, resume=resume, ...)
 
         params = clones$parameters
@@ -3779,7 +3785,8 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=30000000, log_every="auto", 
                     burnin=10, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, 
                     rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
-                    germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, ...){
+                    germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, 
+                    tree_states=FALSE, ...){
 
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
@@ -3885,6 +3892,7 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
                             java=java,
                             seed=seed,
                             log_target=log_target,
+                            tree_states=tree_states,
                             ...
                             ),error=function(e)e)
 
@@ -3961,7 +3969,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, seed=NULL, 
-                   log_target=10000, ...) {
+                   log_target=10000, tree_states=FALSE, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -4014,7 +4022,8 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       template=template,
       include_germline_as_root=include_germline,
       include_germline_as_tip=include_germline, 
-      germline_range=germline_range, ...)
+      germline_range=germline_range,
+      tree_states=tree_states, ...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
@@ -4227,7 +4236,8 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
 xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL, 
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
-  germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10,...) {
+  germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
+  ...) {
   
   kwargs <- list(...)
 
@@ -4333,29 +4343,31 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
       # TODO: check if there are traits associated with the internal nodes
       # if so, add the integer corresponding to each node's trait to an array
       # such that starting_traits[i] is the trait for node i
-      tips <- nrow(clone@data) + 1 # node numbering includes germline as a tip
-      nodes <- 2*tips-1
-      if("state" %in% names(tree)){
-        states <- strsplit(tree$state, split=",")
-        starting_traits_all <- sapply(states, function(x)x[1])
-        starting_traits <- match(starting_traits_all, trait_list)-1
-        if(sum(is.na(starting_traits)) > 0){
-          print(trait_list)
-          stop(paste0("unknown state found", paste0(starting_traits_all, collapse=" ")))
+      if(tree_states){
+        tips <- nrow(clone@data) + 1 # node numbering includes germline as a tip
+        nodes <- 2*tips-1
+        if("state" %in% names(tree)){
+          states <- strsplit(tree$state, split=",")
+          starting_traits_all <- sapply(states, function(x)x[1])
+          starting_traits <- match(starting_traits_all, trait_list)-1
+          if(sum(is.na(starting_traits)) > 0){
+            print(trait_list)
+            stop(paste0("unknown state found", paste0(starting_traits_all, collapse=" ")))
+          }
+        }else{
+          warning("States not found in starting tree, setting to 0")
+          starting_traits <- rep(0, nodes)
         }
-      }else{
-        warning("States not found in starting tree, setting to 0")
-        starting_traits <- rep(0, nodes)
-      }
-      # replace the value of the traitCategories parameter with the starting traits
-      trait_categories_index <- grep("id='traitCategories'", xml)
-      if (length(trait_categories_index) > 0) {
-        xml[trait_categories_index] <- 
-          gsub('value="[^"]*"', 
-               paste0('value="', paste(starting_traits, collapse=" "), '"'), 
-               xml[trait_categories_index])
-      } else {
-        stop("Could not find traitCategories parameter in the template file")
+        # replace the value of the traitCategories parameter with the starting traits
+        trait_categories_index <- grep("id='traitCategories'", xml)
+        if (length(trait_categories_index) > 0) {
+          xml[trait_categories_index] <- 
+            gsub('value="[^"]*"', 
+                 paste0('value="', paste(starting_traits, collapse=" "), '"'), 
+                 xml[trait_categories_index])
+        } else {
+          stop("Could not find traitCategories parameter in the template file")
+        }
       }
     } else {
       stop("Could not find <init> tag in the template file")
@@ -4409,7 +4421,8 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
 xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, 
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
-  include_germline_as_tip=FALSE, germline_range=c(-10000,10000), ...) {
+  include_germline_as_tip=FALSE, germline_range=c(-10000,10000), 
+  tree_states=FALSE, ...) {
 
   kwargs <- list(...)
 
@@ -4451,6 +4464,7 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
                      germline_range=germline_range,
                      tree=tree,
                      trait_list=trait_list,
+                     tree_states=tree_states,
                      ...))
   }
   return(xmls)
@@ -4518,9 +4532,13 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
     }
     command <- paste("-burnin", burnin, treesfile, treefile)
     if(low_ram){
-      command = paste("-lowMem TRUE", command)
+      command <- paste("-lowMem TRUE", command)
     }
-    
+
+    console_log <- file.path(dir, paste0(id, "_", data[[x]]@clone,".log"))
+
+    #command <- paste(command, ">>", console_log)
+
     if(quiet < 1){
       print(paste(annotator_exec,command))
     }
