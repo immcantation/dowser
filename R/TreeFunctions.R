@@ -4221,12 +4221,18 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
   return(traitset_xml)
 }
 
-create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
+create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_states) {
   # create a starting tree in newick format
   if (inherits(tree, "phylo")) {
     ntips = length(tree$tip.label)
-    tree$node.label = (ntips + 1): (ntips + 1 + tree$Nnode - 1)
-    tree$edge.length <- rep(10, length(tree$edge.length)) # set all edge lengths to 10
+    if(tree_states){
+      tree$node.label = (ntips + 1): (ntips + 1 + tree$Nnode - 1)
+      tree$edge.length <- rep(10, length(tree$edge.length)) # set all edge lengths to 10
+    }else{
+      tree$node.label = NULL
+      tree$edge.length = rep(10, length(tree$edge.length))
+      tree <- ape::multi2di(tree)
+    }
     if (!include_germline_as_tip) {
       # remove the germline tip if it exists but after numbering the nodes
       # so that the node numbers are correct
@@ -4240,12 +4246,21 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip) {
   }
   
   # create the starting tree XML
-  starting_tree_xml <- 
+  if(tree_states){
+    starting_tree_xml <- 
     paste0('<init spec="beast.base.evolution.tree.TreeParser" id="NewickTree.t:', 
            id, "_", clone@clone, '" initial="@Tree.t:', 
            id, "_", clone@clone, '" taxa="@', 
            id, "_", clone@clone, '" IsLabelledNewick="false" adjustTipHeights="true" newick="', 
            newick, '"/>')
+  }else{
+    starting_tree_xml <- 
+      paste0('<init spec="beast.base.evolution.tree.TreeParser" id="NewickTree.t:', 
+           id, "_", clone@clone, '" initial="@Tree.t:', 
+           id, "_", clone@clone, '" taxa="@', 
+           id, "_", clone@clone, '" IsLabelledNewick="false" adjustTipHeights="true" newick="', 
+           newick, '"/>')
+  }
   
   return(starting_tree_xml)
 }
@@ -4355,7 +4370,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     if (length(start_idx) == 1 && length(end_idx) == 1 && start_idx < end_idx) {
       xml <- c(
         xml[1:(start_idx-1)],
-        c(create_starting_tree(clone, id, tree, include_germline_as_tip)),
+        c(create_starting_tree(clone, id, tree, include_germline_as_tip, tree_states)),
         xml[(end_idx+1):length(xml)]
       )
       # TODO: check if there are traits associated with the internal nodes
