@@ -221,6 +221,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    node_palette       deprecated, use palette
 #' @param    tip_palette        deprecated, use palette
 #' @param    guide_title        Title of color guide. Defaults to tips variable if specified.
+#' @param    branch_lengths     Use branch lenghts? Use "none" if not.
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'

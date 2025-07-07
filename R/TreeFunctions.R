@@ -3731,7 +3731,7 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
           print(paste("Starting iteration", iter))
         }
 
-        clones = getTimeTrees(clones, resume=resume, ...)
+        clones = getTimeTrees(clones, resume_clones=resume, ...)
 
         params = clones$parameters
         for(regex in ignore){
@@ -3758,19 +3758,31 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
     return(clones)
 }
 
-#' Estimate lineage tree topologies, branch lengths,
-#' and internal node states if desired
+#' Estimate time trees by running BEAST on each clone
+#' Applies XML \code{template} to each clone
 #'
-#' \code{getTrees} Tree building function.
+#' \code{getTimeTrees} Tree building function.
 #' @param    clones     a tibble of \code{airrClone} objects, the output of
 #'                      \link{formatClones}
-#' @param    template      trait to use for parsimony models (required if
-#'                      \code{igphyml} specified)
-#' @param    beast       location of desired phylogenetic executable
+#' @param    template   XML template
+#' @param    beast      location of beast binary directory (beast/bin)
 #' @param    dir        directory where temporary files will be placed.
-#' @param    id         unique identifer for this analysis (required if
-#'                      \code{igphyml} or \code{dnapars} specified)
-#' @param    nproc      number of cores to parallelize computations
+#' @param    id         unique identifer for this analysis
+#' @param    mcmc_length  Number of MCMC iterations
+#' @param    time         Name of sample time column  
+#' @param    log_every    Frequency of states logged. "auto" will divide
+#'                        mcmc_length by log_target         
+#' @param    burnin       Burnin percent (default 10)                 
+#' @param    trait        Trait coolumn used         
+#' @param    resume_clones  Clones to resume for mcmc_length more iterations            
+#' @param    include_germline Include germline in analysis?     
+#' @param    seq          Sequence column in data      
+#' @param    germline_range   Possible date range of germline tip     
+#' @param    java         Use the -java flag for BEAST run      
+#' @param    seed         Used for the -seed option for BEASTrun    
+#' @param    log_target   Target number of samples over mcmc_length         
+#' @param    tree_states  Use \code{states} vector for starting tree
+#' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
 #' @param    quiet      amount of rubbish to print to console
 #' @param    rm_temp    remove temporary files (default=TRUE)
 #' @param    ...        Additional arguments passed to tree building programs
@@ -3780,13 +3792,14 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 #' @details
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'
-#' @seealso \link{formatClones}, \link{getTrees}, \link{readBEAST}
+#' @seealso \link{getTrees}, \link{readBEAST}
 #' @export
-getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=30000000, log_every="auto", 
-                    burnin=10, trait=NULL, id=NULL, resume_clones=NULL, nproc=1, quiet=0, 
-                    rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
-                    germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, 
-                    tree_states=FALSE, ...){
+getTimeTrees <- function(clones, template, beast, dir, id, time,  
+        mcmc_length=30000000, log_every="auto", 
+        burnin=10, trait=NULL, resume_clones=NULL, nproc=1, quiet=0, 
+        rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
+        germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, 
+        tree_states=FALSE, ...){
 
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
@@ -3940,36 +3953,41 @@ getTimeTrees <- function(clones, template, beast, dir, time, mcmc_length=3000000
 }
 
 
-
-#' Writes a BEAST XML file given a list of airrClone objects, then runs them
+#' Read in a directory from a BEAST run. Runs treeannotator and loganalyser.
 #' 
-#' \code{buildBeast2Strict} Phylogenetic bootstrap function.
-#' @param data    an \code{airrClone} object
-#' @param time          name of time column (trait in getTrees)
-#' @param include_gm    Include germline sequence?
-#' @param mcmc_length   Length of MCMC chain
-#' @param dir           directory where temporary files will be placed
-#' @param germline      name of germline sequence
-#' @param units         time units
-#' @param log_every     log every X samples, default mcmc_length/10000
-#' @param verbose       if > 0 print run information
-#' @param rerun         clone IDs to re-run
-#' @param burnin        percent of initial tree samples to discard (1-100)
-#' @param tree_prior    prior for tree model
-#' @param pop_sizes     number of population sizes for coalescent-skyline prior
-#' @param full_posterior  store tree posterior? Used for densitree plots
-#' @param germline_time date of the germline sequence
-#' @param asr           log ancestral sequences?
-#' @param epoch_dates   dates of epochs if desired
+#' @param    data     a list of \code{airrClone} objects
+#' @param    template   XML template
+#' @param    beast      location of beast binary directory (beast/bin)
+#' @param    dir        directory where temporary files will be placed.
+#' @param    id         unique identifer for this analysis
+#' @param    mcmc_length  Number of MCMC iterations
+#' @param    time         Name of sample time column 
+#' @param    log_every    Frequency of states logged. \code{auto} will divide mcmc_length by log_target         
+#' @param    burnin       Burnin percent (default 10)                 
+#' @param    trait        Trait coolumn used         
+#' @param    asr          Log ancestral sequences?
+#' @param    full_posterior  Read un full distribution of parameters and trees?
+#' @param    resume_clones  Clones to resume for mcmc_length more iterations            
+#' @param    include_germline Include germline in analysis?     
+#' @param    germline_range   Possible date range of germline tip     
+#' @param    java         Use the -java flag for BEAST run      
+#' @param    seed         Used for the -seed option for BEASTrun    
+#' @param    log_target   Target number of samples over mcmc_length         
+#' @param    tree_states  Use \code{states} vector for starting tree
+#' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
+#' @param    quiet      amount of rubbish to print to console
+#' @param    low_ram    run with less memory (slower)  
+#' @param    ...      Additional arguments for XML writing functions
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
+#' @seealso \link{getTimeTrees}
 #' @export
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
-                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, seed=NULL, 
-                   log_target=10000, tree_states=FALSE, ...) {
+                   burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
+                   seed=NULL, log_target=10000, tree_states=FALSE, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -4401,10 +4419,6 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
       xml <- gsub(paste0("\\$\\{", replacement, "\\}"), value, xml)
     }
   }
-
-  
-  
-  
   # open a connection to the file
   file <- paste0(file, "_", clone@clone, ".xml")
   con <- file(file, "w")
@@ -4471,20 +4485,20 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
 }
 
 
-
-
-
-
 #' Reads in a BEAST output directory
 #' 
 #' \code{readBEAST} Reads in data from BEAST output directory
-#' @param clones         either a tibble (getTrees) or list of \code{airrClone} object
-#' @param time           name of time column (trait in getTrees)
-#' @param dir            directory where temporary files will be placed
-#' @param verbose        if > 0 print run information
+#' @param clones     either a tibble (getTrees) or list of \code{airrClone} object
+#' @param beast      location of beast binary directory (beast/bin)
+#' @param dir        directory where temporary files will be placed.
+#' @param id         unique identifer for this analysis
+#' @param trait      Trait coolumn used         
+#' @param asr        Log ancestral sequences?
+#' @param full_posterior  Read un full distribution of parameters and trees?
+#' @param nproc      Number of cores for parallelization. Uses 1 core per tree.
+#' @param quiet      amount of rubbish to print to console
 #' @param burnin         percent of initial tree samples to discard (1-100)
 #' @param nproc          cores to use
-#' @param full_posterior Store tree posterior distribution? (used for density plot)
 #' @param low_ram        run with less memory (slower)       
 #'
 #' @return   
@@ -4494,8 +4508,8 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
 #' given the burnin
 #'  
 #' @export
-readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, quiet=0, 
-  full_posterior=FALSE, asr=FALSE, low_ram=TRUE) {
+readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
+  quiet=0, full_posterior=FALSE, asr=FALSE, low_ram=TRUE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
@@ -4833,7 +4847,6 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 #' @param  dir       directory of BEAST trees file 
 #' @param  time      name of time column
 #' @param  bins      number of bins for plotting
-#' @param  oldest    age of the oldest tip sampled (if forward time desired)
 #' @param  verbose   if 1, print name of clones
 #' @param  forward   plot in forward or (FALSE) backward time?
 #' @param  nproc     processors for parallelization (by clone)
