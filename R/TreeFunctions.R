@@ -1355,9 +1355,14 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       cat(paste(readLines(logfile),"\n"))
       return(w)
     })
-    root_probs <- paste0(clone@clone, ".fasta_igphyml_hlp_rootprobs.txt")
-    if(!file.exists(root_probs)){
-      stop("root probabilities not found")
+    n_root_probs <- length(list.files(
+      path = file.path(temp_path, paste0(id, "_recon_", id)),
+      pattern = "\\.fasta_igphyml_rootprobs_hlp\\.txt$",
+      full.names = TRUE
+    ))
+    if(length(clone) != n_root_probs){
+      diff_clones <- length(clone) - n_root_probs
+      stop(diff_clones, " root probabilities not found")
     }
   }
   #trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
