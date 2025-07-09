@@ -1355,7 +1355,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       cat(paste(readLines(logfile),"\n"))
       return(w)
     })
-    root_probs <- paste0(gsub(".tsv", "", file), "_hlp_rootprobs.txt")
+    root_probs <- paste0(clone@clone, ".fasta_igphyml_hlp_rootprobs.txt")
     if(!file.exists(root_probs)){
       stop("root probabilities not found")
     }
