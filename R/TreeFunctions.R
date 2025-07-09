@@ -4380,6 +4380,19 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     }
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
   }
+  if (any(grepl("\\$\\{EMP_EQFREQS\\}", xml))) { 
+    getFreqs = function(seqs){
+      nts <- c("A", "C","G","T")
+      splits <- strsplit(seqs, split="")
+      counts <- table(unlist(splits))[nts]
+      freqs <- counts/sum(counts)
+      freqs
+    }
+    freqs <- getFreqs(clone@data$sequence)
+    freqstring <- paste(freqs, collapse=" ")
+    print(freqstring)
+    xml <- gsub("\\$\\{EMP_EQFREQS\\}", freqstring, xml)
+  }
 
     if (!is.null(tree)) {
     # replace the random tree with the provided tree in newick format
