@@ -3799,7 +3799,7 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
         burnin=10, trait=NULL, resume_clones=NULL, nproc=1, quiet=0, 
         rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
         germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, 
-        tree_states=FALSE, ...){
+        tree_states=FALSE, trees=NULL, ...){
 
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
@@ -3906,6 +3906,7 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
                             seed=seed,
                             log_target=log_target,
                             tree_states=tree_states,
+                            trees=trees,
                             ...
                             ),error=function(e)e)
 
@@ -3987,7 +3988,8 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
-                   seed=NULL, log_target=10000, tree_states=FALSE, ...) {
+                   seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
+                   start_edge_length=100, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -4026,6 +4028,17 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
     }
     cat("Re-running clones", paste(resume_clones, collapse=","), "\n")
     data <- data[sapply(data, function(x)x@clone %in% resume_clones)]
+    if(!is.null(trees)){
+      trees <- trees[sapply(trees, function(x)x$name %in% resume_clones)]
+    }
+  }
+  if(!is.null(trees)){
+    check <- sapply(1:length(data), function(x){
+      data[[x]]@clone == trees[[x]]$name
+    })
+    if(sum(!check) > 0){
+      stop("Clone and starting tree names do not match")
+    }
   }
   
   # Create the XML file using the current template and include germline
@@ -4041,7 +4054,9 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       include_germline_as_root=include_germline,
       include_germline_as_tip=include_germline, 
       germline_range=germline_range,
-      tree_states=tree_states, ...)
+      tree_states=tree_states, 
+      start_edge_length=start_edge_length,
+      trees=trees,...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
@@ -4221,17 +4236,20 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
   return(traitset_xml)
 }
 
-create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_states) {
+create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_states, start_edge_length) {
   # create a starting tree in newick format
   if (inherits(tree, "phylo")) {
     ntips = length(tree$tip.label)
     if(tree_states){
       tree$node.label = (ntips + 1): (ntips + 1 + tree$Nnode - 1)
-      tree$edge.length <- rep(10, length(tree$edge.length)) # set all edge lengths to 10
+      tree$edge.length <- rep(start_edge_length, length(tree$edge.length)) # set all edge lengths to 10
     }else{
       tree$node.label = NULL
-      tree$edge.length = rep(10, length(tree$edge.length))
+      #tree$edge.length = rep(start_edge_length, length(tree$edge.length))
       tree <- ape::multi2di(tree)
+      terminal <- tree$edge[,2]<= length(tree$tip.label)
+      tree$edge.length[terminal] <- start_edge_length
+      tree$edge.length[!terminal] <- 1
     }
     if (!include_germline_as_tip) {
       # remove the germline tip if it exists but after numbering the nodes
@@ -4270,7 +4288,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
-  ...) {
+  start_edge_length=100, ...) {
   
   kwargs <- list(...)
 
@@ -4370,7 +4388,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     if (length(start_idx) == 1 && length(end_idx) == 1 && start_idx < end_idx) {
       xml <- c(
         xml[1:(start_idx-1)],
-        c(create_starting_tree(clone, id, tree, include_germline_as_tip, tree_states)),
+        c(create_starting_tree(clone, id, tree, include_germline_as_tip, tree_states, start_edge_length)),
         xml[(end_idx+1):length(xml)]
       )
       # TODO: check if there are traits associated with the internal nodes
@@ -4447,11 +4465,11 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   return(file)
 }
 
-xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL, 
+xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, template=NULL, 
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
   include_germline_as_tip=FALSE, germline_range=c(-10000,10000), 
-  tree_states=FALSE, ...) {
+  tree_states=FALSE, start_edge_length=100,...) {
 
   kwargs <- list(...)
 
@@ -4472,9 +4490,10 @@ xml_writer_wrapper <- function(data, id, time=NULL, trait=NULL, template=NULL,
   }
   xmls = c()
   for (i in 1:length(data)){
-    if ("trees" %in% names(kwargs)) {
+    #if ("trees" %in% names(kwargs)) {
+    if(!is.null(trees)){
       # if trees are provided, use them
-      tree <- kwargs$trees[[i]]
+      tree <- trees[[i]]
     } else {
       tree <- NULL
     }
