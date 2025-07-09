@@ -825,24 +825,16 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
 # @param clone_ids  A clone id for the clones object. This is only used in parallel
 # @param clones     A clones object from \link{formatClones}
 # @param dir        The directory where data should be saved to 
-# @param exec       The file path to the tree building executable 
 # @param id         The run id
-# @param nproc      The number of cores to use 
-# @param omega      Omega parameters to estimate (see IgPhyMl docs)
-# @param optimize   Optimize HLP rates (r), lengths (l), and/or topology (r)
-# @param motifs     Motifs to consider (see IgPhyMl docs)
-# @param hotness    Hotness parameters to estimate (see IgPhyMl docs)
 # @param resolve_v  Resolve the V gene as well?
-# @param all_germlines The output of createAllGermlines. Only needed if resolve_genes = TRUE.
 # @param resolve_j  Resolve the J gene in addition to the V gene?
+# @param all_germlines The output of createAllGermlines. Only needed if resolving genes.
 # @param quiet      How much noise to print out
 # @param chain      HL or H?
 #
-processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc = 1,
-                                 omega = NULL, optimize = "lr", motifs = "FCH", 
-                                 hotness = "e,e,e,e,e,e", resolve_v = FALSE, 
-                                 all_germlines = NULL, resolve_j = FALSE, 
-                                 quiet = 0, chain = chain,...){
+processCloneGermline <- function(clone_ids, clones, dir, build, id,
+                                 resolve_v = FALSE, resolve_j = FALSE,
+                                 all_germlines = NULL, quiet = 0, chain = chain,...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
@@ -850,15 +842,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   }
   if(quiet > 0){
     print(paste("constructing tree for", clone_ids))
-  }
-  if(build == "igphyml"){
-    sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                    omega = omega, optimize = optimize, motifs = motifs, 
-                    hotness = hotness, asrp = TRUE, chain = chain)
-  } else if(build == "pml"){
-    sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE)
-  } else{
-    stop("the tree bulding method ", build, "is not supported")
   }
   saveRDS(sub, file.path(subDir, "clone.rds"))
   
@@ -871,8 +854,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     }
   }
   
-  # get the MRCA for the UCA input -- and the input germline 
-  # mrca <- ape::getMRCA(sub$trees[[1]], tip = sub$data[[1]]@data$sequence_id)
   imgt_germline <- sub$data[[1]]@germline
   r <- sub$data[[1]]@region
   if(sub$data[[1]]@phylo_seq == "sequence"){
@@ -885,8 +866,8 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   }
   # double check that the sequence starts with C and ends with F/W
   if(build == "igphyml"){
-    tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample",
-                                                            "sample_lineages_sample_pars_hlp_rootprobs.txt"), 
+    tree_df <- suppressWarnings(read.table(file = file.path(dir, "sample", "sample_recon_sample",
+                                           paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
                                            header = F, sep = "\t"))
   } else if(build == "pml"){
     tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
@@ -964,7 +945,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
   if(quiet > 0){
     print(paste("sucessfully obtained most likely junction for", clone_ids))
   }
-  if(sub$data[[1]]@phylo_seq == "hlsequence"){
+  if(sub$data[[1]]@phylo_seq == "hlsequence" & resolve_v){
     has_multiple <- all_germlines[all_germlines$clone_id == clone_ids,]
     heavy_indx <- grepl("^IGH", has_multiple$v_call)
     saveRDS(has_multiple, file.path(subDir, "all_germlines.rds"))
@@ -1143,6 +1124,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, exec, id, nproc 
     file_path_junction_position <- file.path(subDir, paste("olga_junction_positions_light.txt"))
     writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
     writeLines(paste(nchar(v_light), nchar(v_cdr3)), con = file_path_junction_position)
+    if(!dir.exists(file.path(subDir, "sample"))){
+      dir.create(file.path(subDir, "sample"))
+    }
     tree_df <- tree_df[, !names(tree_df) %in% c("value")]
     write.table(tree_df, file.path(subDir, "sample", "heavy_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
@@ -1812,8 +1796,10 @@ maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id"
 #' @param resolve_j     Resolve the J gene as well  
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
+#' @param heavy         The name of the heavy chain locus. Default is IGH. 
+#' @param subsample_size The amount that the clone should be sampled down to. Default is 5. 
 #' @param method        The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.
-#' @param rscript       The fiile path to the rscript with get_UCA.py
+#' @param rscript       The file path to the rscript with get_UCA.py
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:
@@ -1823,13 +1809,13 @@ maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id"
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model_folder,
+getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder,
                            model_folder_igk = NULL, model_folder_igl = NULL, uca_script,
                            python = "python", id = "sample", max_iters = 100, nproc = 1,
                            rm_temp = TRUE, quiet = 0, chain = "H", omega = NULL, optimize = "lr",
                            motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
-                           resolve_j = FALSE, references = NULL, clone = "clone_id",
-                           method = "ML", rscript = NULL,...){
+                           resolve_j = FALSE, references = NULL, clone = "clone_id", heavy = "IGH",
+                           subsample_size = 5, method = "ML", rscript = NULL,...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -1863,7 +1849,20 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
     if (is.null(omega)) "NULL" else omega
   )
   
-  if(resolve_v | resolve_j | chain == "HL"){
+  # subsample clones
+  # heavy <- data[data$locus == heavy,]
+  # heavy <- shazam::observedMutations(heavy,
+  #                                    regionDefinition=shazam::IMGT_V,
+  #                                    frequency=TRUE, 
+  #                                    combine=TRUE,
+  #                                    nproc=nproc)
+  # cell_ids_to_keep <- unlist(parallel::mclapply(split(heavy, heavy[[clone]]), function(df){
+  #   df$cell_id[order(df$mu_freq)][1:subsample_size]
+  # }))
+  
+  # data <- data[data$cell_id %in% cell_ids_to_keep,]
+  
+  if(resolve_v | resolve_j){
     if(is.null(data)){
       stop("The data object is required with current settings")
     }
@@ -1880,13 +1879,23 @@ getTreesAndUCAs <- function(clones, data = NULL, dir = NULL, build, exec,  model
   }
   
   if(quiet > 0){
+    print("constructing trees")
+  }
+  if(build == "igphyml"){
+    clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                    omega = omega, optimize = optimize, motifs = motifs, 
+                    hotness = hotness, asrp = TRUE, chain = chain)
+  } else if(build == "pml"){
+    clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE)
+  } else{
+    stop("the tree bulding method ", build, "is not supported")
+  }
+  if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
   clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones[[clone]]), function(x)
     processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
-                         exec = exec, id = id, omega = omega, optimize = optimize, 
-                         motifs = motifs, hotness = hotness, chain = chain,
-                         resolve_v = resolve_v, resolve_j = resolve_j,
+                         id = id, resolve_v = resolve_v, resolve_j = resolve_j,
                          all_germlines = all_germlines, quiet = quiet), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
