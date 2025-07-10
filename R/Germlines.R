@@ -1882,7 +1882,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     print("constructing trees")
   }
   if(build == "igphyml"){
-    clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+    clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
                     omega = omega, optimize = optimize, motifs = motifs, 
                     hotness = hotness, asrp = TRUE, chain = chain)
   } else if(build == "pml"){
