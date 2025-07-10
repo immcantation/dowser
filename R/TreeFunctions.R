@@ -3989,7 +3989,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
-                   start_edge_length=100, ...) {
+                   start_edge_length=100, start_date=NULL,...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -4056,7 +4056,8 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       germline_range=germline_range,
       tree_states=tree_states, 
       start_edge_length=start_edge_length,
-      trees=trees,...)
+      trees=trees,
+      start_date=start_date, ...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
@@ -4211,6 +4212,22 @@ create_MRCA_prior_germline <- function(clone, id, germline_range) {
   return(distribution_xml)
 }
 
+create_height_prior <- function(clone, id, start_date) {
+  #taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
+  #taxa <- paste0(taxa,"\n",paste0('<taxon id="', 'Germline', '" spec="Taxon"/>', collapse="\n"))
+  distribution_xml <- 
+    paste0('<distribution id="height.prior" spec="beast.base.evolution.tree.MRCAPrior" monophyletic="true" tree="@Tree.t:', 
+      id, "_", clone@clone, '">\n', 
+           paste0('<taxonset idref="TaxonSet.',paste0(id, "_", clone@clone),'" spec="TaxonSet">\n'), 
+           '</taxonset>\n',
+           '<LaplaceDistribution id="LaplaceDistribution.1" name="distr">\n',
+            paste0('<parameter id="RealParameter.32" spec="parameter.RealParameter" estimate="false" name="mu">',start_date,'</parameter>\n'),
+            '<parameter id="RealParameter.33" spec="parameter.RealParameter" estimate="false" name="scale">0.001</parameter>\n',
+            '</LaplaceDistribution>\n',
+           '</distribution>', sep="")
+  return(distribution_xml)
+}
+
 create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL, 
   isSet=FALSE, include_germline_as_tip=FALSE) {
 
@@ -4288,7 +4305,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
-  start_edge_length=100, ...) {
+  start_edge_length=100, start_date=NULL, ...) {
   
   kwargs <- list(...)
 
@@ -4352,6 +4369,10 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     if (include_germline_as_tip) {
       mrca_priors <- paste0(create_MRCA_prior_observed(clone, id), 
         create_MRCA_prior_germline(clone, id, germline_range), sep="\n")
+    }
+    if(!is.null(start_date)){
+      mrca_priors <- paste0(mrca_priors, "\n",
+        create_height_prior(clone, id, start_date) )
     }
     
     xml <- gsub("\\$\\{MRCA\\}", mrca_priors, xml)
@@ -4482,7 +4503,7 @@ xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, temp
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
   include_germline_as_tip=FALSE, germline_range=c(-10000,10000), 
-  tree_states=FALSE, start_edge_length=100,...) {
+  tree_states=FALSE, start_edge_length=100, start_date=NULL,...) {
 
   kwargs <- list(...)
 
@@ -4526,6 +4547,7 @@ xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, temp
                      tree=tree,
                      trait_list=trait_list,
                      tree_states=tree_states,
+                     start_date=start_date,
                      ...))
   }
   return(xmls)
