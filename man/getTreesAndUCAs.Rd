@@ -6,7 +6,7 @@
 \usage{
 getTreesAndUCAs(
   clones,
-  data = NULL,
+  data,
   dir = NULL,
   build,
   exec,
@@ -29,6 +29,8 @@ getTreesAndUCAs(
   resolve_j = FALSE,
   references = NULL,
   clone = "clone_id",
+  heavy = "IGH",
+  subsample_size = 5,
   method = "ML",
   rscript = NULL,
   ...
@@ -85,9 +87,13 @@ on command line that issues the python you want to use.
 
 \item{clone}{The name of the clone id column used in \link{formatClones}}
 
+\item{heavy}{The name of the heavy chain locus. Default is IGH.}
+
+\item{subsample_size}{The amount that the clone should be sampled down to. Default is 5.}
+
 \item{method}{The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.}
 
-\item{rscript}{The fiile path to the rscript with get_UCA.py}
+\item{rscript}{The file path to the rscript with get_UCA.py}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }

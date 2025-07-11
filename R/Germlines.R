@@ -863,6 +863,8 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     heavy_r <- r[1:nchar(sub$data[[1]]@germline)]
     light_r <- r[(nchar(sub$data[[1]]@germline) + 1): length(r)]
     cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
+  } else if(sub$data[[1]]@phylo_seq == "lsequence"){
+    cdr3_index <- (min(which(r == "cdr3")) - 3):(max(which(r == "cdr3")) + 3)
   }
   # double check that the sequence starts with C and ends with F/W
   if(build == "igphyml"){
@@ -898,6 +900,8 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     mrcacdr3 <- paste0(strsplit(mrca, "")[[1]][cdr3_index], collapse = "")
     mrca_light <- substring(tree_seq, nchar(sub$data[[1]]@germline) + 1, nchar(tree_seq))
   }else if(sub$data[[1]]@phylo_seq == "sequence"){
+    mrcacdr3 <- paste0(strsplit(tree_seq, "")[[1]][cdr3_index], collapse = "")
+  } else{
     mrcacdr3 <- paste0(strsplit(tree_seq, "")[[1]][cdr3_index], collapse = "")
   }
   test_cdr3 <- strsplit(alakazam::translateDNA(mrcacdr3), "")[[1]]
@@ -940,6 +944,12 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     # get the heavy chain J and associated stats
     j_start <- nchar(paste0(v, mrcacdr3, collapse = "")) +1
     j <- substring(sub$data[[1]]@germline, j_start, nchar(sub$data[[1]]@germline))
+    j_len <- nchar(j)
+  } else if(sub$data[[1]]@phylo_seq == "lsequence"){
+    v_len <- min(cdr3_index)-1
+    v <- substring(imgt_germline, 1, v_len)
+    j_start <- nchar(paste0(v, mrcacdr3, collapse = "")) +1
+    j <- substring(imgt_germline, j_start, nchar(imgt_germline))
     j_len <- nchar(j)
   }
   if(quiet > 0){
