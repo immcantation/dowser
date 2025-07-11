@@ -840,9 +840,6 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
   if(!dir.exists(subDir)){
     dir.create(subDir, recursive = T)
   }
-  if(quiet > 0){
-    print(paste("constructing tree for", clone_ids))
-  }
   saveRDS(sub, file.path(subDir, "clone.rds"))
   
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
@@ -855,6 +852,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
   }
   
   imgt_germline <- sub$data[[1]]@germline
+  if(sub$data[[1]]@phylo_seq == "lsequence"){
+    imgt_germline <- sub$data[[1]]@lgermline
+  }
   r <- sub$data[[1]]@region
   if(sub$data[[1]]@phylo_seq == "sequence"){
     cdr3_index <- (min(which(r == "cdr3")) - 3):(max(which(r == "cdr3")) + 3)
@@ -871,6 +871,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     tree_df <- suppressWarnings(read.table(file = file.path(dir, "sample", "sample_recon_sample",
                                            paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
                                            header = F, sep = "\t"))
+    file.copy(file.path(dir, "sample", "sample_recon_sample",
+                        paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+              file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
   } else if(build == "pml"){
     tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
                                            header = F, sep = "\t"))
@@ -879,7 +882,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
       dir.create(file.path(subDir, "sample"))
     }
     file.copy(file.path(subDir, "codon_table.txt"), 
-              file.path(subDir, "sample", "sample_lineages_sample_pars_hlp_rootprobs.txt"))
+              file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
   }
 
   colnames(tree_df) = c("site", "codon", "partial_likelihood", "nope", "nada", "no", "equilbrium")
@@ -1138,11 +1141,11 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
       dir.create(file.path(subDir, "sample"))
     }
     tree_df <- tree_df[, !names(tree_df) %in% c("value")]
-    write.table(tree_df, file.path(subDir, "sample", "heavy_table.txt"), quote = FALSE,
+    write.table(tree_df, file.path(subDir, "heavy_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
     tree_df_light <- tree_df_light[, !names(tree_df_light) %in% c("new_site", "value")]
     tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
-    write.table(tree_df_light, file.path(subDir, "sample", "light_table.txt"), quote = FALSE,
+    write.table(tree_df_light, file.path(subDir, "light_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
   }
   return(sub)
@@ -1195,13 +1198,16 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
   })), collapse = ",")
   tree_tables <- paste0(unlist(lapply(clones[[clone]], function(z){
     if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "sequence"){
-      value <- path.expand(file.path(dir, paste0(id, "_", z), "sample", 
-                                     "sample_lineages_sample_pars_hlp_rootprobs.txt"))
+      value <- path.expand(file.path(dir, paste0(id, "_", z), 
+                                     paste0(z, ".fasta_igphyml_rootprobs_hlp.txt")))
     } else if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
-      value <- path.expand(file.path(dir, paste0(id, "_", z), "sample", 
+      value <- path.expand(file.path(dir, paste0(id, "_", z), 
                                      "heavy_table.txt"))
-      value <- append(value, path.expand(file.path(dir, paste0(id, "_", z), "sample", 
+      value <- append(value, path.expand(file.path(dir, paste0(id, "_", z),
                                                    "light_table.txt")))
+    } else if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "lsequence"){
+      value <- path.expand(file.path(dir, paste0(id, "_", z), 
+                                     paste0(z, ".fasta_igphyml_rootprobs_hlp.txt")))
     }
     return(value)
   })), collapse = ",")
@@ -1252,10 +1258,15 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
 updateClone <- function(clones, dir, id, nproc = 1){
   updated_clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
     clone <- clones[x,]
-    uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"), sep = "\t")[[1]]
-    if(clone$data[[1]]@phylo_seq == "hlsequence"){
-      uca <- paste0(uca, read.table(file.path(dir, paste0(id, "_", clone$clone_id),
-                                              "UCA_light.txt"), sep = "\t")[[1]])
+    if(clone$data[[1]]@phylo_seq == "lsequence"){
+      uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id),
+                                  "UCA_light.txt"), sep = "\t")[[1]]
+    } else{
+      uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"), sep = "\t")[[1]]
+      if(clone$data[[1]]@phylo_seq == "hlsequence"){
+        uca <- paste0(uca, read.table(file.path(dir, paste0(id, "_", clone$clone_id),
+                                                "UCA_light.txt"), sep = "\t")[[1]])
+      }
     }
     clone$UCA <- uca
     clone$AA_UCA <- alakazam::translateDNA(uca)
@@ -1266,7 +1277,9 @@ updateClone <- function(clones, dir, id, nproc = 1){
       UCA_light <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[2]
       clone$UCA_IMGT <- paste0(UCA_heavy, UCA_light)
     } else if(clone$data[[1]]@phylo_seq == "sequence"){
-      clone$UCA_IMGT <-getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
+      clone$UCA_IMGT <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
+    } else if(clone$data[[1]]@phylo_seq == "lsequence"){
+      clone$UCA_IMGT <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
     }
     return(clone)
   }, mc.cores = nproc))
