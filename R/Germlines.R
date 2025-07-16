@@ -913,6 +913,8 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
       groupedList <- split(1:length(r), ceiling(seq_along(r) / 3))
     } else if(chain == "HL"){
       groupedList <- split(1:length(heavy_r), ceiling(seq_along(heavy_r) / 3))
+    } else if(chain == "L"){
+      groupedList <- split(1:length(r), ceiling(seq_along(r) / 3))
     }
     if(test_cdr3[1] != "C"){
       codon_site <- which(sapply(groupedList, function(group) min(cdr3_index) %in% group))
@@ -1919,7 +1921,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones[[clone]]), function(x)
     processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
                          id = id, resolve_v = resolve_v, resolve_j = resolve_j,
-                         all_germlines = all_germlines, quiet = quiet), mc.cores = nproc)))
+                         all_germlines = all_germlines, quiet = quiet, chain = chain, 
+                         ...), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")
