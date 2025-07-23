@@ -120,6 +120,7 @@ Examples
 data(ExampleClones)
 trees <- getTrees(ExampleClones[10,])
 plotTrees(trees)[[1]]
+
 ```
 
 ![2](plotTrees-2.png)

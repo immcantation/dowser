@@ -24,7 +24,10 @@ optEdge = TRUE,
 verbose = FALSE,
 resolve_random = TRUE,
 quiet = 0,
-rep = NULL
+rep = NULL,
+dir = NULL,
+id = NULL,
+asrp = FALSE
 )
 ```
 
@@ -75,6 +78,15 @@ quiet
 
 rep
 :   current bootstrap replicate (experimental)
+
+dir
+:   A directory to save the codon table
+
+id
+:   The identifier value
+
+asrp
+:   Get the codon table?
 
 
 

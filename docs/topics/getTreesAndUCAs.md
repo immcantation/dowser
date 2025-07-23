@@ -11,7 +11,7 @@ Usage
 ```
 getTreesAndUCAs(
 clones,
-data = NULL,
+data,
 dir = NULL,
 build,
 exec,
@@ -34,6 +34,10 @@ resolve_v = FALSE,
 resolve_j = FALSE,
 references = NULL,
 clone = "clone_id",
+heavy = "IGH",
+subsample_size = 5,
+method = "ML",
+rscript = NULL,
 ...
 )
 ```
@@ -114,6 +118,18 @@ references
 
 clone
 :   The name of the clone id column used in [formatClones](formatClones.md)
+
+heavy
+:   The name of the heavy chain locus. Default is IGH.
+
+subsample_size
+:   The amount that the clone should be sampled down to. Default is 5.
+
+method
+:   The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.
+
+rscript
+:   The file path to the rscript with get_UCA.py
 
 ...
 :   Additional arguments passed to [buildGermline](buildGermline.md)

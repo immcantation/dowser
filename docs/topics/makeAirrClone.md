@@ -208,6 +208,7 @@ Examples
 ```R
 data(ExampleAirr)
 airr_clone <- makeAirrClone(ExampleAirr[ExampleAirr$clone_id=="3184",])
+
 ```
 
 
