@@ -3699,7 +3699,6 @@ writeCloneSequences <- function(clones, file){
   }
 }
 
-
 #' Iteratively resume getTimeTrees until convergence, as defined by 
 #' all parameters (except those in \code{ignore} vector) having ESS 
 #' greater than or equal to the specified ess_cutoff
@@ -3711,6 +3710,9 @@ writeCloneSequences <- function(clones, file){
 #' @param    ess_cutoff Minimum number of ESS for all parameters
 #' @param    ignore     Vector of parameters to ignore for ESS calculation
 #' @param    quiet      quiet notifications if > 0
+#' @param    adapt_operators Adapt the operator weights
+#' @param    save_intermittent Save intermittent results?
+#' @param    intermittent_dir Directory to save intermittent results
 #' @param    ...        Additional arguments for getTimeTrees
 #'
 #' @return   A tibble of \code{tidytree} and \code{airrClone} objects
@@ -3721,7 +3723,8 @@ writeCloneSequences <- function(clones, file){
 #' @seealso \link{getTimeTrees}, \link{readBEAST}
 #' @export
 getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
-  ignore = c("traitfrequencies"), quiet=0, ...){
+  ignore = c("traitfrequencies"), quiet=0, adapt_operators=FALSE,
+  save_intermittent=FALSE, intermittent_dir=NULL, ...){
 
   resume = NULL
   iter = 0
@@ -3731,7 +3734,8 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
           print(paste("Starting iteration", iter))
         }
 
-        clones = getTimeTrees(clones, resume_clones=resume, iterate=TRUE, iter=iter, ...)
+        clones = getTimeTrees(clones, resume_clones=resume, adapt_operators=adapt_operators,
+                              iterate=TRUE, iter=iter,  ...)
 
         params = clones$parameters
         for(regex in ignore){
@@ -3750,6 +3754,19 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
     
         resume = filter(clones, below_ESS > 0)$clone_id
         iter = iter + 1
+
+        if(length(resume) > 0 && save_intermittent){
+          if(is.null(intermittent_dir)){
+            intermittent_dir = file.path(tempdir(), paste0("intermittent_", iter))
+          }
+          if(!dir.exists(intermittent_dir)){
+            dir.create(intermittent_dir, recursive=TRUE)
+          }
+          if(quiet < 1){
+            print(paste("Saving intermittent results to", intermittent_dir))
+          }
+          saveRDS(clones, file.path(intermittent_dir, paste0("iter_", iter, ".rds")))
+        }
     }
     if(iter == iterations & length(resume) != 0){
       warning(paste(paste(resume, collapse=","), "failed to converge after",
@@ -3783,7 +3800,6 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 #' @param    log_target   Target number of samples over mcmc_length         
 #' @param    tree_states  Use \code{states} vector for starting tree
 #' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
-#' @param    adapt_operators Adapt the operator weights (FALSE if resume_clones is not NULL)
 #' @param    quiet      amount of rubbish to print to console
 #' @param    rm_temp    remove temporary files (default=TRUE)
 #' @param    ...        Additional arguments passed to tree building programs
@@ -3986,15 +4002,15 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
-#' @seealso \link{getTimeTrees}
+#' @seealso \link{getTimeTrees} \link{getTimeTreesIterate}
 #' @export
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
                    resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
-                   start_edge_length=100, start_date=NULL, 
-                   adapt_operators=FALSE, iterate=FALSE, iter=NULL,...) {
+                   start_edge_length=100, start_date=NULL, adapt_operators=FALSE, 
+                   iterate=FALSE, iter=NULL, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -4074,33 +4090,6 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
   } else {
     xml_filepath <- paste0(file.path(dir, id), "_", resume_clones, ".xml")
   }
-  
-  # Adapt the operator weights if requested
-  if(adapt_operators && !iterate){
-    adaptOperators(data,
-                  time=time,
-                  trait=trait,
-                  mcmc_length=mcmc_length,
-                  burnin=burnin,
-                  beast=beast,
-                  dir=dir,
-                  id=id,
-                  nproc=nproc,
-                  template=template,
-                  include_germline=include_germline,
-                  resume_clones=NULL, 
-                  log_every=log_every,
-                  germline_range=germline_range,
-                  java=java,
-                  seed=seed,
-                  log_target=log_target,
-                  tree_states=tree_states,
-                  trees=trees,
-                  xml_filepath=xml_filepath,
-                  iterate=FALSE,
-                  ...
-                  )
-  } 
 
   # Run BEAST on each tree sequentially
   # TODO: option to parallelize by tree?
@@ -4185,7 +4174,6 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                   tree_states=tree_states,
                   trees=trees,
                   xml_filepath=xml_filepath,
-                  iterate=TRUE,
                   ...
                   )
   }
@@ -4201,8 +4189,9 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 #' @param    dir        directory where temporary files will be placed.
 #' @param    id         unique identifer for this analysis
 #' @param    adapt_percent  Percent of MCMC length to use for adapting operators
-#' @param    exclude_composite_logs  Logged composite parameters whose ESS values are checked but operators are not updated 
 #' @param    exclude_logs  Logged parameters whose ESS values are not considered for operator adaptation (i.e., prior, posterior)
+#' @param    ess_adapt_cutoff  ESS value for "convergence" of operators
+#' @param    min_operator_weight  Minimum operator weight to allow
 #' @param    mcmc_length  Original number of MCMC iterations
 #' @param    time         Name of sample time column 
 #' @param    log_every    Frequency of states logged. \code{auto} will divide mcmc_length by log_target         
@@ -4220,156 +4209,33 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 #' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
 #' @param    quiet      amount of rubbish to print to console
 #' @param    low_ram    run with less memory (slower)  
-#' @param    iterate     Set to TRUE for use with getTimeTreesIterate
+#' @param    
 #' @param    ...      Additional arguments for XML writing functions
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
 #'  
-#' @seealso \link{getTimeTrees}
+#' @seealso \link{getTimeTrees} \link{getTimeTreesIterate}
 #' @export
 
 adaptOperators <- function(data, beast, time, template, dir, id, xml_filepath=NULL,
-                   adapt_percent=10, exclude_composite_logs=c("TreeHeight", "BayesianSkyline"),
-                   exclude_logs=c("posterior", "likelihood", "prior", "treeLikelihood", 
+                   adapt_percent=10, exclude_logs=c("posterior", "likelihood", "prior", "treeLikelihood", 
                         "rateIndicator", "freqParameter", "traitfrequencies", "typeLinkedRates"),
-                   mcmc_length = 1000000, resume_clones=NULL, trait=NULL, asr=FALSE,
-                   full_posterior=FALSE, log_every="auto", include_germline = TRUE, nproc = 1, 
-                   quiet=0, burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
-                   seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
-                   start_edge_length=100, start_date=NULL, iterate=FALSE,
-                   ...) {
+                    ess_adapt_cutoff=200, min_operator_weight=0.001,
+                    nproc=1, quiet=0,
+                    ...) {
+
+  
 
   if (is.null(xml_filepath)) {
     stop("xml_files not properly built.")
-  }
-  if (!iterate){                 
-    id_adapt_operators <- paste0(id, "_adapt_operators")
-    beast_exec <- file.path(beast,"beast")
-    annotator_exec <- file.path(beast,"treeannotator")
-    analyser_exec <- file.path(beast,"loganalyser")
-
-    trait_list <- NULL
-    if(!is.null(trait)){
-      trait_list <- sort(unique(unlist(lapply(data, function(x)x@data[[trait]]))))
-    }
-    
-    invisible(capture.output(adaptive_xml_filepath <- xml_writer_wrapper(data, 
-      mcmc_length=max((mcmc_length*adapt_percent/100), 1),
-      log_every=max((log_every*adapt_percent/100), 1),
-      id=id_adapt_operators,
-      outfile=file.path(dir, id_adapt_operators), 
-      time=time, 
-      trait=trait, 
-      trait_list=trait_list,
-      template=template,
-      include_germline_as_root=include_germline,
-      include_germline_as_tip=include_germline, 
-      germline_range=germline_range,
-      tree_states=tree_states, 
-      start_edge_length=start_edge_length,
-      trees=trees,
-      start_date=start_date, ...)))
-
-    adaptive_xml_filepath <- adaptive_xml_filepath[!is.na(adaptive_xml_filepath)]
-
-    # Run BEAST on the adaptive operators XML files
-    print(paste0("Running BEAST on ", adapt_percent, "% of mcmc_length to adapt operator weights"))
-    capture <- parallel::mclapply(1:length(xml_filepath), function(x) {
-      y <- adaptive_xml_filepath[x]
-      overwrite <- "-overwrite"
-      if(!is.null(resume_clones)){
-        overwrite <- "-resume"
-      }
-      if(java){
-        command <- paste0(
-        "\ ", "-threads\ ", 1,
-        "\ ", "-working\ ", 
-        "\ ", "-java\ ", 
-        "\ ",overwrite, "\ ")
-      }else{
-        command <- paste0(
-        "\ ", "-threads\ ", 1,
-        "\ ", "-working\ ", 
-        "\ ",overwrite, "\ ")
-      }
-
-      if(is.null(seed)){
-        command <- paste0(command, y)
-      }else{
-        command <- paste0(command, "-seed ",seed, "\ ",y)
-      }
-
-      console_out <- paste(gsub(".xml$","_console.log",y))
-      
-      if(is.null(resume_clones)){  
-        command <- paste0(command, " > ", console_out)
-      }else{
-        command <- paste0(command, " >> ", console_out)
-      }
-      
-      # if(quiet < 1){
-      #   print(paste(beast_exec,command))
-      # }
-      
-      params <- list(beast_exec, command, stdout=TRUE, stderr=TRUE)
-
-      status <- tryCatch(do.call(base::system2, params), error=function(e){
-          print(paste("BEAST error: ",e));
-          return(e)
-      }, warning=function(w){
-          print(paste("BEAST warnings ",w));
-          return(w)
-      })
-      status
-    }, mc.cores=nproc)
-
-    # Run loganalyser in parallel
-    capture <- parallel::mclapply(1:length(data), function(x) {
-      y <- data[[x]]@clone
-      if (!iterate){
-        logfile <- file.path(dir, paste0(id_adapt_operators, "_", data[[x]]@clone,".log"))
-        outfile <- file.path(dir, paste0(id_adapt_operators, "_", data[[x]]@clone,"_log.tsv"))
-      } else {
-        logfile <- file.path(dir, paste0(id, "_", data[[x]]@clone,"_log.tsv"))
-        outfile <- file.path(dir, paste0(id, "_", data[[x]]@clone,"_log.tsv"))
-      }
-      command <- paste("-quiet -b", burnin, logfile, ">", outfile)
-      
-      # if(quiet < 1){
-      #   print(paste(analyser_exec,command))
-      # }
-        
-      params <- list(analyser_exec, command, stdout=TRUE, stderr=TRUE)
-    
-      status <- tryCatch(do.call(base::system2, params), error=function(e){
-          print(paste("Loganalyser error: ",e));
-          return(e)
-      }, warning=function(w){
-          print(paste("Loganalyser warnings ",w));
-          return(w)
-      })
-
-      status
-    }, mc.cores=nproc)
-
-    for(i in 1:length(capture)){
-      if("error" %in% class(capture[[i]])){
-        print(capture[[i]])
-        stop(paste("Error running log analyzer (see above), clone", data[[i]]@clone))
-      }
-    }
   }
 
   # Read in the log files and determine which operator weights need to change
   capture <- parallel::mclapply(1:length(data), function(x) {
     y <- data[[x]]@clone
-    if (!iterate){
-      logfile <- file.path(dir, paste0(id_adapt_operators, "_", data[[x]]@clone,"_log.tsv"))
-      console_logfile <- file.path(dir, paste0(id_adapt_operators, "_", data[[x]]@clone,"_console.log"))
-    } else {
-      logfile <- file.path(dir, paste0(id, "_", data[[x]]@clone,"_log.tsv"))
-      console_logfile <- file.path(dir, paste0(id, "_", data[[x]]@clone,"_console.log"))
-    }
+    logfile <- file.path(dir, paste0(id, "_", data[[x]]@clone,"_log.tsv"))
+    console_logfile <- file.path(dir, paste0(id, "_", data[[x]]@clone,"_console.log"))
+    
     loglines <- readLines(logfile) 
     loglines <- loglines[-c(1:3,length(loglines))]
     log <- read.table(text=loglines, header=TRUE, stringsAsFactors=FALSE) %>% select(item, ESS)
@@ -4394,20 +4260,21 @@ adaptOperators <- function(data, beast, time, template, dir, id, xml_filepath=NU
       group_by(item) %>%
       summarise(ESS = min(ESS, na.rm = TRUE)) %>%
       ungroup() %>% 
-      mutate(rescale = min(ESS, na.rm = TRUE) / ESS) %>%
-      filter(!(item %in% exclude_composite_logs)) # remove the composite parameters
+      mutate(rescale = ifelse(ESS >= ess_adapt_cutoff, 0.5, 1))
 
-    if (iterate){
+    if (quiet < 1){
       print("Rescaling operator weights based on ESS values")
       print(adapt_log_collapse)
     }
+    
+    
 
     # Find the operators that need to be adapted - use the xml template as a map
     xml_path <- xml_filepath[x]
     xml <- readLines(xml_path)
 
     # Get all operators from the XML file
-    operator_blocks <- tibble(operator = character(), lines = numeric(), operator_group = numeric())
+    operator_blocks <- tibble(operator = character(), lines = numeric(), operator_group = numeric(), weight = numeric())
     line_num <- 1
     operator_group_num <- 1
     while (line_num <= length(xml)) {
@@ -4415,24 +4282,45 @@ adaptOperators <- function(data, beast, time, template, dir, id, xml_filepath=NU
 
       # Catch single line operators: <operator ... />
       if (grepl("^<operator\\b.*?/>$", line)) {
-        operator_blocks <- rbind(operator_blocks, tibble(operator = line, lines = line_num, operator_group = operator_group_num))
+        block <- c(line)
+        weight <- stringr::str_extract(line, "weight=\"[0-9.]+\"")
+        weight_value <- gsub("weight=\"", "", weight) %>% gsub("\"", "", .) %>% as.numeric()
+        operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num, weight = weight_value))
         line_num <- line_num + 1
         operator_group_num <- operator_group_num + 1
 
       # Catch multi-line operators: <operator ...> ... </operator>
       } else if (grepl("^<operator\\b[^>]*?>", line) && !grepl("/>$", line)) {
         block <- c(line)
-        operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num))
+        if (grepl("weight", block)){
+          weight <- stringr::str_extract(block, "weight=\"[0-9.]+\"")
+          weight_value <- gsub("weight=\"", "", weight) %>% gsub("\"", "", .) %>% as.numeric()
+        } else {
+          weight_value <- NA
+        }
+        operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num, weight = weight_value))
         line_num <- line_num + 1
         # read until the closing tag </operator>
         while (line_num <= length(xml) && !grepl("</operator>", xml[line_num])) {
           block <- trimws(xml[line_num])
-          operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num))
+          if (grepl("weight", block)){
+            weight <- stringr::str_extract(block, "weight=\"[0-9.]+\"")
+            weight_value <- gsub("weight=\"", "", weight) %>% gsub("\"", "", .) %>% as.numeric()
+          } else {
+            weight_value <- NA
+          }
+          operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num, weight = weight_value))
           line_num <- line_num + 1
         }
         if (line_num <= length(xml)) {
           block <- trimws(xml[line_num])
-          operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num))
+          if (grepl("weight", block)){
+            weight <- stringr::str_extract(block, "weight=\"[0-9.]+\"")
+            weight_value <- gsub("weight=\"", "", weight) %>% gsub("\"", "", .) %>% as.numeric()
+          } else {
+            weight_value <- NA
+          }
+          operator_blocks <- rbind(operator_blocks, tibble(operator = block, lines = line_num, operator_group = operator_group_num, weight = weight_value))
           line_num <- line_num + 1
         }
         operator_group_num <- operator_group_num + 1
@@ -4444,13 +4332,21 @@ adaptOperators <- function(data, beast, time, template, dir, id, xml_filepath=NU
     }
 
     # Edit the operator weights in the XML file
+    # If the ESS is below the convergence threshold, multiply the weight by 2.  If the ESS is above the threshold, divide the weight by 2.
+    # Don't allow the weight outside of min_op_weight and max_op_weight
     for (row in 1:nrow(adapt_log_collapse)) {
       item <- adapt_log_collapse$item[row]
       rescale <- adapt_log_collapse$rescale[row]
 
-      # Find the operator in the operator blocks and grab all lines in that group
-      operator_group_id <- operator_blocks$operator_group[grepl(item, operator_blocks$operator)]
-      operator_block <- operator_blocks %>% filter(operator_group == operator_group_id )
+      # If the item is TreeHeight, things can be a bit tricky
+      if (item == "TreeHeight"){
+        operator_group_id <- operator_blocks$operator_group[grepl("tree=\"@Tree", operator_blocks$operator)]
+      } else {
+        # Find the operator group ID for the non TreeHeight items
+        operator_group_id <- operator_blocks$operator_group[grepl(item, operator_blocks$operator)]
+      }
+      # Get all of the xml lines for the operator groups
+      operator_block <- operator_blocks %>% filter(operator_group %in% operator_group_id)
 
       # Find the weight in the operator block and rescale it
       weight_line <- operator_block$operator[grepl("weight", operator_block$operator)]
@@ -4458,22 +4354,19 @@ adaptOperators <- function(data, beast, time, template, dir, id, xml_filepath=NU
       weight <- stringr::str_extract(weight_line, "weight=\"[0-9.]+\"")
       weight_value <- gsub("weight=\"", "", weight) %>% gsub("\"", "", .) %>% as.numeric()
       new_weight_value <- weight_value * rescale %>% round(2)
+      
+      # Ensure the new weight is within the specified bounds
+      new_weight_value <- pmax(new_weight_value, min_operator_weight)
 
       # Replace the weight line in the XML file
-      xml[weight_line_num] <- gsub("weight=\"[0-9.]+\"",
-        paste0("weight=\"", new_weight_value, "\""),
-        xml[weight_line_num])
+      for (op in 1:length(weight_line_num)) {
+        xml[weight_line_num[op]] <- gsub("weight=\"[0-9.]+\"",
+          paste0("weight=\"", new_weight_value[op], "\""),
+          xml[weight_line_num[op]])
+      }
     }
     # Write the modified XML back to file
     writeLines(xml, xml_path)
-
-    if (!iterate){
-      # Clean up the adapt_operators files except the XML to check on how weights changed
-      cleanup_files <- list.files(dir, pattern = paste0(id_adapt_operators, "_", y), full.names = TRUE)
-      cleanup_files <- cleanup_files[!grepl("\\.xml$", cleanup_files)]
-      cleanup_files <- cleanup_files[!grepl("\\_log.tsv$", cleanup_files)]
-      invisible(file.remove(cleanup_files))
-    }
     
   }, mc.cores=nproc)
   for(i in 1:length(capture)){
@@ -4482,8 +4375,9 @@ adaptOperators <- function(data, beast, time, template, dir, id, xml_filepath=NU
       stop(paste("Error adapting operators in xml file, clone", data[[i]]@clone))
     }
   }
-
-  print("Operator weights adapted based on ESS values and updated in XML files.")
+  if (quiet < 1) {
+    print("Operator weights adapted based on ESS values and updated in XML files.")
+  }
 }
 
 
