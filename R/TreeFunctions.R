@@ -3745,7 +3745,9 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
         if(quiet < 1){
           print(clones$below_ESS)
           ess_items = unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
-          print(table(ess_items))
+          if(length(ess_items) > 0){
+            print(table(ess_items))
+          }
         }
     
         resume = filter(clones, below_ESS > 0)$clone_id
