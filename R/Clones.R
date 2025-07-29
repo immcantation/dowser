@@ -1737,5 +1737,85 @@ sampleClones = function(clones, size, weight=NULL, group=NULL){
 }
 
 
+#'\code{sampleCloneMultiGroup} Down-sample clone to specified size with multiple groups to sample evenly
+#' @param    clone       an \link{airrClone} object
+#' @param    size        target size
+#' @param    weight      column for weighting sample probability
+#' @param    groups      columns to sample evenly among groups
+#' @return   a down-sampled airrClone object
+# @export
+sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
+  if(size > nrow(clone@data)){
+    return(clone)
+  }
+  if(sum(!groups %in% names(clone@data)) != 0){
+    stop(paste("One or more grouping columns not found in clone data"))
+  }
+
+  if(is.null(groups)){
+    if(is.null(weight)){
+      sd = sample(clone@data$sequence_id, size=size)
+    }else{
+      sd = sample(clone@data$sequence_id, size=size, prob=clone@data[[weight]])
+    }
+  }else{
+
+    combos = lapply(1:length(groups), function(x){
+      unique(clone@data[[groups[x]]])
+    })
+    combo_sets = expand.grid(combos) 
+    colnames(combo_sets) = groups
+    combo_sets = combo_sets[sample(1:nrow(combo_sets)),]
+    ncombo_sets = nrow(combo_sets)
+
+    group_list = vector("list", ncombo_sets)
+    group_sizes = numeric(ncombo_sets)
+
+    # Get all sequences in each combination of groups
+    for (i in seq_len(ncombo_sets)) {
+      subset_idx = Reduce(`&`, lapply(groups, function(g) clone@data[[g]] == combo_sets[[g]][i]))
+      temp = clone@data[subset_idx, ]
+      if (nrow(temp) == 0) next
+      if (is.null(weight)) {
+        group_list[[i]] = sample(temp$sequence_id, size=nrow(temp))
+      } else {
+        group_list[[i]] = sample(temp$sequence_id, size=nrow(temp), prob=temp[[weight]])
+      }
+      group_sizes[i] = length(group_list[[i]])
+    }
+
+    # Sample sequences evenly (as much as possible) from each group
+    sd = c()
+    counters = rep(1, ncombo_sets)
+    group_index = 1
+    sd_index = 1
+
+    while (sd_index <= size) {
+      if (group_sizes[group_index] == 0 || counters[group_index] > group_sizes[group_index]) {
+        group_index = group_index %% ncombo_sets + 1
+        next
+      }
+      sd[sd_index] = group_list[[group_index]][counters[group_index]]
+      counters[group_index] = counters[group_index] + 1
+      sd_index = sd_index + 1
+      group_index = group_index %% ncombo_sets + 1
+    }
+
+  clone@data = clone@data[clone@data$sequence_id %in% sd,]
+  return(clone)
+}
+
+#'\code{sampleClonesMultiGroup} Down-sample clones to specified size with multiple groups to sample evenly
+#' @param    clones      a tibble of \link{airrClone} objects
+#' @param    size        target size
+#' @param    weight      column for weighting sample probability
+#' @param    group       column to sample evenly among groups
+#' @return   The input object with sequences down-sampled
+#' @export
+sampleClonesMultiGroup = function(clones, size, weight=NULL, group=NULL){
+  clones$data <- lapply(clones$data, function(x) sampleCloneMultiGroup(x, size, weight, group))
+  clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
+  return(clones)
+}
 
 
