@@ -3749,7 +3749,9 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
         if(quiet < 1){
           print(clones$below_ESS)
           ess_items = unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
-          print(table(ess_items))
+          if(length(ess_items) > 0){
+            print(table(ess_items))
+          }
         }
     
         resume = filter(clones, below_ESS > 0)$clone_id
@@ -3990,6 +3992,8 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    full_posterior  Read un full distribution of parameters and trees?
 #' @param    resume_clones  Clones to resume for mcmc_length more iterations            
 #' @param    include_germline Include germline in analysis?     
+#' @param    start_date       Starting date of time tree if desired
+#' @param    max_start_date   Maximum starting date of time tree if desired
 #' @param    germline_range   Possible date range of germline tip     
 #' @param    java         Use the -java flag for BEAST run      
 #' @param    seed         Used for the -seed option for BEASTrun    
@@ -4009,7 +4013,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
-                   start_edge_length=100, start_date=NULL, adapt_operators=FALSE, 
+                   start_edge_length=100, start_date=NULL, max_start_date=NULL, adapt_operators=FALSE, 
                    iterate=FALSE, iter=NULL, ...) {
 
   beast <- path.expand(beast)
@@ -4084,7 +4088,9 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       tree_states=tree_states, 
       start_edge_length=start_edge_length,
       trees=trees,
-      start_date=start_date, ...)
+      start_date=start_date, 
+      max_start_date=max_start_date,
+      ...)
 
     xml_filepath <- xml_filepath[!is.na(xml_filepath)]
   } else {
@@ -4466,6 +4472,7 @@ create_MRCA_prior_germline <- function(clone, id, germline_range) {
   return(distribution_xml)
 }
 
+# start_date is in forward time, the date not the height
 create_height_prior <- function(clone, id, start_date) {
   #taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
   #taxa <- paste0(taxa,"\n",paste0('<taxon id="', 'Germline', '" spec="Taxon"/>', collapse="\n"))
@@ -4479,6 +4486,20 @@ create_height_prior <- function(clone, id, start_date) {
             '<parameter id="RealParameter.33" spec="parameter.RealParameter" estimate="false" name="scale">0.001</parameter>\n',
             '</LaplaceDistribution>\n',
            '</distribution>', sep="")
+  return(distribution_xml)
+}
+
+# max_start_date is in forward time, the date not the height
+create_max_height_prior <- function(clone, id, max_start_date) {
+  #taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
+  #taxa <- paste0(taxa,"\n",paste0('<taxon id="', 'Germline', '" spec="Taxon"/>', collapse="\n"))
+  distribution_xml <- 
+    paste0('<distribution id="height.prior" spec="beast.base.evolution.tree.MRCAPrior" monophyletic="true" tree="@Tree.t:', 
+      id, "_", clone@clone, '">\n', 
+           paste0('<taxonset idref="TaxonSet.',paste0(id, "_", clone@clone),'" spec="TaxonSet">\n'), 
+           '</taxonset>\n',
+           '<Uniform id="Uniform.root" name="distr" lower="',max_start_date,'" upper="Infinity"/>',
+            '</distribution>', sep="")
   return(distribution_xml)
 }
 
@@ -4559,7 +4580,7 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
-  start_edge_length=100, start_date=NULL, ...) {
+  start_edge_length=100, start_date=NULL, max_start_date=NULL,...) {
   
   kwargs <- list(...)
 
@@ -4627,6 +4648,10 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
     if(!is.null(start_date)){
       mrca_priors <- paste0(mrca_priors, "\n",
         create_height_prior(clone, id, start_date) )
+    }
+    if(!is.null(max_start_date)){
+      mrca_priors <- paste0(mrca_priors, "\n",
+        create_max_height_prior(clone, id, max_start_date) )
     }
     
     xml <- gsub("\\$\\{MRCA\\}", mrca_priors, xml)
@@ -4757,7 +4782,8 @@ xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, temp
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
   include_germline_as_tip=FALSE, germline_range=c(-10000,10000), 
-  tree_states=FALSE, start_edge_length=100, start_date=NULL,...) {
+  tree_states=FALSE, start_edge_length=100, start_date=NULL, max_start_date=NULL,
+  ...) {
 
   kwargs <- list(...)
 
@@ -4802,6 +4828,7 @@ xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, temp
                      trait_list=trait_list,
                      tree_states=tree_states,
                      start_date=start_date,
+                     max_start_date=max_start_date,
                      ...))
   }
   return(xmls)
