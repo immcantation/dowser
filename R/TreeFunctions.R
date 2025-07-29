@@ -3983,7 +3983,7 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    time         Name of sample time column 
 #' @param    log_every    Frequency of states logged. \code{auto} will divide mcmc_length by log_target         
 #' @param    burnin       Burnin percent (default 10) 
-#' @param    adapt_operators Adapt the operator weights (FALSE if resume_clones is not NULL) 
+#' @param    adapt_operators Adapt the operator weights (FALSE if not using from getTimeTreesIterate) 
 #' @param    iterate      Set to TRUE for use with getTimeTreesIterate            
 #' @param    trait        Trait coolumn used         
 #' @param    asr          Log ancestral sequences?
