@@ -1755,10 +1755,10 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
   if(is.null(groups)){
     if(is.null(weight)){
       sd = sample(clone@data$sequence_id, size=size)
-    }else{
+    } else {
       sd = sample(clone@data$sequence_id, size=size, prob=clone@data[[weight]])
     }
-  }else{
+  } else {
 
     combos = lapply(1:length(groups), function(x){
       unique(clone@data[[groups[x]]])
@@ -1800,6 +1800,7 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
       sd_index = sd_index + 1
       group_index = group_index %% ncombo_sets + 1
     }
+  }
 
   clone@data = clone@data[clone@data$sequence_id %in% sd,]
   return(clone)
@@ -1817,5 +1818,3 @@ sampleClonesMultiGroup = function(clones, size, weight=NULL, group=NULL){
   clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
   return(clones)
 }
-
-
