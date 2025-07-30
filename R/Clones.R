@@ -1727,12 +1727,17 @@ sampleClone = function(clone, size, weight=NULL, group=NULL){
 #' @param    clones      a tibble of \link{airrClone} objects
 #' @param    size        target size
 #' @param    weight      column for weighting sample probability
-#' @param    group       column to sample evenly among groups
+#' @param    group       column (or columns) to sample evenly among groups
 #' @return   The input object with sequences down-sampled
 #' @export
 sampleClones = function(clones, size, weight=NULL, group=NULL){
-  clones$data <- lapply(clones$data, function(x) sampleClone(x, size, weight, group))
+  if (is.null(group) || length(group) == 1){
+      clones$data <- lapply(clones$data, function(x) sampleClone(x, size, weight, group))
   clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
+  } else {
+      clones$data <- lapply(clones$data, function(x) sampleCloneMultiGroup(x, size, weight, groups=group))
+      clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
+  }
   return(clones)
 }
 
@@ -1806,15 +1811,3 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
   return(clone)
 }
 
-#'\code{sampleClonesMultiGroup} Down-sample clones to specified size with multiple groups to sample evenly
-#' @param    clones      a tibble of \link{airrClone} objects
-#' @param    size        target size
-#' @param    weight      column for weighting sample probability
-#' @param    group       column to sample evenly among groups
-#' @return   The input object with sequences down-sampled
-#' @export
-sampleClonesMultiGroup = function(clones, size, weight=NULL, group=NULL){
-  clones$data <- lapply(clones$data, function(x) sampleCloneMultiGroup(x, size, weight, group))
-  clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
-  return(clones)
-}
