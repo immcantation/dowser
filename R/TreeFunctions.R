@@ -4781,7 +4781,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
 #'
 #' @export
 makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0, 
-    clone_id=NULL){
+    clone_id=NULL, max_height=c("min","median","mean","max")){
     
     l <- tryCatch(read.csv(logfile, head=TRUE, sep="\t", comment.char="#"),error=function(e)e)
     if("error" %in% class(l)){
@@ -4806,7 +4806,12 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
       params <- filter(params, Sample %in% samples)
     }
     if(n_distinct(params$Sample) != length(phylos)){
-      stop("Parameter and tree posteriors not same length")
+      warning("Parameter and tree posteriors not same length, subsetting")
+      treestates <- as.numeric(gsub("STATE_","",names(phylos)))
+      commonstates <- intersect(treestates, params$Sample)
+      phylos <- phylos[treestates %in% commonstates]
+      params <- filter(params, Sample %in% commonstates)
+      samples <- unique(params$Sample)
     }
 
     groups <- filter(params, grepl("GroupSizes", parameter))
@@ -4823,10 +4828,21 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     groups$index <- as.numeric(gsub("bGroupSizes\\.","",groups$parameter))
 
     # smallest tree height in log file (this is what tracer seems to do)
-    maxheight <- min(filter(params, parameter == "Tree.height")$value)
+    if(max_height == "min"){
+      maxheight <- min(filter(params, parameter == "TreeHeight")$value)
+    }else if(max_height == "median"){
+      maxheight <- median(filter(params, parameter == "TreeHeight")$value)
+    }else if(max_height == "mean"){
+      maxheight <- mean(filter(params, parameter == "TreeHeight")$value)
+    }else if(max_height == "max"){
+      maxheight <- max(filter(params, parameter == "TreeHeight")$value)
+    }else{
+      stop("max_height option must be min, median, mean, or max")
+    }
+    
     if(youngest > 0){
-        mintime <- youngest - maxheight;
-        maxtime <- youngest;
+        mintime <- youngest - maxheight
+        maxtime <- youngest
     }else{
         mintime <- 0
         maxtime <- maxheight - youngest
@@ -4894,9 +4910,9 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
         dplyr::filter(!!rlang::sym("end") > bin_start) %>%
         slice_min(!!rlang::sym("end"))
 
-      if(nrow(matches) != n_sample){
-        stop("didn't find some indexes")
-      }
+#      if(nrow(matches) != n_sample){
+#        stop("didn't find some indexes")
+#      }
 
       matches <- select(matches, !!rlang::sym("end"), 
         !!rlang::sym("popsize"), !!rlang::sym("sample"), !!rlang::sym("index"))
@@ -4949,21 +4965,14 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 #' @return   Bayesian Skyline values for given clone
 #' @details Burnin set from readBEAST or getTrees
 #' @export
-getSkylines <- function(clones, dir, time, bins=100, verbose=0, forward=TRUE,
-    nproc=1){
+getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, forward=TRUE,
+    nproc=1, max_height=c("min","median","mean","max")){
 
     treesfiles <- sapply(clones$data, function(x)
-        file.path(dir, paste0(x@clone, ".trees")))
+        file.path(dir, paste0(id, "_", x@clone, ".trees")))
 
     logfiles <- sapply(clones$data, function(x)
-        file.path(dir, paste0(x@clone, ".log")))
-
-    burnins <- sapply(clones$trees, function(x)
-        x$burnin)
-
-    if(sum(is.null(burnins)) > 0){
-        stop("burnin not found in some tree objects")
-    }
+        file.path(dir, paste0(id, "_", x@clone, ".log")))
 
     if(forward){
         youngest <- sapply(clones$data, function(x)
@@ -4975,11 +4984,11 @@ getSkylines <- function(clones, dir, time, bins=100, verbose=0, forward=TRUE,
     skylines <- parallel::mclapply(1:nrow(clones), function(x){
         if(verbose != 0){
             print(paste(clones$clone_id[x], logfiles[x], 
-                treesfiles[x], youngest[x], burnins[x]))
+                treesfiles[x], youngest[x]))
         }
         tryCatch(makeSkyline(logfile=logfiles[x], treesfile=treesfiles[x],
-            youngest=youngest[x], burnin=burnins[x], bins=bins, 
-            clone_id=clones$clone_id[x]), error=function(e)e)
+            youngest=youngest[x], burnin=burnin, bins=bins, 
+            clone_id=clones$clone_id[x], max_height=max_height), error=function(e)e)
     }, mc.cores=nproc)
 
     clones$skyline <- skylines
