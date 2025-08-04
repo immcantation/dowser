@@ -1745,8 +1745,14 @@ buildRAxML <- function(clone, exec, seq = "sequence", sub_model = 'GTR', partiti
     # update the node labels to reflect
     tree$node.label <- c("UCA", tree$node.label)
     
+    # correct unlisting issue
+    tree$nodes = lapply(tree$nodes, function(x){
+      y = list()
+      y$sequence = unlist(unlist(x))
+      y
+    })
     
-  }else {
+  }else{
     tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
     tree$germid <- paste0(clone@clone, "_GERM")
     results <- list()
@@ -1821,6 +1827,8 @@ buildRAxML <- function(clone, exec, seq = "sequence", sub_model = 'GTR', partiti
   if(rm_files){
     unlink(file.path(dir, paste0(name,"*")))
   }
+
+
   return(tree)
 }
 
