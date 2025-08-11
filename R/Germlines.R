@@ -818,12 +818,238 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
   results
 }
 
+# finds what the consensus sequence was that createGermlines used.
+findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
+                          seq = "sequence_alignment", id = "sequence_id"){
+  v_dict <- c()
+  j_dict <- c()
+  pad_char <- "N"
+  v_dict <- unlist(lapply(receptors[[v_call]],function(x)
+    alakazam::getAllele(x, strip_d=FALSE)))
+  j_dict <- unlist(lapply(receptors[[j_call]],function(x)
+    alakazam::getAllele(x, strip_d=FALSE)))
+  seq_len <- unlist(lapply(receptors[[seq]],function(x)
+    nchar(x)))
+  
+  # Consensus V and J having most observations
+  vcounts <- table(v_dict)
+  jcounts <- table(j_dict)
+  v_cons <- names(vcounts)[vcounts == max(vcounts)]
+  j_cons <- names(jcounts)[jcounts == max(jcounts)]
+  max_len <- max(seq_len)
+  
+  # Consensus sequence(s) with consensus V/J calls and longest sequence
+  cons_index <- v_dict %in% v_cons & j_dict %in% j_cons & seq_len == max_len
+  
+  # Consensus sequence(s) with consensus V/J calls but not the longest sequence
+  if(sum(cons_index) == 0){
+    cons_index <- v_dict == v_cons & j_dict == j_cons
+  }
+  cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
+  cons <- receptors[receptors[[id]] == cons_id,]
+  rec_v <- strsplit(cons[[v_call]], ",")[[1]]
+  rec_v <- rec_v[rec_v %in% v_cons][1]
+  rec_j <- strsplit(cons[[j_call]], ",")[[1]]
+  rec_j <- rec_j[rec_j %in% j_cons][1]
+  temp <- data.frame(clone_id = receptors$clone_id_unique[1], locus = receptors$locus[1], v_call = rec_v, 
+                     j_call = rec_j, cons_id = cons_id)
+  return(temp)
+}
+
+# find the igblast gene lengths of a given sequence 
+findLengths <- function(data, sequence_id, clone, locus = "locus", seq = "sequence_id", 
+                        v_len = "v_germline_length", d_len = "d_germline_length",
+                        j_len = "j_germline_length", np1_len = "np1_length", 
+                        np2_len = "np2_length"){
+  v_length <- data[[v_len]][data[[seq]] == sequence_id]
+  np1_length <- data[[np1_len]][data[[seq]] == sequence_id]
+  j_length <- data[[j_len]][data[[seq]] == sequence_id]
+  if(data[[locus]][data[[seq]] == sequence_id] == "IGH"){
+    d_length <- data[[d_len]][data[[seq]] == sequence_id]
+    np2_length <- data[[np2_len]][data[[seq]] == sequence_id]
+    if(is.na(d_length)){
+      d_length <- 0
+    }
+    if(is.na(np2_length)){
+      np2_length <- 0
+    }
+  } else{
+    d_length <- NA
+    np2_length <- NA
+  }
+  temp <- data.frame(sequence_id = sequence_id, locus = data[[locus]][data[[seq]] == sequence_id],
+                     v_length = v_length, np1_length = np1_length, d_length = d_length, 
+                     np2_length = np2_length, j_length = j_length)
+  # update the lengths to take out gaps -- see numbers
+  numbers <- clone$data[[1]]@numbers
+  regions <- clone$data[[1]]@region
+  if(clone$data[[1]]@phylo_seq == "hlsequence"){
+    restart_point <- which(diff(numbers) < 0) + 1
+    if(data[[locus]][data[[seq]] == sequence_id] == "IGH"){
+      numbers <- numbers[1:restart_point-1]
+      regions <- regions[1:restart_point-1]
+    }else{
+      numbers <- numbers[restart_point:length(numbers)]
+      regions <- regions[restart_point:length(regions)]
+    }
+  }
+  gaps <- dplyr::setdiff(1:max(numbers), numbers)
+  v_length <- 1:temp$v_length
+  v_length <- length(v_length[-which(v_length %in% gaps)])
+  np1_length <- (temp$v_length + 1): (temp$np1_length + temp$v_length)
+  np1_length <- length(np1_length[!np1_length %in% gaps])
+  if(data[[locus]][data[[seq]] == sequence_id] == "IGH"){
+    d_length <- (temp$v_length + temp$np1_length + 1): (temp$d_length + temp$np1_length + temp$v_length)
+    d_length <- length(d_length[!d_length %in% gaps])
+    np2_length <- (temp$v_length + temp$np1_length + temp$d_length + 1): (temp$np2_length + 
+                                                                            temp$d_length + temp$np1_length + temp$v_length)
+    np2_length <- length(np2_length[!np2_length %in% gaps])
+    j_length <- (temp$v_length + temp$np1_length + temp$d_length + temp$np2_length + 1): 
+      (temp$j_length + temp$np2_length + temp$d_length + temp$np1_length + temp$v_length)
+    j_length <- length(j_length[!j_length %in% gaps])
+  } else{
+    j_length <- (temp$v_length + temp$np1_length + 1): (temp$j_length + temp$np1_length + temp$v_length)
+    j_length <- length(j_length[!j_length %in% gaps])
+    d_length <- NA
+    np2_length <- NA
+  }
+  temp$v_length <- v_length
+  temp$np1_length <- np1_length
+  temp$d_length <- d_length
+  temp$np2_length <- np2_length
+  temp$j_length <- j_length
+  temp$regions <- I(list(regions))
+  temp$numbers <- I(list(numbers))
+  return(temp)
+}
+
+# finds where cdr3 in in a given gene
+cdr3inGene <- function(temp){
+  regions <- temp$regions[[1]]
+  v_cdr3 <- which(regions[1:temp$v_length] == "cdr3")
+  if(temp$locus == "IGH"){
+    j_start <- sum(temp$v_length, temp$np1_length, temp$d_length, temp$np2_length)
+    j_cdr3 <- which(regions[j_start:length(regions)] == "cdr3")
+  }else{
+    j_start <- sum(temp$v_length, temp$np1_length)
+    j_cdr3 <- which(regions[j_start:length(regions)] == "cdr3")
+  }
+  temp$v_cdr3 <- I(list(v_cdr3))
+  temp$j_cdr3 <- I(list(j_cdr3))
+  return(temp)
+}
+
+# if check_genes is TRUE then this function goes through the proposed starting germline and 
+# fixes the v and j genes of said germline 
+updateGermline <- function(stats_df, uca, references, data, v_glen = "v_germline_length", 
+                           np1_length = "np1_length", d_glen = "d_germline_length",
+                           np2_length = "np2_length", j_glen = "j_germline_length",
+                           seq = "sequence_id", germ = "germline_alignment", 
+                           v_call = "v_call", j_call = "j_call", v_germline_start = "v_germline_start",
+                           v_germline_end = "v_germline_end", j_germline_start = "j_germline_start",
+                           j_germline_end = "j_germline_end", locus = "locus"){
+  v_indx <- stats_df$v_cdr3[[1]]
+  j_indx <- stats_df$j_cdr3[[1]]
+  #cg_germ <- data[[germ]][data[[seq]] == stats_df[[seq]]]
+  if(length(v_indx) == 0){
+    v_indx <- NULL
+  } else{
+    if(length(v_indx) == 1 & sum(is.na(v_indx)) == 1){
+      v_indx <- NULL
+    }
+  }
+  if(length(j_indx) == 0){
+    j_indx <- NULL
+  } else{
+    if(length(j_indx) == 1 & sum(is.na(j_indx)) == 1){
+      j_indx <- NULL
+    }
+  }
+  if(is.na(stats_df$d_length)){
+    stats_df$d_length <- 0
+  }
+  if(is.na(stats_df$np2_length)){
+    stats_df$np2_length <- 0
+  }
+  if(length(v_indx) > 0){
+    uca <- strsplit(uca, "")[[1]]
+    ref_seq <- references[[stats_df[[locus]]]]$V
+    ref_seq <- ref_seq[names(ref_seq) == stats_df[[v_call]]]
+    gap_values <- dplyr::setdiff(1:max(stats_df$numbers[[1]]), stats_df$numbers[[1]])
+    ref_seq <- strsplit(substring(ref_seq, data[[v_germline_start]][data[[seq]] == stats_df[[seq]]],
+                                  data[[v_germline_end]][data[[seq]] == stats_df[[seq]]]),
+                        "")[[1]][-gap_values]
+    v_indx <- v_indx[v_indx < length(ref_seq) + 1]
+    uca[v_indx] <- ref_seq[v_indx]
+    uca <- paste(uca, collapse = "")
+  }
+  if(length(j_indx) > 0){
+    front_uca <- substring(uca, 1, sum(stats_df$v_length, stats_df$np1_length, stats_df$d_length, 
+                                       stats_df$np2_length))
+    back_uca <- substring(uca, sum(stats_df$v_length, stats_df$np1_length, stats_df$d_length, 
+                                   stats_df$np2_length, 1), nchar(uca))
+    back_uca <- strsplit(back_uca, "")[[1]]
+    ref_seq <- references[[stats_df[[locus]]]]$J
+    ref_seq <- ref_seq[names(ref_seq) == stats_df[[j_call]]]
+    ref_seq <- strsplit(substring(ref_seq, data[[j_germline_start]][data[[seq]] == stats_df[[seq]]], 
+                                  data[[j_germline_end]][data[[seq]] == stats_df[[seq]]]), "")[[1]]
+    gap_values <- dplyr::setdiff(1:max(stats_df$numbers[[1]]), stats_df$numbers[[1]])
+    front_length <- sum(data[[v_glen]][data[[seq]] == stats_df[[seq]]],
+                        data[[np1_length]][data[[seq]] == stats_df[[seq]]],
+                        data[[d_glen]][data[[seq]] == stats_df[[seq]]],
+                        data[[np2_length]][data[[seq]] == stats_df[[seq]]])
+    if(is.na(front_length)){
+      front_length <- sum(data[[v_glen]][data[[seq]] == stats_df[[seq]]],
+                          data[[np1_length]][data[[seq]] == stats_df[[seq]]])
+    }
+    gap_values <- gap_values[gap_values > front_length]
+    if(length(gap_values) > 0){
+      ref_seq <- ref_seq[-gap_values]
+    }
+    back_uca[j_indx] <- ref_seq[j_indx]
+    uca <- paste0(front_uca, paste0(back_uca, collapse = ""))
+    j_replacements <- j_indx + nchar(front_uca)
+  } else{
+    j_replacements <- j_indx
+  }
+  temp <- data.frame(uca = uca, v_replace = I(list(v_indx)), 
+                     j_replace = I(list(j_replacements)))
+  return(temp)
+}
+
+# Finds the AA of a codon
+findCodon <- function(germ, group, indx, aa = FALSE){
+  min_val <- group[[indx]][1]
+  max_val <- group[[indx]][3]
+  if(!aa){
+    seq_val <- substring(germ, min_val, max_val)
+  } else{
+    seq_val <- alakazam::translateDNA(substring(germ, min_val, max_val)) 
+  }
+  return(seq_val)
+}
+
+# update the Tree Df based on the V/Js in the cdr3 boundary
+updateTreeDF <- function(df, sites, codons, site = "site", codon = "codon"){
+  noneffectdf <- df[!df[[site]] %in% sites,]
+  temp <- df[df[[site]] %in% sites,]
+  temp <- do.call(rbind, lapply(sites, function(x){
+    sub <- temp[temp[[site]] == x,]
+    sub <- sub[sub$codon == codons[which(sites == x)],]
+    return(sub)
+  }))
+  df_new <- rbind(noneffectdf, temp)
+  df_new <- df_new[order(df_new[[site]]),]
+  return(df_new)
+}
+
 # Prepares clones for UCA inference. 
 #
 # \code{processCloneGermline} Exports two text files that are used as inputs for 
 #                             the UCA script.
 # @param clone_ids  A clone id for the clones object. This is only used in parallel
 # @param clones     A clones object from \link{formatClones}
+# @param data       The airr-table associated with the clones object
 # @param dir        The directory where data should be saved to 
 # @param id         The run id
 # @param resolve_v  Resolve the V gene as well?
@@ -831,10 +1057,13 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
 # @param all_germlines The output of createAllGermlines. Only needed if resolving genes.
 # @param quiet      How much noise to print out
 # @param chain      HL or H?
+# @param check_genes Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
+# @param references IMGT references read in using \link{readIMGT}
 #
-processCloneGermline <- function(clone_ids, clones, dir, build, id,
+processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                  resolve_v = FALSE, resolve_j = FALSE,
-                                 all_germlines = NULL, quiet = 0, chain = chain,...){
+                                 all_germlines = NULL, quiet = 0, chain = chain,
+                                 check_genes = FALSE, references = NULL, ...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
@@ -878,9 +1107,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
                                            header = F, sep = "\t"))
     # make the sample folder and save a copy of the codon table as the sample...rootprobs.txt
-    if(!dir.exists(file.path(subDir, "sample"))){
-      dir.create(file.path(subDir, "sample"))
-    }
+    # if(!dir.exists(file.path(subDir, "sample"))){
+    #   dir.create(file.path(subDir, "sample"))
+    # }
     file.copy(file.path(subDir, "codon_table.txt"), 
               file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
   }
@@ -897,7 +1126,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     nsite_heavy <- nchar(sub$data[[1]]@germline)/3
     tree_df_light <- tree_df[tree_df$site >= nsite_heavy,]
-    tree_df_light$new_site <- tree_df_light$site - min(tree_df_light$site) + 1
+    tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
     tree_df <- tree_df[tree_df$site < nsite_heavy,]
     mrca <- substring(tree_seq, 1, nchar(sub$data[[1]]@germline))
     mrcacdr3 <- paste0(strsplit(mrca, "")[[1]][cdr3_index], collapse = "")
@@ -911,9 +1140,9 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
   if(test_cdr3[1] != "C" || !test_cdr3[length(test_cdr3)] %in% c("F", "W")){
     if(sub$data[[1]]@phylo_seq == "sequence"){
       groupedList <- split(1:length(r), ceiling(seq_along(r) / 3))
-    } else if(chain == "HL"){
+    } else if(sub$data[[1]]@phylo_seq == "hlsequence"){
       groupedList <- split(1:length(heavy_r), ceiling(seq_along(heavy_r) / 3))
-    } else if(chain == "L"){
+    } else if(sub$data[[1]]@phylo_seq == "lsequence"){
       groupedList <- split(1:length(r), ceiling(seq_along(r) / 3))
     }
     if(test_cdr3[1] != "C"){
@@ -1061,7 +1290,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     if(light_cdr3_test[1] != "C" || !light_cdr3_test[length(light_cdr3_test)] %in% c("F", "W")){
       if(light_cdr3_test[1] != "C"){
         codon_site <- nchar(v_light)/3 + 1
-        sub_tree_df <- dplyr::filter(tree_df_light, !!rlang::sym("new_site") == codon_site)
+        sub_tree_df <- dplyr::filter(tree_df_light, !!rlang::sym("site") == codon_site)
         sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
         sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") == "C")
         sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
@@ -1070,7 +1299,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
       }
       if(!light_cdr3_test[length(light_cdr3_test)] %in% c("F", "W")){
         codon_site <- nchar(paste0(v_light, light_cdr3))/3 + 1
-        sub_tree_df <- dplyr::filter(tree_df_light, !!rlang::sym("new_site") == codon_site)
+        sub_tree_df <- dplyr::filter(tree_df_light, !!rlang::sym("site") == codon_site)
         sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
         sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") %in% c("W", "F"))
         sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
@@ -1086,7 +1315,7 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
         if(nchar(j_alt) > nchar(j_light)){
           j_alt <- substring(j_alt, 1, nchar(j_light))
         }
-        sub_tree_df <- tree_df_light[tree_df_light$new_site %in% c(1:(nchar(v_light)/3),
+        sub_tree_df <- tree_df_light[tree_df_light$site %in% c(1:(nchar(v_light)/3),
                         (max(tree_df_light$new_site) - (nchar(j_light)/3) + 1):max(tree_df_light$new_site)),]
         # get the likelihood of the v_alt and j_alt combo
         vj <- paste0(v_alt, j_alt, collapse = "")
@@ -1125,6 +1354,219 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     } 
   }
   saveRDS(sub, file.path(subDir, "clone.rds"))
+  # check if the V/J goes into the CDR3 region definition 
+  if(check_genes){
+    if(sub$data[[1]]@phylo_seq == "hlsequence"){
+      # use heavy and light_r
+      heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                                  !!rlang::sym('locus') == "IGH"))
+      light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                                  !!rlang::sym('locus') != "IGH"))
+      heavy_stats <- findLengths(data, heavy_cons$cons_id, sub)
+      light_stats <- findLengths(data, light_cons$cons_id, sub)
+      heavy_stats <- cdr3inGene(heavy_stats)
+      light_stats <- cdr3inGene(light_stats)
+      # grab the v and j calls 
+      heavy_stats$v_call <- heavy_cons$v_call
+      heavy_stats$j_call <- heavy_cons$j_call
+      light_stats$v_call <- light_cons$v_call
+      light_stats$j_call <- light_cons$j_call
+      
+      heavy_germ <- updateGermline(heavy_stats, paste0(v, mrcacdr3, j), references,
+                                  data)
+      light_germ <- updateGermline(light_stats, paste0(v_light, light_cdr3, j_light),
+                                   references, data)
+      # now update the tree df to only look for the codon combos for the replaced sites 
+      # are AAs of what is there 
+      heavy_groups <- lapply(seq(1, nchar(sub$data[[1]]@germline), by = 3),
+                             function(i) i:min(i+2, nchar(sub$data[[1]]@germline)))
+      light_groups <- lapply(seq(1, nchar(sub$data[[1]]@lgermline), by = 3),
+                             function(i) i:min(i+2, nchar(sub$data[[1]]@lgermline)))
+
+      if(!is.null(heavy_germ$v_replace[[1]]) | !is.null(heavy_germ$j_replace[[1]])){
+        # find the sites that were changed
+        heavy_indices <- unlist(unique(lapply(c(heavy_germ$v_replace[[1]], heavy_germ$j_replace[[1]]), function(val) {
+          which(sapply(heavy_groups, function(g) val %in% g))})))
+        # find the AA of what should be there 
+        heavy_codon <- unlist(lapply(1:length(heavy_indices), function(x){
+          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x])
+          return(value)
+        }))
+        # if there are Xs or *s in the returned values remove those indices 
+        stop_codons <- c("TAA", "TAG", "TGA")
+        heavy_indices <- heavy_indices[!heavy_codon %in% stop_codons]
+        heavy_codon <- heavy_codon[!heavy_codon %in% stop_codons]
+        heavy_codon <- heavy_codon[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
+        heavy_indices <- heavy_indices[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
+        # remove any indices that have codons that translate to X
+        heavy_aa <- unlist(lapply(1:length(heavy_indices), function(x){
+          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x], aa= TRUE)
+          return(value)
+        }))
+        heavy_indices <- heavy_indices[heavy_aa != "X"]
+        heavy_codon[heavy_aa != "X"]
+        # update to be 0 based counting 
+        heavy_indices <- heavy_indices - 1
+        # filter down the associated df 
+        tree_df <- updateTreeDF(tree_df, heavy_indices, heavy_codon)
+        # if there is a stop codon find it and replace with what the og value was
+        germ_test <- which(strsplit(alakazam::translateDNA(heavy_germ$uca), "")[[1]] == "*")
+        if(length(germ_test) > 0){
+          change_vals <- heavy_groups[[germ_test]]
+          uca <- strsplit(heavy_germ$uca, "")[[1]]
+          og_uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+          uca[change_vals] <- og_uca[change_vals]
+          uca <- paste(uca, collapse = "")
+          heavy_germ$uca <- uca
+        }
+        # update the v, cdr3, and j cuts 
+        v <- substring(heavy_germ$uca, 1, nchar(v))
+        cdr3_c <- substring(mrcacdr3, 1, 3)
+        cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+        mrcacdr3 <- paste0(cdr3_c, substring(heavy_germ$uca, nchar(v) + 4, nchar(v) + nchar(mrcacdr3)-3),
+                           cdr3_fw)
+        j <- substring(heavy_germ$uca, nchar(v) + nchar(mrcacdr3) + 1, nchar(heavy_germ$uca))
+      }
+      if(!is.null(light_germ$v_replace[[1]]) | !is.null(light_germ$j_replace[[1]])){
+        light_indices <- unlist(unique(lapply(c(light_germ$v_replace[[1]], light_germ$j_replace[[1]]), function(val) {
+          which(sapply(light_groups, function(g) val %in% g))})))
+        light_codon <- unlist(lapply(1:length(light_indices), function(x){
+          value <- findAA(light_germ$uca, light_groups, light_indices[x])
+          return(value)
+        }))
+        stop_codons <- c("TAA", "TAG", "TGA")
+        light_indices <- light_indices[!light_codon %in% stop_codons]
+        light_codon <- light_codon[!lilight_codonght_aa %in% stop_codons]
+        light_codon <- light_codon[!light_indices %in% c(nchar(v_light)/3, nchar(paste0(v_light, light_cdr3))/3)]
+        light_indices <- light_indices[!light_indices %in% c(nchar(v_light)/3, nchar(paste0(v_light, light_cdr3))/3)]
+        light_aa <- unlist(lapply(1:length(light_indices), function(x){
+          value <- findCodon(light_germ$uca, light_groups, light_indices[x], aa= TRUE)
+          return(value)
+        }))
+        light_indices <- light_indices[light_aa != "X"]
+        light_codon[light_aa != "X"]
+        light_indices <- light_indices - 1
+        tree_df_light <- updateTreeDF(tree_df_light, light_indices, light_codon)
+        germ_test <- which(strsplit(alakazam::translateDNA(light_germ$uca), "")[[1]] == "*")
+        if(length(germ_test) > 0){
+          change_vals <- light_groups[[germ_test]]
+          uca <- strsplit(light_germ$uca, "")[[1]]
+          og_uca <- strsplit(paste0(v_light, light_cdr3, j_light), "")[[1]]
+          uca[change_vals] <- og_uca[change_vals]
+          uca <- paste(uca, collapse = "")
+          light_germ$uca <- uca
+        }
+        v_light <- substring(light_germ$uca, 1, nchar(v_light))
+        cdr3_c <- substring(light_cdr3, 1, 3)
+        cdr3_fw <- substring(light_cdr3, nchar(light_cdr3)-2, nchar(light_cdr3))
+        light_cdr3 <- paste0(cdr3_c, substring(light_germ$uca, nchar(v_light) + 4, nchar(v_light) + nchar(light_cdr3)-3),
+                             cdr3_fw)
+        j_light <- substring(light_germ$uca, nchar(v_light) + nchar(light_cdr3) + 1, nchar(light_germ$uca))
+      }
+    }else if(sub$data[[1]]@phylo_seq == "sequence"){
+      heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                                  !!rlang::sym('locus') == "IGH"))
+      heavy_stats <- findLengths(data, heavy_cons$cons_id, sub)
+      heavy_stats <- cdr3inGene(heavy_stats)
+      heavy_stats$v_call <- heavy_cons$v_call
+      heavy_stats$j_call <- heavy_cons$j_call
+      heavy_germ <- updateGermline(heavy_stats, paste0(v, mrcacdr3, j), references,
+                                   data)
+      if(!is.null(heavy_germ$v_replace[[1]]) | !is.null(heavy_germ$j_replace[[1]])){
+        heavy_groups <- lapply(seq(1, nchar(sub$data[[1]]@germline), by = 3),
+                               function(i) i:min(i+2, nchar(sub$data[[1]]@germline)))
+        heavy_indices <- unlist(unique(lapply(c(heavy_germ$v_replace[[1]], heavy_germ$j_replace[[1]]), function(val) {
+          which(sapply(heavy_groups, function(g) val %in% g))})))
+        heavy_codon <- unlist(lapply(1:length(heavy_indices), function(x){
+          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x])
+          return(value)
+        }))
+        heavy_indices <- heavy_indices[!heavy_codon %in% stop_codons]
+        heavy_codon <- heavy_codon[!heavy_codon %in% stop_codons]
+        heavy_codon <- heavy_codon[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
+        heavy_indices <- heavy_indices[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
+        heavy_aa <- unlist(lapply(1:length(heavy_indices), function(x){
+          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x], aa= TRUE)
+          return(value)
+        }))
+        heavy_indices <- heavy_indices[heavy_aa != "X"]
+        heavy_codon[heavy_aa != "X"]
+        heavy_indices <- heavy_indices - 1
+        tree_df <- updateTreeDF(tree_df, heavy_indices, heavy_codon)
+        germ_test <- which(strsplit(alakazam::translateDNA(heavy_germ$uca), "")[[1]] == "*")
+        if(length(germ_test) > 0){
+          change_vals <- heavy_groups[[germ_test]]
+          uca <- strsplit(heavy_germ$uca, "")[[1]]
+          og_uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+          uca[change_vals] <- og_uca[change_vals]
+          uca <- paste(uca, collapse = "")
+          heavy_germ$uca <- uca
+        }
+        v <- substring(heavy_germ$uca, 1, nchar(v))
+        cdr3_c <- substring(mrcacdr3, 1, 3)
+        cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+        mrcacdr3 <- paste0(cdr3_c, substring(heavy_germ$uca, nchar(v) + 4, nchar(v) + nchar(mrcacdr3)-3),
+                           cdr3_fw)
+        j <- substring(heavy_germ$uca, nchar(v) + nchar(mrcacdr3) + 1, nchar(heavy_germ$uca))
+        # save tree_df
+        tree_df <- tree_df[, !names(tree_df) == "value"]
+        write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                    quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+      }
+      
+    } else if(sub$data[[1]]@phylo_seq == "lsequence"){
+      light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                                  !!rlang::sym('locus') != "IGH"))
+      light_stats <- findLengths(data, light_cons$cons_id, sub)
+      light_stats <- cdr3inGene(light_stats)
+      light_stats$v_call <- light_cons$v_call
+      light_stats$j_call <- light_cons$j_call
+      light_germ <- updateGermline(light_stats, paste0(v, mrcacdr3, j),
+                                   references, data)
+      if(!is.null(light_germ$v_replace[[1]]) | !is.null(light_germ$j_replace[[1]])){
+        light_groups <- lapply(seq(1, nchar(sub$data[[1]]@lgermline), by = 3),
+                               function(i) i:min(i+2, nchar(sub$data[[1]]@lgermline)))
+        light_indices <- unlist(unique(lapply(c(light_germ$v_replace[[1]], light_germ$j_replace[[1]]), function(val) {
+          which(sapply(light_groups, function(g) val %in% g))})))
+        light_codon <- unlist(lapply(1:length(light_indices), function(x){
+          value <- findAA(light_germ$uca, light_groups, light_indices[x])
+          return(value)
+        }))
+        stop_codons <- c("TAA", "TAG", "TGA")
+        light_indices <- light_indices[!light_codon %in% stop_codons]
+        light_codon <- light_codon[!lilight_codonght_aa %in% stop_codons]
+        light_aa <- light_aa[!light_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
+        light_indices <- light_indices[!light_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
+        light_aa <- unlist(lapply(1:length(light_indices), function(x){
+          value <- findCodon(light_germ$uca, light_groups, light_indices[x], aa= TRUE)
+          return(value)
+        }))
+        light_indices <- light_indices[light_aa != "X"]
+        light_codon[light_aa != "X"]
+        light_indices <- light_indices - 1
+        tree_df <- updateTreeDF(tree_df, light_indices, light_codon)
+        germ_test <- which(strsplit(alakazam::translateDNA(light_germ$uca), "")[[1]] == "*")
+        if(length(germ_test) > 0){
+          change_vals <- light_groups[[germ_test]]
+          uca <- strsplit(light_germ$uca, "")[[1]]
+          og_uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+          uca[change_vals] <- og_uca[change_vals]
+          uca <- paste(uca, collapse = "")
+          light_germ$uca <- uca
+        }
+        v <- substring(light_germ$uca, 1, nchar(v))
+        cdr3_c <- substring(mrcacdr3, 1, 3)
+        cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+        mrcacdr3 <- paste0(cdr3_c, substring(light_germ$uca, nchar(v) + 4, nchar(v) + nchar(mrcacdr3)-3),
+                           cdr3_fw)
+        j <- substring(light_germ$uca, nchar(v) + nchar(mrcacdr3) + 1, nchar(light_germ$uca))
+        tree_df <- tree_df[, !names(tree_df) == "value"]
+        write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                    quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+      }
+      
+    }
+  }
   # put it all together 
   v_cdr3 <- paste0(v, paste0(mrcacdr3, collapse = ""), collapse = "")
   starting_germ <- paste0(v_cdr3, j, collapse = "")
@@ -1139,14 +1581,13 @@ processCloneGermline <- function(clone_ids, clones, dir, build, id,
     file_path_junction_position <- file.path(subDir, paste("olga_junction_positions_light.txt"))
     writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
     writeLines(paste(nchar(v_light), nchar(v_cdr3)), con = file_path_junction_position)
-    if(!dir.exists(file.path(subDir, "sample"))){
-      dir.create(file.path(subDir, "sample"))
-    }
+    # if(!dir.exists(file.path(subDir, "sample"))){
+    #   dir.create(file.path(subDir, "sample"))
+    # }
     tree_df <- tree_df[, !names(tree_df) %in% c("value")]
     write.table(tree_df, file.path(subDir, "heavy_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
-    tree_df_light <- tree_df_light[, !names(tree_df_light) %in% c("new_site", "value")]
-    tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
+    tree_df_light <- tree_df_light[, !names(tree_df_light) %in% c("value")]
     write.table(tree_df_light, file.path(subDir, "light_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
   }
@@ -1277,7 +1718,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
     if(clone$data[[1]]@phylo_seq == "hlsequence"){
       UCA_heavy <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
       UCA_light <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[2]
-      clone$UCA_IMGT <- paste0(UCA_heavy, UCA_light)
+      clone$UCA_IMGT <- I(list(c(UCA_heavy, UCA_light)))
     } else if(clone$data[[1]]@phylo_seq == "sequence"){
       clone$UCA_IMGT <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
     } else if(clone$data[[1]]@phylo_seq == "lsequence"){
@@ -1796,7 +2237,7 @@ maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id"
 
 #' \link{getTreesAndUCAs} Construct trees and infer the UCA
 #' @param clones        AIRR-table containing sequences \link{formatClones}
-#' @param data          The AIRR-table that was used to make the clones object. Required for resolve_v.
+#' @param data          The AIRR-table that was used to make the clones object.
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method
 #' @param exec          File path to the tree building executable
@@ -1822,9 +2263,15 @@ maskAmbigousReferenceSites <- function(clones, all_germlines, clone = "clone_id"
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
 #' @param heavy         The name of the heavy chain locus. Default is IGH. 
+#' @param sampling_method How to subsample. Methods include 'random', 'lm' (least mutated),
+#'                      and 'ratio' (a weighted sampling with heavier weights
+#'                      towards the least mutated sequences). The later two methods
+#'                      require 'mu_freq' to be passed as a trait when running
+#'                      \link{formatClones}
 #' @param subsample_size The amount that the clone should be sampled down to. Default is 5. 
 #' @param method        The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.
 #' @param rscript       The file path to the rscript with get_UCA.py
+#' @param check_genes   Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
 #' @param ...           Additional arguments passed to \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:
@@ -1840,7 +2287,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
                            rm_temp = TRUE, quiet = 0, chain = "H", omega = NULL, optimize = "lr",
                            motifs = "FCH", hotness = "e,e,e,e,e,e", resolve_v = FALSE,
                            resolve_j = FALSE, references = NULL, clone = "clone_id", heavy = "IGH",
-                           subsample_size = 5, method = "ML", rscript = NULL,...){
+                           sampling_method = c('random', 'lm', 'ratio'), subsample_size = 5, 
+                           method = "ML", rscript = NULL, check_genes = TRUE,...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -1865,6 +2313,11 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     stop("The file", path.expand(uca_script), " cannot be executed.")
   }
   
+  if(check_genes & is.null(references)){
+    stop("check_genes cannot be run without references. Pass a references object using references =",
+         "References need to be read in using dowser::readIMGT()")
+  }
+  
   # make the tree_specs value 
   tree_specs <- paste0(
     if (is.null(exec)) "NULL" else exec, ";",
@@ -1874,18 +2327,42 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     if (is.null(omega)) "NULL" else omega
   )
   
-  # subsample clones
-  # heavy <- data[data$locus == heavy,]
-  # heavy <- shazam::observedMutations(heavy,
-  #                                    regionDefinition=shazam::IMGT_V,
-  #                                    frequency=TRUE, 
-  #                                    combine=TRUE,
-  #                                    nproc=nproc)
-  # cell_ids_to_keep <- unlist(parallel::mclapply(split(heavy, heavy[[clone]]), function(df){
-  #   df$cell_id[order(df$mu_freq)][1:subsample_size]
-  # }))
-  
-  # data <- data[data$cell_id %in% cell_ids_to_keep,]
+  # subsample the clones 
+  if(sampling_method == "random"){
+    clones <- sampleClones(clones, size = subsample_size)
+  } else{
+    if(!"mu_freq" %in% colnames(clones$data[[1]]@data)){
+      stop('Mutation frequency calculations are required for this subsampling method.',
+           ' Please run your data through shazam::observedMutations() and then rerun',
+           ' formatClones and getTreesAndUCAs.')
+    }
+    if(sampling_method == "lm"){
+      clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+        sub <- clones[x,]
+        if(!subsample_size > nrow(sub$data[[1]]@data)){
+          temp_subsample_size <- subsample_size
+        } else{
+          temp_subsample_size <- nrow(sub$data[[1]]@data)
+        }
+        sub$data[[1]]@data$weight <- NA
+        temp_df <- sub$data[[1]]@data[order(sub$data[[1]]@data$mu_freq, decreasing = FALSE),]
+        sample_names <- temp_df$sequence_id[1:temp_subsample_size]
+        sub$data[[1]]@data$weight[sub$data[[1]]@data$sequence_id %in% sample_names] <- 100
+        sub$data[[1]]@data$weight[!sub$data[[1]]@data$sequence_id %in% sample_names] <- 0
+        return(sub)
+      }, mc.cores = nproc))
+      clones <- sampleClones(clones, subsample_size, weight = "weight")
+    } else if(sampling_method == "ratio"){
+      clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+        sub <- clones[x,]
+        sub$data[[1]]@data$weight <- 1/(sub$data[[1]]@data$mu_freq + 1e-10)
+        return(sub)
+      }, mc.cores = nproc))
+      clones <- sampleClones(clones, subsample_size, weight = "weight")
+    } else{
+      stop('sampling_method:', sampling_method, ' not recognized')
+    }
+  }
   
   if(resolve_v | resolve_j){
     if(is.null(data)){
@@ -1909,20 +2386,21 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   if(build == "igphyml"){
     clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
                     omega = omega, optimize = optimize, motifs = motifs, 
-                    hotness = hotness, asrp = TRUE, chain = chain)
+                    hotness = hotness, asrp = TRUE, chain = chain, ...)
   } else if(build == "pml"){
-    clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE)
+    clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE, ...)
   } else{
     stop("the tree bulding method ", build, "is not supported")
   }
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
+  saveRDS(clones, file.path(dir, "clones.rds"))
   clones <- do.call(rbind, invisible(parallel::mclapply(unique(clones[[clone]]), function(x)
-    processCloneGermline(clone_ids = x, clones = clones, dir = dir, build = build, 
+    processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir, build = build, 
                          id = id, resolve_v = resolve_v, resolve_j = resolve_j,
                          all_germlines = all_germlines, quiet = quiet, chain = chain, 
-                         ...), mc.cores = nproc)))
+                         check_genes = check_genes, references = references), mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")

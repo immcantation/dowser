@@ -30,16 +30,18 @@ getTreesAndUCAs(
   references = NULL,
   clone = "clone_id",
   heavy = "IGH",
+  sampling_method = c("random", "lm", "ratio"),
   subsample_size = 5,
   method = "ML",
   rscript = NULL,
+  check_genes = TRUE,
   ...
 )
 }
 \arguments{
 \item{clones}{AIRR-table containing sequences \link{formatClones}}
 
-\item{data}{The AIRR-table that was used to make the clones object. Required for resolve_v.}
+\item{data}{The AIRR-table that was used to make the clones object.}
 
 \item{dir}{The file path of the directory of where data is saved. NULL is default.}
 
@@ -89,11 +91,19 @@ on command line that issues the python you want to use.
 
 \item{heavy}{The name of the heavy chain locus. Default is IGH.}
 
+\item{sampling_method}{How to subsample. Methods include 'random', 'lm' (least mutated),
+and 'ratio' (a weighted sampling with heavier weights
+towards the least mutated sequences). The later two methods
+require 'mu_freq' to be passed as a trait when running
+\link{formatClones}}
+
 \item{subsample_size}{The amount that the clone should be sampled down to. Default is 5.}
 
 \item{method}{The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.}
 
 \item{rscript}{The file path to the rscript with get_UCA.py}
+
+\item{check_genes}{Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly.}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }
