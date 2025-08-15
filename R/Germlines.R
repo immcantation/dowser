@@ -1,3 +1,940 @@
+## Functions for constructing clonal germline sequences
+# Based closely on CreateGermlines.py
+# Download IMGT GENE-DB databases
+# 
+# Loads all reference germlines from an Immcantation-formatted IMGT database.
+# 
+#TODO: make auto-download or internal IMGT database
+# param dir      directory to contain database
+# param organism  vector of species to download: human, mouse, rat, rabbit, rhesus_monkey
+# param timeout  max time allowed for each download (temporarily sets global timeout option)
+# return directory of downloaded IMGT BCR and TCR reference files
+# details 
+# Recoding of this script: 
+# https://bitbucket.org/kleinstein/immcantation/src/master/scripts/fetch_imgtdb.sh
+downloadIMGT <- function(dir="imgt", organism=c("human", "mouse", "rat", "rabbit", "rhesus_monkey"),
+                         timeout=300){
+  
+  old_timeout <- getOption("timeout")
+  options(timeout = max(timeout, getOption("timeout")))
+  
+  species_list <- organism
+  OUTDIR <- dir
+  REPERTOIRE <- "imgt"
+  DATE <- format(Sys.time(), "%Y.%m.%d")
+  
+  # Associative array (for BASH v3) where keys are species folder names and values are query strings
+  # rabbit:Oryctolagus_cuniculus, rat:Rattus_norvegicus, rhesus_monkey:Macaca_mulatta
+  SPECIES_QUERY=c("human"="Homo+sapiens",
+                  "mouse"="Mus",
+                  "rat"="Rattus+norvegicus",
+                  "rabbit"="Oryctolagus+cuniculus",
+                  "rhesus_monkey"="Macaca+mulatta")
+  # Associative array (for BASH v3) with species name replacements
+  SPECIES_REPLACE=c("human"="Homo sapiens/Homo_sapiens",
+                    "mouse"="Mus musculus/Mus_musculus",
+                    "rat"="Rattus norvegicus/Rattus_norvegicus",
+                    "rabbit"="Oryctolagus cuniculus/Oryctolagus_cuniculus",
+                    "rhesus_monkey"="Macaca mulatta/Macaca_mulatta")
+  
+  for(SPECIES in species_list){
+    KEY <- SPECIES
+    VALUE <- SPECIES_QUERY[SPECIES]
+    REPLACE_VALUE <- SPECIES_REPLACE[SPECIES]
+    
+    print(paste("Downloading", KEY,"repertoires into",OUTDIR))
+    
+    # Create directories
+    dir.create(file.path(OUTDIR, KEY, "vdj"), recursive=TRUE, showWarnings=FALSE)
+    dir.create(file.path(OUTDIR, KEY, "vdj_aa"), recursive=TRUE, showWarnings=FALSE)
+    dir.create(file.path(OUTDIR, KEY, "leader_vexon"), recursive=TRUE, showWarnings=FALSE)
+    dir.create(file.path(OUTDIR, KEY, "leader"), recursive=TRUE, showWarnings=FALSE)
+    dir.create(file.path(OUTDIR, KEY, "constant"), recursive=TRUE, showWarnings=FALSE)
+    
+    # Download functions
+    download_and_process <- function(url, outfile, replace) {
+      tmpfile <- paste0(outfile, ".tmp")
+      download.file(url, tmpfile, quiet=TRUE)
+      lines <- readLines(tmpfile, warn=F)
+      # fasta between last pre and /pre
+      pre_start <- max(grep("<pre>", lines))
+      pre_end <- max(grep("</pre>", lines))
+      data <- lines[(pre_start + 1):(pre_end - 1)]
+      
+      # replace names with spaces with unerlines
+      split <- strsplit(replace,split="/")[[1]]
+      sub <- gsub(split[1], split[2], data)
+      writeLines(sub, outfile)
+      file.remove(tmpfile)
+    }
+    
+    # Download VDJ regions
+    cat("|---- Ig\n")
+    for (CHAIN in c("IGHV", "IGHD", "IGHJ", "IGKV", "IGKJ", "IGLV", "IGLJ")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.1+", CHAIN, "&species=", VALUE)
+      FILE_NAME <- file.path(OUTDIR, KEY, "vdj", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # Download leader and V exon for Ig
+    for (CHAIN in c("IGHV", "IGKV", "IGLV")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+", CHAIN, "&species=", VALUE,"&IMGTlabel=L-PART1+V-EXON")
+      FILE_NAME <- file.path(OUTDIR, KEY, "leader_vexon", paste0(REPERTOIRE,"_lv_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # V amino acid for Ig
+    for (CHAIN in c("IGHV", "IGKV", "IGLV")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.3+",CHAIN,"&species=",VALUE)
+      FILE_NAME <- file.path(OUTDIR, KEY, "vdj_aa", paste0(REPERTOIRE,"_aa_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # VDJ TCR
+    cat("|---- TCR\n")
+    for (CHAIN in c("TRAV", "TRAJ", "TRBV", "TRBD", "TRBJ", "TRDV", "TRDD", "TRDJ", "TRGV", "TRGJ")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.1+",CHAIN,"&species=",VALUE)
+      FILE_NAME <- file.path(OUTDIR, KEY, "vdj", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # Download leader and V exon for Ig
+    for (CHAIN in c("TRAV", "TRBV", "TRDV", "TRGV")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+",CHAIN,"&species=",VALUE,"&IMGTlabel=L-PART1+V-EXON")
+      FILE_NAME <- file.path(OUTDIR, KEY, "leader_vexon", paste0(REPERTOIRE,"_lv_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # V amino acid for TCR
+    for (CHAIN in c("TRAV", "TRBV", "TRDV", "TRGV")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.3+",CHAIN,"&species=",VALUE)
+      FILE_NAME <- file.path(OUTDIR, KEY, "vdj_aa", paste0(REPERTOIRE,"_aa_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    
+    # Download leaders
+    cat("|- Spliced leader regions\n")
+    
+    # Download leader and V exon for Ig
+    cat("|---- Ig\n")
+    for (CHAIN in c("IGH", "IGK", "IGL")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+",CHAIN,"V&species=",VALUE,"&IMGTlabel=L-PART1+L-PART2")
+      FILE_NAME <- file.path(OUTDIR, KEY, "leader", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, "L.fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # Download leader and V exon for TCR
+    cat("|---- TCR\n")
+    for (CHAIN in c("TRA", "TRB", "TRG", "TRD")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+",CHAIN,"V&species=",VALUE,"&IMGTlabel=L-PART1+L-PART2")
+      FILE_NAME <- file.path(OUTDIR, KEY, "leader", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, "L.fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    # Download constant regions
+    cat("|- Spliced constant regions\n")
+    cat("|---- Ig\n")
+    for (CHAIN in c("IGHC", "IGKC", "IGLC")) {
+      # IMGT does not have artificially spliced IGKC / IGLC for multiple species
+      if(CHAIN == "IGHC"){
+        QUERY <- 14.1
+      }else{
+        QUERY <- 7.5
+      }
+      
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=",QUERY,"+",CHAIN,"&species=",VALUE)
+      FILE_NAME <- file.path(OUTDIR, KEY, "constant", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+    
+    cat("|---- TCR\n")
+    for (CHAIN in c("TRAC", "TRBC", "TRGC", "TRDC")) {
+      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=14.1+",CHAIN,"&species=",VALUE)
+      FILE_NAME <- file.path(OUTDIR, KEY, "constant", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
+      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
+    }
+  }
+  
+  # Write download info
+  INFO_FILE <- file.path(OUTDIR, "IMGT.yaml")
+  info <- c(
+    "source:  https://www.imgt.org/genedb",
+    paste0("date:    ",DATE),
+    "species:",
+    paste0("    - ",paste0(species_list,":",SPECIES_QUERY[species_list]))
+  )
+  writeLines(info, con=INFO_FILE)
+  
+  options(timeout = old_timeout)
+  
+  return(dir)
+}
+
+
+#' \code{writeFasta} Write a fasta file of sequences given a 
+#' named list of sequences
+#' @param    seqs      named list of sequences (output from \code{readFasta})
+#' @param    file      FASTA file for output
+#'
+#' @return   File of FASTA formatted sequences
+#' @export
+writeFasta <- function(seqs, file){
+  if(!is.null(seqs)){
+    out <- paste0(">", names(seqs), "\n", seqs)
+    writeLines(out, con=file)
+  }else{
+    file.create(file)
+  }
+}
+
+# Format IMGT database to Igblast database
+# 
+# Cleans IMGT database and creates blast dbs for IgBlast
+# 
+# param imgt  directory containing IMGT sequences ("dir" in downloadIMGT)
+# param outdir   output directory for IgBlast databases, will contain /fasta and /database
+# param igblast  IgBlast home directory location
+# param organism   organism species to use (must be human, mouse, or rhesus_monkey)
+# return outdir
+# details 
+# Recoding of this script: 
+# https://bitbucket.org/kleinstein/immcantation/src/master/scripts/imgt2igblast.sh
+imgtToIgblast <- function(imgt, outdir, igblast, 
+                          organism=c("human", "mouse", "rhesus_monkey")){
+  
+  OUTDIR <- outdir
+  GERMDIR <- imgt
+  OUTFASTA <- file.path(OUTDIR, "fasta")
+  OUTDATA <- file.path(OUTDIR, "database")
+  
+  exec = file.path(igblast, "bin", "makeblastdb")
+  exec <- path.expand(exec)
+  if(file.access(exec, mode=1) == -1) {
+    stop("The file ", exec, " cannot be executed.")
+  }
+  
+  dir.create(file.path(OUTDIR), recursive=TRUE, showWarnings=FALSE)
+  dir.create(file.path(OUTFASTA), recursive=TRUE, showWarnings=FALSE)
+  dir.create(file.path(OUTDATA), recursive=TRUE, showWarnings=FALSE)
+  
+  species_list <- dir(GERMDIR)
+  species_list <- species_list[species_list != "IMGT.yaml"]
+  species_list <- species_list[species_list %in% organism]
+  
+  
+  vdj <- dir(file.path(GERMDIR, species_list, c("vdj")))
+  vdj <- vdj[grepl(".fasta$", vdj)]
+  vdj_aa <- dir(file.path(GERMDIR, species_list, c("vdj_aa")))
+  vdj_aa <- vdj_aa[grepl(".fasta$", vdj_aa)]
+  constant <- dir(file.path(GERMDIR, species_list, c("constant")))
+  constant <- constant[grepl(".fasta$", constant)]
+  
+  # Create fasta files of each species, chain and segment combination
+  for(SPECIES in species_list){
+    #dir(file.path(GERMDIR, SPECIES, "vdj"))
+    for(CHAIN in c("IG","TR")){
+      # VDJ nucleotides
+      for(SEGMENT in c("V","D","J")){
+        #F=$(echo imgt_${SPECIES}_${CHAIN}_${SEGMENT}.fasta | tr '[:upper:]' '[:lower:]')
+        #cat ${GERMDIR}/${SPECIES}/vdj/imgt_${SPECIES}_${CHAIN}?${SEGMENT}.fasta > ${TMPDIR}/${F}
+        # requires updated readFasta
+        fastas <- list.files(file.path(GERMDIR, SPECIES, "vdj"))
+        fastas <- fastas[grepl(paste0("imgt_", SPECIES, "_", CHAIN, ".", SEGMENT,".*.fasta$"), fastas)]
+        f <- unlist(lapply(fastas, function(x)readFasta(file.path(GERMDIR, SPECIES, "vdj", x))))
+        cf <- cleanSeqs(f)
+        writeFasta(cf, file.path(OUTFASTA, tolower(paste0("imgt_", SPECIES, "_", CHAIN, "_", SEGMENT, ".fasta"))))
+      }
+      
+      # C nucleotides
+      #F=$(echo imgt_${SPECIES}_${CHAIN}_c.fasta | tr '[:upper:]' '[:lower:]')
+      #cat ${GERMDIR}/${SPECIES}/constant/imgt_${SPECIES}_${CHAIN}?C.fasta > ${TMPDIR}/${F}
+      fastas <- list.files(file.path(GERMDIR, SPECIES, "constant"))
+      fastas <- fastas[grepl(paste0("imgt_", SPECIES, "_", CHAIN, ".C.*.fasta$"), fastas)]
+      f <- unlist(lapply(fastas, function(x)readFasta(file.path(GERMDIR, SPECIES, "constant", x))))
+      cf <- cleanSeqs(f)
+      writeFasta(cf, file.path(OUTFASTA, tolower(paste0("imgt_", SPECIES, "_", CHAIN, "_C", ".fasta"))))
+      
+      # V amino acids
+      #F=$(echo imgt_aa_${SPECIES}_${CHAIN}_v.fasta | tr '[:upper:]' '[:lower:]')
+      #cat ${GERMDIR}/${SPECIES}/vdj_aa/imgt_aa_${SPECIES}_${CHAIN}?V.fasta > ${TMPDIR}/${F}
+      fastas <- list.files(file.path(GERMDIR, SPECIES, "vdj_aa"))
+      fastas <- fastas[grepl(paste0("imgt_aa_", SPECIES, "_", CHAIN, ".V.*.fasta$"), fastas)]
+      f <- unlist(lapply(fastas, function(x)readFasta(file.path(GERMDIR, SPECIES, "vdj_aa", x))))
+      cf <- cleanSeqs(f)
+      writeFasta(cf, file.path(OUTFASTA, tolower(paste0("imgt_aa_", SPECIES, "_", CHAIN, "_V", ".fasta"))))
+    }
+  }
+  
+  fastas <- list.files(OUTFASTA, full.names=FALSE)
+  NT_FILES <- fastas[!grepl("imgt_aa_", fastas)]
+  AA_FILES <- fastas[grepl("imgt_aa_", fastas)]
+  
+  for(file in NT_FILES){
+    stem <- strsplit(file, split="\\.")[[1]][1]
+    command <- paste("-parse_seqids -dbtype nucl -in",
+                     file.path(OUTFASTA, file), "-out", file.path(OUTDATA, stem))
+    params <- list(exec, command, stdout="", stderr="")
+    status <- tryCatch(do.call(base::system2, params), error=function(e){
+      return(e)
+    }, warning=function(w){
+      return(w)
+    })
+    if(status != 0){
+      cat(paste(exec, command, "\n"))
+      warning(status, paste(exec, command, "\n"))
+    }
+  }
+  
+  for(file in AA_FILES){
+    stem <- strsplit(file, split="\\.")[[1]][1]
+    command <- paste("-parse_seqids -dbtype prot -in",
+                     file.path(OUTFASTA, file), "-out", file.path(OUTDATA, stem))
+    params <- list(exec, command, stdout="", stderr="")
+    status <- tryCatch(do.call(base::system2, params), error=function(e){
+      return(e)
+    }, warning=function(w){
+      return(w)
+    })
+    if(status != 0){
+      cat(paste(exec, command, "\n"))
+      warning(status, paste(exec, command, "\n"))
+    }
+  }
+  return(OUTDIR)
+}
+
+# remove IMGT gaps, uppercase sequences, and use second delimiter for name
+cleanSeqs <- function(seqs, rm_gaps=TRUE){
+  if(length(seqs) == 0){
+    return(NULL)
+  }
+  if(rm_gaps){
+    seqs <- toupper(gsub("\\.","",seqs))
+  }else{
+    seqs <- toupper(seqs)
+  }
+  names(seqs) <- sapply(strsplit(names(seqs), split="\\|"), function(x)x[2])
+  # if repeated IDs, use the first one
+  # might be consistent with cleanIMGT.py?
+  cseqs <- list()
+  for(x in 1:length(seqs)){
+    if(is.null(cseqs[[names(seqs)[x]]])){
+      cseqs[[names(seqs)[x]]] <- seqs[[x]]
+    }
+  }
+  cseqs
+}
+
+# Runs IgBlast on a fasta file
+#  
+# param file      Fasta file of Ig or TR sequences
+# param igblast   Location of IgBlast program directory, containing /bin/igblastn
+# param refs     Reference directory of sequences (see downloadIMGT)
+# param igdata  Internal data directory for IgBlast (defaults to \code{igblast}/internal_data)
+# param organism    Organism (human, mouse, rhesus_monkey)
+# param domain_system Currently only IMGT supported
+# param outfile       Name of AIRR rearrangement file (must end in TSV)
+# param nproc     Nummber of threads to use
+# param db_prefix   File prefix for reference fastas
+# param locus     Ig or TR
+# param set_igdata  Set IGDATA environment variable?
+# param return    Return data.frame of output?
+# param verbose   Print extra info?
+# return AIRR-rearrangement formatted data frame
+# details 
+# Runs IgBlast, similar to AssignGenes.py in Changeo.
+# Must have IgBlast downloaded, precompiled binaries recommended:
+# https://ncbi.github.io/igblast/
+# 
+# Note for M1/M2 Mac OS, may be necessary to install IgBlast .dmg and 
+# manually set igdata. Otherwise most issues stem from the internal_data
+# directory location.
+# 
+assignGenes <- function(
+    file,
+    igblast,
+    refs,
+    igdata = NULL,
+    organism = "human",
+    domain_system = "imgt",
+    outfile = NULL,
+    nproc = 1,
+    db_prefix="imgt",
+    locus = "Ig",
+    set_igdata=TRUE,
+    return=TRUE,
+    verbose=TRUE){
+  
+  if(!organism %in% c("human", "mouse", "rhesus_monkey")){
+    stop(paste("organism must be either human, mouse, rhesus_monkey"))
+  }
+  
+  if(!locus %in% c("Ig", "TR")){
+    stop(paste("locus must be either Ig or TR"))
+  }
+  
+  exec <- file.path(igblast, "bin", "igblastn")
+  exec <- path.expand(exec)
+  if(file.access(exec, mode=1) == -1) {
+    stop("The file ", exec, " cannot be executed.")
+  }
+  
+  if(is.null(igdata)){
+    print(paste0("igdata not specified, using ",igblast," for IGDATA"))
+    igdata <- igblast
+  }
+  if(!is.null(igdata) && set_igdata){    
+    cat(paste0("Setting IGDATA to ", igdata,"\n"))
+    id <- file.path(igdata, "internal_data")
+    opt <- file.path(igdata, "optional_file")
+    if(!dir.exists(id)){
+      stop(paste("Error setting IGDATA, directory:", id, "does not exist. See ?assignGenes for help."))
+    }
+    if(!dir.exists(opt)){
+      stop(paste("Error setting IGDATA, directory:", opt, "does not exist. See ?assignGenes for help."))
+    }
+    Sys.setenv(IGDATA = igdata)
+  }
+  
+  db_dir <- file.path(refs, "database")
+  fasta_dir <- file.path(refs, "fasta")
+  if(!dir.exists(db_dir)){
+    stop(paste(db_dir, "does not exist."))
+  }
+  if(!dir.exists(fasta_dir)){
+    stop(paste(db_dir, "does not exist."))
+  }
+  
+  if(!grepl("\\.fasta$", file) && !grepl("\\.fa$", file)){
+    stop(paste(file, "is not a fasta file (at least, it doesn't end in .fasta or .fa)"))
+  }
+  
+  if(is.null(outfile)){
+    filestem <- gsub("\\.fasta$|\\.fa$","", file)
+  }else{
+    if(!grepl("\\.tsv$", outfile)){
+      stop(outfile, " must be a .tsv file")
+    }
+    filestem <- gsub("\\.tsv", "", outfile)
+  }
+  
+  blastout <- paste0(filestem, ".tsv")
+  #airrout <- paste0(filestem, ".tsv")
+  
+  db_v <- file.path(db_dir, paste(db_prefix, organism, tolower(locus), "v", sep="_"))
+  db_d <- file.path(db_dir, paste(db_prefix, organism, tolower(locus), "d", sep="_"))
+  db_j <- file.path(db_dir, paste(db_prefix, organism, tolower(locus), "j", sep="_"))
+  aux <- file.path(igdata, "optional_file", paste0(organism,"_gl.aux"))
+  
+  
+  stem <- strsplit(file, split="\\.")[[1]][1]
+  command <- paste(
+    paste0("-germline_db_V ", db_v),
+    paste0("-germline_db_D ", db_d),
+    paste0("-germline_db_J ", db_j),
+    paste0("-auxiliary_data ", aux),
+    paste0("-domain_system ", domain_system," -ig_seqtype ",locus," -organism ", organism),
+    #paste0("-outfmt '7 std qseq sseq btop'"),
+    paste0("-outfmt 19"),
+    paste0("-query ", file),
+    paste0("-num_threads ", nproc),
+    paste0("-out ", blastout)
+  )
+  if(verbose){
+    cat(paste(exec, command))
+  }
+  params <- list(exec, command, stdout="", stderr="")
+  status <- tryCatch(do.call(base::system2, params), error=function(e){
+    return(e)
+  }, warning=function(w){
+    return(w)
+  })
+  if(status != 0){
+    cat(paste(exec, command, "\n"))
+    stop("error running IgBlast")
+  }
+  
+  if(return){
+    return(airr::read_rearrangement(blastout))
+  }
+}
+
+# Add IMGT gaps to IgBlast output
+#  
+# param db      AIRR-rearrangment formatted dataframe outputted from \link{assignGenes}
+# param gapdb   Root directory of gapped fasta files (\code{dir} in \link{downloadIMGT})
+# param organism  Organism (human, mouse, rhesus_monkey)
+# param locus   Ig or TR
+# param gapped_d  Include IMGT gaps in D regions? Only applicable to 
+# return AIRR-rearrangement formatted data frame in which sequence_alignment and germline_alignment
+# have been updated with IMGT gaps
+# details 
+# Similar functionality to MakeDb.py in Change-O. 
+# 
+addGaps <- function(db, gapdb, organism="human", locus="Ig", gapped_d=FALSE){
+  
+  if(!organism %in% c("human", "mouse", "rhesus_monkey")){
+    stop(paste("organism must be either human, mouse, rhesus_monkey"))
+  }
+  
+  if(!locus %in% c("Ig", "TR")){
+    stop(paste("locus must be either Ig or TR"))
+  }
+  
+  gap_files <- list.files(file.path(gapdb, organism, "vdj"))
+  if(length(gap_files) == 0){
+    stop(paste("No files found in",file.path(gapdb, organism, "vdj")))
+  }
+  vgap_files <- gap_files[grepl(paste0("_",toupper(locus),".V\\.fasta$"), gap_files)]
+  gaps <- unlist(lapply(vgap_files, function(x)readFasta(file.path(gapdb, organism, "vdj", x))))
+  gaps <- cleanSeqs(gaps, rm_gaps=FALSE)
+  
+  # IGHD3-10*02 has a gap :-(
+  # need to account for that
+  dgap_files <- gap_files[grepl(paste0("_",toupper(locus),".D\\.fasta$"), gap_files)]
+  dgaps <- unlist(lapply(dgap_files, function(x)readFasta(file.path(gapdb, organism, "vdj", x))))
+  dgaps <- cleanSeqs(dgaps, rm_gaps=FALSE)
+  
+  
+  results <- dplyr::tibble()
+  for(i in 1:nrow(db)){
+    row <- db[i,]
+    
+    insertion_sites <- 0
+    
+    if(is.na(row$np1_length) || is.na(row$np1)){
+      row$np1_length <- 0
+      row$np1 <- ""
+    }
+    if(is.na(row$np2_length) || is.na(row$np2)){
+      row$np2_length <- 0
+      row$np2 <- ""
+    }
+    if(is.na(row$d_sequence_alignment) || is.na(row$d_germline_alignment)){
+      row$d_sequence_alignment <- ""
+      row$d_germline_alignment <- ""
+    }
+    if(is.na(row$j_sequence_alignment) || is.na(row$j_germline_alignment)){
+      row$j_sequence_alignment <- ""
+      row$j_germline_alignment <- ""
+    }
+    if(is.na(row$v_sequence_alignment)){
+      warning(row$sequence_id, " v alignment not found")
+      next
+    }
+    
+    if(paste0(row$v_sequence_alignment, row$np1, row$d_sequence_alignment, row$np2, row$j_sequence_alignment) != row$sequence_alignment){
+      warning(row$sequence_id, " alignments don't add up")
+      next
+    }
+    
+    vcall <- strsplit(row$v_call, split=",")[[1]][1]
+    dcall <- strsplit(row$d_call, split=",")[[1]][1]
+    jcall <- strsplit(row$j_call, split=",")[[1]][1]
+    
+    # add IMGT gaps
+    # remove germline-relative insertations
+    qv <- strsplit(as.character(row$v_sequence_alignment),"")[[1]]
+    gv <- strsplit(as.character(row$v_germline_alignment),"")[[1]]
+    
+    # remove insertions relative to germline
+    v_del_pos <- gv == "-"
+    gv <- gv[!v_del_pos]
+    qv <- qv[!v_del_pos]
+    
+    qj <- strsplit(as.character(row$j_sequence_alignment),"")[[1]]
+    gj <- strsplit(as.character(row$j_germline_alignment),"")[[1]]
+    
+    # remove insertions relative to germline
+    j_del_pos <- gj == "-"
+    gj <- gj[!j_del_pos]
+    qj <- qj[!j_del_pos]
+    
+    insertion_sites <- sum(v_del_pos) + sum(j_del_pos)
+    
+    qd <- strsplit(as.character(row$d_sequence_alignment),"")[[1]]
+    gd <- strsplit(as.character(row$d_germline_alignment),"")[[1]]
+    
+    # remove insertions relative to germline
+    d_del_pos <- gd == "-"
+    gd <- gd[!d_del_pos]
+    qd <- qd[!d_del_pos]
+    
+    # v gene with IMGT gaps
+    gappedv <- strsplit(gaps[[vcall]], split="")[[1]]
+    
+    # positions without gaps in IMGT
+    no_gap_pos <- 1:length(gappedv)
+    no_gap_pos <- no_gap_pos[gappedv != "."]
+    
+    # positions without gaps present in alignment
+    v_germ_gap <- rep(".", length(gappedv))
+    v_quer_gap <- rep(".", length(gappedv))
+    
+    # add non gap characters to non-gap sites
+    gstart <- row$v_germline_start
+    no_gap_pos_g <- no_gap_pos[1:row$v_germline_end] #gapped germline is always full length
+    no_gap_pos <- no_gap_pos[gstart:(gstart + length(gv) - 1)]
+    
+    v_germ_gap[no_gap_pos_g] <- gappedv[no_gap_pos_g]
+    v_quer_gap[no_gap_pos] <- qv
+    
+    if(length(v_germ_gap[no_gap_pos]) != length(gv)){
+      stop("Error processing gapped V segment: ", row$sequence_id)
+    }
+    if(length(v_quer_gap[no_gap_pos]) != length(qv)){
+      stop("Error processing gapped V segment: ", row$sequence_id)
+    }
+    
+    # remove trailing gaps
+    max_char <- max(which(v_germ_gap != "."))
+    v_germ_gap <- v_germ_gap[1:max_char]
+    v_quer_gap <- v_quer_gap[1:max_char]
+    
+    # correct germline coordinate positions
+    vgaps_added <- sum(v_quer_gap == ".")
+    vpos_del <- sum(v_del_pos)
+    jpos_del <- sum(j_del_pos)
+    
+    row$v_germline_end <- max(no_gap_pos_g)
+    # always start at 1 when adding IMGT gaps
+    row$v_germline_start <- 1
+    
+    if(!is.na(dcall) && gapped_d){
+      # d gene with IMGT gaps
+      gappedd <- strsplit(dgaps[[dcall]], split="")[[1]]
+      
+      # positions without gaps in IMGT
+      no_gap_pos <- 1:length(gappedd)
+      no_gap_pos <- no_gap_pos[gappedd != "."]
+      
+      # positions without gaps present in alignment
+      d_germ_gap <- rep(".", length(gappedd))
+      d_quer_gap <- rep(".", length(gappedd))
+      
+      # add non gap characters to non-gap sites
+      gdstart <- row$d_germline_start
+      no_gap_pos_gd <- no_gap_pos[gdstart:row$d_germline_end] #non-gap positions in germline 
+      no_gap_pos <- no_gap_pos[gdstart:row$d_germline_end] #non-gap positions in query
+      
+      d_germ_gap[no_gap_pos_gd] <- gappedd[no_gap_pos_gd]
+      d_quer_gap[no_gap_pos] <- qd
+      
+      if(length(d_germ_gap[no_gap_pos]) != length(gd)){
+        stop("Error processing gapped D segment: ", row$sequence_id)
+      }
+      if(length(d_quer_gap[no_gap_pos]) != length(qd)){
+        stop("Error processing gapped D segment: ", row$sequence_id)
+      }
+      
+      # remove trailing gaps
+      max_char <- max(which(d_germ_gap != "."))
+      d_germ_gap <- d_germ_gap[1:max_char]
+      d_quer_gap <- d_quer_gap[1:max_char]
+      
+      # remove trailing gaps
+      min_char <- min(which(d_germ_gap != "."))
+      if(min_char > 1){
+        d_germ_gap <- d_germ_gap[(min_char):length(d_germ_gap)]
+        d_quer_gap <- d_quer_gap[(min_char):length(d_quer_gap)]
+      }
+      
+      dgaps_added <- sum(d_quer_gap == ".")
+      dpos_del <- sum(d_del_pos)
+      row$d_germline_end <- max(no_gap_pos_gd) + dgaps_added
+      
+    }else{
+      d_germ_gap <- strsplit(row$d_germline_alignment, split="")[[1]]
+      d_quer_gap <- strsplit(row$d_sequence_alignment, split="")[[1]]
+      dgaps_added <- 0
+      dpos_del <- 0
+    }
+    
+    vdj_quer_gapped <- paste0(
+      paste(v_quer_gap,collapse=""),
+      row$np1, 
+      paste(d_quer_gap,collapse=""),
+      row$np2,
+      paste(qj,collapse=""))
+    
+    vdj_germ_gapped <- paste0(
+      paste(v_germ_gap,collapse=""),
+      paste0(rep("N",row$np1_length),collapse=""),
+      paste(d_germ_gap,collapse=""),
+      paste0(rep("N",row$np2_length),collapse=""),
+      paste(gj,collapse=""))
+    
+    row$sequence_alignment <- vdj_quer_gapped
+    row$germline_alignment <- vdj_germ_gapped
+    
+    # check region values
+    # https://www.imgt.org/IMGTScientificChart/Numbering/IMGTIGVLsuperfamily.html
+    if(!is.na(row$fwr1)){
+      row$fwr1_start <- 1
+      row$fwr1_end <- 26*3
+      if(gsub("\\.|-","",substr(row$sequence_alignment, row$fwr1_start, row$fwr1_end)) != row$fwr1){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " fwr1 doesn't match")
+          #next
+        }else{
+          warning(row$sequence_id, " fwr1 doesn't match but insertions present")
+        }
+      }#else{
+      row$fwr1 <- substr(row$sequence_alignment, row$fwr1_start, row$fwr1_end)
+      #}
+    }
+    if(!is.na(row$cdr1)){
+      row$cdr1_start <- 26*3+1
+      row$cdr1_end <- 38*3
+      if(gsub("\\.|-","",substr(row$sequence_alignment, row$cdr1_start, row$cdr1_end)) != row$cdr1){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " cdr1 doesn't match")
+          #next
+        }else{
+          warning(row$sequence_id, " cdr1 doesn't match but insertions present")
+        }
+      }#else{
+      row$cdr1 <- substr(row$sequence_alignment, row$cdr1_start, row$cdr1_end)
+      #}
+    }
+    if(!is.na(row$fwr2)){
+      row$fwr2_start <- 38*3+1
+      row$fwr2_end <- 55*3
+      if(gsub("\\.|-","",substr(row$sequence_alignment, row$fwr2_start, row$fwr2_end)) != row$fwr2){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " fwr2 doesn't match")
+          #next
+        }else{
+          warning(row$sequence_id, " fwr2 doesn't match but insertions present")
+        }
+      }#else{
+      row$fwr2 <- substr(row$sequence_alignment, row$fwr2_start, row$fwr2_end)
+      #}
+    }
+    if(!is.na(row$cdr2)){
+      row$cdr2_start <- 55*3+1
+      row$cdr2_end <- 65*3
+      if(gsub("\\.|\\-","",substr(row$sequence_alignment, row$cdr2_start, row$cdr2_end)) != row$cdr2){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " cdr2 doesn't match")
+          #next
+        }else{
+          warning(row$sequence_id, " cdr2 doesn't match but insertions present")
+        }
+      }#else{
+      row$cdr2 <- substr(row$sequence_alignment, row$cdr2_start, row$cdr2_end)
+      #}
+    }
+    if(!is.na(row$fwr3)){
+      row$fwr3_start <- 65*3+1
+      row$fwr3_end <- 104*3
+      if(gsub("\\.|-","",substr(row$sequence_alignment, row$fwr3_start, row$fwr3_end)) != row$fwr3){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " fwr3 doesn't match")
+          #next
+        }else{
+          warning(row$sequence_id, " fwr3 doesn't match but insertions present")
+        }
+      }#else{
+      row$fwr3 <- substr(row$sequence_alignment, row$fwr3_start, row$fwr3_end)
+      #}
+    }
+    if(!is.na(row$junction)){
+      row$cdr3_start <- 104*3+1
+      row$cdr3_end <- 104*3+1 + row$junction_length -6 - 1 + dgaps_added - dpos_del
+      row$fwr4_start <- 104*3+1 + row$junction_length -6 - 1 + 1 + dgaps_added - dpos_del
+      row$fwr4_end <- nchar(row$sequence_alignment)
+      if(gsub("\\.","",substr(row$sequence_alignment, row$cdr3_start, row$cdr3_end)) != row$cdr3){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " cdr3 doesn't match")
+          #next
+        }else{
+          warning(row$sequence_id, " cdr3 doesn't match but insertions present")
+        }
+      }#else{
+      row$cdr3 <- gsub("\\.","",substr(row$sequence_alignment, row$cdr3_start, row$cdr3_end))
+      #}
+      #if(substr(row$sequence_alignment, row$fwr4_start, row$fwr4_end) != row$fwr4){
+      # stop(row$sequence_id, " fwr4 doesn't match")
+      #}
+      row$fwr4 <- gsub("\\.","",substr(row$sequence_alignment, row$fwr4_start, row$fwr4_end))
+      if(gsub("\\.","",substr(row$sequence_alignment, 310, 
+                              310+row$junction_length-1 + dgaps_added - dpos_del)) != row$junction){
+        if(insertion_sites == 0){
+          warning(row$sequence_id, " junction doesn't match")
+          next
+        }else{
+          warning(row$sequence_id, " junction doesn't - insertions present")
+          next
+        }
+      }else{
+        row$junction <- gsub("\\.","",substr(row$sequence_alignment, 310, 
+                                             310+row$junction_length-1 + dgaps_added - dpos_del))
+        row$junction_aa <- alakazam::translateDNA(row$junction)
+      }
+    }
+    rm_cols <- c(
+      "v_sequence_alignment", "d_sequence_alignment", "j_sequence_alignment",
+      "v_germline_alignment", "d_germline_alignment", "j_germline_alignment",
+      "v_alignment_start", "d_alignment_start", "j_alignment_start",
+      "v_alignment_end", "d_alignment_end", "j_alignment_end",
+      "v_sequence_alignment_aa", "d_sequence_alignment_aa", "j_sequence_alignment_aa",
+      "v_germline_alignment_aa", "d_germline_alignment_aa", "j_germline_alignment_aa"
+    )
+    row <- row[,!names(row) %in% rm_cols]
+    results <- bind_rows(results, row)
+  }
+  return(results)
+}
+
+# Get the MRCA sequence of a particular tree
+#
+# param clone      A row of a \link{formatClones} object
+# return The MRCA sequence of that clone
+getMRCASeq <- function(clone){
+  mrca_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
+  mrca <- clone$trees[[1]]$nodes[[mrca_node]]$sequence
+  return(mrca)
+}
+
+#' \code{updateAIRRGerm} Updates an AIRR-table to have a new germline alignment and associated germline statistics 
+#' 
+#' Uses the MRCA of a given clone as the germline alignment and updates the statistics by the associated IgBlast values
+#' 
+#' @param airr_data      the airr-table used to create the clones object
+#' @param clones   a clones object from \link{formatClones}
+#' @param igblast  the file path to igblast
+#' @param igblast_database the file path to the igblast database
+#' @param references the file path to the references to be used with igblast 
+#' @param organism the organism of the associated airr_data. Examples include "human" and "mouse"
+#' @param locus if BCR data use "Ig" if TCR data use "TR"
+#' @param outdir the directory to save intermediate files to
+#' @param nproc the number of processors to use. Default is one. 
+#' @return directory of downloaded IMGT BCR and TCR reference files
+#' 
+#' @export
+updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, references, organism, locus, outdir, nproc = 1){
+  mrcas <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+    if(clones$data[[x]]@phylo_seq != "hlsequence"){
+      value <- getMRCASeq(clones[x,])
+      if(clones$data[[x]]@phylo_seq == "sequence"){
+        seq_id <- paste0(clones$clone_id[x], "_heavy")
+        og_germ <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+                                                  airr_data$locus == "IGH"][1]
+      } else{
+        seq_id <- paste0(clones$clone_id[x], "_light")
+        og_germ <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+                                                  airr_data$locus != "IGH"][1]
+      }
+      numbers <- clones$data[[x]]@numbers
+      gaps <- dplyr::setdiff(1:max(numbers), numbers)
+      og_germ <- paste0(strsplit(og_germ, "")[[1]][-gaps], collapse = "")
+      if(nchar(og_germ) > nchar(value)){
+        diff <- nchar(og_germ) - nchar(value)
+        pad_val <- substring(og_germ, nchar(og_germ) - diff + 1, nchar(og_germ))
+        value <- paste0(value, pad_val)
+      }
+    }else{
+      value <- getMRCASeq(clones[x,])
+      restart_point <- which(diff(clones$data[[x]]@numbers) < 0) + 1
+      hnumbers <- clones$data[[x]]@numbers[1:restart_point-1]
+      lnumbers <- clones$data[[x]]@numbers[restart_point:length(clones$data[[x]]@numbers)]
+      hvalue <- substring(value, 1, length(hnumbers))
+      lvalue <- substring(value, length(hnumbers)+1, nchar(value))
+      seq_id <- c(paste0(clones$clone_id[x], "_heavy"), paste0(clones$clone_id[x], "_light"))
+
+      og_germ <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+                                                airr_data$locus == "IGH"][1]
+      gaps <- dplyr::setdiff(1:max(hnumbers), hnumbers)
+      og_germ <- paste0(strsplit(og_germ, "")[[1]][-gaps], collapse = "")
+      og_lgerm <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+                                                 airr_data$locus != "IGH"][1]
+      gaps <- dplyr::setdiff(1:max(lnumbers), lnumbers)
+      og_lgerm <- paste0(strsplit(og_lgerm, "")[[1]][-gaps], collapse = "")
+      if(nchar(og_germ) > nchar(hvalue)){
+        diff <- nchar(og_germ) - nchar(hvalue)
+        pad_val <- substring(og_germ, nchar(og_germ) - diff + 1, nchar(og_germ))
+        hvalue <- paste0(hvalue, pad_val)
+      }
+      if(nchar(og_lgerm) > nchar(lvalue)){
+        diff <- nchar(og_lgerm) - nchar(hvalue)
+        pad_val <- substring(og_lgerm, nchar(og_lgerm) - diff + 1, nchar(og_lgerm))
+        lvalue <- paste0(lvalue, pad_val)
+      }
+      value <- c(hvalue, lvalue)
+    }
+    temp <- data.frame(seq_id = seq_id,
+                       sequence = value)
+    return(temp)
+  }, mc.cores = nproc))
+  
+  sink(path.expand(file.path(outdir, "mrca_seqs.fasta")))
+  for(i in 1:nrow(mrcas)){
+    cat(paste0(">", mrcas$seq_id[i]), "\n", mrcas$sequence[i], "\n", sep = "")
+  }
+  sink()
+  
+  ig_data <- assignGenes(file.path(outdir, "mrca_seqs.fasta"),
+                         igblast = igblast,
+                         refs = igblast_database,
+                         outfile = file.path(outdir, "igblast.tsv"))
+  ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus)
+  ig_data$clone_id <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
+
+  # get the length values 
+  ig_data$v_germline_length <- ig_data$v_germline_end - ig_data$v_germline_start + 1
+  ig_data$d_germline_length <- ig_data$d_germline_end - ig_data$d_germline_start + 1
+  ig_data$j_germline_length <- ig_data$j_germline_end - ig_data$j_germline_start + 1
+  
+  # make the germline__mask column 
+  ig_data$germline_alignment_d_mask <- unlist(parallel::mclapply(1:nrow(ig_data), function(x){
+    vseq <- substring(ig_data$germline_alignment[x], 1, ig_data$v_germline_length[x])
+    jseq <- substring(ig_data$germline_alignment[x], nchar(ig_data$germline_alignment[x]) - ig_data$j_germline_length[x] + 1, 
+                      nchar(ig_data$germline_alignment[x]))
+    nseq <- paste0(rep("N", nchar(ig_data$germline_alignment[x]) - sum(nchar(vseq), nchar(jseq))),
+                    collapse = "")
+    gmask <- paste0(vseq, nseq, jseq)
+    return(gmask)
+  }, mc.cores = nproc))
+  write.table(ig_data, file = file.path(outdir, "igblast.tsv"), sep = "\t", row.names = FALSE)
+  
+  airr_data <- do.call(rbind, parallel::mclapply(1:nrow(airr_data), function(x){
+    sub <- airr_data[x,]
+    indx <- which(sub$clone_id == ig_data$clone_id & sub$locus == ig_data$locus)
+    if(length(indx) > 0){
+      sub$germline_alignment <- ig_data$germline_alignment[indx]
+      sub$germline_alignment_d_mask <- ig_data$germline_alignment_d_mask[indx]
+      sub$v_germline_start <- ig_data$v_germline_start[indx]
+      sub$v_germline_end <- ig_data$v_germline_end[indx]
+      sub$d_germline_start <- ig_data$d_germline_start[indx]
+      sub$d_germline_end <- ig_data$d_germline_end[indx]
+      sub$j_germline_start <- ig_data$j_germline_start[indx]
+      sub$j_germline_end <- ig_data$j_germline_end[indx]
+      sub$np1_length <- ig_data$np1_length[indx]
+      sub$np2_length <- ig_data$np2_length[indx]
+      sub$v_germline_length <- ig_data$v_germline_length[indx]
+      sub$d_germline_length <- ig_data$d_germline_length[indx]
+      sub$j_germline_length <- ig_data$j_germline_length[indx]
+    }
+    return(sub)
+  }, mc.cores = nproc))
+  
+  # If you want to keep airr_data's original columns and update only the relevant ones:
+  cols_to_update <- c("germline_alignment", "germline_alignment_d_mask", "v_germline_start", "v_germline_end",
+                      "d_germline_start", "d_germline_end", "j_germline_start", "j_germline_end",
+                      "np1_length", "np2_length", "v_germline_length", "d_germline_length", "j_germline_length")
+  
+  airr_data <- merge(airr_data, ig_data[, c("clone_id", "locus", cols_to_update)], 
+                  by = c("clone_id", "locus"), all.x = TRUE, suffixes = c("", ".ig"))
+  
+  for (col in cols_to_update) {
+    airr_data[[col]] <- airr_data[[paste0(col, ".ig")]]
+    airr_data[[paste0(col, ".ig")]] <- NULL
+  }
+  return(airr_data)
+}
+
 #' \code{readIMGT} read in IMGT database
 #' 
 #' Loads all reference germlines from an Immcantation-formatted IMGT database.
@@ -856,193 +1793,6 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
   return(temp)
 }
 
-# find the igblast gene lengths of a given sequence 
-findLengths <- function(data, sequence_id, clone, locus = "locus", seq = "sequence_id", 
-                        v_len = "v_germline_length", d_len = "d_germline_length",
-                        j_len = "j_germline_length", np1_len = "np1_length", 
-                        np2_len = "np2_length"){
-  v_length <- data[[v_len]][data[[seq]] == sequence_id]
-  np1_length <- data[[np1_len]][data[[seq]] == sequence_id]
-  j_length <- data[[j_len]][data[[seq]] == sequence_id]
-  if(data[[locus]][data[[seq]] == sequence_id] == "IGH"){
-    d_length <- data[[d_len]][data[[seq]] == sequence_id]
-    np2_length <- data[[np2_len]][data[[seq]] == sequence_id]
-    if(is.na(d_length)){
-      d_length <- 0
-    }
-    if(is.na(np2_length)){
-      np2_length <- 0
-    }
-  } else{
-    d_length <- NA
-    np2_length <- NA
-  }
-  temp <- data.frame(sequence_id = sequence_id, locus = data[[locus]][data[[seq]] == sequence_id],
-                     v_length = v_length, np1_length = np1_length, d_length = d_length, 
-                     np2_length = np2_length, j_length = j_length)
-  # update the lengths to take out gaps -- see numbers
-  numbers <- clone$data[[1]]@numbers
-  regions <- clone$data[[1]]@region
-  if(clone$data[[1]]@phylo_seq == "hlsequence"){
-    restart_point <- which(diff(numbers) < 0) + 1
-    if(data[[locus]][data[[seq]] == sequence_id] == "IGH"){
-      numbers <- numbers[1:restart_point-1]
-      regions <- regions[1:restart_point-1]
-    }else{
-      numbers <- numbers[restart_point:length(numbers)]
-      regions <- regions[restart_point:length(regions)]
-    }
-  }
-  gaps <- dplyr::setdiff(1:max(numbers), numbers)
-  v_length <- 1:temp$v_length
-  v_length <- length(v_length[-which(v_length %in% gaps)])
-  np1_length <- (temp$v_length + 1): (temp$np1_length + temp$v_length)
-  np1_length <- length(np1_length[!np1_length %in% gaps])
-  if(data[[locus]][data[[seq]] == sequence_id] == "IGH"){
-    d_length <- (temp$v_length + temp$np1_length + 1): (temp$d_length + temp$np1_length + temp$v_length)
-    d_length <- length(d_length[!d_length %in% gaps])
-    np2_length <- (temp$v_length + temp$np1_length + temp$d_length + 1): (temp$np2_length + 
-                                                                            temp$d_length + temp$np1_length + temp$v_length)
-    np2_length <- length(np2_length[!np2_length %in% gaps])
-    j_length <- (temp$v_length + temp$np1_length + temp$d_length + temp$np2_length + 1): 
-      (temp$j_length + temp$np2_length + temp$d_length + temp$np1_length + temp$v_length)
-    j_length <- length(j_length[!j_length %in% gaps])
-  } else{
-    j_length <- (temp$v_length + temp$np1_length + 1): (temp$j_length + temp$np1_length + temp$v_length)
-    j_length <- length(j_length[!j_length %in% gaps])
-    d_length <- NA
-    np2_length <- NA
-  }
-  temp$v_length <- v_length
-  temp$np1_length <- np1_length
-  temp$d_length <- d_length
-  temp$np2_length <- np2_length
-  temp$j_length <- j_length
-  temp$regions <- I(list(regions))
-  temp$numbers <- I(list(numbers))
-  return(temp)
-}
-
-# finds where cdr3 in in a given gene
-cdr3inGene <- function(temp){
-  regions <- temp$regions[[1]]
-  v_cdr3 <- which(regions[1:temp$v_length] == "cdr3")
-  if(temp$locus == "IGH"){
-    j_start <- sum(temp$v_length, temp$np1_length, temp$d_length, temp$np2_length)
-    j_cdr3 <- which(regions[j_start:length(regions)] == "cdr3")
-  }else{
-    j_start <- sum(temp$v_length, temp$np1_length)
-    j_cdr3 <- which(regions[j_start:length(regions)] == "cdr3")
-  }
-  temp$v_cdr3 <- I(list(v_cdr3))
-  temp$j_cdr3 <- I(list(j_cdr3))
-  return(temp)
-}
-
-# if check_genes is TRUE then this function goes through the proposed starting germline and 
-# fixes the v and j genes of said germline 
-updateGermline <- function(stats_df, uca, references, data, v_glen = "v_germline_length", 
-                           np1_length = "np1_length", d_glen = "d_germline_length",
-                           np2_length = "np2_length", j_glen = "j_germline_length",
-                           seq = "sequence_id", germ = "germline_alignment", 
-                           v_call = "v_call", j_call = "j_call", v_germline_start = "v_germline_start",
-                           v_germline_end = "v_germline_end", j_germline_start = "j_germline_start",
-                           j_germline_end = "j_germline_end", locus = "locus"){
-  v_indx <- stats_df$v_cdr3[[1]]
-  j_indx <- stats_df$j_cdr3[[1]]
-  #cg_germ <- data[[germ]][data[[seq]] == stats_df[[seq]]]
-  if(length(v_indx) == 0){
-    v_indx <- NULL
-  } else{
-    if(length(v_indx) == 1 & sum(is.na(v_indx)) == 1){
-      v_indx <- NULL
-    }
-  }
-  if(length(j_indx) == 0){
-    j_indx <- NULL
-  } else{
-    if(length(j_indx) == 1 & sum(is.na(j_indx)) == 1){
-      j_indx <- NULL
-    }
-  }
-  if(is.na(stats_df$d_length)){
-    stats_df$d_length <- 0
-  }
-  if(is.na(stats_df$np2_length)){
-    stats_df$np2_length <- 0
-  }
-  if(length(v_indx) > 0){
-    uca <- strsplit(uca, "")[[1]]
-    ref_seq <- references[[stats_df[[locus]]]]$V
-    ref_seq <- ref_seq[names(ref_seq) == stats_df[[v_call]]]
-    gap_values <- dplyr::setdiff(1:max(stats_df$numbers[[1]]), stats_df$numbers[[1]])
-    ref_seq <- strsplit(substring(ref_seq, data[[v_germline_start]][data[[seq]] == stats_df[[seq]]],
-                                  data[[v_germline_end]][data[[seq]] == stats_df[[seq]]]),
-                        "")[[1]][-gap_values]
-    v_indx <- v_indx[v_indx < length(ref_seq) + 1]
-    uca[v_indx] <- ref_seq[v_indx]
-    uca <- paste(uca, collapse = "")
-  }
-  if(length(j_indx) > 0){
-    front_uca <- substring(uca, 1, sum(stats_df$v_length, stats_df$np1_length, stats_df$d_length, 
-                                       stats_df$np2_length))
-    back_uca <- substring(uca, sum(stats_df$v_length, stats_df$np1_length, stats_df$d_length, 
-                                   stats_df$np2_length, 1), nchar(uca))
-    back_uca <- strsplit(back_uca, "")[[1]]
-    ref_seq <- references[[stats_df[[locus]]]]$J
-    ref_seq <- ref_seq[names(ref_seq) == stats_df[[j_call]]]
-    ref_seq <- strsplit(substring(ref_seq, data[[j_germline_start]][data[[seq]] == stats_df[[seq]]], 
-                                  data[[j_germline_end]][data[[seq]] == stats_df[[seq]]]), "")[[1]]
-    gap_values <- dplyr::setdiff(1:max(stats_df$numbers[[1]]), stats_df$numbers[[1]])
-    front_length <- sum(data[[v_glen]][data[[seq]] == stats_df[[seq]]],
-                        data[[np1_length]][data[[seq]] == stats_df[[seq]]],
-                        data[[d_glen]][data[[seq]] == stats_df[[seq]]],
-                        data[[np2_length]][data[[seq]] == stats_df[[seq]]])
-    if(is.na(front_length)){
-      front_length <- sum(data[[v_glen]][data[[seq]] == stats_df[[seq]]],
-                          data[[np1_length]][data[[seq]] == stats_df[[seq]]])
-    }
-    gap_values <- gap_values[gap_values > front_length]
-    if(length(gap_values) > 0){
-      ref_seq <- ref_seq[-gap_values]
-    }
-    back_uca[j_indx] <- ref_seq[j_indx]
-    uca <- paste0(front_uca, paste0(back_uca, collapse = ""))
-    j_replacements <- j_indx + nchar(front_uca)
-  } else{
-    j_replacements <- j_indx
-  }
-  temp <- data.frame(uca = uca, v_replace = I(list(v_indx)), 
-                     j_replace = I(list(j_replacements)))
-  return(temp)
-}
-
-# Finds the AA of a codon
-findCodon <- function(germ, group, indx, aa = FALSE){
-  min_val <- group[[indx]][1]
-  max_val <- group[[indx]][3]
-  if(!aa){
-    seq_val <- substring(germ, min_val, max_val)
-  } else{
-    seq_val <- alakazam::translateDNA(substring(germ, min_val, max_val)) 
-  }
-  return(seq_val)
-}
-
-# update the Tree Df based on the V/Js in the cdr3 boundary
-updateTreeDF <- function(df, sites, codons, site = "site", codon = "codon"){
-  noneffectdf <- df[!df[[site]] %in% sites,]
-  temp <- df[df[[site]] %in% sites,]
-  temp <- do.call(rbind, lapply(sites, function(x){
-    sub <- temp[temp[[site]] == x,]
-    sub <- sub[sub$codon == codons[which(sites == x)],]
-    return(sub)
-  }))
-  df_new <- rbind(noneffectdf, temp)
-  df_new <- df_new[order(df_new[[site]]),]
-  return(df_new)
-}
-
 # Prepares clones for UCA inference. 
 #
 # \code{processCloneGermline} Exports two text files that are used as inputs for 
@@ -1062,7 +1812,7 @@ updateTreeDF <- function(df, sites, codons, site = "site", codon = "codon"){
 #
 processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                  resolve_v = FALSE, resolve_j = FALSE,
-                                 all_germlines = NULL, quiet = 0, chain = chain,
+                                 all_germlines = NULL, quiet = 0, chain = "H",
                                  check_genes = FALSE, references = NULL, ...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
@@ -1357,214 +2107,570 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   # check if the V/J goes into the CDR3 region definition 
   if(check_genes){
     if(sub$data[[1]]@phylo_seq == "hlsequence"){
-      # use heavy and light_r
       heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                                   !!rlang::sym('locus') == "IGH"))
+      heavy_cons <- data[data$sequence_id == heavy_cons$cons_id,]
+      numbers <- sub$data[[1]]@numbers
+      light_numbers <- numbers[(which(diff(numbers) < 0) + 1): length(numbers)]
+      numbers <- numbers[1:(which(diff(numbers) < 0))]
+      gaps <- dplyr::setdiff(1:max(numbers), numbers)
+      uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+      for(pos in gaps){
+        if(pos <= length(uca)) {
+          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
+        }
+      }
+      uca <- paste(uca, collapse = "")
+      # update regions to be gapped
+      for(pos in gaps){
+        if(pos <= length(r)) {
+          r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
+        }
+      }
+      # find where the V/J go into the CDR3
+      ref_v <- references$IGH$V[which(names(references$IGH$V) == strsplit(heavy_cons$v_call, ",")[[1]][1])]
+      ref_v <- substring(ref_v, heavy_cons$v_germline_start, heavy_cons$v_germline_end)
+      pad_length <- nchar(uca) - nchar(heavy_cons$germline_alignment)
+      j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
+      ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
+      ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
+      # ungap them and find out the sites they are associated with 
+      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
+      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
+      if(length(j_gaps) > 0){
+        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
+        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
+      }
+      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
+                         function(i) i:min(i+2, nchar(ref_v)))
+      ref_v <- strsplit(ref_v, "")[[1]]
+      
+      # Create groups starting from the end
+      if(nchar(ref_j)%%3 == 0) {
+        # Perfect multiple of 3, normal grouping
+        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
+                           function(i) i:min(i+2, nchar(ref_j)))
+      } else{
+        # Start with incomplete group, then complete groups of 3
+        j_groups <- list()
+        j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
+        
+        # Add complete groups of 3
+        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
+        complete_groups <- lapply(start_positions,
+                                  function(i) i:min(i+2, nchar(ref_j)))
+        
+        j_groups <- c(j_groups, complete_groups)
+      }
+      ref_j <- strsplit(ref_j, "")[[1]]
+      # update the tree_df to only have the values at each site for the v gene 
+      v_cons <- (nchar(v) + 1): (nchar(v) + 3)
+      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
+        temp <- tree_df[tree_df$site == i - 1,]
+        if(i != v_con_indx){
+          if(length(v_groups[[i]]) == 3){
+            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+          } else{
+            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+            temp <- temp[startsWith(temp$codon, values), ]
+          }
+        } else{
+          if(length(v_groups[[i]]) == 3){
+            temp <- temp[
+              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                (alakazam::translateDNA(temp$codon) == "C"),]
+            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            }
+          } else{
+            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+            temp <- temp[(startsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) == "C"), ]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
+                                             length(j_groups)), ]
+      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
+      j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
+      j_con <- j_con - (j_start - 1)
+      j_con <- j_con[j_con > 0]
+      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
+        temp <- j_df[j_df$new_site == i,]
+        if(i != j_con_indx){
+          if(length(j_groups[[i]]) == 3){
+            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+            } else{
+              values <- ref_j[j_groups[[i]]]
+              values <- paste0(values[-which(values == "N")], collapse = "")
+              temp <- temp[startsWith(temp$codon, values), ]
+            }
+          } else{
+            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+            temp <- temp[endsWith(temp$codon, values), ]
+          }
+        } else{
+          if(length(j_groups[[i]]) == 3){
+            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            } else{
+              values <- ref_j[j_groups[[i]]]
+              values <- paste0(values[-which(values == "N")], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+            }
+          } else{
+            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+            temp <- temp[(endsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- j_df[, !names(j_df) == "new_site"]
+      junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+      tree_df <- rbind(v_df, junc_df, j_df)
+      tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
+        sub <- tree_df[tree_df$site == x,]
+        sub_indx <- which(sub$value == max(sub$value))[1]
+        sub$codon[sub_indx]
+      })), collapse = "")
+      v <- substring(tree_seq, 1, nchar(v))
+      test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
+      cdr3_c <- substring(mrcacdr3, 1, 3)
+      cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+      mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
+                         cdr3_fw)
+      j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      # LCs
       light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                                   !!rlang::sym('locus') != "IGH"))
-      heavy_stats <- findLengths(data, heavy_cons$cons_id, sub)
-      light_stats <- findLengths(data, light_cons$cons_id, sub)
-      heavy_stats <- cdr3inGene(heavy_stats)
-      light_stats <- cdr3inGene(light_stats)
-      # grab the v and j calls 
-      heavy_stats$v_call <- heavy_cons$v_call
-      heavy_stats$j_call <- heavy_cons$j_call
-      light_stats$v_call <- light_cons$v_call
-      light_stats$j_call <- light_cons$j_call
-      
-      heavy_germ <- updateGermline(heavy_stats, paste0(v, mrcacdr3, j), references,
-                                  data)
-      light_germ <- updateGermline(light_stats, paste0(v_light, light_cdr3, j_light),
-                                   references, data)
-      # now update the tree df to only look for the codon combos for the replaced sites 
-      # are AAs of what is there 
-      heavy_groups <- lapply(seq(1, nchar(sub$data[[1]]@germline), by = 3),
-                             function(i) i:min(i+2, nchar(sub$data[[1]]@germline)))
-      light_groups <- lapply(seq(1, nchar(sub$data[[1]]@lgermline), by = 3),
-                             function(i) i:min(i+2, nchar(sub$data[[1]]@lgermline)))
-
-      if(!is.null(heavy_germ$v_replace[[1]]) | !is.null(heavy_germ$j_replace[[1]])){
-        # find the sites that were changed
-        heavy_indices <- unlist(unique(lapply(c(heavy_germ$v_replace[[1]], heavy_germ$j_replace[[1]]), function(val) {
-          which(sapply(heavy_groups, function(g) val %in% g))})))
-        # find the AA of what should be there 
-        heavy_codon <- unlist(lapply(1:length(heavy_indices), function(x){
-          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x])
-          return(value)
-        }))
-        # if there are Xs or *s in the returned values remove those indices 
-        stop_codons <- c("TAA", "TAG", "TGA")
-        heavy_indices <- heavy_indices[!heavy_codon %in% stop_codons]
-        heavy_codon <- heavy_codon[!heavy_codon %in% stop_codons]
-        heavy_codon <- heavy_codon[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
-        heavy_indices <- heavy_indices[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
-        # remove any indices that have codons that translate to X
-        heavy_aa <- unlist(lapply(1:length(heavy_indices), function(x){
-          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x], aa= TRUE)
-          return(value)
-        }))
-        heavy_indices <- heavy_indices[heavy_aa != "X"]
-        heavy_codon[heavy_aa != "X"]
-        # update to be 0 based counting 
-        heavy_indices <- heavy_indices - 1
-        # filter down the associated df 
-        tree_df <- updateTreeDF(tree_df, heavy_indices, heavy_codon)
-        # if there is a stop codon find it and replace with what the og value was
-        germ_test <- which(strsplit(alakazam::translateDNA(heavy_germ$uca), "")[[1]] == "*")
-        if(length(germ_test) > 0){
-          change_vals <- heavy_groups[[germ_test]]
-          uca <- strsplit(heavy_germ$uca, "")[[1]]
-          og_uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
-          uca[change_vals] <- og_uca[change_vals]
-          uca <- paste(uca, collapse = "")
-          heavy_germ$uca <- uca
+      light_cons <- data[data$sequence_id == light_cons$cons_id,]
+      gaps <- dplyr::setdiff(1:max(light_numbers), light_numbers)
+      uca <- strsplit(paste0(v_light, light_cdr3, j_light), "")[[1]]
+      for(pos in gaps){
+        if(pos <= length(uca)) {
+          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
         }
-        # update the v, cdr3, and j cuts 
-        v <- substring(heavy_germ$uca, 1, nchar(v))
-        cdr3_c <- substring(mrcacdr3, 1, 3)
-        cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
-        mrcacdr3 <- paste0(cdr3_c, substring(heavy_germ$uca, nchar(v) + 4, nchar(v) + nchar(mrcacdr3)-3),
-                           cdr3_fw)
-        j <- substring(heavy_germ$uca, nchar(v) + nchar(mrcacdr3) + 1, nchar(heavy_germ$uca))
       }
-      if(!is.null(light_germ$v_replace[[1]]) | !is.null(light_germ$j_replace[[1]])){
-        light_indices <- unlist(unique(lapply(c(light_germ$v_replace[[1]], light_germ$j_replace[[1]]), function(val) {
-          which(sapply(light_groups, function(g) val %in% g))})))
-        light_codon <- unlist(lapply(1:length(light_indices), function(x){
-          value <- findAA(light_germ$uca, light_groups, light_indices[x])
-          return(value)
-        }))
-        stop_codons <- c("TAA", "TAG", "TGA")
-        light_indices <- light_indices[!light_codon %in% stop_codons]
-        light_codon <- light_codon[!lilight_codonght_aa %in% stop_codons]
-        light_codon <- light_codon[!light_indices %in% c(nchar(v_light)/3, nchar(paste0(v_light, light_cdr3))/3)]
-        light_indices <- light_indices[!light_indices %in% c(nchar(v_light)/3, nchar(paste0(v_light, light_cdr3))/3)]
-        light_aa <- unlist(lapply(1:length(light_indices), function(x){
-          value <- findCodon(light_germ$uca, light_groups, light_indices[x], aa= TRUE)
-          return(value)
-        }))
-        light_indices <- light_indices[light_aa != "X"]
-        light_codon[light_aa != "X"]
-        light_indices <- light_indices - 1
-        tree_df_light <- updateTreeDF(tree_df_light, light_indices, light_codon)
-        germ_test <- which(strsplit(alakazam::translateDNA(light_germ$uca), "")[[1]] == "*")
-        if(length(germ_test) > 0){
-          change_vals <- light_groups[[germ_test]]
-          uca <- strsplit(light_germ$uca, "")[[1]]
-          og_uca <- strsplit(paste0(v_light, light_cdr3, j_light), "")[[1]]
-          uca[change_vals] <- og_uca[change_vals]
-          uca <- paste(uca, collapse = "")
-          light_germ$uca <- uca
+      uca <- paste(uca, collapse = "")
+      # find where the V/J go into the CDR3
+      ref_v <- references[[light_cons$locus]]$V[which(names(references[[light_cons$locus]]$V) ==
+                                                        strsplit(light_cons$v_call, ",")[[1]][1])]
+      ref_v <- substring(ref_v, light_cons$v_germline_start, light_cons$v_germline_end)
+      pad_length <- nchar(uca) - nchar(light_cons$germline_alignment)
+      j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
+      ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) ==
+                                                        strsplit(light_cons$j_call, ",")[[1]][1])]
+      ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
+      # ungap them and find out the sites they are associated with 
+      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
+      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
+      if(length(j_gaps) > 0){
+        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
+        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
+      }
+      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
+                         function(i) i:min(i+2, nchar(ref_v)))
+      ref_v <- strsplit(ref_v, "")[[1]]
+      if(nchar(ref_j)%%3 == 0) {
+        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
+                           function(i) i:min(i+2, nchar(ref_j)))
+      } else{
+        j_groups <- list()
+        j_groups[[1]] <- 1:(nchar(ref_j) %% 3) 
+        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
+        complete_groups <- lapply(start_positions,
+                                  function(i) i:min(i+2, nchar(ref_j)))
+        j_groups <- c(j_groups, complete_groups)
+      }
+      ref_j <- strsplit(ref_j, "")[[1]]
+      v_cons <- (nchar(v_light) + 1): (nchar(v_light) + 3)
+      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
+        temp <- tree_df_light[tree_df_light$site == i - 1,]
+        if(length(v_con_indx) > 0){
+          if(i != v_con_indx){
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[startsWith(temp$codon, values), ]
+            }
+          } 
+        } else{
+          if(length(v_groups[[i]]) == 3){
+            temp <- temp[
+              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                (alakazam::translateDNA(temp$codon) == "C"),]
+            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            }
+          } else{
+            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+            temp <- temp[(startsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) == "C"), ]
+          }
         }
-        v_light <- substring(light_germ$uca, 1, nchar(v_light))
-        cdr3_c <- substring(light_cdr3, 1, 3)
-        cdr3_fw <- substring(light_cdr3, nchar(light_cdr3)-2, nchar(light_cdr3))
-        light_cdr3 <- paste0(cdr3_c, substring(light_germ$uca, nchar(v_light) + 4, nchar(v_light) + nchar(light_cdr3)-3),
-                             cdr3_fw)
-        j_light <- substring(light_germ$uca, nchar(v_light) + nchar(light_cdr3) + 1, nchar(light_germ$uca))
-      }
+        return(temp)
+      }))
+      j_df <- tree_df_light[tree_df_light$site %in% tail(sort(unique(tree_df_light$site)),
+                                             length(j_groups)), ]
+      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
+      j_con <- (nchar(v_light)+ nchar(light_cdr3) - 2): (nchar(v_light)+ nchar(light_cdr3))
+      j_con <- j_con - (j_start - 1)
+      j_con <- j_con[j_con > 0]
+      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
+        temp <- j_df[j_df$new_site == i,]
+        if(length(j_con_indx) > 0){
+          if(i != j_con_indx){
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[startsWith(temp$codon, values), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[endsWith(temp$codon, values), ]
+            }
+          }
+        } else{
+          if(length(j_groups[[i]]) == 3){
+            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            } else{
+              values <- ref_j[j_groups[[i]]]
+              values <- paste0(values[-which(values == "N")], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+            }
+          } else{
+            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+            temp <- temp[(endsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- j_df[, !names(j_df) == "new_site"]
+      junc_df <- tree_df_light[!tree_df_light$site %in% c(unique(v_df$site), unique(j_df$site)),]
+      tree_df_light <- rbind(v_df, junc_df, j_df)
+      tree_seq <- paste0(unlist(lapply(unique(tree_df_light$site), function(x){
+        sub <- tree_df_light[tree_df_light$site == x,]
+        sub_indx <- which(sub$value == max(sub$value))[1]
+        sub$codon[sub_indx]
+      })), collapse = "")
+      v_light <- substring(tree_seq, 1, nchar(v_light))
+      test_junc <- substring(tree_seq, nchar(v_light) + 1, nchar(v_light) + nchar(light_cdr3))
+      cdr3_c <- substring(light_cdr3, 1, 3)
+      cdr3_fw <- substring(light_cdr3, nchar(light_cdr3)-2, nchar(light_cdr3))
+      light_cdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
+                         cdr3_fw)
+      j_light <- substring(tree_seq, nchar(v_light) + nchar(light_cdr3) + 1, nchar(tree_seq))
     }else if(sub$data[[1]]@phylo_seq == "sequence"){
+      # get the cons
       heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                                   !!rlang::sym('locus') == "IGH"))
-      heavy_stats <- findLengths(data, heavy_cons$cons_id, sub)
-      heavy_stats <- cdr3inGene(heavy_stats)
-      heavy_stats$v_call <- heavy_cons$v_call
-      heavy_stats$j_call <- heavy_cons$j_call
-      heavy_germ <- updateGermline(heavy_stats, paste0(v, mrcacdr3, j), references,
-                                   data)
-      if(!is.null(heavy_germ$v_replace[[1]]) | !is.null(heavy_germ$j_replace[[1]])){
-        heavy_groups <- lapply(seq(1, nchar(sub$data[[1]]@germline), by = 3),
-                               function(i) i:min(i+2, nchar(sub$data[[1]]@germline)))
-        heavy_indices <- unlist(unique(lapply(c(heavy_germ$v_replace[[1]], heavy_germ$j_replace[[1]]), function(val) {
-          which(sapply(heavy_groups, function(g) val %in% g))})))
-        heavy_codon <- unlist(lapply(1:length(heavy_indices), function(x){
-          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x])
-          return(value)
-        }))
-        heavy_indices <- heavy_indices[!heavy_codon %in% stop_codons]
-        heavy_codon <- heavy_codon[!heavy_codon %in% stop_codons]
-        heavy_codon <- heavy_codon[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
-        heavy_indices <- heavy_indices[!heavy_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
-        heavy_aa <- unlist(lapply(1:length(heavy_indices), function(x){
-          value <- findCodon(heavy_germ$uca, heavy_groups, heavy_indices[x], aa= TRUE)
-          return(value)
-        }))
-        heavy_indices <- heavy_indices[heavy_aa != "X"]
-        heavy_codon[heavy_aa != "X"]
-        heavy_indices <- heavy_indices - 1
-        tree_df <- updateTreeDF(tree_df, heavy_indices, heavy_codon)
-        germ_test <- which(strsplit(alakazam::translateDNA(heavy_germ$uca), "")[[1]] == "*")
-        if(length(germ_test) > 0){
-          change_vals <- heavy_groups[[germ_test]]
-          uca <- strsplit(heavy_germ$uca, "")[[1]]
-          og_uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
-          uca[change_vals] <- og_uca[change_vals]
-          uca <- paste(uca, collapse = "")
-          heavy_germ$uca <- uca
+      # grab the stats from DATA
+      heavy_cons <- data[data$sequence_id == heavy_cons$cons_id,]
+      # get the GAPPED germline 
+      numbers <- sub$data[[1]]@numbers
+      gaps <- dplyr::setdiff(1:max(numbers), numbers)
+      uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+      for(pos in gaps){
+        if(pos <= length(uca)) {
+          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
         }
-        v <- substring(heavy_germ$uca, 1, nchar(v))
-        cdr3_c <- substring(mrcacdr3, 1, 3)
-        cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
-        mrcacdr3 <- paste0(cdr3_c, substring(heavy_germ$uca, nchar(v) + 4, nchar(v) + nchar(mrcacdr3)-3),
-                           cdr3_fw)
-        j <- substring(heavy_germ$uca, nchar(v) + nchar(mrcacdr3) + 1, nchar(heavy_germ$uca))
-        # save tree_df
-        tree_df <- tree_df[, !names(tree_df) == "value"]
-        write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                    quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
       }
+      uca <- paste(uca, collapse = "")
+      # update regions to be gapped
+      for(pos in gaps){
+        if(pos <= length(r)) {
+          r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
+        }
+      }
+      # find where the V/J go into the CDR3
+      ref_v <- references$IGH$V[which(names(references$IGH$V) == strsplit(heavy_cons$v_call, ",")[[1]][1])]
+      ref_v <- substring(ref_v, heavy_cons$v_germline_start, heavy_cons$v_germline_end)
+      pad_length <- nchar(uca) - nchar(heavy_cons$germline_alignment)
+      j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
+      ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
+      ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
+      # ungap them and find out the sites they are associated with 
+      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
+      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
+      if(length(j_gaps) > 0){
+        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
+        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
+      }
+      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
+                             function(i) i:min(i+2, nchar(ref_v)))
+      ref_v <- strsplit(ref_v, "")[[1]]
       
+      # Create groups starting from the end
+      if(nchar(ref_j)%%3 == 0) {
+        # Perfect multiple of 3, normal grouping
+        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
+                           function(i) i:min(i+2, nchar(ref_j)))
+      } else{
+        # Start with incomplete group, then complete groups of 3
+        j_groups <- list()
+        j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
+        
+        # Add complete groups of 3
+        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
+        complete_groups <- lapply(start_positions,
+                                  function(i) i:min(i+2, nchar(ref_j)))
+        
+        j_groups <- c(j_groups, complete_groups)
+      }
+      ref_j <- strsplit(ref_j, "")[[1]]
+      # update the tree_df to only have the values at each site for the v gene 
+      v_cons <- (nchar(v) + 1): (nchar(v) + 3)
+      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
+        temp <- tree_df[tree_df$site == i - 1,]
+        if(length(v_con_indx) > 0){
+          if(i != v_con_indx){
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[startsWith(temp$codon, values), ]
+            }
+          }
+        } else{
+          if(length(v_groups[[i]]) == 3){
+            temp <- temp[
+              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                (alakazam::translateDNA(temp$codon) == "C"),]
+            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            }
+          } else{
+            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+            temp <- temp[(startsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) == "C"), ]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
+                                                            length(j_groups)), ]
+      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
+      j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
+      j_con <- j_con - (j_start - 1)
+      j_con <- j_con[j_con > 0]
+      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
+        temp <- j_df[j_df$new_site == i,]
+        if(length(j_con_indx) > 0){
+          if(i != j_con_indx){
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[startsWith(temp$codon, values), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[endsWith(temp$codon, values), ]
+            }
+          }
+        } else{
+          if(length(j_groups[[i]]) == 3){
+            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            } else{
+              values <- ref_j[j_groups[[i]]]
+              values <- paste0(values[-which(values == "N")], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+            }
+          } else{
+            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+            temp <- temp[(endsWith(temp$codon, values)) |
+                (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- j_df[, !names(j_df) == "new_site"]
+      junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+      tree_df <- rbind(v_df, junc_df, j_df)
+      tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
+        sub <- tree_df[tree_df$site == x,]
+        sub_indx <- which(sub$value == max(sub$value))[1]
+        sub$codon[sub_indx]
+      })), collapse = "")
+      tree_df <- tree_df[, !names(tree_df) == "value"]
+      write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+      # update the starting values to reflect these changes 
+      v <- substring(tree_seq, 1, nchar(v))
+      test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
+      cdr3_c <- substring(mrcacdr3, 1, 3)
+      cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+      mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
+                         cdr3_fw)
+      j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
     } else if(sub$data[[1]]@phylo_seq == "lsequence"){
       light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                                   !!rlang::sym('locus') != "IGH"))
-      light_stats <- findLengths(data, light_cons$cons_id, sub)
-      light_stats <- cdr3inGene(light_stats)
-      light_stats$v_call <- light_cons$v_call
-      light_stats$j_call <- light_cons$j_call
-      light_germ <- updateGermline(light_stats, paste0(v, mrcacdr3, j),
-                                   references, data)
-      if(!is.null(light_germ$v_replace[[1]]) | !is.null(light_germ$j_replace[[1]])){
-        light_groups <- lapply(seq(1, nchar(sub$data[[1]]@lgermline), by = 3),
-                               function(i) i:min(i+2, nchar(sub$data[[1]]@lgermline)))
-        light_indices <- unlist(unique(lapply(c(light_germ$v_replace[[1]], light_germ$j_replace[[1]]), function(val) {
-          which(sapply(light_groups, function(g) val %in% g))})))
-        light_codon <- unlist(lapply(1:length(light_indices), function(x){
-          value <- findAA(light_germ$uca, light_groups, light_indices[x])
-          return(value)
-        }))
-        stop_codons <- c("TAA", "TAG", "TGA")
-        light_indices <- light_indices[!light_codon %in% stop_codons]
-        light_codon <- light_codon[!lilight_codonght_aa %in% stop_codons]
-        light_aa <- light_aa[!light_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
-        light_indices <- light_indices[!light_indices %in% c(nchar(v)/3, nchar(paste0(v, mrcacdr3))/3)]
-        light_aa <- unlist(lapply(1:length(light_indices), function(x){
-          value <- findCodon(light_germ$uca, light_groups, light_indices[x], aa= TRUE)
-          return(value)
-        }))
-        light_indices <- light_indices[light_aa != "X"]
-        light_codon[light_aa != "X"]
-        light_indices <- light_indices - 1
-        tree_df <- updateTreeDF(tree_df, light_indices, light_codon)
-        germ_test <- which(strsplit(alakazam::translateDNA(light_germ$uca), "")[[1]] == "*")
-        if(length(germ_test) > 0){
-          change_vals <- light_groups[[germ_test]]
-          uca <- strsplit(light_germ$uca, "")[[1]]
-          og_uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
-          uca[change_vals] <- og_uca[change_vals]
-          uca <- paste(uca, collapse = "")
-          light_germ$uca <- uca
+      light_cons <- data[data$sequence_id == light_cons$cons_id,]
+      numbers <- sub$data[[1]]@numbers
+      gaps <- dplyr::setdiff(1:max(numbers), numbers)
+      uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+      for(pos in gaps){
+        if(pos <= length(uca)) {
+          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
         }
-        v <- substring(light_germ$uca, 1, nchar(v))
-        cdr3_c <- substring(mrcacdr3, 1, 3)
-        cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
-        mrcacdr3 <- paste0(cdr3_c, substring(light_germ$uca, nchar(v) + 4, nchar(v) + nchar(mrcacdr3)-3),
-                           cdr3_fw)
-        j <- substring(light_germ$uca, nchar(v) + nchar(mrcacdr3) + 1, nchar(light_germ$uca))
-        tree_df <- tree_df[, !names(tree_df) == "value"]
-        write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                    quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
       }
-      
+      uca <- paste(uca, collapse = "")
+      for(pos in gaps){
+        if(pos <= length(r)) {
+          r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
+        }
+      }
+      ref_v <- references[[light_cons$locus]]$V[which(names(references[[light_cons$locus]]$V) == 
+                                                        strsplit(light_cons$v_call, ",")[[1]][1])]
+      ref_v <- substring(ref_v, light_cons$v_germline_start, light_cons$v_germline_end)
+      pad_length <- nchar(uca) - nchar(light_cons$germline_alignment)
+      j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
+      ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) == 
+                                                        strsplit(light_cons$j_call, ",")[[1]][1])]
+      ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
+      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
+      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
+      if(length(j_gaps) > 0){
+        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
+        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
+      }
+      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
+                         function(i) i:min(i+2, nchar(ref_v)))
+      ref_v <- strsplit(ref_v, "")[[1]]
+      if(nchar(ref_j)%%3 == 0) {
+        # Perfect multiple of 3, normal grouping
+        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
+                           function(i) i:min(i+2, nchar(ref_j)))
+      } else{
+        # Start with incomplete group, then complete groups of 3
+        j_groups <- list()
+        j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
+        
+        # Add complete groups of 3
+        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
+        complete_groups <- lapply(start_positions,
+                                  function(i) i:min(i+2, nchar(ref_j)))
+        
+        j_groups <- c(j_groups, complete_groups)
+      }
+      ref_j <- strsplit(ref_j, "")[[1]]
+      # update the tree_df to only have the values at each site for the v gene 
+      v_cons <- (nchar(v) + 1): (nchar(v) + 3)
+      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
+        temp <- tree_df[tree_df$site == i - 1,]
+        if(length(v_con_indx) > 0){
+          if(i != v_con_indx){
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[startsWith(temp$codon, values), ]
+            }
+          }
+        } else{
+          if(length(v_groups[[i]]) == 3){
+            temp <- temp[
+              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                (alakazam::translateDNA(temp$codon) == "C"),]
+            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            }
+          } else{
+            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+            temp <- temp[(startsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) == "C"), ]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
+                                             length(j_groups)), ]
+      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
+      j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
+      j_con <- j_con - (j_start - 1)
+      j_con <- j_con[j_con > 0]
+      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
+        temp <- j_df[j_df$new_site == i,]
+        if(length(j_con_indx) > 0){
+          if(i != j_con_indx ){
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[startsWith(temp$codon, values), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[endsWith(temp$codon, values), ]
+            }
+          }
+        } else{
+          if(length(j_groups[[i]]) == 3){
+            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            } else{
+              values <- ref_j[j_groups[[i]]]
+              values <- paste0(values[-which(values == "N")], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+            }
+          } else{
+            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+            temp <- temp[(endsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+          }
+        }
+        return(temp)
+      }))
+      j_df <- j_df[, !names(j_df) == "new_site"]
+      junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+      tree_df <- rbind(v_df, junc_df, j_df)
+      tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
+        sub <- tree_df[tree_df$site == x,]
+        sub_indx <- which(sub$value == max(sub$value))[1]
+        sub$codon[sub_indx]
+      })), collapse = "")
+      tree_df <- tree_df[, !names(tree_df) == "value"]
+      write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+      # update the starting values to reflect these changes 
+      v <- substring(tree_seq, 1, nchar(v))
+      test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
+      cdr3_c <- substring(mrcacdr3, 1, 3)
+      cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+      mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
+                         cdr3_fw)
+      j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
     }
   }
   # put it all together 
@@ -1581,9 +2687,6 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     file_path_junction_position <- file.path(subDir, paste("olga_junction_positions_light.txt"))
     writeLines(paste0(starting_germ, collapse = ""), con = file_path_germline)
     writeLines(paste(nchar(v_light), nchar(v_cdr3)), con = file_path_junction_position)
-    # if(!dir.exists(file.path(subDir, "sample"))){
-    #   dir.create(file.path(subDir, "sample"))
-    # }
     tree_df <- tree_df[, !names(tree_df) %in% c("value")]
     write.table(tree_df, file.path(subDir, "heavy_table.txt"), quote = FALSE,
                 sep = "\t", col.names = FALSE, row.names = FALSE)
@@ -1660,7 +2763,7 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
   
   args <- c(
     "--clone_ids", clone_ids, 
-    "--directory", dir, 
+    "--directory", path.expand(dir), 
     "--max_iters", max_iters,
     "--nproc", nproc, 
     "--id", id, 

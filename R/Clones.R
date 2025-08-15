@@ -481,7 +481,7 @@ makeAirrClone <-
     
     # Define return object
     tmp_names <- names(tmp_df)
-    if ("sequence" %in% tmp_names & seq != "sequence") {
+    if("sequence" %in% tmp_names & seq != "sequence"){
       tmp_df <- tmp_df[, tmp_names != "sequence"]
       tmp_names <- names(tmp_df)
     }
