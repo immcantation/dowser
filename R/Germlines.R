@@ -2134,6 +2134,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
       ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
       ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
+      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
       # ungap them and find out the sites they are associated with 
       ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
       j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
@@ -2168,25 +2169,34 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
       v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
         temp <- tree_df[tree_df$site == i - 1,]
-        if(i != v_con_indx){
+        if(length(v_con_indx) > 0){
+          if(i != v_con_indx){
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[startsWith(temp$codon, values), ]
+            }
+          } else{
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[
+                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                  (alakazam::translateDNA(temp$codon) == "C"),]
+              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+              }
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) == "C"), ]
+            }
+          }
+        } else{
           if(length(v_groups[[i]]) == 3){
             temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
           } else{
             values <- paste0(ref_v[v_groups[[i]]], collapse = "")
             temp <- temp[startsWith(temp$codon, values), ]
-          }
-        } else{
-          if(length(v_groups[[i]]) == 3){
-            temp <- temp[
-              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                (alakazam::translateDNA(temp$codon) == "C"),]
-            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            }
-          } else{
-            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[(startsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) == "C"), ]
           }
         }
         return(temp)
@@ -2200,7 +2210,38 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
-        if(i != j_con_indx){
+        if(length(j_con_indx) > 0){
+          if(i != j_con_indx){
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[startsWith(temp$codon, values), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[endsWith(temp$codon, values), ]
+            }
+          } else{
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[(startsWith(temp$codon, values)) |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[(endsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            }
+          }
+        } else{
           if(length(j_groups[[i]]) == 3){
             if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
               temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
@@ -2212,22 +2253,6 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
           } else{
             values <- paste0(ref_j[j_groups[[i]]], collapse = "")
             temp <- temp[endsWith(temp$codon, values), ]
-          }
-        } else{
-          if(length(j_groups[[i]]) == 3){
-            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-            } else{
-              values <- ref_j[j_groups[[i]]]
-              values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
-            }
-          } else{
-            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[(endsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
           }
         }
         return(temp)
@@ -2246,7 +2271,13 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
       mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
                          cdr3_fw)
-      j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      if(pad_length == 0){
+        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      } else{
+        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
+        j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
+      }
+      
       # LCs
       light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                                   !!rlang::sym('locus') != "IGH"))
@@ -2268,6 +2299,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) ==
                                                         strsplit(light_cons$j_call, ",")[[1]][1])]
       ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
+      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
       # ungap them and find out the sites they are associated with 
       ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
       j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
@@ -2302,19 +2334,26 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
               values <- paste0(ref_v[v_groups[[i]]], collapse = "")
               temp <- temp[startsWith(temp$codon, values), ]
             }
-          } 
+          } else{
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[
+                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                  (alakazam::translateDNA(temp$codon) == "C"),]
+              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+              }
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) == "C"), ]
+            }
+          }
         } else{
           if(length(v_groups[[i]]) == 3){
-            temp <- temp[
-              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                (alakazam::translateDNA(temp$codon) == "C"),]
-            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            }
+            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
           } else{
             values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[(startsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) == "C"), ]
+            temp <- temp[startsWith(temp$codon, values), ]
           }
         }
         return(temp)
@@ -2342,22 +2381,35 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
               values <- paste0(ref_j[j_groups[[i]]], collapse = "")
               temp <- temp[endsWith(temp$codon, values), ]
             }
+          } else{
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[(startsWith(temp$codon, values)) |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[(endsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            }
           }
         } else{
           if(length(j_groups[[i]]) == 3){
             if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
             } else{
               values <- ref_j[j_groups[[i]]]
               values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              temp <- temp[startsWith(temp$codon, values), ]
             }
           } else{
             values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[(endsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            temp <- temp[endsWith(temp$codon, values), ]
           }
         }
         return(temp)
@@ -2376,7 +2428,12 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       cdr3_fw <- substring(light_cdr3, nchar(light_cdr3)-2, nchar(light_cdr3))
       light_cdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
                          cdr3_fw)
-      j_light <- substring(tree_seq, nchar(v_light) + nchar(light_cdr3) + 1, nchar(tree_seq))
+      if(pad_length == 0){
+        j_light <- substring(tree_seq, nchar(v_light) + nchar(light_cdr3) + 1, nchar(tree_seq))
+      } else{
+        j_light <- substring(tree_seq, nchar(v_light) + nchar(light_cdr3) + 1, nchar(tree_seq)- pad_length)
+        j_light <- paste0(j_light, paste(rep("N", pad_length), collapse = ""))
+      }
     }else if(sub$data[[1]]@phylo_seq == "sequence"){
       # get the cons
       heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
@@ -2406,6 +2463,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
       ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
       ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
+      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
       # ungap them and find out the sites they are associated with 
       ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
       j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
@@ -2448,19 +2506,26 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
               values <- paste0(ref_v[v_groups[[i]]], collapse = "")
               temp <- temp[startsWith(temp$codon, values), ]
             }
+          } else{
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[
+                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                  (alakazam::translateDNA(temp$codon) == "C"),]
+              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+              }
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) == "C"), ]
+            }
           }
         } else{
           if(length(v_groups[[i]]) == 3){
-            temp <- temp[
-              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                (alakazam::translateDNA(temp$codon) == "C"),]
-            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            }
+            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
           } else{
             values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[(startsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) == "C"), ]
+            temp <- temp[startsWith(temp$codon, values), ]
           }
         }
         return(temp)
@@ -2488,28 +2553,43 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
               values <- paste0(ref_j[j_groups[[i]]], collapse = "")
               temp <- temp[endsWith(temp$codon, values), ]
             }
+          } else{
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[(startsWith(temp$codon, values)) |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[(endsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            }
           }
         } else{
           if(length(j_groups[[i]]) == 3){
             if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
             } else{
               values <- ref_j[j_groups[[i]]]
               values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              temp <- temp[startsWith(temp$codon, values), ]
             }
           } else{
             values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[(endsWith(temp$codon, values)) |
-                (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            temp <- temp[endsWith(temp$codon, values), ]
           }
         }
         return(temp)
       }))
       j_df <- j_df[, !names(j_df) == "new_site"]
       junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+      write.table(tree_df, file.path(subDir, paste0("original_", clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
       tree_df <- rbind(v_df, junc_df, j_df)
       tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
         sub <- tree_df[tree_df$site == x,]
@@ -2526,7 +2606,12 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
       mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
                          cdr3_fw)
-      j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      if(pad_length == 0){
+        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      } else{
+        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
+        j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
+      }
     } else if(sub$data[[1]]@phylo_seq == "lsequence"){
       light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                                   !!rlang::sym('locus') != "IGH"))
@@ -2553,6 +2638,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) == 
                                                         strsplit(light_cons$j_call, ",")[[1]][1])]
       ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
+      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
       ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
       j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
       if(length(j_gaps) > 0){
@@ -2592,19 +2678,26 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
               values <- paste0(ref_v[v_groups[[i]]], collapse = "")
               temp <- temp[startsWith(temp$codon, values), ]
             }
+          } else{
+            if(length(v_groups[[i]]) == 3){
+              temp <- temp[
+                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+                  (alakazam::translateDNA(temp$codon) == "C"),]
+              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+              }
+            } else{
+              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+              temp <- temp[(startsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) == "C"), ]
+            }
           }
         } else{
           if(length(v_groups[[i]]) == 3){
-            temp <- temp[
-              (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                (alakazam::translateDNA(temp$codon) == "C"),]
-            if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            }
+            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
           } else{
             values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[(startsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) == "C"), ]
+            temp <- temp[startsWith(temp$codon, values), ]
           }
         }
         return(temp)
@@ -2619,7 +2712,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
-          if(i != j_con_indx ){
+          if(i != j_con_indx){
             if(length(j_groups[[i]]) == 3){
               if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
                 temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
@@ -2632,28 +2725,43 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
               values <- paste0(ref_j[j_groups[[i]]], collapse = "")
               temp <- temp[endsWith(temp$codon, values), ]
             }
+          } else{
+            if(length(j_groups[[i]]) == 3){
+              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              } else{
+                values <- ref_j[j_groups[[i]]]
+                values <- paste0(values[-which(values == "N")], collapse = "")
+                temp <- temp[(startsWith(temp$codon, values)) |
+                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              }
+            } else{
+              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+              temp <- temp[(endsWith(temp$codon, values)) |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            }
           }
         } else{
           if(length(j_groups[[i]]) == 3){
             if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
             } else{
               values <- ref_j[j_groups[[i]]]
               values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+              temp <- temp[startsWith(temp$codon, values), ]
             }
           } else{
             values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[(endsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            temp <- temp[endsWith(temp$codon, values), ]
           }
         }
         return(temp)
       }))
       j_df <- j_df[, !names(j_df) == "new_site"]
       junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+      write.table(tree_df, file.path(subDir, paste0("original_", clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
       tree_df <- rbind(v_df, junc_df, j_df)
       tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
         sub <- tree_df[tree_df$site == x,]
@@ -2670,7 +2778,12 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
       mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
                          cdr3_fw)
-      j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      if(pad_length == 0){
+        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+      } else{
+        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
+        j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
+      }
     }
   }
   # put it all together 
