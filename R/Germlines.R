@@ -2205,9 +2205,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                              length(j_groups)), ]
       j_df$new_site <- j_df$site - (min(j_df$site) - 1)
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      j_con <- j_con - (j_start - 1)
-      j_con <- j_con[j_con > 0]
-      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+      j_groups_num <- lapply(j_groups, function(x) x + offset)
+      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
@@ -2362,9 +2362,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                              length(j_groups)), ]
       j_df$new_site <- j_df$site - (min(j_df$site) - 1)
       j_con <- (nchar(v_light)+ nchar(light_cdr3) - 2): (nchar(v_light)+ nchar(light_cdr3))
-      j_con <- j_con - (j_start - 1)
-      j_con <- j_con[j_con > 0]
-      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+      j_groups_num <- lapply(j_groups, function(x) x + offset)
+      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
@@ -2534,9 +2534,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                                             length(j_groups)), ]
       j_df$new_site <- j_df$site - (min(j_df$site) - 1)
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      j_con <- j_con - (j_start - 1)
-      j_con <- j_con[j_con > 0]
-      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+      j_groups_num <- lapply(j_groups, function(x) x + offset)
+      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
@@ -2706,9 +2706,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                              length(j_groups)), ]
       j_df$new_site <- j_df$site - (min(j_df$site) - 1)
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      j_con <- j_con - (j_start - 1)
-      j_con <- j_con[j_con > 0]
-      j_con_indx <- which(sapply(j_groups, function(x) length(x) == length(j_con) && all(x == j_con)))
+      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+      j_groups_num <- lapply(j_groups, function(x) x + offset)
+      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
