@@ -2130,7 +2130,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       # find where the V/J go into the CDR3
       ref_v <- references$IGH$V[which(names(references$IGH$V) == strsplit(heavy_cons$v_call, ",")[[1]][1])]
       ref_v <- substring(ref_v, heavy_cons$v_germline_start, heavy_cons$v_germline_end)
-      pad_length <- nchar(uca) - nchar(heavy_cons$germline_alignment)
+      pad_length <- sum(strsplit(substring(sub$data[[1]]@germline, (nchar(sub$data[[1]]@germline)-2),
+                                           (nchar(sub$data[[1]]@germline))), "")[[1]] == "N")
       j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
       ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
       ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
@@ -2294,7 +2295,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_v <- references[[light_cons$locus]]$V[which(names(references[[light_cons$locus]]$V) ==
                                                         strsplit(light_cons$v_call, ",")[[1]][1])]
       ref_v <- substring(ref_v, light_cons$v_germline_start, light_cons$v_germline_end)
-      pad_length <- nchar(uca) - nchar(light_cons$germline_alignment)
+      pad_length <- sum(strsplit(substring(sub$data[[1]]@lgermline, (nchar(sub$data[[1]]@lgermline)-2),
+                                           (nchar(sub$data[[1]]@lgermline))), "")[[1]] == "N")
       j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
       ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) ==
                                                         strsplit(light_cons$j_call, ",")[[1]][1])]
@@ -2362,7 +2364,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                              length(j_groups)), ]
       j_df$new_site <- j_df$site - (min(j_df$site) - 1)
       j_con <- (nchar(v_light)+ nchar(light_cdr3) - 2): (nchar(v_light)+ nchar(light_cdr3))
-      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+      offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
       j_groups_num <- lapply(j_groups, function(x) x + offset)
       j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
@@ -2459,7 +2461,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       # find where the V/J go into the CDR3
       ref_v <- references$IGH$V[which(names(references$IGH$V) == strsplit(heavy_cons$v_call, ",")[[1]][1])]
       ref_v <- substring(ref_v, heavy_cons$v_germline_start, heavy_cons$v_germline_end)
-      pad_length <- nchar(uca) - nchar(heavy_cons$germline_alignment)
+      pad_length <- sum(strsplit(substring(sub$data[[1]]@germline, (nchar(sub$data[[1]]@germline)-2),
+                                           (nchar(sub$data[[1]]@germline))), "")[[1]] == "N")
       j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
       ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
       ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
@@ -2633,7 +2636,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_v <- references[[light_cons$locus]]$V[which(names(references[[light_cons$locus]]$V) == 
                                                         strsplit(light_cons$v_call, ",")[[1]][1])]
       ref_v <- substring(ref_v, light_cons$v_germline_start, light_cons$v_germline_end)
-      pad_length <- nchar(uca) - nchar(light_cons$germline_alignment)
+      pad_length <- sum(strsplit(substring(sub$data[[1]]@lgermline, (nchar(sub$data[[1]]@lgermline)-2),
+                                           (nchar(sub$data[[1]]@lgermline))), "")[[1]] == "N")
       j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
       ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) == 
                                                         strsplit(light_cons$j_call, ",")[[1]][1])]
@@ -2706,7 +2710,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                              length(j_groups)), ]
       j_df$new_site <- j_df$site - (min(j_df$site) - 1)
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+      offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
       j_groups_num <- lapply(j_groups, function(x) x + offset)
       j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
@@ -3533,8 +3537,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     stop("check_genes cannot be run without references. Pass a references object using references =",
          "References need to be read in using dowser::readIMGT()")
   }
-  
-  # make the tree_specs value 
+
   tree_specs <- paste0(
     if (is.null(exec)) "NULL" else exec, ";",
     if (is.null(optimize)) "NULL" else optimize, ";",
@@ -3543,7 +3546,6 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     if (is.null(omega)) "NULL" else omega
   )
   
-  # subsample the clones 
   if(sampling_method == "random"){
     clones <- sampleClones(clones, size = subsample_size)
   } else{
@@ -3621,20 +3623,17 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   if(quiet > 0){
     print("running UCA analysis")
   }
-  #clone_ids_str <- paste(unique(clones$clone_id), collapse = ",")
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
            uca_script = uca_script, python = python, max_iters = max_iters, nproc = nproc,
            id = id, quiet = quiet, method = method, tree_specs = tree_specs, rscript = rscript, 
            clone = clone)
-  
-  # read in the clones to make the base clones object again with the UCA in the data table
+
   if(quiet > 0){
     print("updating clones")
   }
   clones <- updateClone(clones, dir, id, nproc)
-  
-  # unlink if desired 
+
   unlink(rm_dir,recursive=TRUE)
   return(clones)
 }
