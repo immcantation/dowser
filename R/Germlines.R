@@ -1803,7 +1803,7 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
 # tree_df is the the codon table 
 # subDir is where things should be saved
 # chain is used to indicate heavy chain ("H") or light chain ("L")
-checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir, clone_ids, chain = "H"){
+checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir, clone_ids, r, chain = "H"){
   if(chain == "H"){
     cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
                                           !!rlang::sym('locus') == "IGH"))
@@ -2345,10 +2345,10 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     if(sub$data[[1]]@phylo_seq == "hlsequence"){
        heavy_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
                                    j = j, references = references, tree_df = tree_df,
-                                   subDir = subDir, clone_ids = clone_ids, chain = "H")
+                                   subDir = subDir, clone_ids = clone_ids, chain = "H", r = heavy_r)
        light_vals <- checkGenesUCA(sub = sub, data = data, v = v_light, mrcacdr3 = light_cdr3,
                                    j = j_light, references = references, tree_df = tree_df_light,
-                                   subDir = subDir, clone_ids = clone_ids, chain = "L")
+                                   subDir = subDir, clone_ids = clone_ids, chain = "L", r = light_r)
        v <- heavy_vals$v
        mrcacdr3 <- heavy_vals$cdr3
        j <- heavy_vals$j
@@ -2358,14 +2358,14 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     }else if(sub$data[[1]]@phylo_seq == "sequence"){
       heavy_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
                                   j = j, references = references, tree_df = tree_df,
-                                  subDir = subDir, clone_ids = clone_ids, chain = "H")
+                                  subDir = subDir, clone_ids = clone_ids, chain = "H", r = r)
       v <- heavy_vals$v
       mrcacdr3 <- heavy_vals$cdr3
       j <- heavy_vals$j
     } else if(sub$data[[1]]@phylo_seq == "lsequence"){
       light_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
                                   j = j, references = references, tree_df = tree_df,
-                                  subDir = subDir, clone_ids = clone_ids, chain = "L")
+                                  subDir = subDir, clone_ids = clone_ids, chain = "L", r = r)
       v <- light_vals$v
       mrcacdr3 <- light_vals$cdr3
       j <- light_vals$j
