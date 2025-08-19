@@ -1793,6 +1793,242 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
   return(temp)
 }
 
+# checkGenesUCA is what is run if check_genes = TRUE in getTreesAndUCAs
+# sub is an clones object for only 1 clone
+# data is the airr data used to formatclones
+# v is a string for the v gene
+# mracdr3 is a string of the junction (conserved site to conserved site)
+# j is a string for the j gene 
+# references is the readIMGT output 
+# tree_df is the the codon table 
+# subDir is where things should be saved
+# chain is used to indicate heavy chain ("H") or light chain ("L")
+checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir, clone_ids, chain = "H"){
+  if(chain == "H"){
+    cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                          !!rlang::sym('locus') == "IGH"))
+  } else{
+    cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                          !!rlang::sym('locus') != "IGH"))
+  }
+  cons <- data[data$sequence_id == cons$cons_id,]
+  if(sub$data[[1]]@phylo_seq == "hlsequence"){
+    numbers <- sub$data[[1]]@numbers
+    restart_point <- which(diff(numbers) < 0) + 1
+    if(chain == "H"){
+      numbers <- numbers[1:restart_point - 1]
+    } else{
+      numbers <- numbers[restart_point: length(numbers)]
+    }
+  }else{
+    numbers <- sub$data[[1]]@numbers
+  }
+  gaps <- dplyr::setdiff(1:max(numbers), numbers)
+  uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
+  for(pos in gaps){
+    if(pos <= length(uca)) {
+      uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
+    }
+  }
+  uca <- paste(uca, collapse = "")
+  for(pos in gaps){
+    if(pos <= length(r)) {
+      r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
+    }
+  }
+  ref_v <- references[[cons$locus]]$V[which(names(references[[cons$locus]]$V) == 
+                                              strsplit(cons$v_call, ",")[[1]][1])]
+  ref_v <- substring(ref_v, cons$v_germline_start, cons$v_germline_end)
+  if(chain == "L" | sub$data[[1]]@phylo_seq == "lsequence"){
+    pad_length <- sum(strsplit(substring(sub$data[[1]]@lgermline, (nchar(sub$data[[1]]@lgermline)-2),
+                                         (nchar(sub$data[[1]]@lgermline))), "")[[1]] == "N")
+  } else{
+    pad_length <- sum(strsplit(substring(sub$data[[1]]@germline, (nchar(sub$data[[1]]@germline)-2),
+                                         (nchar(sub$data[[1]]@germline))), "")[[1]] == "N")
+  }
+  j_start <- nchar(uca) - cons$j_germline_length - pad_length + 1
+  ref_j <- references[[cons$locus]]$J[which(names(references[[cons$locus]]$J) == 
+                                              strsplit(cons$j_call, ",")[[1]][1])]
+  # do a check if nchar(germline alignment) is > sum(igblast stats) 
+  # if greater add to j length 
+  if(is.na(cons$d_germline_length)){
+    cons$d_germline_length <- 0 
+  } 
+  if(is.na(cons$np2_length)){
+    cons$np2_length <- 0 
+  }
+  igblast_len <- sum(cons$v_germline_length, cons$np1_length,
+                     cons$d_germline_length, cons$np2_length,
+                     cons$j_germline_length)
+  if(igblast_len < nchar(cons$germline_alignment)){
+    ig_diff <- nchar(cons$germline_alignment) - igblast_len
+    cons$j_germline_length <- cons$j_germline_length + ig_diff
+    cons$j_germline_end <- cons$j_germline_end + ig_diff
+  }
+  ref_j <- substring(ref_j, cons$j_germline_start, cons$j_germline_end)
+  ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
+  ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
+  j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
+  
+  if(length(j_gaps) > 0){
+    j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
+    ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
+  }
+  v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
+                     function(i) i:min(i+2, nchar(ref_v)))
+  ref_v <- strsplit(ref_v, "")[[1]]
+  if(nchar(ref_j)%%3 == 0) {
+    # Perfect multiple of 3, normal grouping
+    j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
+                       function(i) i:min(i+2, nchar(ref_j)))
+  } else{
+    # Start with incomplete group, then complete groups of 3
+    j_groups <- list()
+    j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
+    
+    # Add complete groups of 3
+    start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
+    complete_groups <- lapply(start_positions,
+                              function(i) i:min(i+2, nchar(ref_j)))
+    
+    j_groups <- c(j_groups, complete_groups)
+  }
+  ref_j <- strsplit(ref_j, "")[[1]]
+  # update the tree_df to only have the values at each site for the v gene 
+  v_cons <- (nchar(v) + 1): (nchar(v) + 3)
+  v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
+  v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
+    temp <- tree_df[tree_df$site == i - 1,]
+    if(length(v_con_indx) > 0){
+      if(i != v_con_indx){
+        if(length(v_groups[[i]]) == 3){
+          temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+        } else{
+          values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+          temp <- temp[startsWith(temp$codon, values), ]
+        }
+      } else{
+        if(length(v_groups[[i]]) == 3){
+          temp <- temp[
+            (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+              (alakazam::translateDNA(temp$codon) == "C"),]
+          if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+          }
+        } else{
+          values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+          temp <- temp[(startsWith(temp$codon, values)) |
+                         (alakazam::translateDNA(temp$codon) == "C"), ]
+        }
+      }
+    } else{
+      if(length(v_groups[[i]]) == 3){
+        temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+      } else{
+        values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+        temp <- temp[startsWith(temp$codon, values), ]
+      }
+    }
+    return(temp)
+  }))
+  j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
+                                         length(j_groups)), ]
+  j_df$new_site <- j_df$site - (min(j_df$site) - 1)
+  j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
+  if(chain == "L" | sub$data[[1]]@phylo_seq == "lsequence"){
+    offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
+  } else{
+    offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
+  }
+  j_groups_num <- lapply(j_groups, function(x) x + offset)
+  j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
+  j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
+    temp <- j_df[j_df$new_site == i,]
+    if(length(j_con_indx) > 0){
+      if(i != j_con_indx){
+        if(length(j_groups[[i]]) == 3){
+          if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+            if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+            }
+          } else{
+            values <- ref_j[j_groups[[i]]]
+            values <- paste0(values[-which(values == "N")], collapse = "")
+            temp <- temp[startsWith(temp$codon, values), ]
+          }
+        } else{
+          values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+          temp <- temp[endsWith(temp$codon, values), ]
+        }
+      } else{
+        if(length(j_groups[[i]]) == 3){
+          if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+            if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+            } else{
+              temp <- temp[alakazam::translateDNA(temp$codon) %in% c("F", "W"),]
+            }
+          } else{
+            values <- ref_j[j_groups[[i]]]
+            values <- paste0(values[-which(values == "N")], collapse = "")
+            temp <- temp[(startsWith(temp$codon, values)) |
+                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+          }
+        } else{
+          values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+          temp <- temp[(endsWith(temp$codon, values)) |
+                         (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+        }
+      }
+    } else{
+      if(length(j_groups[[i]]) == 3){
+        if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+          temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+        } else{
+          values <- ref_j[j_groups[[i]]]
+          values <- paste0(values[-which(values == "N")], collapse = "")
+          temp <- temp[startsWith(temp$codon, values), ]
+        }
+      } else{
+        values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+        temp <- temp[endsWith(temp$codon, values), ]
+      }
+    }
+    return(temp)
+  }))
+  j_df <- j_df[, !names(j_df) == "new_site"]
+  junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+  write.table(tree_df, file.path(subDir, paste0("original_", clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+              quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+  tree_df <- rbind(v_df, junc_df, j_df)
+  tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
+    sub <- tree_df[tree_df$site == x,]
+    sub_indx <- which(sub$value == max(sub$value))[1]
+    sub$codon[sub_indx]
+  })), collapse = "")
+  tree_df <- tree_df[, !names(tree_df) == "value"]
+  if(sub$data[[1]]@phylo_seq != "hlsequence"){
+    write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+  }
+  # update the starting values to reflect these changes 
+  v <- substring(tree_seq, 1, nchar(v))
+  test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
+  cdr3_c <- substring(mrcacdr3, 1, 3)
+  cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
+  mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
+                     cdr3_fw)
+  if(pad_length == 0){
+    j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
+  } else{
+    j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
+    j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
+  }
+  temp <- data.frame(v = v, j = j, cdr3 = mrcacdr3)
+  return(temp)
+}
+
 # Prepares clones for UCA inference. 
 #
 # \code{processCloneGermline} Exports two text files that are used as inputs for 
@@ -2107,709 +2343,32 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   # check if the V/J goes into the CDR3 region definition 
   if(check_genes){
     if(sub$data[[1]]@phylo_seq == "hlsequence"){
-      heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                                  !!rlang::sym('locus') == "IGH"))
-      heavy_cons <- data[data$sequence_id == heavy_cons$cons_id,]
-      numbers <- sub$data[[1]]@numbers
-      light_numbers <- numbers[(which(diff(numbers) < 0) + 1): length(numbers)]
-      numbers <- numbers[1:(which(diff(numbers) < 0))]
-      gaps <- dplyr::setdiff(1:max(numbers), numbers)
-      uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
-      for(pos in gaps){
-        if(pos <= length(uca)) {
-          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
-        }
-      }
-      uca <- paste(uca, collapse = "")
-      # update regions to be gapped
-      for(pos in gaps){
-        if(pos <= length(r)) {
-          r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
-        }
-      }
-      # find where the V/J go into the CDR3
-      ref_v <- references$IGH$V[which(names(references$IGH$V) == strsplit(heavy_cons$v_call, ",")[[1]][1])]
-      ref_v <- substring(ref_v, heavy_cons$v_germline_start, heavy_cons$v_germline_end)
-      pad_length <- sum(strsplit(substring(sub$data[[1]]@germline, (nchar(sub$data[[1]]@germline)-2),
-                                           (nchar(sub$data[[1]]@germline))), "")[[1]] == "N")
-      j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
-      ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
-      ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
-      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
-      # ungap them and find out the sites they are associated with 
-      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
-      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
-      if(length(j_gaps) > 0){
-        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
-        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
-      }
-      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
-                         function(i) i:min(i+2, nchar(ref_v)))
-      ref_v <- strsplit(ref_v, "")[[1]]
-      
-      # Create groups starting from the end
-      if(nchar(ref_j)%%3 == 0) {
-        # Perfect multiple of 3, normal grouping
-        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
-                           function(i) i:min(i+2, nchar(ref_j)))
-      } else{
-        # Start with incomplete group, then complete groups of 3
-        j_groups <- list()
-        j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
-        
-        # Add complete groups of 3
-        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
-        complete_groups <- lapply(start_positions,
-                                  function(i) i:min(i+2, nchar(ref_j)))
-        
-        j_groups <- c(j_groups, complete_groups)
-      }
-      ref_j <- strsplit(ref_j, "")[[1]]
-      # update the tree_df to only have the values at each site for the v gene 
-      v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
-      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
-        temp <- tree_df[tree_df$site == i - 1,]
-        if(length(v_con_indx) > 0){
-          if(i != v_con_indx){
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[
-                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                  (alakazam::translateDNA(temp$codon) == "C"),]
-              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-              }
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) == "C"), ]
-            }
-          }
-        } else{
-          if(length(v_groups[[i]]) == 3){
-            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-          } else{
-            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[startsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
-                                             length(j_groups)), ]
-      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
-      j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
-      j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
-      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
-        temp <- j_df[j_df$new_site == i,]
-        if(length(j_con_indx) > 0){
-          if(i != j_con_indx){
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[startsWith(temp$codon, values), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[endsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[(startsWith(temp$codon, values)) |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[(endsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-            }
-          }
-        } else{
-          if(length(j_groups[[i]]) == 3){
-            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-            } else{
-              values <- ref_j[j_groups[[i]]]
-              values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[endsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- j_df[, !names(j_df) == "new_site"]
-      junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
-      tree_df <- rbind(v_df, junc_df, j_df)
-      tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
-        sub <- tree_df[tree_df$site == x,]
-        sub_indx <- which(sub$value == max(sub$value))[1]
-        sub$codon[sub_indx]
-      })), collapse = "")
-      v <- substring(tree_seq, 1, nchar(v))
-      test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
-      cdr3_c <- substring(mrcacdr3, 1, 3)
-      cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
-      mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
-                         cdr3_fw)
-      if(pad_length == 0){
-        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
-      } else{
-        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
-        j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
-      }
-      
-      # LCs
-      light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                                  !!rlang::sym('locus') != "IGH"))
-      light_cons <- data[data$sequence_id == light_cons$cons_id,]
-      gaps <- dplyr::setdiff(1:max(light_numbers), light_numbers)
-      uca <- strsplit(paste0(v_light, light_cdr3, j_light), "")[[1]]
-      for(pos in gaps){
-        if(pos <= length(uca)) {
-          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
-        }
-      }
-      uca <- paste(uca, collapse = "")
-      # find where the V/J go into the CDR3
-      ref_v <- references[[light_cons$locus]]$V[which(names(references[[light_cons$locus]]$V) ==
-                                                        strsplit(light_cons$v_call, ",")[[1]][1])]
-      ref_v <- substring(ref_v, light_cons$v_germline_start, light_cons$v_germline_end)
-      pad_length <- sum(strsplit(substring(sub$data[[1]]@lgermline, (nchar(sub$data[[1]]@lgermline)-2),
-                                           (nchar(sub$data[[1]]@lgermline))), "")[[1]] == "N")
-      j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
-      ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) ==
-                                                        strsplit(light_cons$j_call, ",")[[1]][1])]
-      ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
-      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
-      # ungap them and find out the sites they are associated with 
-      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
-      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
-      if(length(j_gaps) > 0){
-        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
-        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
-      }
-      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
-                         function(i) i:min(i+2, nchar(ref_v)))
-      ref_v <- strsplit(ref_v, "")[[1]]
-      if(nchar(ref_j)%%3 == 0) {
-        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
-                           function(i) i:min(i+2, nchar(ref_j)))
-      } else{
-        j_groups <- list()
-        j_groups[[1]] <- 1:(nchar(ref_j) %% 3) 
-        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
-        complete_groups <- lapply(start_positions,
-                                  function(i) i:min(i+2, nchar(ref_j)))
-        j_groups <- c(j_groups, complete_groups)
-      }
-      ref_j <- strsplit(ref_j, "")[[1]]
-      v_cons <- (nchar(v_light) + 1): (nchar(v_light) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
-      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
-        temp <- tree_df_light[tree_df_light$site == i - 1,]
-        if(length(v_con_indx) > 0){
-          if(i != v_con_indx){
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[
-                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                  (alakazam::translateDNA(temp$codon) == "C"),]
-              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-              }
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) == "C"), ]
-            }
-          }
-        } else{
-          if(length(v_groups[[i]]) == 3){
-            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-          } else{
-            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[startsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- tree_df_light[tree_df_light$site %in% tail(sort(unique(tree_df_light$site)),
-                                             length(j_groups)), ]
-      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
-      j_con <- (nchar(v_light)+ nchar(light_cdr3) - 2): (nchar(v_light)+ nchar(light_cdr3))
-      offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
-      j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
-      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
-        temp <- j_df[j_df$new_site == i,]
-        if(length(j_con_indx) > 0){
-          if(i != j_con_indx){
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[startsWith(temp$codon, values), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[endsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[(startsWith(temp$codon, values)) |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[(endsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-            }
-          }
-        } else{
-          if(length(j_groups[[i]]) == 3){
-            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-            } else{
-              values <- ref_j[j_groups[[i]]]
-              values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[endsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- j_df[, !names(j_df) == "new_site"]
-      junc_df <- tree_df_light[!tree_df_light$site %in% c(unique(v_df$site), unique(j_df$site)),]
-      tree_df_light <- rbind(v_df, junc_df, j_df)
-      tree_seq <- paste0(unlist(lapply(unique(tree_df_light$site), function(x){
-        sub <- tree_df_light[tree_df_light$site == x,]
-        sub_indx <- which(sub$value == max(sub$value))[1]
-        sub$codon[sub_indx]
-      })), collapse = "")
-      v_light <- substring(tree_seq, 1, nchar(v_light))
-      test_junc <- substring(tree_seq, nchar(v_light) + 1, nchar(v_light) + nchar(light_cdr3))
-      cdr3_c <- substring(light_cdr3, 1, 3)
-      cdr3_fw <- substring(light_cdr3, nchar(light_cdr3)-2, nchar(light_cdr3))
-      light_cdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
-                         cdr3_fw)
-      if(pad_length == 0){
-        j_light <- substring(tree_seq, nchar(v_light) + nchar(light_cdr3) + 1, nchar(tree_seq))
-      } else{
-        j_light <- substring(tree_seq, nchar(v_light) + nchar(light_cdr3) + 1, nchar(tree_seq)- pad_length)
-        j_light <- paste0(j_light, paste(rep("N", pad_length), collapse = ""))
-      }
+       heavy_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
+                                   j = j, references = references, tree_df = tree_df,
+                                   subDir = subDir, clone_ids = clone_ids, chain = "H")
+       light_vals <- checkGenesUCA(sub = sub, data = data, v = v_light, mrcacdr3 = light_cdr3,
+                                   j = j_light, references = references, tree_df = tree_df_light,
+                                   subDir = subDir, clone_ids = clone_ids, chain = "L")
+       v <- heavy_vals$v
+       mrcacdr3 <- heavy_vals$cdr3
+       j <- heavy_vals$j
+       v_light <- light_vals$v
+       light_cdr3 <- light_vals$cdr3
+       j_light <- light_vals$j
     }else if(sub$data[[1]]@phylo_seq == "sequence"){
-      # get the cons
-      heavy_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                                  !!rlang::sym('locus') == "IGH"))
-      # grab the stats from DATA
-      heavy_cons <- data[data$sequence_id == heavy_cons$cons_id,]
-      # get the GAPPED germline 
-      numbers <- sub$data[[1]]@numbers
-      gaps <- dplyr::setdiff(1:max(numbers), numbers)
-      uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
-      for(pos in gaps){
-        if(pos <= length(uca)) {
-          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
-        }
-      }
-      uca <- paste(uca, collapse = "")
-      # update regions to be gapped
-      for(pos in gaps){
-        if(pos <= length(r)) {
-          r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
-        }
-      }
-      # find where the V/J go into the CDR3
-      ref_v <- references$IGH$V[which(names(references$IGH$V) == strsplit(heavy_cons$v_call, ",")[[1]][1])]
-      ref_v <- substring(ref_v, heavy_cons$v_germline_start, heavy_cons$v_germline_end)
-      pad_length <- sum(strsplit(substring(sub$data[[1]]@germline, (nchar(sub$data[[1]]@germline)-2),
-                                           (nchar(sub$data[[1]]@germline))), "")[[1]] == "N")
-      j_start <- nchar(uca) - heavy_cons$j_germline_length - pad_length + 1
-      ref_j <- references$IGH$J[which(names(references$IGH$J) == strsplit(heavy_cons$j_call, ",")[[1]][1])]
-      ref_j <- substring(ref_j, heavy_cons$j_germline_start, heavy_cons$j_germline_end)
-      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
-      # ungap them and find out the sites they are associated with 
-      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
-      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
-      if(length(j_gaps) > 0){
-        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
-        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
-      }
-      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
-                             function(i) i:min(i+2, nchar(ref_v)))
-      ref_v <- strsplit(ref_v, "")[[1]]
-      
-      # Create groups starting from the end
-      if(nchar(ref_j)%%3 == 0) {
-        # Perfect multiple of 3, normal grouping
-        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
-                           function(i) i:min(i+2, nchar(ref_j)))
-      } else{
-        # Start with incomplete group, then complete groups of 3
-        j_groups <- list()
-        j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
-        
-        # Add complete groups of 3
-        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
-        complete_groups <- lapply(start_positions,
-                                  function(i) i:min(i+2, nchar(ref_j)))
-        
-        j_groups <- c(j_groups, complete_groups)
-      }
-      ref_j <- strsplit(ref_j, "")[[1]]
-      # update the tree_df to only have the values at each site for the v gene 
-      v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
-      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
-        temp <- tree_df[tree_df$site == i - 1,]
-        if(length(v_con_indx) > 0){
-          if(i != v_con_indx){
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[
-                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                  (alakazam::translateDNA(temp$codon) == "C"),]
-              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-              }
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) == "C"), ]
-            }
-          }
-        } else{
-          if(length(v_groups[[i]]) == 3){
-            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-          } else{
-            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[startsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
-                                                            length(j_groups)), ]
-      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
-      j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
-      j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
-      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
-        temp <- j_df[j_df$new_site == i,]
-        if(length(j_con_indx) > 0){
-          if(i != j_con_indx){
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[startsWith(temp$codon, values), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[endsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[(startsWith(temp$codon, values)) |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[(endsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-            }
-          }
-        } else{
-          if(length(j_groups[[i]]) == 3){
-            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-            } else{
-              values <- ref_j[j_groups[[i]]]
-              values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[endsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- j_df[, !names(j_df) == "new_site"]
-      junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
-      write.table(tree_df, file.path(subDir, paste0("original_", clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
-      tree_df <- rbind(v_df, junc_df, j_df)
-      tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
-        sub <- tree_df[tree_df$site == x,]
-        sub_indx <- which(sub$value == max(sub$value))[1]
-        sub$codon[sub_indx]
-      })), collapse = "")
-      tree_df <- tree_df[, !names(tree_df) == "value"]
-      write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
-      # update the starting values to reflect these changes 
-      v <- substring(tree_seq, 1, nchar(v))
-      test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
-      cdr3_c <- substring(mrcacdr3, 1, 3)
-      cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
-      mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
-                         cdr3_fw)
-      if(pad_length == 0){
-        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
-      } else{
-        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
-        j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
-      }
+      heavy_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
+                                  j = j, references = references, tree_df = tree_df,
+                                  subDir = subDir, clone_ids = clone_ids, chain = "H")
+      v <- heavy_vals$v
+      mrcacdr3 <- heavy_vals$cdr3
+      j <- heavy_vals$j
     } else if(sub$data[[1]]@phylo_seq == "lsequence"){
-      light_cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                                  !!rlang::sym('locus') != "IGH"))
-      light_cons <- data[data$sequence_id == light_cons$cons_id,]
-      numbers <- sub$data[[1]]@numbers
-      gaps <- dplyr::setdiff(1:max(numbers), numbers)
-      uca <- strsplit(paste0(v, mrcacdr3, j), "")[[1]]
-      for(pos in gaps){
-        if(pos <= length(uca)) {
-          uca <- c(uca[1:(pos-1)], ".", uca[pos:length(uca)])
-        }
-      }
-      uca <- paste(uca, collapse = "")
-      for(pos in gaps){
-        if(pos <= length(r)) {
-          r <- c(r[1:(pos-1)], "gap", r[pos:length(r)])
-        }
-      }
-      ref_v <- references[[light_cons$locus]]$V[which(names(references[[light_cons$locus]]$V) == 
-                                                        strsplit(light_cons$v_call, ",")[[1]][1])]
-      ref_v <- substring(ref_v, light_cons$v_germline_start, light_cons$v_germline_end)
-      pad_length <- sum(strsplit(substring(sub$data[[1]]@lgermline, (nchar(sub$data[[1]]@lgermline)-2),
-                                           (nchar(sub$data[[1]]@lgermline))), "")[[1]] == "N")
-      j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
-      ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) == 
-                                                        strsplit(light_cons$j_call, ",")[[1]][1])]
-      # do a check if nchar(germline alignment) is > sum(igblast stats) 
-      # if greater add to j length 
-      if(is.na(light_cons$d_germline_length)){
-        light_cons$d_germline_length <- 0 
-      } 
-      if(is.na(light_cons$np2_length)){
-        light_cons$np2_length <- 0 
-      }
-      igblast_len <- sum(light_cons$v_germline_length, light_cons$np1_length,
-                         light_cons$d_germline_length, light_cons$np2_length,
-                         light_cons$j_germline_length)
-      if(igblast_len < nchar(light_cons$germline_alignment)){
-        ig_diff <- nchar(light_cons$germline_alignment) - igblast_len
-        light_cons$j_germline_length <- light_cons$j_germline_length + ig_diff
-        light_cons$j_germline_end <- light_cons$j_germline_end + ig_diff
-      }
-      ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
-      ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
-      ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
-      j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
-      if(length(j_gaps) > 0){
-        j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
-        ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
-      }
-      v_groups <- lapply(seq(1, nchar(ref_v), by = 3),
-                         function(i) i:min(i+2, nchar(ref_v)))
-      ref_v <- strsplit(ref_v, "")[[1]]
-      if(nchar(ref_j)%%3 == 0) {
-        # Perfect multiple of 3, normal grouping
-        j_groups <- lapply(seq(1, nchar(ref_j), by = 3),
-                           function(i) i:min(i+2, nchar(ref_j)))
-      } else{
-        # Start with incomplete group, then complete groups of 3
-        j_groups <- list()
-        j_groups[[1]] <- 1:(nchar(ref_j) %% 3)  # First incomplete group
-        
-        # Add complete groups of 3
-        start_positions <- seq((nchar(ref_j) %% 3) + 1, nchar(ref_j), by = 3)
-        complete_groups <- lapply(start_positions,
-                                  function(i) i:min(i+2, nchar(ref_j)))
-        
-        j_groups <- c(j_groups, complete_groups)
-      }
-      ref_j <- strsplit(ref_j, "")[[1]]
-      # update the tree_df to only have the values at each site for the v gene 
-      v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
-      v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
-        temp <- tree_df[tree_df$site == i - 1,]
-        if(length(v_con_indx) > 0){
-          if(i != v_con_indx){
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(v_groups[[i]]) == 3){
-              temp <- temp[
-                (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-                  (alakazam::translateDNA(temp$codon) == "C"),]
-              if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-                temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-              }
-            } else{
-              values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              temp <- temp[(startsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) == "C"), ]
-            }
-          }
-        } else{
-          if(length(v_groups[[i]]) == 3){
-            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-          } else{
-            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[startsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
-                                             length(j_groups)), ]
-      j_df$new_site <- j_df$site - (min(j_df$site) - 1)
-      j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
-      offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
-      j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
-      j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
-        temp <- j_df[j_df$new_site == i,]
-        if(length(j_con_indx) > 0){
-          if(i != j_con_indx){
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
-                  temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-                }
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[startsWith(temp$codon, values), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[endsWith(temp$codon, values), ]
-            }
-          } else{
-            if(length(j_groups[[i]]) == 3){
-              if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
-                  temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                                 (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-                } else{
-                  temp <- temp[alakazam::translateDNA(temp$codon) %in% c("F", "W"),]
-                }
-              } else{
-                values <- ref_j[j_groups[[i]]]
-                values <- paste0(values[-which(values == "N")], collapse = "")
-                temp <- temp[(startsWith(temp$codon, values)) |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
-              }
-            } else{
-              values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-              temp <- temp[(endsWith(temp$codon, values)) |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-            }
-          }
-        } else{
-          if(length(j_groups[[i]]) == 3){
-            if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-            } else{
-              values <- ref_j[j_groups[[i]]]
-              values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
-          } else{
-            values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-            temp <- temp[endsWith(temp$codon, values), ]
-          }
-        }
-        return(temp)
-      }))
-      j_df <- j_df[, !names(j_df) == "new_site"]
-      junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
-      write.table(tree_df, file.path(subDir, paste0("original_", clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
-      tree_df <- rbind(v_df, junc_df, j_df)
-      tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
-        sub <- tree_df[tree_df$site == x,]
-        sub_indx <- which(sub$value == max(sub$value))[1]
-        sub$codon[sub_indx]
-      })), collapse = "")
-      tree_df <- tree_df[, !names(tree_df) == "value"]
-      write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                  quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
-      # update the starting values to reflect these changes 
-      v <- substring(tree_seq, 1, nchar(v))
-      test_junc <- substring(tree_seq, nchar(v) + 1, nchar(v) + nchar(mrcacdr3))
-      cdr3_c <- substring(mrcacdr3, 1, 3)
-      cdr3_fw <- substring(mrcacdr3, nchar(mrcacdr3)-2, nchar(mrcacdr3))
-      mrcacdr3 <- paste0(cdr3_c, substring(test_junc, 4, nchar(test_junc)-3),
-                         cdr3_fw)
-      if(pad_length == 0){
-        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq))
-      } else{
-        j <- substring(tree_seq, nchar(v) + nchar(mrcacdr3) + 1, nchar(tree_seq)- pad_length)
-        j <- paste0(j, paste(rep("N", pad_length), collapse = ""))
-      }
+      light_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
+                                  j = j, references = references, tree_df = tree_df,
+                                  subDir = subDir, clone_ids = clone_ids, chain = "L")
+      v <- light_vals$v
+      mrcacdr3 <- light_vals$cdr3
+      j <- light_vals$j
     }
   }
   # put it all together 
