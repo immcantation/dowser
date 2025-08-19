@@ -2167,7 +2167,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_j <- strsplit(ref_j, "")[[1]]
       # update the tree_df to only have the values at each site for the v gene 
       v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
       v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
         temp <- tree_df[tree_df$site == i - 1,]
         if(length(v_con_indx) > 0){
@@ -2208,7 +2208,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
       offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
       j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
@@ -2325,7 +2325,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       }
       ref_j <- strsplit(ref_j, "")[[1]]
       v_cons <- (nchar(v_light) + 1): (nchar(v_light) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
       v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
         temp <- tree_df_light[tree_df_light$site == i - 1,]
         if(length(v_con_indx) > 0){
@@ -2366,7 +2366,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_con <- (nchar(v_light)+ nchar(light_cdr3) - 2): (nchar(v_light)+ nchar(light_cdr3))
       offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
       j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
@@ -2498,7 +2498,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_j <- strsplit(ref_j, "")[[1]]
       # update the tree_df to only have the values at each site for the v gene 
       v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
       v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
         temp <- tree_df[tree_df$site == i - 1,]
         if(length(v_con_indx) > 0){
@@ -2539,7 +2539,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
       offset <- nchar(sub$data[[1]]@germline) - max(j_groups[[length(j_groups)]])
       j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
@@ -2641,6 +2641,22 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_start <- nchar(uca) - light_cons$j_germline_length - pad_length + 1
       ref_j <- references[[light_cons$locus]]$J[which(names(references[[light_cons$locus]]$J) == 
                                                         strsplit(light_cons$j_call, ",")[[1]][1])]
+      # do a check if nchar(germline alignment) is > sum(igblast stats) 
+      # if greater add to j length 
+      if(is.na(light_cons$d_germline_length)){
+        light_cons$d_germline_length <- 0 
+      } 
+      if(is.na(light_cons$np2_length)){
+        light_cons$np2_length <- 0 
+      }
+      igblast_len <- sum(light_cons$v_germline_length, light_cons$np1_length,
+                         light_cons$d_germline_length, light_cons$np2_length,
+                         light_cons$j_germline_length)
+      if(igblast_len < nchar(light_cons$germline_alignment)){
+        ig_diff <- nchar(light_cons$germline_alignment) - igblast_len
+        light_cons$j_germline_length <- light_cons$j_germline_length + ig_diff
+        light_cons$j_germline_end <- light_cons$j_germline_end + ig_diff
+      }
       ref_j <- substring(ref_j, light_cons$j_germline_start, light_cons$j_germline_end)
       ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
       ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
@@ -2671,7 +2687,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       ref_j <- strsplit(ref_j, "")[[1]]
       # update the tree_df to only have the values at each site for the v gene 
       v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-      v_con_indx <- which(sapply(v_groups, function(x) length(x) == length(v_cons) && all(x == v_cons)))
+      v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
       v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
         temp <- tree_df[tree_df$site == i - 1,]
         if(length(v_con_indx) > 0){
@@ -2712,14 +2728,16 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j_con <- (nchar(v)+ nchar(mrcacdr3) - 2): (nchar(v)+ nchar(mrcacdr3))
       offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
       j_groups_num <- lapply(j_groups, function(x) x + offset)
-      j_con_indx <- which(sapply(j_groups_num, function(x) length(x) == length(j_con) && all(x == j_con)))
+      j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
       j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
         temp <- j_df[j_df$new_site == i,]
         if(length(j_con_indx) > 0){
           if(i != j_con_indx){
             if(length(j_groups[[i]]) == 3){
               if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+                if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+                  temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+                }
               } else{
                 values <- ref_j[j_groups[[i]]]
                 values <- paste0(values[-which(values == "N")], collapse = "")
@@ -2732,8 +2750,12 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
           } else{
             if(length(j_groups[[i]]) == 3){
               if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-                temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                               (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+                if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+                  temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                                 (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+                } else{
+                  temp <- temp[alakazam::translateDNA(temp$codon) %in% c("F", "W"),]
+                }
               } else{
                 values <- ref_j[j_groups[[i]]]
                 values <- paste0(values[-which(values == "N")], collapse = "")
