@@ -2436,7 +2436,6 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param rm_temp       Remove the generated files?
 #' @param chain         Set to HL to use both heavy and light chain sequences
 #' @param quiet         Amount of noise to print out
-#' @param hotness       Hotness parameters to estimate (see IgPhyML docs)
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
 #' @param heavy         The name of the heavy chain locus. Default is IGH. 
@@ -2451,7 +2450,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param igblast       File path to igblast 
 #' @param igblast_database The file path to the database setup for igblast 
 #' @param ref_path      The file path to your references parent folder.
-#' @param organims      The type of organism to align to if using igblast. 
+#' @param organism      The type of organism to align to if using igblast. 
 #' @param ...           Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:
