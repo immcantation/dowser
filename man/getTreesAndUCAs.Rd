@@ -21,20 +21,17 @@ getTreesAndUCAs(
   rm_temp = TRUE,
   quiet = 0,
   chain = "H",
-  omega = NULL,
-  optimize = "lr",
-  motifs = "FCH",
-  hotness = "e,e,e,e,e,e",
-  resolve_v = FALSE,
-  resolve_j = FALSE,
   references = NULL,
   clone = "clone_id",
   heavy = "IGH",
-  sampling_method = c("random", "lm", "ratio"),
+  sampling_method = "random",
   subsample_size = 5,
-  method = "ML",
-  rscript = NULL,
+  search = "codon",
   check_genes = TRUE,
+  igblast = NULL,
+  igblast_database = NULL,
+  ref_path = NULL,
+  organism = "human",
   ...
 )
 }
@@ -73,18 +70,6 @@ on command line that issues the python you want to use.
 
 \item{chain}{Set to HL to use both heavy and light chain sequences}
 
-\item{omega}{Omega parameters to estimate (see IgPhyMl docs)}
-
-\item{optimize}{Optimize HLP rates (r), lengths (l), and/or topology (r)}
-
-\item{motifs}{Motifs to consider (see IgPhyMl docs)}
-
-\item{hotness}{Hotness parameters to estimate (see IgPhyML docs)}
-
-\item{resolve_v}{Resolve the V gene as well}
-
-\item{resolve_j}{Resolve the J gene as well}
-
 \item{references}{Reference genes. See \link{readIMGT}}
 
 \item{clone}{The name of the clone id column used in \link{formatClones}}
@@ -99,13 +84,21 @@ require 'mu_freq' to be passed as a trait when running
 
 \item{subsample_size}{The amount that the clone should be sampled down to. Default is 5.}
 
-\item{method}{The method to find the UCA with. Options are ML (maximum likelihood), ML_tree, or MCMC.}
-
-\item{rscript}{The file path to the rscript with get_UCA.py}
+\item{search}{Search codon or nt space}
 
 \item{check_genes}{Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly.}
 
-\item{...}{Additional arguments passed to \link{buildGermline}}
+\item{igblast}{File path to igblast}
+
+\item{igblast_database}{The file path to the database setup for igblast}
+
+\item{ref_path}{The file path to your references parent folder.}
+
+\item{...}{Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}}
+
+\item{hotness}{Hotness parameters to estimate (see IgPhyML docs)}
+
+\item{organims}{The type of organism to align to if using igblast.}
 }
 \value{
 An \code{airrClone} object with trees and the inferred UCA
