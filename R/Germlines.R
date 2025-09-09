@@ -1759,7 +1759,7 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
 }
 
 # finds what the consensus sequence was that createGermlines used.
-findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
+findConsensus <- function(receptors, clone_id, v_call = "v_call", j_call = "j_call",
                           seq = "sequence_alignment", id = "sequence_id"){
   v_dict <- c()
   j_dict <- c()
@@ -1791,7 +1791,7 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
     alakazam::getAllele(x, strip_d=FALSE)))
   rec_j <- unlist(lapply(cons[[j_call]],function(x)
     alakazam::getAllele(x, strip_d=FALSE)))
-  temp <- data.frame(clone_id = receptors$clone_id_unique[1], locus = receptors$locus[1], v_call = rec_v, 
+  temp <- data.frame(clone_id = clone_id, locus = receptors$locus[1], v_call = rec_v, 
                      j_call = rec_j, cons_id = cons_id)
   return(temp)
 }
@@ -1809,11 +1809,11 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
 checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir,
                           clone_ids, r, chain = "H"){
   if(chain == "H"){
-    cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                          !!rlang::sym('locus') == "IGH"))
+    cons <- findConsensus(receptors = dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                          !!rlang::sym('locus') == "IGH"), clone_id = sub$clone_id)
   } else{
-    cons <- findConsensus(dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                          !!rlang::sym('locus') != "IGH"))
+    cons <- findConsensus(receptors = dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
+                                          !!rlang::sym('locus') != "IGH"), clone_id = sub$clone_id)
   }
   cons <- data[data$sequence_id == cons$cons_id,]
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
@@ -2444,7 +2444,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #'                      towards the least mutated sequences). The later two methods
 #'                      require 'mu_freq' to be passed as a trait when running
 #'                      \link{formatClones}
-#' @param subsample_size The amount that the clone should be sampled down to. Default is 5. 
+#' @param subsample_size The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample -- in testing
 #' @param search        Search codon or nt space
 #' @param check_genes   Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
 #' @param igblast       File path to igblast 
@@ -2466,7 +2466,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
                            max_iters = 100, nproc = 1, rm_temp = TRUE, quiet = 0,
                            chain = "H", references = NULL, clone = "clone_id",
                            heavy = "IGH", sampling_method = 'random',
-                           subsample_size = 5, search = "codon", check_genes = TRUE,
+                           subsample_size = NA, search = "codon", check_genes = TRUE,
                            igblast = NULL, igblast_database = NULL, ref_path = NULL, 
                            organism = 'human', ...){
   if(!is.null(dir)){
@@ -2505,43 +2505,43 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
          'igblast_database: the file path to the databases set up for igblast',"\n",
          'ref_path: the path to the imgt parent folder')
   }
-
-  if(sampling_method == "random"){
-    clones <- sampleClones(clones, size = subsample_size)
-  } else{
-    if(!"mu_freq" %in% colnames(clones$data[[1]]@data)){
-      stop('Mutation frequency calculations are required for this subsampling method.',
-           ' Please run your data through shazam::observedMutations() and then rerun',
-           ' formatClones and getTreesAndUCAs.')
-    }
-    if(sampling_method == "lm"){
-      clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
-        sub <- clones[x,]
-        if(!subsample_size > nrow(sub$data[[1]]@data)){
-          temp_subsample_size <- subsample_size
-        } else{
-          temp_subsample_size <- nrow(sub$data[[1]]@data)
-        }
-        sub$data[[1]]@data$weight <- NA
-        temp_df <- sub$data[[1]]@data[order(sub$data[[1]]@data$mu_freq, decreasing = FALSE),]
-        sample_names <- temp_df$sequence_id[1:temp_subsample_size]
-        sub$data[[1]]@data$weight[sub$data[[1]]@data$sequence_id %in% sample_names] <- 100
-        sub$data[[1]]@data$weight[!sub$data[[1]]@data$sequence_id %in% sample_names] <- 0
-        return(sub)
-      }, mc.cores = nproc))
-      clones <- sampleClones(clones, subsample_size, weight = "weight")
-    } else if(sampling_method == "ratio"){
-      clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
-        sub <- clones[x,]
-        sub$data[[1]]@data$weight <- 1/(sub$data[[1]]@data$mu_freq + 1e-10)
-        return(sub)
-      }, mc.cores = nproc))
-      clones <- sampleClones(clones, subsample_size, weight = "weight")
+  if(!is.na(subsample_size)){
+    if(sampling_method == "random"){
+      clones <- sampleClones(clones, size = subsample_size)
     } else{
-      stop('sampling_method:', sampling_method, ' not recognized')
+      if(!"mu_freq" %in% colnames(clones$data[[1]]@data)){
+        stop('Mutation frequency calculations are required for this subsampling method.',
+             ' Please run your data through shazam::observedMutations() and then rerun',
+             ' formatClones and getTreesAndUCAs.')
+      }
+      if(sampling_method == "lm"){
+        clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+          sub <- clones[x,]
+          if(!subsample_size > nrow(sub$data[[1]]@data)){
+            temp_subsample_size <- subsample_size
+          } else{
+            temp_subsample_size <- nrow(sub$data[[1]]@data)
+          }
+          sub$data[[1]]@data$weight <- NA
+          temp_df <- sub$data[[1]]@data[order(sub$data[[1]]@data$mu_freq, decreasing = FALSE),]
+          sample_names <- temp_df$sequence_id[1:temp_subsample_size]
+          sub$data[[1]]@data$weight[sub$data[[1]]@data$sequence_id %in% sample_names] <- 100
+          sub$data[[1]]@data$weight[!sub$data[[1]]@data$sequence_id %in% sample_names] <- 0
+          return(sub)
+        }, mc.cores = nproc))
+        clones <- sampleClones(clones, subsample_size, weight = "weight")
+      } else if(sampling_method == "ratio"){
+        clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+          sub <- clones[x,]
+          sub$data[[1]]@data$weight <- 1/(sub$data[[1]]@data$mu_freq + 1e-10)
+          return(sub)
+        }, mc.cores = nproc))
+        clones <- sampleClones(clones, subsample_size, weight = "weight")
+      } else{
+        stop('sampling_method:', sampling_method, ' not recognized')
+      }
     }
   }
-  
   if(quiet > 0){
     print("constructing trees")
   }
