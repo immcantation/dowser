@@ -52,7 +52,7 @@ or use the [issue tracker](https://github.com/immcantation/dowser/issues?q=is%3A
 ## Dependencies
 
 **Depends:** ggplot2  
-**Imports:** airr, alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
+**Imports:** airr, alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils, treeio  
 **Suggests:** knitr, rmarkdown, testthat, pwalign
 
 

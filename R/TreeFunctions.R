@@ -4046,7 +4046,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
   }
   
   # Create the XML file using the current template and include germline
-  xml_filepath <- xml_writer_wrapper(data, 
+  xml_filepath <- write_clones_to_xmls(data, 
       mcmc_length=mcmc_length,
       log_every=log_every,
       id=id,
@@ -4133,7 +4133,14 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 }
 
 
-# define a function which takes an airr clone object and returns xml of the sequences
+#' Takes an airr clone object and returns BEAST2 Alignment xml of the sequences
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#' @param    include_germline_as_tip  include the germline as a tip in the alignment?
+#'
+#' @return   String of BEAST2 Alignment and TaxonSet xml
+#'  
 create_alignment <- function(clone, id, include_germline_as_tip) {
   
   all_seqs <- ""
@@ -4170,6 +4177,14 @@ create_alignment <- function(clone, id, include_germline_as_tip) {
   return(paste0(alignment_xml, '\n', taxon_set, '\n'))
 }
 
+
+#' Takes an airr clone object and returns BEAST2 rootfreqs xml of the germline
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#'
+#' @return   String of XML setting the root frequencies to the germline sequence
+#'  
 create_root_freqs <- function(clone, id) {
   if (any(grepl("N", clone@germline))) {
     freqs <- clone@germline
@@ -4191,6 +4206,13 @@ create_root_freqs <- function(clone, id) {
   return(root_freqs)
 }
 
+#' Takes an airr clone object and returns BEAST2 XML for MRCA prior of the observed sequences
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#'
+#' @return   String of XML setting the MRCA prior of the observed sequences
+#'  
 create_MRCA_prior_observed <- function(clone, id) {
   taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
   distribution_xml <- 
@@ -4203,6 +4225,13 @@ create_MRCA_prior_observed <- function(clone, id) {
   return(distribution_xml)
 }
 
+#' Takes an airr clone object and returns BEAST2 XML for MRCA prior of the germline sequence
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#'
+#' @return   String of XML setting the MRCA prior of the germline sequence
+#'  
 create_MRCA_prior_germline <- function(clone, id, germline_range) {
   if(length(germline_range) != 2){
     stop("germline_range must be a vector of length 2")
@@ -4218,10 +4247,16 @@ create_MRCA_prior_germline <- function(clone, id, germline_range) {
   return(distribution_xml)
 }
 
-# start_date is in forward time, the date not the height
+#' Takes an airr clone object and returns BEAST2 XML to set a height prior
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#' @param    start_date               starting date to use as prior, in forward time
+#'
+#' @return   String of XML setting the height prior
+#'  
 create_height_prior <- function(clone, id, start_date) {
-  #taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
-  #taxa <- paste0(taxa,"\n",paste0('<taxon id="', 'Germline', '" spec="Taxon"/>', collapse="\n"))
+  # start_date is in forward time, the date not the height
   distribution_xml <- 
     paste0('<distribution id="height.prior" spec="beast.base.evolution.tree.MRCAPrior" monophyletic="true" tree="@Tree.t:', 
       id, "_", clone@clone, '">\n', 
@@ -4235,10 +4270,16 @@ create_height_prior <- function(clone, id, start_date) {
   return(distribution_xml)
 }
 
-# max_start_date is in forward time, the date not the height
+#' Takes an airr clone object and returns BEAST2 XML to set a maximum height prior
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#' @param    max_start_date           max start date to use for prior, in forward time
+#'
+#' @return   String of XML setting the MRCA prior of the observed sequences
+#'  
 create_max_height_prior <- function(clone, id, max_start_date) {
-  #taxa <- paste0('<taxon id="', clone@data$sequence_id, '" spec="Taxon"/>', collapse="\n")
-  #taxa <- paste0(taxa,"\n",paste0('<taxon id="', 'Germline', '" spec="Taxon"/>', collapse="\n"))
+  # max_start_date is in forward time, the date not the height
   distribution_xml <- 
     paste0('<distribution id="height.prior" spec="beast.base.evolution.tree.MRCAPrior" monophyletic="true" tree="@Tree.t:', 
       id, "_", clone@clone, '">\n', 
@@ -4249,6 +4290,18 @@ create_max_height_prior <- function(clone, id, max_start_date) {
   return(distribution_xml)
 }
 
+#' Takes an airr clone object and returns BEAST2 XML for a trait/traitSet from a column
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    trait_name               name of the trait
+#' @param    column                   column in the clone data to use for the trait
+#' @param    id                       unique identifer for this analysis
+#' @param    trait_data_type          optional data type for the trait
+#' @param    isSet                    is this a traitSet (TRUE) or a trait (FALSE)?
+#' @param    include_germline_as_tip  include the germline as a tip
+#'
+#' @return   String of XML of the trait or traitSet
+#'  
 create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL, 
   isSet=FALSE, include_germline_as_tip=FALSE) {
 
@@ -4274,6 +4327,17 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
   return(traitset_xml)
 }
 
+#' Takes an airr clone object and tree and returns BEAST2 XML for setting the starting tree
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    id                       unique identifer for this analysis
+#' @param    tree                     starting tree, either a phylo object or a newick string
+#' @param    include_germline_as_tip  include the germline as a tip
+#' @param    tree_states              use states in the starting tree?
+#' @param    start_edge_length        edge length to use for all branches in starting tree 
+#'
+#' @return   String of XML setting the starting tree
+#'  
 create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_states, start_edge_length) {
   # create a starting tree in newick format
   if (inherits(tree, "phylo")) {
@@ -4321,8 +4385,34 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_
   return(starting_tree_xml)
 }
 
-# define an xml writer function
-xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL, 
+
+#' Takes an airr clone object and template and writes a BEAST2 XML file 
+#' 
+#' @param    clone                    an \code{airrClone} object
+#' @param    file                     output file path
+#' @param    id                       unique identifer for this analysis
+#' @param    time                     name of column representing sample time
+#' @param    trait                    name of column representing a trait
+#' @param    trait_data_type          optional data type for the trait
+#' @param    template                 XML template
+#' @param    mcmc_length              number of MCMC iterations
+#' @param    log_every                frequency of states logged. \code{auto} will divide mcmc_length by log_target
+#' @param    replacements             list of additional replacements to make in the template
+#' @param    include_germline_as_root include germline in analysis as root?     
+#' @param    include_germline_as_tip  include germline in analysis as tip?     
+#' @param    germline_range           possible date range of germline
+#' @param    tree                     starting tree, either a phylo object or a newick string
+#' @param    trait_list               list of all possible trait values
+#' @param    log_every_trait          frequency of trait states logged relative to log_every
+#' @param    tree_states              use states in the starting tree?
+#' @param    start_edge_length        edge length to use for all branches in starting tree
+#' @param    start_date               starting date to use as prior, in forward time
+#' @param    max_start_date           max starting date to use as prior, in forward time
+#' @param    ...                      additional arguments for XML writing functions
+#'
+#' @return   File path of the written XML file
+#'  
+write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL, 
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
@@ -4376,6 +4466,13 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
       trait_data_type, isSet=TRUE, include_germline_as_tip=include_germline_as_tip)
     # replace the ${TRAIT} placeholder with the sample trait
     xml <- gsub("\\$\\{TRAIT\\}", sample_trait, xml)
+    if (any(grepl("\\$\\{TRAIT_NAME\\}", xml))) {
+      xml <- gsub("\\$\\{TRAIT_NAME\\}", trait, xml)
+    } else {
+      # if there is no ${TRAIT_NAME} placeholder, assume these are old xml templates
+      # and replace tag="location" with tag="trait"
+      xml <- gsub('tag="location"', paste0('tag="',trait,'"'), xml)
+    }
   }
   if (any(grepl("\\$\\{NODES\\}", xml))) {
     # replace the ${NODES} placeholder with the number of nodes in this tree
@@ -4524,7 +4621,31 @@ xml_writer_clone <- function(clone, file, id, time=NULL, trait=NULL,
   return(file)
 }
 
-xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, template=NULL, 
+#' Wrapper to write multiple clones to XML files 
+#' 
+#' @param    data                     a list of \code{airrClone} objects
+#' @param    id                       identifer for this analysis
+#' @param    trees                    optional list of starting trees, either phylo objects or newick strings
+#' @param    time                     name of column representing sample time
+#' @param    trait                    name of column representing a trait
+#' @param    template                 XML template
+#' @param    outfile                  output file path prefix
+#' @param    replacements             list of additional replacements to make in the template
+#' @param    trait_list               list of all possible trait values
+#' @param    mcmc_length              number of MCMC iterations
+#' @param    log_every                frequency of states logged. \code{auto} will divide mcmc_length by log_target         
+#' @param    include_germline_as_root include germline in analysis as root?     
+#' @param    include_germline_as_tip  include germline in analysis as tip?     
+#' @param    germline_range           possible date range of germline
+#' @param    tree_states              use states in the starting tree?
+#' @param    start_edge_length        edge length to use for all branches in starting tree
+#' @param    start_date               starting date to use as prior, in forward time
+#' @param    max_start_date           max starting date to use as prior, in forward time
+#' @param    ...                      additional arguments for XML writing functions
+#'
+#' @return   File paths of the written XML files
+#'  
+write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, template=NULL, 
   outfile=NULL, replacements=NULL, trait_list=NULL, 
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
   include_germline_as_tip=FALSE, germline_range=c(-10000,10000), 
@@ -4557,7 +4678,7 @@ xml_writer_wrapper <- function(data, id, trees=NULL, time=NULL, trait=NULL, temp
     } else {
       tree <- NULL
     }
-    xmls = c(xmls, xml_writer_clone(data[[i]], 
+    xmls = c(xmls, write_clone_to_xml(data[[i]], 
                      file=outfile, 
                      id=id, 
                      time=time, 
