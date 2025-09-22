@@ -23,9 +23,10 @@ getTreesAndUCAs(
   chain = "H",
   references = NULL,
   clone = "clone_id",
+  cell = "cell_id",
   heavy = "IGH",
   sampling_method = "random",
-  subsample_size = 5,
+  subsample_size = NA,
   search = "codon",
   check_genes = TRUE,
   igblast = NULL,
@@ -74,6 +75,8 @@ on command line that issues the python you want to use.
 
 \item{clone}{The name of the clone id column used in \link{formatClones}}
 
+\item{cell}{The name of the cell id in the AIRR table used to generate \link{formatClones}}
+
 \item{heavy}{The name of the heavy chain locus. Default is IGH.}
 
 \item{sampling_method}{How to subsample. Methods include 'random', 'lm' (least mutated),
@@ -82,7 +85,7 @@ towards the least mutated sequences). The later two methods
 require 'mu_freq' to be passed as a trait when running
 \link{formatClones}}
 
-\item{subsample_size}{The amount that the clone should be sampled down to. Default is 5.}
+\item{subsample_size}{The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample -- in testing}
 
 \item{search}{Search codon or nt space}
 
@@ -94,11 +97,9 @@ require 'mu_freq' to be passed as a trait when running
 
 \item{ref_path}{The file path to your references parent folder.}
 
+\item{organism}{The type of organism to align to if using igblast.}
+
 \item{...}{Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}}
-
-\item{hotness}{Hotness parameters to estimate (see IgPhyML docs)}
-
-\item{organims}{The type of organism to align to if using igblast.}
 }
 \value{
 An \code{airrClone} object with trees and the inferred UCA

@@ -471,7 +471,7 @@ assignGenes <- function(
 # have been updated with IMGT gaps
 # details 
 # Similar functionality to MakeDb.py in Change-O. 
-# 
+
 addGaps <- function(db, gapdb, organism="human", locus="Ig", gapped_d=FALSE){
   
   if(!organism %in% c("human", "mouse", "rhesus_monkey")){
@@ -813,7 +813,7 @@ getMRCASeq <- function(clone){
 # param nproc the number of processors to use. Default is one. 
 # return directory of downloaded IMGT BCR and TCR reference files
 # 
-updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, references, organism, locus, outdir, nproc = 1){
+updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, references, organism, locus, outdir, nproc = 1, ...){
   mrcas <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
     if(clones$data[[x]]@phylo_seq != "hlsequence"){
       value <- getMRCASeq(clones[x,])
@@ -877,8 +877,9 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
   ig_data <- assignGenes(file.path(outdir, "mrca_seqs.fasta"),
                          igblast = igblast,
                          refs = igblast_database,
-                         outfile = file.path(outdir, "igblast.tsv"), nproc = nproc)
-  ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus)
+                         outfile = file.path(outdir, "igblast.tsv"),
+                         nproc = nproc, ...)
+  ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus, ...)
   ig_data$clone_id <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
 
   # get the length values 
@@ -1856,9 +1857,9 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
   if(is.na(cons$np2_length)){
     cons$np2_length <- 0 
   }
-  igblast_len <- sum(cons$v_germline_length, cons$np1_length,
-                     cons$d_germline_length, cons$np2_length,
-                     cons$j_germline_length)
+  igblast_len <- sum(as.numeric(cons$v_germline_length), as.numeric(cons$np1_length),
+                     as.numeric(cons$d_germline_length), as.numeric(cons$np2_length),
+                     as.numeric(cons$j_germline_length))
   if(igblast_len < nchar(cons$germline_alignment)){
     ig_diff <- nchar(cons$germline_alignment) - igblast_len
     cons$j_germline_length <- cons$j_germline_length + ig_diff
@@ -2116,8 +2117,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                 file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
   }
 
-  colnames(tree_df) = c("site", "codon", "partial_likelihood", "nope", "nada", "no", "equilbrium")
-  tree_df$value <- tree_df$partial_likelihood + log(tree_df$equilbrium)
+  colnames(tree_df) = c("site", "codon", "partial_likelihood", "log_likelihood_site",
+                        "upper_partial_log_likelihood", "upper_partial_likelihood", "equilibrium")
+  tree_df$value <- tree_df$partial_likelihood + log(tree_df$equilibrium)
   
   tree_seq <- paste0(unlist(lapply(unique(tree_df$site), function(x){
     sub <- tree_df[tree_df$site == x,]
@@ -2153,7 +2155,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub_tree_df <- dplyr::filter(tree_df, !!rlang::sym("site") == codon_site - 1)
       sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
       sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") == "C")
-      sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
+      sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilibrium)
       value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
       mrcacdr3 <- paste0(value[1], substring(mrcacdr3, 4, nchar(mrcacdr3)))
     }
@@ -2162,7 +2164,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub_tree_df <- dplyr::filter(tree_df, !!rlang::sym("site") == codon_site - 1)
       sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
       sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") %in% c("W", "F"))
-      sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
+      sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilibrium)
       value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
       mrcacdr3 <- paste0(substring(mrcacdr3, 1, nchar(mrcacdr3)-3), value[1])
     }
@@ -2210,7 +2212,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         sub_tree_df <- dplyr::filter(tree_df_light, !!rlang::sym("site") == codon_site)
         sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
         sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") == "C")
-        sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
+        sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilibrium)
         value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
         light_cdr3 <- paste0(value[1], substring(light_cdr3, 4, nchar(light_cdr3)))
       }
@@ -2219,7 +2221,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         sub_tree_df <- dplyr::filter(tree_df_light, !!rlang::sym("site") == codon_site)
         sub_tree_df$aa <- alakazam::translateDNA(sub_tree_df$codon)
         sub_tree_df <- dplyr::filter(sub_tree_df, !!rlang::sym("aa") %in% c("W", "F"))
-        sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilbrium)
+        sub_tree_df$value <- sub_tree_df$partial_likelihood + log(sub_tree_df$equilibrium)
         value <- sub_tree_df$codon[sub_tree_df$value == max(sub_tree_df$value)]
         light_cdr3 <- paste0(substring(light_cdr3, 1, nchar(light_cdr3)-3), value[1])
       }
@@ -2438,6 +2440,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param quiet         Amount of noise to print out
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
+#' @param cell          The name of the cell id in the AIRR table used to generate \link{formatClones}
 #' @param heavy         The name of the heavy chain locus. Default is IGH. 
 #' @param sampling_method How to subsample. Methods include 'random', 'lm' (least mutated),
 #'                      and 'ratio' (a weighted sampling with heavier weights
@@ -2465,7 +2468,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
                            uca_script, python = "python", id = "sample", 
                            max_iters = 100, nproc = 1, rm_temp = TRUE, quiet = 0,
                            chain = "H", references = NULL, clone = "clone_id",
-                           heavy = "IGH", sampling_method = 'random',
+                           cell = "cell_id", heavy = "IGH", sampling_method = 'random',
                            subsample_size = NA, search = "codon", check_genes = TRUE,
                            igblast = NULL, igblast_database = NULL, ref_path = NULL, 
                            organism = 'human', ...){
@@ -2494,7 +2497,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   }
   
   if(check_genes & is.null(references)){
-    stop("check_genes cannot be run without references. Pass a references object using references =",
+    stop("check_genes cannot be run without references. Pass a references object using references call.",
          "References need to be read in using dowser::readIMGT()")
   }
   
@@ -2506,6 +2509,9 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
          'ref_path: the path to the imgt parent folder')
   }
   if(!is.na(subsample_size)){
+    if(!is.numeric(subsample_size)){
+      stop("subsample_size must be a numeric")
+    }
     if(sampling_method == "random"){
       clones <- sampleClones(clones, size = subsample_size)
     } else{
@@ -2541,6 +2547,19 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
         stop('sampling_method:', sampling_method, ' not recognized')
       }
     }
+    # if subsampling to 1 sequence
+    if(subsample_size == 1){
+      cells <- unlist(lapply(clones$data, function(x) x@data$sequence_id))
+      if (!is.na(cell) & cell %in% colnames(data)) {
+        filtered <- data[data$sequence_id %in% cells, ]
+        cells <- data$sequence_id[data[[cell]] %in% filtered[[cell]]]
+      }
+      sub_data <- data[data$sequence_id %in% cells,]
+      clones <- formatClones(sub_data, nproc = nproc, 
+                             filterstop = TRUE, chain = chain, minseq = 1, 
+                             dup_singles = T, traits = "mu_freq")
+    }
+    saveRDS(clones, file = file.path(dir, "clones.rds"))
   }
   if(quiet > 0){
     print("constructing trees")
@@ -2554,7 +2573,6 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   } else{
     stop("the tree bulding method ", build, "is not supported")
   }
-
   saveRDS(clones, file.path(dir, "clones.rds"))
   if(!is.null(igblast)){
     if(quiet > 0){
@@ -2569,12 +2587,12 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
-  clones <- do.call(rbind, invisible(lapply(clones[[clone]], function(x){
+  clones <- do.call(rbind, invisible(parallel::mclapply(clones[[clone]], function(x){
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                          build = build, id = id, quiet = quiet, 
                          chain = chain, check_genes = check_genes, 
                          references = references)
-  })))
+  }, mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")
