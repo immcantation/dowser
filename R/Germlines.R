@@ -811,19 +811,21 @@ getMRCASeq <- function(clone){
 # param locus if BCR data use "Ig" if TCR data use "TR"
 # param outdir the directory to save intermediate files to
 # param nproc the number of processors to use. Default is one. 
+# param clone the name of the proper clone_id column to use
 # return directory of downloaded IMGT BCR and TCR reference files
 # 
-updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, references, organism, locus, outdir, nproc = 1, ...){
+updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, references,
+                           organism, locus, outdir, nproc = 1, clone = "clone_id", ...){
   mrcas <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
     if(clones$data[[x]]@phylo_seq != "hlsequence"){
       value <- getMRCASeq(clones[x,])
       if(clones$data[[x]]@phylo_seq == "sequence"){
         seq_id <- paste0(clones$clone_id[x], "_heavy")
-        og_germ <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+        og_germ <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
                                                   airr_data$locus == "IGH"][1]
       } else{
         seq_id <- paste0(clones$clone_id[x], "_light")
-        og_germ <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+        og_germ <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
                                                   airr_data$locus != "IGH"][1]
       }
       numbers <- clones$data[[x]]@numbers
@@ -843,11 +845,11 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
       lvalue <- substring(value, length(hnumbers)+1, nchar(value))
       seq_id <- c(paste0(clones$clone_id[x], "_heavy"), paste0(clones$clone_id[x], "_light"))
 
-      og_germ <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+      og_germ <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
                                                 airr_data$locus == "IGH"][1]
       gaps <- dplyr::setdiff(1:max(hnumbers), hnumbers)
       og_germ <- paste0(strsplit(og_germ, "")[[1]][-gaps], collapse = "")
-      og_lgerm <- airr_data$germline_alignment[airr_data$clone_id == clones$clone_id[x] &
+      og_lgerm <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
                                                  airr_data$locus != "IGH"][1]
       gaps <- dplyr::setdiff(1:max(lnumbers), lnumbers)
       og_lgerm <- paste0(strsplit(og_lgerm, "")[[1]][-gaps], collapse = "")
@@ -880,12 +882,12 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
                          outfile = file.path(outdir, "igblast.tsv"),
                          nproc = nproc, ...)
   ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus, ...)
-  ig_data$clone_id <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
+  ig_data[[clone]] <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
 
   # get the length values 
-  ig_data$v_germline_length <- ig_data$v_germline_end - ig_data$v_germline_start + 1
-  ig_data$d_germline_length <- ig_data$d_germline_end - ig_data$d_germline_start + 1
-  ig_data$j_germline_length <- ig_data$j_germline_end - ig_data$j_germline_start + 1
+  ig_data$v_germline_length <- as.numeric(ig_data$v_germline_end - ig_data$v_germline_start + 1)
+  ig_data$d_germline_length <- as.numeric(ig_data$d_germline_end - ig_data$d_germline_start + 1)
+  ig_data$j_germline_length <- as.numeric(ig_data$j_germline_end - ig_data$j_germline_start + 1)
   
   # make the germline__mask column 
   ig_data$germline_alignment_d_mask <- unlist(parallel::mclapply(1:nrow(ig_data), function(x){
@@ -897,45 +899,19 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
     gmask <- paste0(vseq, nseq, jseq)
     return(gmask)
   }, mc.cores = nproc))
-  write.table(ig_data, file = file.path(outdir, "igblast.tsv"), sep = "\t", row.names = FALSE)
-  
-  airr_data <- do.call(rbind, parallel::mclapply(1:nrow(airr_data), function(x){
-    sub <- airr_data[x,]
-    indx <- which(sub$clone_id == ig_data$clone_id & sub$locus == ig_data$locus)
-    if(length(indx) > 0){
-      sub$germline_alignment <- ig_data$germline_alignment[indx]
-      sub$germline_alignment_d_mask <- ig_data$germline_alignment_d_mask[indx]
-      sub$v_germline_start <- ig_data$v_germline_start[indx]
-      sub$v_germline_end <- ig_data$v_germline_end[indx]
-      sub$d_germline_start <- ig_data$d_germline_start[indx]
-      sub$d_germline_end <- ig_data$d_germline_end[indx]
-      sub$j_germline_start <- ig_data$j_germline_start[indx]
-      sub$j_germline_end <- ig_data$j_germline_end[indx]
-      sub$np1_length <- ig_data$np1_length[indx]
-      sub$np2_length <- ig_data$np2_length[indx]
-      sub$v_germline_length <- ig_data$v_germline_length[indx]
-      sub$d_germline_length <- ig_data$d_germline_length[indx]
-      sub$j_germline_length <- ig_data$j_germline_length[indx]
-      sub$v_call <- ig_data$v_call[indx]
-      sub$d_call <- ig_data$d_call[indx]
-      sub$j_call <- ig_data$j_call[indx]
-    }
-    return(sub)
-  }, mc.cores = nproc))
-  
-  # If you want to keep airr_data's original columns and update only the relevant ones:
+  airr::write_rearrangement(ig_data, file.path(outdir, "igblast.tsv"))
   cols_to_update <- c("germline_alignment", "germline_alignment_d_mask", "v_germline_start", "v_germline_end",
                       "d_germline_start", "d_germline_end", "j_germline_start", "j_germline_end",
                       "np1_length", "np2_length", "v_germline_length", "d_germline_length", "j_germline_length",
                       "v_call", "d_call", "j_call")
-  
-  airr_data <- merge(airr_data, ig_data[, c("clone_id", "locus", cols_to_update)], 
-                  by = c("clone_id", "locus"), all.x = TRUE, suffixes = c("", ".ig"))
-  
+  airr_data <- merge(airr_data, ig_data[, c(clone, "locus", cols_to_update)], 
+                     by = c(clone, "locus"), all.x = TRUE, suffixes = c("", ".ig"))
   for (col in cols_to_update) {
     airr_data[[col]] <- airr_data[[paste0(col, ".ig")]]
     airr_data[[paste0(col, ".ig")]] <- NULL
   }
+  airr_data <- airr_data[!is.na(airr_data$v_call),]
+  airr::write_rearrangement(airr_data, file.path(outdir, "updated_airr_data.tsv"))
   return(airr_data)
 }
 
@@ -1808,13 +1784,13 @@ findConsensus <- function(receptors, clone_id, v_call = "v_call", j_call = "j_ca
 # subDir is where things should be saved
 # chain is used to indicate heavy chain ("H") or light chain ("L")
 checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir,
-                          clone_ids, r, chain = "H"){
+                          clone_ids, r, chain = "H", clone = "clone_id"){
   if(chain == "H"){
-    cons <- findConsensus(receptors = dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                          !!rlang::sym('locus') == "IGH"), clone_id = sub$clone_id)
+    cons <- findConsensus(receptors = data[data[[clone]] == sub$clone_id & data$locus == "IGH",],
+                          clone_id = sub$clone_id)
   } else{
-    cons <- findConsensus(receptors = dplyr::filter(data, !!rlang::sym("clone_id") == sub$clone_id &
-                                          !!rlang::sym('locus') != "IGH"), clone_id = sub$clone_id)
+    cons <- findConsensus(receptors = data[data[[clone]] == sub$clone_id & data$locus != "IGH",],
+                          clone_id = sub$clone_id)
   }
   cons <- data[data$sequence_id == cons$cons_id,]
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
@@ -2067,13 +2043,14 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
 # @param dir        The directory where data should be saved to 
 # @param id         The run id
 # @param quiet      How much noise to print out
+# @param clone      The name of the proper clone_id column to use
 # @param chain      HL or H?
 # @param check_genes Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
 # @param references IMGT references read in using \link{readIMGT}
 #
 processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
-                                 quiet = 0, chain = "H", check_genes = FALSE,
-                                 references = NULL){
+                                 quiet = 0, clone = clone, chain = "H",
+                                 check_genes = FALSE, references = NULL){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
@@ -2233,11 +2210,11 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       heavy_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
                                   j = j, references = references, tree_df = tree_df,
                                   subDir = subDir, clone_ids = clone_ids, chain = "H",
-                                  r = heavy_r)
+                                  r = heavy_r, clone = clone)
       light_vals <- checkGenesUCA(sub = sub, data = data, v = v_light, mrcacdr3 = light_cdr3,
                                   j = j_light, references = references, tree_df = tree_df_light,
                                   subDir = subDir, clone_ids = clone_ids, chain = "L",
-                                  r = light_r)
+                                  r = light_r, clone = clone)
       v <- heavy_vals$v
       mrcacdr3 <- heavy_vals$cdr3
       j <- heavy_vals$j
@@ -2248,7 +2225,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       heavy_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
                                   j = j, references = references, tree_df = tree_df,
                                   subDir = subDir, clone_ids = clone_ids, chain = "H",
-                                  r = r)
+                                  r = r, clone = clone)
       v <- heavy_vals$v
       mrcacdr3 <- heavy_vals$cdr3
       j <- heavy_vals$j
@@ -2256,7 +2233,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       light_vals <- checkGenesUCA(sub = sub, data = data, v = v, mrcacdr3 = mrcacdr3,
                                   j = j, references = references, tree_df = tree_df,
                                   subDir = subDir, clone_ids = clone_ids, chain = "L",
-                                  r = r)
+                                  r = r, clone = clone)
       v <- light_vals$v
       mrcacdr3 <- light_vals$cdr3
       j <- light_vals$j
@@ -2305,49 +2282,48 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
 # @param model_folder_igl The file path to the model parameters for IGL provide by OLGA
 # @param quiet      Amount of noise to print out
 # @param search     Search the codon or nt space
-# @param clone      The column name for the clone identifier 
 #
 
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
-                     model_folder_igk, model_folder_igl, quiet, search, clone){
-  clone_ids <- paste0(unlist(lapply(clones[[clone]], function(z){
+                     model_folder_igk, model_folder_igl, quiet, search){
+  clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- z
-    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
+    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
       value <- append(value, z)
     }
     return(value)
   })), collapse = ",")
-  starting_germlines <- paste0(unlist(lapply(clones[[clone]], function(z){
+  starting_germlines <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline.txt"))
-    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
+    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
       value <- append(value, path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline_light.txt")))
     }
     return(value)
   })), collapse = ",")
-  junction_location <- paste0(unlist(lapply(clones[[clone]], function(z){
+  junction_location <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions.txt"))
-    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
+    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
       value <- append(value, path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions_light.txt")))
     }
     return(value)
   })), collapse = ",")
-  tree_tables <- paste0(unlist(lapply(clones[[clone]], function(z){
-    if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "sequence"){
+  tree_tables <- paste0(unlist(lapply(clones$clone_id, function(z){
+    if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "sequence"){
       value <- path.expand(file.path(dir, paste0(id, "_", z), 
                                      paste0(z, ".fasta_igphyml_rootprobs_hlp.txt")))
-    } else if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "hlsequence"){
+    } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
       value <- path.expand(file.path(dir, paste0(id, "_", z), 
                                      "heavy_table.txt"))
       value <- append(value, path.expand(file.path(dir, paste0(id, "_", z),
                                                    "light_table.txt")))
-    } else if(clones$data[[which(clones[[clone]] == z)]]@phylo_seq == "lsequence"){
+    } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "lsequence"){
       value <- path.expand(file.path(dir, paste0(id, "_", z), 
                                      paste0(z, ".fasta_igphyml_rootprobs_hlp.txt")))
     }
     return(value)
   })), collapse = ",")
-  chains <- paste0(unlist(lapply(clones[[clone]], function(z){
-    loci <- strsplit(clones$locus[which(clones[[clone]] == z)], ",")[[1]]
+  chains <- paste0(unlist(lapply(clones$clone_id, function(z){
+    loci <- strsplit(clones$locus[which(clones$clone_id == z)], ",")[[1]]
   })), collapse = ",")
   
   args <- c(
@@ -2581,15 +2557,14 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     data <- updateAIRRGerm(airr_data = data, clones = clones, igblast = igblast, 
                            igblast_database = igblast_database, references = ref_path, 
                            organism = organism, locus = 'Ig', outdir = dir, 
-                           nproc = nproc)
-    airr::write_rearrangement(data, file = file.path(dir, "updated_data.tsv"))
+                           nproc = nproc, clone = clone, ...)
   }
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
-  clones <- do.call(rbind, invisible(parallel::mclapply(clones[[clone]], function(x){
+  clones <- do.call(rbind, invisible(parallel::mclapply(clones$clone_id, function(x){
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
-                         build = build, id = id, quiet = quiet, 
+                         build = build, id = id, quiet = quiet, clone = clone,
                          chain = chain, check_genes = check_genes, 
                          references = references)
   }, mc.cores = nproc)))
@@ -2599,8 +2574,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   }
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
-           uca_script = uca_script, python = python, max_iters = max_iters, nproc = nproc,
-           id = id, quiet = quiet, searc = search, clone = clone)
+           uca_script = uca_script, python = python, max_iters = max_iters,
+           nproc = nproc, id = id, quiet = quiet, search = search)
 
   if(quiet > 0){
     print("updating clones")

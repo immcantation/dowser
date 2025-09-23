@@ -1131,11 +1131,11 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     })))
     test <- abs(ml_lik - table_lik) < 1e-6
     if(test){
-      write.table(dplyr::select(codon_results, -start), 
+      write.table(dplyr::select(codon_results, -!!rlang::sym("start")), 
                   file=file.path(sub_dir, "codon_table.txt"),
                   col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
     } else{
-      write.table(dplyr::select(codon_results, -start), 
+      write.table(dplyr::select(codon_results, -!!rlang::sym("start")), 
                   file=file.path(sub_dir, "codon_table_failed.txt"),
                   col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
       writeLines(substr(paste(max$codon, collapse=""),1,nchar(ml)), con = file.path(sub_dir, "codon_seq.txt"))
