@@ -1838,8 +1838,8 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
                      as.numeric(cons$j_germline_length))
   if(igblast_len < nchar(cons$germline_alignment)){
     ig_diff <- nchar(cons$germline_alignment) - igblast_len
-    cons$j_germline_length <- cons$j_germline_length + ig_diff
-    cons$j_germline_end <- cons$j_germline_end + ig_diff
+    cons$j_germline_length <- as.numeric(cons$j_germline_length + ig_diff)
+    cons$j_germline_end <- as.numeric(cons$j_germline_end + ig_diff)
   }
   ref_j <- substring(ref_j, cons$j_germline_start, cons$j_germline_end)
   if(nchar(cons$germline_alignment) > nchar(uca)){
@@ -1857,14 +1857,18 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
   }
   if(cons$locus == "IGH"){
     if(nchar(ref_j) > (nchar(sub$data[[1]]@germline) - sum(nchar(ref_v),  
-                                                           cons$np1_length, cons$d_germline_length, cons$np2_length))){
+                             as.numeric(cons$np1_length),
+                             as.numeric(cons$d_germline_length),
+                             as.numeric(cons$np2_length)))){
       diff <- nchar(ref_j) - (nchar(sub$data[[1]]@germline) - sum(nchar(ref_v),  
                                                                   cons$np1_length, cons$d_germline_length, cons$np2_length))
       ref_j <- substring(ref_j, 1, nchar(ref_j) - diff)
     }
   } else{
-    if(nchar(ref_j) > (nchar(sub$data[[1]]@lgermline) - sum(nchar(ref_v),  
-                                                           cons$np1_length, cons$d_germline_length, cons$np2_length))){
+    if(nchar(ref_j) > (nchar(sub$data[[1]]@lgermline) - sum(nchar(ref_v), 
+                             as.numeric(cons$np1_length), 
+                             as.numeric(cons$d_germline_length),
+                             as.numeric(cons$np2_length)))){
       diff <- nchar(ref_j) - (nchar(sub$data[[1]]@lgermline) - sum(nchar(ref_v),  
                                                                   cons$np1_length, cons$d_germline_length, cons$np2_length))
       ref_j <- substring(ref_j, 1, nchar(ref_j) - diff)
@@ -2566,7 +2570,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                          build = build, id = id, quiet = quiet, clone = clone,
                          chain = chain, check_genes = check_genes, 
-                         references = references)
+                         references = references, ...)
   }, mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
