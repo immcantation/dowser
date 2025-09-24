@@ -2351,7 +2351,23 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     shQuote(path.expand(uca_script)), 
     paste(shQuote(args), collapse=" ")
   )
-  olga_check <- tryCatch(system(cmd), error=function(e)e)
+  # There is a system length limit for unix systems -- it differs by computer. 
+  if (.Platform$OS.type == "windows") {
+    max_cmd_len <- Inf  # No practical limit for Windows in this context -- so I'm told 
+  } else {
+    max_cmd_len <- as.numeric(system("getconf ARG_MAX", intern = TRUE))
+  }
+  if(nchar(cmd) > max_cmd_len){  
+    script_filename <- "uca_script.sh"  
+    temp_script <- file.path(path.expand(dir), script_filename)
+    writeLines(cmd, temp_script)
+    system(paste("chmod +x", shQuote(temp_script)))
+    olga_check <- tryCatch({
+      system(temp_script, intern = TRUE)
+    }, error = function(e) e)
+  } else{
+    olga_check <- tryCatch(system(cmd), error=function(e)e)
+  }
   if("error" %in% class(olga_check)){
       stop("there was an error running the get_UCA script. This is likely due to 
            not having the required python packages installed for the python version found
