@@ -2286,10 +2286,11 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
 # @param model_folder_igl The file path to the model parameters for IGL provide by OLGA
 # @param quiet      Amount of noise to print out
 # @param search     Search the codon or nt space
+# @param batch_size The number of jobs to run at a time 
 #
 
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
-                     model_folder_igk, model_folder_igl, quiet, search){
+                     model_folder_igk, model_folder_igl, quiet, search, batch_size = 250){
   clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- z
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -2355,9 +2356,9 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
   if (.Platform$OS.type == "windows") {
     max_cmd_len <- Inf  # No practical limit for Windows in this context -- so I'm told 
   } else {
-    max_cmd_len <- as.numeric(system("getconf ARG_MAX", intern = TRUE))
+    max_cmd_len <- batch_size
   }
-  if(nchar(cmd) > max_cmd_len){  
+  if(length(strsplit(clone_ids, ",")[[1]]) > max_cmd_len){  
     script_filename <- "uca_script.sh"  
     temp_script <- file.path(path.expand(dir), script_filename)
     writeLines(cmd, temp_script)
@@ -2595,7 +2596,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
            uca_script = uca_script, python = python, max_iters = max_iters,
-           nproc = nproc, id = id, quiet = quiet, search = search)
+           nproc = nproc, id = id, quiet = quiet, search = search, ...)
 
   if(quiet > 0){
     print("updating clones")
