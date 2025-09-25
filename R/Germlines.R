@@ -1826,7 +1826,6 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
   ref_j <- references[[cons$locus]]$J[which(names(references[[cons$locus]]$J) == 
                                               strsplit(cons$j_call, ",")[[1]][1])]
   # do a check if nchar(germline alignment) is > sum(igblast stats) 
-  # if greater add to j length 
   if(is.na(cons$d_germline_length)){
     cons$d_germline_length <- 0 
   } 
@@ -1843,7 +1842,6 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
   }
   ref_j <- substring(ref_j, cons$j_germline_start, cons$j_germline_end)
   if(nchar(cons$germline_alignment) > nchar(uca)){
-    # trim the j gene 
     diff <- nchar(cons$germline_alignment) - nchar(uca)
     ref_j <- substring(ref_j, 1, nchar(ref_j)-diff)
   }
@@ -1945,7 +1943,7 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
   j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
     temp <- j_df[j_df$new_site == i,]
     if(length(j_con_indx) > 0){
-      if(i != j_con_indx){
+      if(!i %in% j_con_indx){
         if(length(j_groups[[i]]) == 3){
           if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
             if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
@@ -2587,7 +2585,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                          build = build, id = id, quiet = quiet, clone = clone,
                          chain = chain, check_genes = check_genes, 
-                         references = references, ...)
+                         references = references)
   }, mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){
