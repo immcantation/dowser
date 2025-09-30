@@ -140,7 +140,6 @@ data(ExampleClones)
 # trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
 # id="temp",dir="temp", trait="sample_id")
 # plotTrees(trees)[[1]]
-
 ```
 
 

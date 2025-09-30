@@ -1030,8 +1030,19 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5,
   sg <- gsub("---", "XXX", sg)
   
   # perform global alignment
-  n <- Biostrings::pairwiseAlignment(q, sg, type="global",
-                                     gapOpening=gap_opening, gapExtension=gap_extension)
+  if (packageVersion("BiocManager") >= "1.30.22") {
+    bioc_ver <- as.character(BiocManager::version())
+    has_bioc_3_22 <- utils::compareVersion(bioc_ver, "3.22") >= 0
+  } else {
+    has_bioc_3_22 <- FALSE
+  }
+  if(has_bioc_3_22){
+    n <- pwalign::pairwiseAlignment(q, sg, type="global",
+                                       gapOpening=gap_opening, gapExtension=gap_extension)
+  } else{
+    n <- Biostrings::pairwiseAlignment(q, sg, type="global",
+                                       gapOpening=gap_opening, gapExtension=gap_extension)
+  }
   qa <- as.character(n@pattern)
   sa <- as.character(n@subject)
   if(keep_alignment){

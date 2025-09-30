@@ -1,5 +1,15 @@
 # [![](http://cranlogs.r-pkg.org/badges/grand-total/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://cranlogs.r-pkg.org/badges/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=plastic)](https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html)
 
+**IMPORTANT!** 
+Dowser's source code has moved to https://github.com/immcantation/dowser
+
+To update Git configuration settings use:
+
+```
+   git config user.email "your-gh-user@email.com"
+   git config user.name "your-gh-user-name"
+   git remote set-url origin git@github.com:immcantation/dowser.git
+```
 
 Dowser
 -------------------------------------------------------------------------------
@@ -46,12 +56,12 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 
 **Depends:** ggplot2  
 **Imports:** airr, alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils  
-**Suggests:** knitr, rmarkdown, testthat, pwalign
+**Suggests:** knitr, rmarkdown, testthat, pwalign, BiocManager
 
 
 ## Authors
 
-[Kenneth Hoehn](mailto:kenneth.b.hoehn@dartmouth.edu) (aut, cre)  
+[Kenneth Hoehn](mailto:cole.jensen@yale.edu) (aut, cre)  
 [Cole Jensen](mailto:cole.jensen@yale.edu) (aut)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  

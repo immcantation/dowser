@@ -29,7 +29,7 @@ Useful links:
 Author
 -------------------
 
-**Maintainer**: Kenneth Hoehn [kenneth.b.hoehn@dartmouth.edu](kenneth.b.hoehn@dartmouth.edu)
+**Maintainer**: Kenneth Hoehn [cole.jensen@yale.edu](cole.jensen@yale.edu)
 
 Authors:
 
