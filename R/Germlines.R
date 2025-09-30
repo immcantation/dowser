@@ -2345,28 +2345,24 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     "--chains", chains,
     "--search", search
   )
+  args_keys <- args[seq(1, length(args), 2)]
+  args_values <- args[seq(2, length(args), 2)]
+  args_list <- setNames(as.list(args_values), gsub("^--", "", args_keys))
+  json_str <- paste0(
+    "{\n",
+    paste(
+      sprintf('  "%s": "%s"', names(args_list), gsub('"', '\\"', args_list)),
+      collapse = ",\n"
+    ),
+    "\n}"
+  )
+  writeLines(json_str, file.path(path.expand(dir), "olga_args.json"))
   cmd <- paste(
     shQuote(python), 
     shQuote(path.expand(uca_script)), 
-    paste(shQuote(args), collapse=" ")
+    "--args_json", shQuote(file.path(path.expand(dir), "olga_args.json"))
   )
-  # There is a system length limit for unix systems -- it differs by computer. 
-  if (.Platform$OS.type == "windows") {
-    max_cmd_len <- Inf  # No practical limit for Windows in this context -- so I'm told 
-  } else {
-    max_cmd_len <- batch_size
-  }
-  if(length(strsplit(clone_ids, ",")[[1]]) > max_cmd_len){  
-    script_filename <- "uca_script.sh"  
-    temp_script <- file.path(path.expand(dir), script_filename)
-    writeLines(cmd, temp_script)
-    system(paste("chmod +x", shQuote(temp_script)))
-    olga_check <- tryCatch({
-      system(temp_script, intern = TRUE)
-    }, error = function(e) e)
-  } else{
-    olga_check <- tryCatch(system(cmd), error=function(e)e)
-  }
+  olga_check <- tryCatch(system(cmd), error=function(e)e)
   if("error" %in% class(olga_check)){
       stop("there was an error running the get_UCA script. This is likely due to 
            not having the required python packages installed for the python version found
@@ -2426,7 +2422,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param uca_script    The file path to the UCA python script
 #' @param python        Specify the python call for your system. This is the call
 #'                      on command line that issues the python you want to use. 
-#'                      "python" by default. 
+#'                      "python3" by default. 
 #' @param id            The run ID
 #' @param max_iters     The maximum number of iterations to run before ending
 #' @param nproc         The number of cores to use 
@@ -2460,7 +2456,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @export
 getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder,
                            model_folder_igk = NULL, model_folder_igl = NULL, 
-                           uca_script, python = "python", id = "sample", 
+                           uca_script, python = "python3", id = "sample", 
                            max_iters = 100, nproc = 1, rm_temp = TRUE, quiet = 0,
                            chain = "H", references = NULL, clone = "clone_id",
                            cell = "cell_id", heavy = "IGH", sampling_method = 'random',

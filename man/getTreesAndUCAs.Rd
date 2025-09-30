@@ -14,7 +14,7 @@ getTreesAndUCAs(
   model_folder_igk = NULL,
   model_folder_igl = NULL,
   uca_script,
-  python = "python",
+  python = "python3",
   id = "sample",
   max_iters = 100,
   nproc = 1,

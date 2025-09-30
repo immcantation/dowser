@@ -113,7 +113,6 @@ $sequence_masked_v
 s <- "ATCATCATC..."
 q <- "ATTTTCATCATC"
 print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
-
 ```
 
 *Warning*:pairwiseAlignment() has moved to the pwalign package. Please call
