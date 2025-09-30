@@ -13,7 +13,6 @@ getTreesAndUCAs(
   model_folder,
   model_folder_igk = NULL,
   model_folder_igl = NULL,
-  uca_script,
   python = "python3",
   id = "sample",
   max_iters = 100,
@@ -53,11 +52,9 @@ getTreesAndUCAs(
 
 \item{model_folder_igl}{The file path to the OLGA default model files for IGL}
 
-\item{uca_script}{The file path to the UCA python script}
-
 \item{python}{Specify the python call for your system. This is the call
 on command line that issues the python you want to use. 
-"python" by default.}
+"python3" by default.}
 
 \item{id}{The run ID}
 

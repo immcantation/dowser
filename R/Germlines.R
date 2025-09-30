@@ -2419,7 +2419,6 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param model_folder  The file path to the OLGA default model files for heavy chains
 #' @param model_folder_igk  The file path to the OLGA default model files for IGK
 #' @param model_folder_igl  The file path to the OLGA default model files for IGL
-#' @param uca_script    The file path to the UCA python script
 #' @param python        Specify the python call for your system. This is the call
 #'                      on command line that issues the python you want to use. 
 #'                      "python3" by default. 
@@ -2456,7 +2455,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @export
 getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder,
                            model_folder_igk = NULL, model_folder_igl = NULL, 
-                           uca_script, python = "python3", id = "sample", 
+                           python = "python3", id = "sample", 
                            max_iters = 100, nproc = 1, rm_temp = TRUE, quiet = 0,
                            chain = "H", references = NULL, clone = "clone_id",
                            cell = "cell_id", heavy = "IGH", sampling_method = 'random',
@@ -2483,6 +2482,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
     stop("The python executable found at", path.expand(Sys.which(python)), " cannot be executed.")
   }
   
+  uca_script <- system.file("get_UCA.py", package = "dowser")
   if(!file.exists(path.expand(uca_script))){
     stop("The file", path.expand(uca_script), " cannot be executed.")
   }
