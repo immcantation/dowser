@@ -8,8 +8,8 @@ getTreesAndUCAs(
   clones,
   data,
   dir = NULL,
-  build,
-  exec,
+  build = "igphyml",
+  exec = NULL,
   model_folder,
   model_folder_igk = NULL,
   model_folder_igl = NULL,
@@ -42,7 +42,7 @@ getTreesAndUCAs(
 
 \item{dir}{The file path of the directory of where data is saved. NULL is default.}
 
-\item{build}{Name of the tree building method}
+\item{build}{Name of the tree building method. Currently only igphyml is supported.}
 
 \item{exec}{File path to the tree building executable}
 

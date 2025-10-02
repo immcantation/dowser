@@ -2414,7 +2414,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param clones        AIRR-table containing sequences \link{formatClones}
 #' @param data          The AIRR-table that was used to make the clones object.
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
-#' @param build         Name of the tree building method
+#' @param build         Name of the tree building method. Currently only igphyml is supported.
 #' @param exec          File path to the tree building executable
 #' @param model_folder  The file path to the OLGA default model files for heavy chains
 #' @param model_folder_igk  The file path to the OLGA default model files for IGK
@@ -2453,15 +2453,17 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder,
-                           model_folder_igk = NULL, model_folder_igl = NULL, 
-                           python = "python3", id = "sample", 
-                           max_iters = 100, nproc = 1, rm_temp = TRUE, quiet = 0,
-                           chain = "H", references = NULL, clone = "clone_id",
-                           cell = "cell_id", heavy = "IGH", sampling_method = 'random',
-                           subsample_size = NA, search = "codon", check_genes = TRUE,
-                           igblast = NULL, igblast_database = NULL, ref_path = NULL, 
-                           organism = 'human', ...){
+getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", 
+                            exec = NULL, model_folder, 
+                            model_folder_igk = NULL, model_folder_igl = NULL, 
+                            python = "python3", id = "sample", max_iters = 100, 
+                            nproc = 1, rm_temp = TRUE, quiet = 0, chain = "H",
+                            references = NULL, clone = "clone_id", 
+                            cell = "cell_id", heavy = "IGH", 
+                            sampling_method = 'random', subsample_size = NA,
+                            search = "codon", check_genes = TRUE,
+                            igblast = NULL, igblast_database = NULL, 
+                            ref_path = NULL, organism = 'human', ...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
     dir <- file.path(dir, paste0("all_", id))
@@ -2479,12 +2481,19 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
   }
   
   if(file.access(path.expand(Sys.which(python)), mode = 1) == -1){
-    stop("The python executable found at", path.expand(Sys.which(python)), " cannot be executed.")
+    stop("The python executable provided, ", python, " cannot be executed.")
   }
   
   uca_script <- system.file("get_UCA.py", package = "dowser")
-  if(!file.exists(path.expand(uca_script))){
-    stop("The file", path.expand(uca_script), " cannot be executed.")
+  if (!file.exists(path.expand(uca_script))) {
+    stop(
+      paste(
+        "The required Python script 'get_UCA.py' could not be found or accessed at:",
+        path.expand(uca_script), "\n",
+        "This script should be included with the 'dowser' R package.",
+        "Please update or reinstall the 'dowser' package to ensure all scripts are present."
+      )
+    )
   }
   
   if(check_genes & is.null(references)){
@@ -2539,7 +2548,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
       }
     }
     # if subsampling to 1 sequence
-    if(subsample_size == 1){
+    if(subsample_size == 1 & !is.na(subsample_size)){
       cells <- unlist(lapply(clones$data, function(x) x@data$sequence_id))
       if (!is.na(cell) & cell %in% colnames(data)) {
         filtered <- data[data$sequence_id %in% cells, ]
@@ -2548,7 +2557,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build, exec,  model_folder
       sub_data <- data[data$sequence_id %in% cells,]
       clones <- formatClones(sub_data, nproc = nproc, 
                              filterstop = TRUE, chain = chain, minseq = 1, 
-                             dup_singles = T, traits = "mu_freq")
+                             dup_singles = T, ...)
     }
     saveRDS(clones, file = file.path(dir, "clones.rds"))
   }
