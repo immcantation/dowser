@@ -120,9 +120,15 @@ Examples
 data(ExampleClones)
 trees <- getTrees(ExampleClones[10,])
 plotTrees(trees)[[1]]
+
 ```
 
-![2](plotTrees-2.png)
+*Warning*:Arguments in `...` must be used.
+✖ Problematic arguments:
+• as.Date = as.Date
+• yscale_mapping = yscale_mapping
+• hang = hang
+ℹ Did you misspell an argument name?![3](plotTrees-3.png)
 
 
 See also

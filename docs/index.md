@@ -61,7 +61,7 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 
 ## Authors
 
-[Kenneth Hoehn](mailto:cole.jensen@yale.edu) (aut, cre)  
+[Kenneth Hoehn](mailto:kenneth.b.hoehn@dartmouth.edu) (aut, cre)  
 [Cole Jensen](mailto:cole.jensen@yale.edu) (aut)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  

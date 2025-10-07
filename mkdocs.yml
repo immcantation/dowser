@@ -63,7 +63,6 @@ pages:
     - topics/getSubclones.md
     - topics/getSubTaxa.md
     - topics/getTrees.md
-    - topics/getTreesAndUCAs.md
     - topics/IsotypeTrees.md
     - topics/makeAirrClone.md
     - topics/makeModelFile.md
@@ -91,5 +90,4 @@ pages:
     - topics/TimeTrees.md
     - topics/treesToPDF.md
     - topics/writeCloneSequences.md
-    - topics/writeFasta.md
     - topics/writeLineageFile.md
