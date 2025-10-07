@@ -198,7 +198,7 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
     positions = [
         pos for pos in positions
         if len(igphyml_df_new[igphyml_df_new['site'] == pos]) > 1
-    ]
+  ]
     positions = [
         group for group in junction_site_groups
         if (max(group) // 3 - 1) in positions
@@ -342,16 +342,49 @@ def process_row(row):
         generative_model.load_and_process_igor_model(marginals_file_name)
         pgen_model = pgen.GenerationProbabilityVJ(generative_model, genomic_data)
     
-    values = get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=int(max_iters), nproc = 1)
+    values = get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=int(params.get("max_iters", 100)), nproc = 1)
 
     new_germline = values[0]
     new_lhoods = values[1]
     data = values[2]
     iteration_df = values[3]
-
-    collapsed_df = iteration_df.drop_duplicates(subset=['site', 'codon']).copy()
-    collapsed_df['amino_acid'] = collapsed_df['codon'].apply(translate_to_amino_acid)
-    logo_df = collapsed_df.groupby(['site', 'amino_acid'], as_index=False).agg({
+    junction_sites_full = list(range(starting_point + 1, ending_point + 1))
+    junction_site_groups = [junction_sites_full[i:i+3] for i in range(0, len(junction_sites_full), 3)]
+    positions = [max(group) // 3 - 1 for group in junction_site_groups]
+    positions = [
+        pos for pos in positions
+        if len(igphyml_df[igphyml_df['site'] == pos]) > 1
+    ]
+    positions = [
+        group for group in junction_site_groups
+        if (max(group) // 3 - 1) in positions
+    ]
+    junction_sites = [site for group in positions for site in group]
+    only_in_positions_set = list(set(junction_sites_full) - set(junction_sites))
+    rows = []
+    for s in only_in_positions_set:
+        codon_group_index = next(idx for idx, group in enumerate(junction_site_groups) if s in group)
+        max_value_in_group = max(junction_site_groups[codon_group_index])
+        site_val = max_value_in_group // 3 - 1
+        sub = igphyml_df[igphyml_df['site'] == site_val]
+        codon_val = sub.iloc[0]['codon'] if not sub.empty else None
+        position_in_group = junction_site_groups[codon_group_index].index(s)
+        nt_val = codon_val[position_in_group] if codon_val and len(codon_val) > position_in_group else None
+        
+        rows.append({
+            'site': int(site_val),
+            'nt_site': int(s),
+            'codon': codon_val,
+            'nt': nt_val,
+            'joint_log_likelihood': np.nan,
+            'tree_log_likelihood': np.nan,
+            'pgen_log_likelihood': np.nan,
+            'relative_likelihood': 1/3
+        })
+    skipped_sites_df = pd.DataFrame(rows)
+    iteration_df = pd.concat([iteration_df, skipped_sites_df], ignore_index=True)
+    iteration_df['amino_acid'] = iteration_df['codon'].apply(translate_to_amino_acid)
+    logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
         'relative_likelihood': 'sum'
     })
     pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0)
@@ -371,28 +404,11 @@ def process_row(row):
     logo.ax.set_xlabel('Codon Site')
     plt.title('Amino Acid Logo Plot Based on Relative Likelihoods')
     if chain == "IGH":
-            plt.savefig("amino_acid_logo_plot.png", dpi=300, bbox_inches='tight')
+            plt.savefig(base_string + "/amino_acid_logo_plot.png", dpi=300, bbox_inches='tight')
             plt.close('all')
     else: 
-        plt.savefig("amino_acid_logo_plot_light.png", dpi=300, bbox_inches='tight')
-        plt.close('all')
-    logo_df = iteration_df.groupby(['nt_site', 'nt'], as_index=False).agg({
-        'relative_likelihood': 'sum'})
-    pwm_nuc = logo_df.pivot(index='nt_site', columns='nt', values='relative_likelihood').fillna(0)
-    plt.figure(figsize=(max(10, pwm_nuc.shape[0]), 4))
-    logo = logomaker.Logo(pwm_nuc, color_scheme='chemistry')
-    logo.style_spines(visible=False)
-    logo.style_spines(spines=['left', 'bottom'], visible=True)
-    logo.ax.set_ylabel('Relative Likelihood')
-    logo.ax.set_xlabel('Site')
-    plt.title('Nucleotide Logo Plot Based on Relative Likelihoods')
-    if chain == "IGH":
-            plt.savefig("nucleotide_logo_plot.png", dpi=300, bbox_inches='tight')
-            plt.close('all')
-    else: 
-        plt.savefig("nucleotide_logo_plot_light.png", dpi=300, bbox_inches='tight')
-        plt.close('all')
-        
+        plt.savefig(base_string + "/amino_acid_logo_plot_light.png", dpi=300, bbox_inches='tight')
+        plt.close('all')    
     try:
         if chain == "IGH":
             with open(base_string + "/UCA.txt", "w") as f:
@@ -402,8 +418,7 @@ def process_row(row):
             data.to_csv(base_string + "/UCA_data.csv", index=False)
             iteration_df.to_csv(base_string + "/recombination_stats.csv", index=False)
             pwm.to_csv(base_string + "/logo_plot_pwm.csv", index=False) 
-            pwm_nuc.to_csv(base_string + "/logo_plot_pwm_nuc.csv", index=False)
-            collapsed_df.to_csv(base_string + "/collapsed_iteration_df_amino_acid.csv", index=False)
+            #collapsed_df.to_csv(base_string + "/collapsed_iteration_df_amino_acid.csv", index=False)
         else:
             with open(base_string + "/UCA_light.txt", "w") as f:
                 f.write(new_germline + "\n")
@@ -412,8 +427,7 @@ def process_row(row):
             data.to_csv(base_string + "/UCA_data_light.csv", index=False)
             iteration_df.to_csv(base_string + "/recombination_stats_light.csv", index=False)
             pwm.to_csv(base_string + "/logo_plot_pwm_light.csv", index=False) 
-            pwm_nuc.to_csv(base_string + "/logo_plot_pwm_nuc_light.csv", index=False)
-            collapsed_df.to_csv(base_string + "/collapsed_iteration_df_amino_acid_light.csv", index=False)
+            #collapsed_df.to_csv(base_string + "/collapsed_iteration_df_amino_acid_light.csv", index=False)
 
     except Exception as e:
         print(f"Error writing output files: {e}")
@@ -532,6 +546,28 @@ if __name__ == '__main__':
             data = values[2]
             iteration_df = values[3]
 
+            # check for skipped sites for the logo plot 
+            codons_cdr3 = [(i, starting_germline[i:i+3]) for i in range(starting_point, ending_point, 3)]
+            positions = [pos for pos, _ in codons_cdr3]
+            positions = [p // 3 for p in positions]
+            sites = iteration_df['site'].tolist()
+            only_in_positions_set = sorted(set(positions) - set(sites))
+            rows = []
+            for s in only_in_positions_set:
+                sub = igphyml_df[igphyml_df['site'] == s]
+                codon_val = sub.iloc[0]['codon'] if not sub.empty else None
+                rows.append({
+                    'site': int(s),
+                    'codon': codon_val,
+                    'joint_log_likelihood': np.nan,
+                    'tree_log_likelihood': np.nan,
+                    'pgen_log_likelihood': np.nan,
+                    'relative_likelihood': 1
+                })
+            skipped_sites_df = pd.DataFrame(rows)
+            iteration_df = pd.concat([skipped_sites_df, iteration_df])
+            iteration_df = iteration_df.sort_values(by=['site', 'codon'], ascending=[True, True])
+
             # make the logo plot
             iteration_df['amino_acid'] = iteration_df['codon'].apply(translate_to_amino_acid)
             logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
@@ -556,7 +592,7 @@ if __name__ == '__main__':
                     data.to_csv(base_string + "/UCA_data.csv", index=False)
                     iteration_df.to_csv(base_string + "/recombination_stats.csv", index=False)
                     pwm.to_csv(base_string + "/logo_plot_pwm.csv", index=False) 
-                    plt.savefig("amino_acid_logo_plot.png", dpi=300, bbox_inches='tight')
+                    plt.savefig(base_string + "/amino_acid_logo_plot.png", dpi=300, bbox_inches='tight')
                     plt.close('all')
                 else:
                     with open(base_string + "/UCA_light.txt", "w") as f:
@@ -566,7 +602,7 @@ if __name__ == '__main__':
                     data.to_csv(base_string + "/UCA_data_light.csv", index=False)
                     iteration_df.to_csv(base_string + "/recombination_stats_light.csv", index=False)
                     pwm.to_csv(base_string + "/logo_plot_pwm_light.csv", index=False) 
-                    plt.savefig("amino_acid_logo_plot_light.png", dpi=300, bbox_inches='tight')
+                    plt.savefig(base_string + "/amino_acid_logo_plot_light.png", dpi=300, bbox_inches='tight')
                     plt.close('all')
             except Exception as e:
                 print(f"Error writing output files: {e}")
