@@ -3,11 +3,11 @@ Type: Package
 Version: 2.3.2.999
 Date: 2025-10-7
 Authors@R: c(
-    person("Kenneth", "Hoehn", "kenneth.b.hoehn@dartmouth.edu", role = c("aut", "cre")),
-    person("Cole", "Jensen", "cole.jensen@yale.edu", role = "aut"),
-    person("Susanna", "Marquez", "susanna.marquez@yale.edu", role = "ctb"),
-    person("Jason", "Vander Heiden", "jason.vanderheiden@gmail.com", role = "ctb"),
-    person("Steven", "Kleinstein", "steven.kleinstein@yale.edu", role = c("aut", "cph"))
+    person("Kenneth", "Hoehn", email = "kenneth.b.hoehn@dartmouth.edu", role = c("aut", "cre")),
+    person("Cole", "Jensen", email = "cole.jensen@yale.edu", role = "aut"),
+    person("Susanna", "Marquez", email = "susanna.marquez@yale.edu", role = "ctb"),
+    person("Jason", "Vander Heiden", email = "jason.vanderheiden@gmail.com", role = "ctb"),
+    person("Steven", "Kleinstein", email = "steven.kleinstein@yale.edu", role = c("aut", "cph"))
   )
 Title: B Cell Receptor Phylogenetics Toolkit
 Description: Provides a set of functions for inferring, visualizing, and analyzing B cell phylogenetic trees.
