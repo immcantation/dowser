@@ -69,4 +69,5 @@ Collate:
     'Germlines.R'
     'Statistics.R'
     'TreeFunctions.R'
+    'TimeTreesFunctions.R'
     'zzz.R'
