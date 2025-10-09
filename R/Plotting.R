@@ -544,7 +544,6 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
 #' @param  file   pdf file name for printing plots
 #' @param  width  width of plot in inches if file specified
 #' @param  height height of plot in inches if file specified
-#' @param  ess    add ESS to facets?
 #' @param  ...   optional arguments passed to grDevices::pdf
 #' 
 #' @return   if no file specified, a list of ggplot objects. If file specified
@@ -552,7 +551,7 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
 #'  
 #' @seealso \link{getSkylines} \link{readBEAST} \link{getTrees}
 #' @export
-plotSkylines = function(clones, file=NULL, width=8.5, height=11){
+plotSkylines = function(clones, file=NULL, width=8.5, height=11, ...){
     plots <- list()
     for(i in 1:nrow(clones)){
         skyline <- clones$skyline[[i]]
@@ -561,7 +560,7 @@ plotSkylines = function(clones, file=NULL, width=8.5, height=11){
             next
         }
 
-        plots[[i]] <- ggplot(skyline, aes(x=bin, y=median, ymin=lci, ymax=uci)) +
+        plots[[i]] <- ggplot(skyline, aes(x=!!rlang::sym("bin"), y=!!rlang::sym("median"), ymin=!!rlang::sym("lci"), ymax=!!rlang::sym("uci"))) +
             geom_ribbon(fill = "grey70") + scale_y_log10() + theme_bw() + 
             geom_line() + xlab("Time") + ylab("Effective pop. size") +
             ggtitle(clones$clone_id[i])

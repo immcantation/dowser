@@ -4,7 +4,7 @@
 #' all parameters (except those in \code{ignore} vector) having ESS 
 #' greater than or equal to the specified ess_cutoff
 #'
-#' \code{getTimeTreesIterate} Iteratively resume getTimeTrees until convergence.
+#' \code{getTimeTreesIterate} Iteratively resume getTimeTrees til convergence.
 #' @param    clones     a tibble of \code{airrClone} objects, the output of
 #'                      \link{formatClones}
 #' @param    iterations Maximum number of iterations
@@ -13,12 +13,11 @@
 #' @param    quiet      quiet notifications if > 0
 #' @param    ...        Additional arguments for getTimeTrees
 #'
-#' @return   A tibble of \code{tidytree} and \code{airrClone} objects
+#' @return   A tibble of \code{tidytree} and \code{airrClone} objects.
 #'
 #' @details
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'
-#' @seealso \link{getTimeTrees}, \link{readBEAST}
 #' @export
 getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
   ignore = c("traitfrequencies"), quiet=0, ...){
@@ -36,7 +35,7 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
         params = clones$parameters
         for(regex in ignore){
             params = lapply(params, function(x){
-                filter(x, !grepl(regex, item))
+                dplyr::filter(x, !grepl(regex, !!rlang::sym("item")))
                 })
         }
         
@@ -50,7 +49,7 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
           }
         }
     
-        resume = filter(clones, below_ESS > 0)$clone_id
+        resume = dplyr::filter(clones, !!rlang::sym("below_ESS") > 0)$clone_id
         iter = iter + 1
     }
     if(iter == iterations & length(resume) != 0){
@@ -87,6 +86,7 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 #' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
 #' @param    quiet      amount of rubbish to print to console
 #' @param    rm_temp    remove temporary files (default=TRUE)
+#' @param    trees      optional list of starting trees, either phylo objects or newick strings
 #' @param    ...        Additional arguments passed to tree building programs
 #'
 #' @return   A list of \code{phylo} objects in the same order as \code{data}.
@@ -282,6 +282,8 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
 #' @param    quiet      amount of rubbish to print to console
 #' @param    low_ram    run with less memory (slower)  
+#' @param    trees                    optional list of starting trees, either phylo objects or newick strings
+#' @param    start_edge_length        edge length to use for all branches in starting tree 
 #' @param    ...      Additional arguments for XML writing functions
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
@@ -529,6 +531,7 @@ create_MRCA_prior_observed <- function(clone, id) {
 #' 
 #' @param    clone                    an \code{airrClone} object
 #' @param    id                       unique identifer for this analysis
+#' @param    germline_range           Possible date range of germline tip
 #'
 #' @return   String of XML setting the MRCA prior of the germline sequence
 #'  
@@ -656,7 +659,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_
     if (!include_germline_as_tip) {
       # remove the germline tip if it exists but after numbering the nodes
       # so that the node numbers are correct
-      tree <- drop.tip(tree, "Germline")
+      tree <- ape::drop.tip(tree, "Germline")
     }
     newick <- ape::write.tree(tree)
   } else if (inherits(tree, "character")) {
@@ -1143,7 +1146,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
       stop(paste("Couldn't read in ",treefile))
     }
     l <- readLines(logoutfile)
-    log <- read.table(text=l[4:(length(l)-1)], head=TRUE)
+    log <- read.table(text=l[4:(length(l)-1)], header=TRUE)
 
     # add parameter summary
     beast@info$parameters <- log
@@ -1168,8 +1171,8 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
       
       beast@info$tree_posterior <- phylos
 
-      l <- read.table(logfile, head=TRUE)
-      beast@info$parameters_posterior <- tidyr::gather(l, "parameter", "value", -Sample)
+      l <- read.table(logfile, header=TRUE)
+      beast@info$parameters_posterior <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
     }
     beast@info$name <- data[[i]]@clone
     trees[[i]] <- beast
@@ -1194,17 +1197,18 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
 #' \code{makeSkyline} 
 #' @param  logfile   Beast log file
 #' @param  treesfile BEAST trees file 
-#' @param  burnin    file name for trace plots
+#' @param  burnin    Burnin percentage (1-100) 
 #' @param  bins      number of bins for plotting
 #' @param  youngest  timepoint of the most recently tip sampled (if 0, backward time used)
 #' @param  clone_id  name of the clone being analyzed (if desired)
+#' @param  max_height max height to use (min, median, mean, max)
 #' @return   Bayesian Skyline values for given clone
 #'
 #' @export
 makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0, 
     clone_id=NULL, max_height=c("min","median","mean","max")){
     
-    l <- tryCatch(read.csv(logfile, head=TRUE, sep="\t", comment.char="#"),error=function(e)e)
+    l <- tryCatch(read.csv(logfile, header=TRUE, sep="\t", comment.char="#"),error=function(e)e)
     if("error" %in% class(l)){
         stop(paste("couldn't open",logfile))
     }
@@ -1212,7 +1216,7 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     if("error" %in% class(phylos)){
         stop(paste("couldn't open", treesfile))
     }
-    params <- tidyr::gather(l, "parameter", "value", -Sample)
+    params <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
 
     if(!"bPopSizes.1" %in% unique(params$parameter)){
         stop(paste("log file doesn't have pop sizes.",
@@ -1224,19 +1228,19 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     if(burn > 0){
       phylos <- phylos[(burn+1):length(phylos)]
       samples <- samples[(burn+1):length(samples)]
-      params <- filter(params, Sample %in% samples)
+      params <- dplyr::filter(params, !!rlang::sym("Sample") %in% samples)
     }
-    if(n_distinct(params$Sample) != length(phylos)){
+    if(dplyr::n_distinct(params$Sample) != length(phylos)){
       warning("Parameter and tree posteriors not same length, subsetting")
       treestates <- as.numeric(gsub("STATE_","",names(phylos)))
       commonstates <- intersect(treestates, params$Sample)
       phylos <- phylos[treestates %in% commonstates]
-      params <- filter(params, Sample %in% commonstates)
+      params <- dplyr::filter(params, !!rlang::sym("Sample") %in% commonstates)
       samples <- unique(params$Sample)
     }
 
-    groups <- filter(params, grepl("GroupSizes", parameter))
-    pops <- filter(params, grepl("PopSizes", parameter))
+    groups <- dplyr::filter(params, grepl("GroupSizes", !!rlang::sym("parameter")))
+    pops <- dplyr::filter(params, grepl("PopSizes", !!rlang::sym("parameter")))
 
     if(sum(pops$value < 0) > 0){
         stop(paste(logfile, "found popsizes < 0, can't continue"))
@@ -1250,13 +1254,13 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 
     # smallest tree height in log file (this is what tracer seems to do)
     if(max_height == "min"){
-      maxheight <- min(filter(params, parameter == "TreeHeight")$value)
+      maxheight <- min(dplyr::filter(params, !!rlang::sym("parameter") == "TreeHeight")$value)
     }else if(max_height == "median"){
-      maxheight <- median(filter(params, parameter == "TreeHeight")$value)
+      maxheight <- stats::median(dplyr::filter(params, !!rlang::sym("parameter") == "TreeHeight")$value)
     }else if(max_height == "mean"){
-      maxheight <- mean(filter(params, parameter == "TreeHeight")$value)
+      maxheight <- mean(dplyr::filter(params, !!rlang::sym("parameter") == "TreeHeight")$value)
     }else if(max_height == "max"){
-      maxheight <- max(filter(params, parameter == "TreeHeight")$value)
+      maxheight <- max(dplyr::filter(params, !!rlang::sym("parameter") == "TreeHeight")$value)
     }else{
       stop("max_height option must be min, median, mean, or max")
     }
@@ -1271,7 +1275,7 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 
     binwidth <- (maxtime - mintime)/(bins - 1)
 
-    all_intervals <- tibble()
+    all_intervals <- dplyr::tibble()
     for(index in 1:length(phylos)){
       tr <- phylos[[index]]
       sample <- samples[index]
@@ -1283,17 +1287,17 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
       nodes <- nodes[order(nodes, decreasing=FALSE)]
 
 
-      pop <- filter(pops, !!rlang::sym("Sample") == sample)
-      group <- filter(groups, !!rlang::sym("Sample") == sample)
+      pop <- dplyr::filter(pops, !!rlang::sym("Sample") == sample)
+      group <- dplyr::filter(groups, !!rlang::sym("Sample") == sample)
 
       temp <- nodes
-      results <- tibble()
+      results <- dplyr::tibble()
       for(i in 1:nrow(group)){
         groupsize <- group$value[i]
         popsize <- pop$value[i]
         events <- temp[1:(groupsize)]
         results <- bind_rows(results,
-          tibble(end=events[length(events)], interval=i,
+          dplyr::tibble(end=events[length(events)], interval=i,
             events=length(events), popsize=popsize))
         temp <- temp[-1:-(groupsize)]
       }
@@ -1304,15 +1308,15 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 
     indistinct <- all_intervals %>%
         group_by(sample) %>%
-        summarize(distinct = dplyr::n_distinct(end),
+        summarize(distinct = dplyr::n_distinct(!!rlang::sym("end")),
             n = n()) %>%
-        filter(distinct < n) %>%
+        dplyr::filter(!!rlang::sym("distinct") < n) %>%
         pull(sample)
 
     if(length(indistinct) > 0){
         warning(paste(logfile, "Removing",length(indistinct),
             "samples with indistinct intervals. This shouldn't happen."))
-        all_intervals <- dplyr::filter(all_intervals, !sample %in% indistinct)
+        all_intervals <- dplyr::filter(all_intervals, !(!!rlang::sym("sample") %in% indistinct))
         if(nrow(all_intervals) == 0){
             stop("No intervals left :-(")
         }
@@ -1321,7 +1325,7 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     skyline <- tidyr::tibble()
     n_sample <- dplyr::n_distinct(all_intervals$sample)
     bin_intervals <- seq(0, length=bins, by=binwidth)
-    interval_bins <- tibble()
+    interval_bins <- dplyr::tibble()
     for(j in 1:(length(bin_intervals)-1)){
       bin_start <- bin_intervals[j]
       bin_end <- bin_intervals[j+1]
@@ -1329,7 +1333,7 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
       matches <- all_intervals %>%
         dplyr::group_by(!!rlang::sym("sample")) %>%
         dplyr::filter(!!rlang::sym("end") > bin_start) %>%
-        slice_min(!!rlang::sym("end"))
+        dplyr::slice_min(!!rlang::sym("end"))
 
 #      if(nrow(matches) != n_sample){
 #        stop("didn't find some indexes")
@@ -1378,11 +1382,14 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 #' \code{makeSkylines} 
 #' @param  clones    clone tibble
 #' @param  dir       directory of BEAST trees file 
+#' @param  id        unique identifer for this analysis
 #' @param  time      name of time column
 #' @param  bins      number of bins for plotting
+#' @param  burnin    Burnin percent (default 10) 
 #' @param  verbose   if 1, print name of clones
 #' @param  forward   plot in forward or (FALSE) backward time?
 #' @param  nproc     processors for parallelization (by clone)
+#' @param  max_height max height to use (min, median, mean, max)
 #' @return   Bayesian Skyline values for given clone
 #' @details Burnin set from readBEAST or getTrees
 #' @export
