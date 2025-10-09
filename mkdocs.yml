@@ -16,21 +16,20 @@ pages:
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
   - 'Vignettes':
-    - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md
-    - 'Discrete Trait Analysis': vignettes/Discrete-Trait-Vignette.md
-    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
-    - 'Measurable evolution': vignettes/Measurable-Evolution.md
-    - 'Plotting Lineage Trees': vignettes/Plotting-Trees-Vignette.md
     - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Building trees with paired heavy and light chain data': vignettes/Resolve-Light-Chains-Vignette.md
+    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
+    - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md
+    - 'Paired Heavy and Light Chain Trees': vignettes/Resolve-Light-Chains-Vignette.md
+    - 'Plot Lineage Trees': vignettes/Plotting-Trees-Vignette.md
     - 'Reconstruct Intermediate Sequences': vignettes/Sequences-Vignette.md
     - 'Migration, Differentiation, Class-switching Analysis': vignettes/Discrete-Trait-Vignette.md
     - 'Time-based Longitudinal Analysis': vignettes/Measurable-Evolution.md
-    - 'Building Time Trees': vignettes/Building-Time-Trees-Vignette.md
+    - 'Build Time Trees with TyCHE': vignettes/Building-Time-Trees-Vignette.md
   - 'Help Topics':
     - topics/airrClone-class.md
     - topics/BiopsyTrees.md
     - topics/bootstrapTrees.md
+    - topics/buildBeast.md
     - topics/buildClonalGermline.md
     - topics/buildGermline.md
     - topics/buildIgphyml.md
@@ -49,6 +48,7 @@ pages:
     - topics/downsampleClone.md
     - topics/dowser-package.md
     - topics/ExampleAirr.md
+    - topics/ExampleAirrTyCHE.md
     - topics/ExampleClones.md
     - topics/ExampleDbChangeo.md
     - topics/ExampleMixedClones.md
@@ -63,15 +63,21 @@ pages:
     - topics/getNodeSeq.md
     - topics/getPalette.md
     - topics/getSeq.md
+    - topics/getSkylines.md
     - topics/getSubclones.md
     - topics/getSubTaxa.md
+    - topics/getTimeTrees.md
+    - topics/getTimeTreesIterate.md
     - topics/getTrees.md
     - topics/IsotypeTrees.md
     - topics/makeAirrClone.md
     - topics/makeModelFile.md
+    - topics/makeSkyline.md
     - topics/maskCodons.md
     - topics/maskSequences.md
+    - topics/plotSkylines.md
     - topics/plotTrees.md
+    - topics/readBEAST.md
     - topics/readFasta.md
     - topics/readIMGT.md
     - topics/readLineages.md
@@ -82,6 +88,7 @@ pages:
     - topics/resolvePolytomies.md
     - topics/runCorrelationTest.md
     - topics/sampleClone.md
+    - topics/sampleCloneMultiGroup.md
     - topics/sampleClones.md
     - topics/scaleBranches.md
     - topics/stitchRegions.md
