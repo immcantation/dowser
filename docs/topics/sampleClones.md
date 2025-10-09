@@ -25,7 +25,7 @@ weight
 :   column for weighting sample probability
 
 group
-:   column to sample evenly among groups
+:   column (or columns) to sample evenly among groups
 
 
 

@@ -2,7 +2,7 @@
 ---
 title: "Build Time Trees Using TyCHE and BEAST"
 author: "Jessie Fielding"
-date: "2025-09-17"
+date: "2025-10-09"
 output:
   html_document:
     fig_height: 4
@@ -31,6 +31,9 @@ vignette: >
 ---
 
 ## Building Time Trees
+> **Expected tutorial time:** This tutorial takes approximately an hour to complete,
+> including 45 minutes of BEAST2 run time. You can reduce the run time by following
+> the suggestions in the tip boxes above each code chunk that runs BEAST2.
 
 There are many options for building time trees using BEAST2. Here we demonstrate
 how to use TyCHE to fit a trait-linked clock for heterogeneous evolution to
@@ -53,18 +56,111 @@ states and dates of tree nodes using trait-specific clock rates.
 
 This tutorial requires Dowser 2.4 or later.
 
-Install BEAST 2.7.7 from [here](https://www.beast2.org/). 
+You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine.
 
-You will also need to install the following BEAST packages:
 
-- rootfreqs: [https://github.com/rbouckaert/rootfreqs](https://github.com/rbouckaert/rootfreqs)
-- BEAST Classic: Can be installed via BEAST package manager (see [ here](https://www.beast2.org/tutorials/beast-package-manager/)).
+<style>
+ol.os {
+  list-style-type: none;
+  counter-reset: elementcounter;
+}
+.os li {
+  position: relative;
+  left: 6em;
+  }
+.os li:before{
+  position: absolute;
+  left: -6em;
+  width: 3.5em;
+  text-align: left;
+}
+li.mac:before {
+  content: "Mac:";
+  counter-increment: elementcounter;
+  font-weight: bold;
+}
+li.windows:before {
+  content: "Windows:";
+  counter-increment: elementcounter;
+  font-weight: bold;
+}
+</style>
 
-Install TyCHE from [github.com/hoehnlab/tyche](https://github.com/hoehnlab/tyche).
 
-## Setting up XML templates
+#### For Mac and Windows machines, we recommend:
 
-BEAST models are specified and run through XML files.
+<ol>
+ <li>
+    <ol class="os">
+     <li><br/></li>
+     <li class="mac">Click to [download the BEAST 2.7.7 dmg](https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Mac.dmg)</li>
+     <li class="windows">Click to [download the BEAST 2.7.7 zip](https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Windows.zip)</li>
+    </ol>
+**OR** download the appropriate version from  [https://github.com/CompEvol/beast2/releases/tag/v2.7.7](https://github.com/CompEvol/beast2/releases/tag/v2.7.7)
+or [www.beast2.org](https://www.beast2.org/).
+  </li>
+ <li>
+ <ol class="os">
+     <li><br/></li>
+     <li class="mac">Open the dmg file and drag the BEAST application to your Applications folder</li>
+     <li class="windows">Right click on the zip file to extract the BEAST folder</li>
+    </ol>
+ </li>
+</ol>
+3. Open BEAUti, click on the "File" menu, and select "Manage Packages...".
+
+4. In the package manager, find and install the "BEAST Classic" package.
+
+5. Once released: In the package manager, find and install the "TyCHE" package.
+
+Currently: Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/tyche) "by hand":
+[www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
+
+6. Follow this tutorial to install the [rootfreqs package](https://github.com/rbouckaert/rootfreqs) "by hand":
+[www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
+
+#### For Linux machines, we recommend running:
+
+``` bash
+# Choose appropriate version for your architecture (x86 or aarch64)
+BEAST=BEAST.v2.7.7.Linux.x86.tgz # or BEAST=BEAST.v2.7.7.Linux.aarch64.tgz
+
+# download file and uncompress
+curl -O https://github.com/CompEvol/beast2/releases/download/v2.7.7/$BEAST
+tar -xvzf $BEAST
+
+# optionally remove the compressed file
+rm $BEAST
+
+# run BEAST, at least with help, to allow it to set up its directories
+~/beast/bin/beast -help
+
+# install BEAST Classic package
+~/beast/bin/packagemanager -add BEAST_CLASSIC
+
+# install TyCHE package (currently not released on BEAST package manager)
+curl -O https://github.com/hoehnlab/tyche/releases/download/v0.0.3/TyCHE.v0.0.3.zip 
+unzip -o -d ~/.beast/2.7/TyCHE TyCHE.v0.0.3.zip
+rm -f TyCHE.v0.0.3.zip
+
+# install TyCHE package once it is released on BEAST package manager
+# ~/beast/bin/packagemanager -add TyCHE
+
+# install rootfreqs package
+ROOTFREQS=rootfreqs.package.v0.0.2.zip
+curl -O https://github.com/rbouckaert/rootfreqs/releases/download/v0.0.2/$ROOTFREQS
+unzip -o -d ~/.beast/2.7/rootfreqs $ROOTFREQS
+rm -f $ROOTFREQS
+
+```
+
+
+
+
+### Download and set up XML templates
+
+BEAST models are specified and run through XML files. A template is required to run BEAST2 through Dowser.
+
 We provide several BEAST XML templates in the 
 [xml-templates repository](https://github.com/hoehnlab/xml-templates/). You can 
 download these and modify them as needed. Additionally, you can create your own
@@ -74,6 +170,12 @@ The templates used in this tutorial are:
 
 - `custom/StrictClock_Standard_EmpFreq.xml`: A simple strict clock model with empirical nucleotide frequencies.
 - `custom/TraitLinkedExpectedOccupancy_EstTraitClockRates_EmpFreq.xml`: A trait-linked clock model using an expected occupancy method for determining the proportion of each branch in each state, estimating separate clock rates for each state, and using empirical nucleotide frequencies.
+
+You can specify the path to the
+template in the `template` argument of `getTimeTreesIterate`, or you can pass a 
+connection object to the `template` argument, e.g. 
+`getTimeTreesIterate(..., template = url(<url-to-github-file-raw>), ...)`. In this 
+tutorial, we assume you have downloaded the above templates to your working directory.
 
 ---
 
@@ -95,13 +197,13 @@ library(ggtree)
 data(ExampleAirrTyCHE)
 
 # set up time/date trait
-ExampleAirrTyche$sample_time <- as.numeric(ExampleAirrTyche$sample_time)
+ExampleAirrTyCHE$sample_time <- as.numeric(ExampleAirrTyCHE$sample_time)
 
 # trait value of interest
 trait="location"
 
 clones <- formatClones(
-  ExampleAirrTyche,
+  ExampleAirrTyCHE,
   traits = c(trait, "sample_time"),
   germ   = "germline_alignment"
 )
@@ -111,11 +213,6 @@ print(table(ExampleAirrTyCHE[[trait]]))
 ```
 
 
-```
-## 
-## germinal_center           other 
-##             100             100
-```
 ---
 
 ## Estimating the GC clock rate
@@ -127,7 +224,7 @@ or both populations.
 
 If you do not have an external estimate of the clock rate for each trait, you can estimate
 the clock rate using a using root-to-tip regression or by fitting a strict clock 
-model to pure cell populations. 
+model to GC B cells. 
 
 Here we estimate the clock rate of germinal center B cells using BEAST2 with a strict clock model.
 
@@ -144,7 +241,12 @@ plotTrees(gctrees)[[1]] + geom_tippoint(aes(color=sample_time))
 ![](figure/Building-Time-Trees-gc-trees.png) 
 
 
-> **Tip:** For a quick demonstration set smaller `mcmc_length` or `iterations`
+> **Tip:** With two processors available, this step takes about 15 minutes to run, depending on your machine. 
+> For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
+> results to be unconverged.
+
+`getTimeTreesIterate` will run BEAST2 on each clone in parallel 
+(here, `nproc=2`, so 2 clones at a time).
 
 
 ``` r
@@ -152,20 +254,21 @@ plotTrees(gctrees)[[1]] + geom_tippoint(aes(color=sample_time))
 beast <- "/Applications/BEAST 2.7.7/bin/"
 
 # estimate clock rate of GC B cells
-# Note, this will take several minutes
 # if you don't care about convergence, reduce mcmc_length
+# ensure you are providing the correct path to the template file downloaded earlier (see Requirements)
 gctree = getTimeTreesIterate(gcf,
 	beast=beast,
 	template="StrictClock_Standard_EmpFreq.xml",
 	dir="temp",
 	id="gc_strict",
 	time="sample_time",
-	mcmc_length=1e7,
-	iterations=5,
-	nproc=5,
+	mcmc_length=1e6,
+	iterations=10,
+	nproc=2, 
 	CLOCK_RATE_INIT=0.001,
 	KAPPA_PRIOR_M=0.67,
-	KAPPA_PRIOR_S=0.2)
+	KAPPA_PRIOR_S=0.2,
+	ignore=c("freqParameter"))
 
 
 gcrate_tree = mean(sapply(gctree$parameters, function(x)filter(x,item=="geneticClockRate")$mean))
@@ -202,9 +305,9 @@ occupancy method to determine the proportion of each branch in each state.
 Features of this template:
 
 - Allows estimation of clock rates:
-  - we provide we provide values of the mean (`TRAIT_RATE_MEAN_1`, `TRAIT_RATE_MEAN_2`) 
+  - we provide values of the mean (`TRAIT_RATE_MEAN_1`, `TRAIT_RATE_MEAN_2`) 
 and sigma (`TRAIT_RATE_SIGMA_1`, `TRAIT_RATE_SIGMA_2`)
-for the prior distributions of each clock rate.
+for the prior normal distributions of each clock rate.
 - Uses empirical nucleotide frequencies as the equilibrium frequencies.
   - Dowser will automatically calculate these frequencies from the input sequences.
   - Recommended for most data, especially BCRs.
@@ -212,13 +315,17 @@ for the prior distributions of each clock rate.
 `getTimeTreesIterate` is designed to run each analysis iteratively, checking for
 convergence after each iteration. If the analyses converge before 
 reaching the max iterations, it will stop early. It will run each analysis for `mcmc_length`
-MCMC samples (here, `1e7`), and it will repeat this up to `iterations` times (here, `10`), 
-so here we have a maximum of 1e8 MCMC samples. 
+MCMC samples (here, `1e6`), and it will repeat this up to `iterations` times (here, `10`), 
+so here we have a maximum of 1e7 MCMC samples. 
 
 The convergence check is based 
 on the ESS of the parameters reported in the log files. You can exclude parameters
 from this ESS check using the `ignore` argument (here, we ignore `freqParameter`, as it
 is a fixed value).
+
+> **Tip:** This step takes about 30 minutes to run, depending on your machine. 
+> For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
+> results to be unconverged.
 
 
 
@@ -232,27 +339,27 @@ mixed_trees <- getTimeTreesIterate(
   dir      = "temp",
   id       = "tyche_eo_est",
   log_every = "auto",
-  nproc     = 5,
+  nproc     = 2,
   KAPPA_PRIOR_M = 0.67,
   KAPPA_PRIOR_S = 0.2,
   TRAIT_RATE_MEAN_1 = gcrate_tree,
   TRAIT_RATE_MEAN_2 = 0.000001,
   TRAIT_RATE_SIGMA_1 = gcrate_tree * 0.01,
-  TRAIT_RATE_SIGMA_2 = 0.00001,
+  TRAIT_RATE_SIGMA_2 = 0.001,
   RATE_INDICATORS = "1 0",
   TRANSITION_RATE_ALPHA_1 = 0.1,
   TRANSITION_RATE_ALPHA_2 = 1.0,
   TRANSITION_RATE_BETA_1  = 0.1,
   TRANSITION_RATE_BETA_2  = 1.0,
   log_target   = 2000,
-  mcmc_length  = 1e7,
+  mcmc_length  = 1e6,
   ignore       = c("freqParameter"),
   iterations   = 10
 )
 ```
 
-`getTimeTreesIterate` will run multiple BEAST2 analyses in parallel 
-(here, `nproc=5`, so 5 at a time).
+`getTimeTreesIterate` will run BEAST2 on each clone in parallel 
+(here, `nproc=2`, so 2 at a time).
 
 To capture sufficient information about the posterior distribution while keeping 
 log files from becoming overly large or unwieldy, we provide the option to set 
@@ -265,9 +372,9 @@ The rate indicators (`RATE_INDICATORS`) specify which traits can transition to e
 other. In a primary immune response we recommend setting this to `"1 0"`, as GC 
 B cells can transition to other tissues, but not vice versa. If your data comprises
 chronic infections or repeated vaccinations, you may want to allow transitions in both
-directions, so you would set this to `"1 1"`.
+directions, so you would set this to `"1 1"`. Note: traits are always sorted ASCII alphabetically.
 
-You can also specify alpha and beta values for the prior distributions of the
+You can also specify alpha (shape) and beta (rate) values for the prior gamma distributions of the
 transition rates between traits. We recommend setting the same prior for each transition
 rate except in rare cases.
 
@@ -281,15 +388,21 @@ See `?getTimeTreesIterate` and TyCHE and BEAST2 documentation for more details.
 ## Visualize the results
 After the analyses have converged, you can visualize the time trees.
 
+Note: plotTrees sets a default value for the scale bar of 0.01, which is appropriate 
+for trees with genetic distance branch lengths (mutations per site), but time trees typically 
+require a larger scale bar. In this case, we know the data spans 200 time units,
+so we set `scale=10` to make the scale bar more visually interpretable.
+
 
 ``` r
-plotTrees(mixed_trees)[[1]] + geom_point(aes(color=location))
+plotTrees(mixed_trees, scale=10)[[1]] + geom_point(aes(fill=location), pch=21, size=3)
 ```
 ![](figure/Building-Time-Trees-mixed-trees.png)
 
 If you want to revisit an analysis and no longer have the `mixed_trees` object 
 in your R environment, you can use `readBEAST` to read in the BEAST log and tree 
-files from the directory (`dir`) you specified in `getTimeTreesIterate`.
+files from the directory (`dir`) you specified in `getTimeTreesIterate`. Because of this,
+it is important to always specify a unique combination of `dir` and `id` for each analysis.
 
 
 

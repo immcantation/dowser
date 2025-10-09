@@ -27,7 +27,8 @@ ambig = "grey",
 bootstrap_scores = FALSE,
 tip_palette = NULL,
 node_palette = NULL,
-guide_title = NULL
+guide_title = NULL,
+branch_lengths = NULL
 )
 ```
 
@@ -93,6 +94,9 @@ node_palette
 guide_title
 :   Title of color guide. Defaults to tips variable if specified.
 
+branch_lengths
+:   Use branch lenghts? Use "none" if not.
+
 
 
 
@@ -120,15 +124,9 @@ Examples
 data(ExampleClones)
 trees <- getTrees(ExampleClones[10,])
 plotTrees(trees)[[1]]
-
 ```
 
-*Warning*:Arguments in `...` must be used.
-✖ Problematic arguments:
-• as.Date = as.Date
-• yscale_mapping = yscale_mapping
-• hang = hang
-ℹ Did you misspell an argument name?![3](plotTrees-3.png)
+![2](plotTrees-2.png)
 
 
 See also

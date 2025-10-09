@@ -80,70 +80,25 @@ print(maskCodons(1,q,s,TRUE))
 
 ```
 
-*Warning*:pairwiseAlignment() has moved to the pwalign package. Please call
-  pwalign::pairwiseAlignment() to get rid of this warning.
-```
-$sequence_id
-[1] 1
+**Error in .load_package_gracefully("pwalign", "starting with BioC 3.19, ", **: Could not load package pwalign. Is it installed?
 
-$sequence_masked
-[1] ""
+  Note that starting with BioC 3.19, calling pairwiseAlignment() requires
+  the pwalign package. Please install it with:
 
-$masking_note
-[1] ""
-
-$insertions
-[1] ""
-
-$subject_alignment
-[1] "ATC---ATCATC"
-
-$query_alignment
-[1] "ATCTTTATCATC"
-
-$sequence_masked_v
-[1] "ATCATCATC..."
-
-
-```
-
-
+    BiocManager::install("pwalign")
 ```R
 
 s <- "ATCATCATC..."
 q <- "ATTTTCATCATC"
 print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
-
 ```
 
-*Warning*:pairwiseAlignment() has moved to the pwalign package. Please call
-  pwalign::pairwiseAlignment() to get rid of this warning.
-```
-$sequence_id
-[1] "test"
+**Error in .load_package_gracefully("pwalign", "starting with BioC 3.19, ", **: Could not load package pwalign. Is it installed?
 
-$sequence_masked
-[1] ""
+  Note that starting with BioC 3.19, calling pairwiseAlignment() requires
+  the pwalign package. Please install it with:
 
-$masking_note
-[1] "1,2"
-
-$insertions
-[1] "3-TTT"
-
-$subject_alignment
-[1] "AT---CATCATC"
-
-$query_alignment
-[1] "ATTTTCATCATC"
-
-$sequence_masked_v
-[1] "NNNATCATC..."
-
-
-```
-
-
+    BiocManager::install("pwalign")
 
 See also
 -------------------

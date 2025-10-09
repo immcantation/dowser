@@ -22,7 +22,8 @@ plotTrees(
   bootstrap_scores = FALSE,
   tip_palette = NULL,
   node_palette = NULL,
-  guide_title = NULL
+  guide_title = NULL,
+  branch_lengths = NULL
 )
 }
 \arguments{
@@ -66,6 +67,8 @@ determined by sequence with highest divergence}
 \item{node_palette}{deprecated, use palette}
 
 \item{guide_title}{Title of color guide. Defaults to tips variable if specified.}
+
+\item{branch_lengths}{Use branch lenghts? Use "none" if not.}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
