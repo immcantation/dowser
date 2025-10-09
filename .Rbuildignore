@@ -9,7 +9,7 @@
 LICENSE
 mkdocs.yml
 bitbucket-pipelines.yml
-site
+site$
 requirements.txt
 .readthedocs.yaml
 announcements.html
