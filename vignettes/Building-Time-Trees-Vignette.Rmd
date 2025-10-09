@@ -210,11 +210,11 @@ print(table(ExampleAirrTyCHE[[trait]]))
 ```
 
 ```{r print-table, echo=FALSE, warning=FALSE, message=FALSE}
-# library(dowser)
-# data(ExampleAirrTyCHE)
-# trait="location"
-# 
-# print(table(ExampleAirrTyCHE[[trait]]))
+library(dowser)
+data(ExampleAirrTyCHE)
+trait="location"
+
+print(table(ExampleAirrTyCHE[[trait]]))
 ```
 ---
 
@@ -264,18 +264,19 @@ gctree = getTimeTreesIterate(gcf,
 	id="gc_strict",
 	time="sample_time",
 	mcmc_length=1e6,
-	iterations=5,
+	iterations=10,
 	nproc=2, 
 	CLOCK_RATE_INIT=0.001,
 	KAPPA_PRIOR_M=0.67,
-	KAPPA_PRIOR_S=0.2)
+	KAPPA_PRIOR_S=0.2,
+	ignore=c("freqParameter"))
 
 
 gcrate_tree = mean(sapply(gctree$parameters, function(x)filter(x,item=="geneticClockRate")$mean))
 print(gcrate_tree)
 ```
 ```{r, echo=FALSE}
-print(0.0004308)
+print(0.000363)
 ```
 
 If it is not feasible to run a strict clock analysis, you can use the slope from a
@@ -288,7 +289,7 @@ print(gcrate_slope)
 ```
 
 ```{r, echo=FALSE}
-print(0.0003716162)
+print(0.0003686277)
 ```
 ---
 
@@ -312,8 +313,8 @@ for the prior normal distributions of each clock rate.
 `getTimeTreesIterate` is designed to run each analysis iteratively, checking for
 convergence after each iteration. If the analyses converge before 
 reaching the max iterations, it will stop early. It will run each analysis for `mcmc_length`
-MCMC samples (here, `1e6`), and it will repeat this up to `iterations` times (here, `10`), 
-so here we have a maximum of 1e7 MCMC samples. 
+MCMC samples (here, `1e6`), and it will repeat this up to `iterations` times (here, `20`), 
+so here we have a maximum of 2e7 MCMC samples. 
 
 The convergence check is based 
 on the ESS of the parameters reported in the log files. You can exclude parameters
@@ -350,7 +351,7 @@ mixed_trees <- getTimeTreesIterate(
   log_target   = 2000,
   mcmc_length  = 1e6,
   ignore       = c("freqParameter"),
-  iterations   = 10
+  iterations   = 20
 )
 ```
 
