@@ -882,6 +882,14 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
                          outfile = file.path(outdir, "igblast.tsv"),
                          nproc = nproc, ...)
   ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus, ...)
+  # ig_data[[clone]] <- unlist(parallel::mclapply(1:nrow(ig_data), function(x){
+  #   
+  #   if(clones$data[[x]]@phylo_seq == "hlsequence"){
+  #     # need the same clone_id twice
+  #   } else{
+  #     # only need one
+  #   }
+  # }))
   ig_data[[clone]] <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
 
   # get the length values 
@@ -907,8 +915,12 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
   airr_data <- merge(airr_data, ig_data[, c(clone, "locus", cols_to_update)], 
                      by = c(clone, "locus"), all.x = TRUE, suffixes = c("", ".ig"))
   for (col in cols_to_update) {
-    airr_data[[col]] <- airr_data[[paste0(col, ".ig")]]
-    airr_data[[paste0(col, ".ig")]] <- NULL
+    ig_col <- paste0(col, ".ig")
+    if(ig_col %in% names(airr_data)){
+      tmp <- airr_data[[col]]
+      airr_data[[col]] <- airr_data[[ig_col]]
+      airr_data[[ig_col]] <- tmp
+    }
   }
   airr_data <- airr_data[!is.na(airr_data$v_call),]
   airr::write_rearrangement(airr_data, file.path(outdir, "updated_airr_data.tsv"))
