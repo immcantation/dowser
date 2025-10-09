@@ -779,7 +779,7 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
                              type="AA")
   }
   if(is.null(tree)){
-    tree <- tryCatch(phangorn::pratchet(data,trace=FALSE),warning=function(w)w)
+    tree <- tryCatch(phangorn::pratchet(data,trace=0),warning=function(w)w)
     tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
     tree <- ape::unroot(tree)
     tree$edge.length <- tree$edge.length/nchar(germline)
@@ -1092,7 +1092,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     
     # convert single nt lhoods into codon loglhoods table
     ml = paste0(nt[apply(nts, 2, which.max)], collapse="")
-    codon_pos = seq(1, length=ncol(nts)/3, by=3)
+    codon_pos = base::seq(1, length=ncol(nts)/3, by=3)
     codon_results = dplyr::tibble()
     bf = object$bf #base frequencies
     for(i in codon_pos){
@@ -1116,15 +1116,33 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
       pos = pos[m,]
       codon_results = dplyr::bind_rows(codon_results, pos)
     }
-    # check if ML codon sequence is same as ML nt sequence
-    max <- codon_results[ave(codon_results$lhood, codon_results$site, 
-                             FUN = function(x) x == max(x)) == 1, ]
-    test <- substr(paste(max$codon, collapse=""),1,nchar(ml)) == ml
+    ml_codons <- substring(ml, seq(1, nchar(ml), 3),
+                           seq(3, nchar(ml)+2, 3))
+    ml_lik <-   sum(unlist(lapply(0:max(codon_results$site), function(x){
+      sub <- codon_results[codon_results$site == x,]
+      lhood <- sub$lhood[sub$codon == ml_codons[x + 1]]
+    })))
+    table_seq <- do.call(paste0, lapply(0:max(codon_results$site), function(x){
+      sub <- codon_results[codon_results$site == x,]
+      codon <- sub$codon[sub$lhood == max(sub$lhood)]
+    }))[1]
+    table_codons <- substring(table_seq, seq(1, nchar(table_seq), 3),
+                              seq(3, nchar(table_seq)+2, 3))
+    table_lik <-   sum(unlist(lapply(0:max(codon_results$site), function(x){
+      sub <- codon_results[codon_results$site == x,]
+      lhood <- sub$lhood[sub$codon == table_codons[x + 1]]
+    })))
+    test <- abs(ml_lik - table_lik) < 1e-6
     if(test){
-      write.table(dplyr::select(codon_results, -start), 
+      write.table(dplyr::select(codon_results, -!!rlang::sym("start")), 
                   file=file.path(sub_dir, "codon_table.txt"),
                   col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
     } else{
+      write.table(dplyr::select(codon_results, -!!rlang::sym("start")), 
+                  file=file.path(sub_dir, "codon_table_failed.txt"),
+                  col.names=FALSE, row.names=FALSE, sep="\t", quote=FALSE)
+      writeLines(substr(paste(max$codon, collapse=""),1,nchar(ml)), con = file.path(sub_dir, "codon_seq.txt"))
+      writeLines(ml, con = file.path(sub_dir, "ml_seq.txt"))
       stop("ASRP failed for clone ", clone@clone)
     }
   }
@@ -1340,9 +1358,14 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       cat(paste(readLines(logfile),"\n"))
       return(w)
     })
-    root_probs <- paste0(gsub(".tsv", "", file), "_hlp_rootprobs.txt")
-    if(!file.exists(root_probs)){
-      stop("root probabilities not found")
+    n_root_probs <- length(list.files(
+      path = file.path(temp_path, paste0(id, "_recon_", id)),
+      pattern = "\\.fasta_igphyml_rootprobs_hlp\\.txt$",
+      full.names = TRUE
+    ))
+    if(length(clone) != n_root_probs){
+      diff_clones <- length(clone) - n_root_probs
+      stop(diff_clones, " root probabilities not found")
     }
   }
   #trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
@@ -1725,8 +1748,14 @@ buildRAxML <- function(clone, exec, seq = "sequence", sub_model = 'GTR', partiti
     # update the node labels to reflect
     tree$node.label <- c("UCA", tree$node.label)
     
+    # correct unlisting issue
+    tree$nodes = lapply(tree$nodes, function(x){
+      y = list()
+      y$sequence = unlist(unlist(x))
+      y
+    })
     
-  }else {
+  }else{
     tree <- rerootTree(ape::unroot(ape::read.tree(file.path(dir,paste0(name, ".raxml.bestTree")))), "Germline", verbose = 0)
     tree$germid <- paste0(clone@clone, "_GERM")
     results <- list()
@@ -1801,6 +1830,8 @@ buildRAxML <- function(clone, exec, seq = "sequence", sub_model = 'GTR', partiti
   if(rm_files){
     unlink(file.path(dir, paste0(name,"*")))
   }
+
+
   return(tree)
 }
 

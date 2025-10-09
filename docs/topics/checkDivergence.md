@@ -19,7 +19,13 @@ cross this threshold
 Usage
 --------------------
 ```
-checkDivergence(clones, threshold = -1, verbose = TRUE, germline = "Germline")
+checkDivergence(
+clones,
+threshold = -1,
+verbose = TRUE,
+germline = "Germline",
+data_type = "DNA"
+)
 ```
 
 Arguments
@@ -36,6 +42,9 @@ verbose
 
 germline
 :   ID of the tree's predicted germline sequence
+
+data_type
+:   The type of data being used. Either "DNA" (default) or "AA"
 
 
 

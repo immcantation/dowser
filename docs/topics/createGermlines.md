@@ -171,6 +171,7 @@ imgt <- readIMGT(vdj_dir)
 
 ```R
 db <- createGermlines(ExampleAirr[1,], imgt)
+
 ```
 
 *Warning*:locus column not found, attempting to extract locus from V call*Warning*:Loci found: IGH*Warning*:Allele IGHV3-49*03 is not in the provided germline database.*Warning*:Allele IGHD6-13*01 is not in the provided germline database.*Warning*:Removing 1 failed clonal germlines. Clones: 3128

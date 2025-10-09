@@ -1,20 +1,7 @@
 theme: readthedocs
 site_name: dowser
-site_url: https://dowser.readthedocs.io
-repo_url: https://github.com/immcantation/dowser
-edit_uri: src/master/docs/
-theme:
-  name: readthedocs
-  navigation_depth: 2
-  collapse_navigation: False
-  sticky_navigation: False
-  locale: en
-  titles_only: False
-  #logo: img/rod_white_leaf_light_background.png
-  analytics:
-    gtag: G-CD0939NYSC
+docs_dir: docs
 markdown_extensions:
-  - admonition
   - def_list
   - sane_lists
   - smarty
@@ -23,20 +10,19 @@ markdown_extensions:
       permalink: True
 extra_javascript:
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
-  - path: js/custom.js
-    defer: true  
-nav:
+pages:
   - 'About':
     - 'Introduction': index.md
-    - 'Contributing': contributing.md
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
   - 'Vignettes':
-    - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
     - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md
-    - 'Paired Heavy and Light Chain Trees': vignettes/Resolve-Light-Chains-Vignette.md
-    - 'Plot Lineage Trees': vignettes/Plotting-Trees-Vignette.md
+    - 'Discrete Trait Analysis': vignettes/Discrete-Trait-Vignette.md
+    - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
+    - 'Measurable evolution': vignettes/Measurable-Evolution.md
+    - 'Plotting Lineage Trees': vignettes/Plotting-Trees-Vignette.md
+    - 'Quickstart': vignettes/Quickstart-Vignette.md
+    - 'Building trees with paired heavy and light chain data': vignettes/Resolve-Light-Chains-Vignette.md
     - 'Reconstruct Intermediate Sequences': vignettes/Sequences-Vignette.md
     - 'Migration, Differentiation, Class-switching Analysis': vignettes/Discrete-Trait-Vignette.md
     - 'Time-based Longitudinal Analysis': vignettes/Measurable-Evolution.md
@@ -53,12 +39,13 @@ nav:
     - topics/buildPratchet.md
     - topics/buildRAxML.md
     - topics/calcRF.md
+    - topics/checkDivergence.md
     - topics/collapseNodes.md
     - topics/colorTrees.md
     - topics/condenseTrees.md
     - topics/correlationTest.md
-    - topics/createAllGermlines.md
     - topics/createGermlines.md
+    - topics/dfToFasta.md
     - topics/downsampleClone.md
     - topics/dowser-package.md
     - topics/ExampleAirr.md
@@ -69,6 +56,7 @@ nav:
     - topics/exportTrees.md
     - topics/findSwitches.md
     - topics/formatClones.md
+    - topics/getAllSeqs.md
     - topics/getBootstraps.md
     - topics/getDivergence.md
     - topics/getGermline.md
@@ -78,7 +66,6 @@ nav:
     - topics/getSubclones.md
     - topics/getSubTaxa.md
     - topics/getTrees.md
-    - topics/getTreesAndUCAs.md
     - topics/IsotypeTrees.md
     - topics/makeAirrClone.md
     - topics/makeModelFile.md
@@ -94,15 +81,12 @@ nav:
     - topics/resolveLightChains.md
     - topics/resolvePolytomies.md
     - topics/runCorrelationTest.md
+    - topics/sampleClone.md
+    - topics/sampleClones.md
     - topics/scaleBranches.md
-    - topics/rerootTree.md
-    #- 'Intermediate sequence functions':
-    - topics/getAllSeqs.md
-    - topics/getNodeSeq.md
-    - topics/dfToFasta.md
-    - topics/getSubTaxa.md
-    #- 'Discrete trait analysis functions':
-    - topics/findSwitches.md
+    - topics/stitchRegions.md
+    - topics/stitchVDJ.md
+    - topics/stopCodonCheck.md
     - topics/testPS.md
     - topics/testSC.md
     - topics/testSP.md

@@ -20,7 +20,7 @@ These commands will create a series of directories containing the IMGT reference
 mkdir germlines
 
 # Download the Immcantation repository
-git clone https://bitbucket.org/kleinstein/immcantation
+git clone https://github.com/immcantation/immcantation
 
 # Run script to obtain IMGT gapped sequences
 immcantation/scripts/fetch_imgtdb.sh -o germlines

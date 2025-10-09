@@ -481,7 +481,7 @@ makeAirrClone <-
     
     # Define return object
     tmp_names <- names(tmp_df)
-    if ("sequence" %in% tmp_names & seq != "sequence") {
+    if("sequence" %in% tmp_names & seq != "sequence"){
       tmp_df <- tmp_df[, tmp_names != "sequence"]
       tmp_names <- names(tmp_df)
     }
@@ -1030,8 +1030,19 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5,
   sg <- gsub("---", "XXX", sg)
   
   # perform global alignment
-  n <- Biostrings::pairwiseAlignment(q, sg, type="global",
-                                     gapOpening=gap_opening, gapExtension=gap_extension)
+  if (packageVersion("BiocManager") >= "1.30.20") {
+    bioc_ver <- as.character(BiocManager::version())
+    has_bioc_3_19 <- utils::compareVersion(bioc_ver, "3.19") >= 0
+  } else {
+    has_bioc_3_19 <- FALSE
+  }
+  if(has_bioc_3_19){
+    n <- pwalign::pairwiseAlignment(q, sg, type="global",
+                                       gapOpening=gap_opening, gapExtension=gap_extension)
+  } else{
+    n <- Biostrings::pairwiseAlignment(q, sg, type="global",
+                                       gapOpening=gap_opening, gapExtension=gap_extension)
+  }
   qa <- as.character(n@pattern)
   sa <- as.character(n@subject)
   if(keep_alignment){

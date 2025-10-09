@@ -95,6 +95,7 @@ igphyml <- "~/apps/igphyml/src/igphyml"
 # btrees = findSwitches(clones[1:2], bootstraps=100, nproc=1,
 # igphyml=igphyml, trait="sample_id", id="temp", dir="temp")
 # testSC(btrees$switches)
+
 ```
 
 

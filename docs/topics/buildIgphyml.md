@@ -29,6 +29,7 @@ rates = NULL,
 asrc = 0.95,
 splitfreqs = FALSE,
 asrp = FALSE,
+make_gyrep = TRUE,
 ...
 )
 ```
@@ -93,6 +94,9 @@ splitfreqs
 
 asrp
 :   Run ASRp?
+
+make_gyrep
+:   Create the grep file?
 
 ...
 :   Additional arguments (not currently used)

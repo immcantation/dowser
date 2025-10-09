@@ -1,6 +1,6 @@
 # Release Notes
 
-Version 2.3.2 April 25, 2025
+Version 2.3.2 October 7, 2025
 -------------------------------------------------------------------------------
 
 + Added light chain UCA inference to getTreesAndUCAs and addressed minor bugs
