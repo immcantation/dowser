@@ -397,6 +397,52 @@ plotTrees(mixed_trees, scale=10)[[1]] + geom_point(aes(fill=location), pch=21, s
 ```
 ![](Building-Time-Trees-mixed-trees.png)
 
+The `parameters` column of `mixed_trees` contains a table that collates the output from the BEAST2 analysis. Columns include the parameter (item), the posterior mean, standard error, standard deviation, median, 95% highest posterior density interval, autocorrelation time (ACT), effective sample size, and geometric mean.
+
+The effective sample size (ESS) of a parameter is a measure of how much independent information your MCMC sample contains. Even though MCMC generates many samples, they are typically autocorrelated—each sample depends on the previous one. ESS estimates how many of those samples are equivalent to independent draws from the target distribution.
+
+A higher ESS means your sample more reliably represents the posterior distribution. Low ESS indicates strong autocorrelation and less trustworthy inference, which can indicate the need for longer MCMC runs.
+
+The autocorrelation time (ACT) of a parameter measures how strongly each sample in the MCMC chain depends on previous samples. The ACT tells you how long the MCMC chain takes to produce a roughly independent sample. ACT is inversely related to ESS.
+
+If we're interested in the estimated tree height, we can filter the parameters table for `TreeHeight`:
+
+```{r tree-height-parameter, eval=FALSE}
+print(mixed_trees$parameters[[1]] %>% filter(item=="TreeHeight"))
+```
+
+```{r, echo=FALSE}
+tree_height_param <- "         item     mean   stderr   stddev   median X95.HPDlo X95.HPDup      ACT      ESS geometric.mean\n1 TreeHeight 247.2976 1.126495 20.78793 245.4723  210.1209  289.7387 52859.16 340.5369         246.44"
+cat(tree_height_param)
+```
+
+We see that even though our model hasn't fully converged, the ESS for the tree height is high. The mean tree height is around 247 time units, with a 95% highest posterior density interval from about 210 to 290 time units. Since we know the data spans 200 time units, this is a high estimate, likely due to the unconverged analysis.
+
+The parameters available will depend on the model you used and what is specified for
+logging in the XML template. In this case, we can see all the items that were logged:
+
+```{r logged-parameters, eval=FALSE}
+print(mixed_trees$parameters[[1]]$item)
+```
+```{r, echo=FALSE}
+logged_items <- c("posterior", "likelihood","prior", 
+                  "treeLikelihood.tyche_eo_est_1t", "TreeHeight", 
+                  "rateIndicator.type.1", "rateIndicator.type.2", 
+                  "relativeGeoRates.type.1", "relativeGeoRates.type.2",
+                  "typeSwitchClockRate", "kappa.tyche_eo_est_1",
+                  "BayesianSkyline", "bPopSizes.1", "bPopSizes.2", "bPopSizes.3",
+                  "bPopSizes.4", "bPopSizes.5", "bGroupSizes.1",
+                  "bGroupSizes.2", "bGroupSizes.3", "bGroupSizes.4",
+                  "bGroupSizes.5", "freqParameter.tyche_eo_est_1.1",
+                  "freqParameter.tyche_eo_est_1.2",
+                  "freqParameter.tyche_eo_est_1.3", 
+                  "freqParameter.tyche_eo_est_1.4", "traitfrequencies.type.1",
+                  "traitfrequencies.type.2", "typeLinkedRates.1", "typeLinkedRates.2")
+print(logged_items)
+```
+
+These include the posterior, likelihood, and prior probabilities; the tree likelihood; estimated values of the tree height, the clock rates for each trait (`typeLinkedRates`), the relative transition rates between traits (`relativeGeoRates`), the rate of switching traits (`typeSwitchClockRate`); parameters relating to BayesianSkyline (`BayesianSkyline`, `bPopSizes`, `bGroupSizes`); and some fixed parameters that are included in logging for record-keeping convenience (the kappa value of the HKY substitution model, the empirical frequencies of the nucleotides, the frequencies of the traits).
+
 If you want to revisit an analysis and no longer have the `mixed_trees` object 
 in your R environment, you can use `readBEAST` to read in the BEAST log and tree 
 files from the directory (`dir`) you specified in `getTimeTreesIterate`. Because of this,
