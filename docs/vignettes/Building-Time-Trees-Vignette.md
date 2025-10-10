@@ -34,7 +34,32 @@ You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine
 
 
 #### For Mac and Windows machines, we recommend:
-
+<style>
+  .rst-content .section ul.os {
+    list-style: none;
+    list-style-type: none;
+  }
+  .rst-content .section .os li {
+    list-style: none;
+    list-style-type: none;
+    position: relative;
+    left: 6em;
+  }
+  .os li:before{
+    position: absolute;
+    left: -6em;
+    width: 3.5em;
+    text-align: left;
+  }
+  li.mac:before {
+    content: "Mac:";
+    font-weight: bold;
+  }
+  li.windows:before {
+    content: "Windows:";
+    font-weight: bold;
+  }
+</style>
 <ol>
  <li>
     <ul class="os">
@@ -46,11 +71,11 @@ You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine
 or <a href="https://www.beast2.org">www.beast2.org</a>.
   </li>
  <li>
- <ol class="os">
+ <ul class="os">
      <li><br/></li>
      <li class="mac">Open the dmg file and drag the BEAST application to your Applications folder</li>
      <li class="windows">Right click on the zip file to extract the BEAST folder</li>
-    </ol>
+    </ul>
  </li>
 </ol>
 3. Open BEAUti, click on the "File" menu, and select "Manage Packages...".
