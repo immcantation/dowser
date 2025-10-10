@@ -21,6 +21,7 @@ Useful links:
 Authors:
 \itemize{
   \item Cole Jensen \email{cole.jensen@yale.edu}
+  \item Jessie Fielding \email{jessie.jo.fielding@dartmouth.edu}
   \item Steven Kleinstein \email{steven.kleinstein@yale.edu} [copyright holder]
 }
 

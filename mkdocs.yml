@@ -10,7 +10,7 @@ markdown_extensions:
       permalink: True
 extra_javascript:
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
-pages:
+nav:
   - 'About':
     - 'Introduction': index.md
     - 'Package Overview': topics/dowser.md
@@ -25,6 +25,7 @@ pages:
     - 'Migration, Differentiation, Class-switching Analysis': vignettes/Discrete-Trait-Vignette.md
     - 'Time-based Longitudinal Analysis': vignettes/Measurable-Evolution.md
     - 'Build Time Trees with TyCHE': vignettes/Building-Time-Trees-Vignette.md
+    - 'Using data from non-B cells': vignettes/NonB-Cell-Data.md
   - 'Help Topics':
     - topics/airrClone-class.md
     - topics/BiopsyTrees.md
