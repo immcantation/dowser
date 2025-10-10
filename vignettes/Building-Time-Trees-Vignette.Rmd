@@ -110,9 +110,7 @@ or <a href="https://www.beast2.org">www.beast2.org</a>.
 
 4. In the package manager, find and install the "BEAST Classic" package.
 
-5. Once released: In the package manager, find and install the "TyCHE" package.
-
-Currently: Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/tyche) "by hand":
+5. Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/tyche) "by hand":
 [www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
 
 6. Follow this tutorial to install the [rootfreqs package](https://github.com/rbouckaert/rootfreqs) "by hand":
@@ -140,9 +138,6 @@ rm $BEAST
 curl -O https://github.com/hoehnlab/tyche/releases/download/v0.0.3/TyCHE.v0.0.3.zip 
 unzip -o -d ~/.beast/2.7/TyCHE TyCHE.v0.0.3.zip
 rm -f TyCHE.v0.0.3.zip
-
-# install TyCHE package once it is released on BEAST package manager
-# ~/beast/bin/packagemanager -add TyCHE
 
 # install rootfreqs package
 ROOTFREQS=rootfreqs.package.v0.0.2.zip
@@ -243,9 +238,13 @@ plotTrees(gctrees)[[1]] + geom_tippoint(aes(color=sample_time))
 ![](Building-Time-Trees-gc-trees.png) 
 
 
-> **Tip:** With two processors available, this step takes about 15 minutes to run, depending on your machine. 
-> For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
-> results to be unconverged.
+<div class="admonition-announcement tip">
+  <p class="admonition-title">Tip</p>
+  With two processors available, this step takes about 15 minutes to run, depending on your machine. 
+  For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
+  results to be unconverged.
+      <br><br>
+</div>
 
 `getTimeTreesIterate` will run BEAST2 on each clone in parallel 
 (here, `nproc=2`, so 2 clones at a time).
@@ -321,10 +320,13 @@ on the ESS of the parameters reported in the log files. You can exclude paramete
 from this ESS check using the `ignore` argument (here, we ignore `freqParameter`, as it
 is a fixed value).
 
-> **Tip:** This step takes about 30 minutes to run, depending on your machine. 
-> For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
-> results to be unconverged.
-
+<div class="admonition-announcement tip">
+  <p class="admonition-title">Tip</p>
+      This step takes about 30 minutes to run, depending on your machine. 
+      For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
+      results to be unconverged.
+      <br><br>
+</div>
 
 ```{r, eval=FALSE}
 mixed_trees <- getTimeTreesIterate(
@@ -407,6 +409,10 @@ mixed_trees <- readBEAST(clones, dir="temp", id="tyche_eo_est", beast=beast, tra
 
 See `?readBEAST` for more details.
 
-> **Tip:** You can find all of BEAST's output files, including the trees, logs, console logs, and TreeAnnotator outputs, in the `dir` you specified (here, "temp"). You can view these files using BEAST tools such as Tracer.
+<div class="admonition-announcement tip">
+  <p class="admonition-title">Tip</p>
+  You can find all of BEAST's output files, including the trees, logs, console logs, and TreeAnnotator outputs, in the `dir` you specified (here, "temp"). You can view these files using BEAST tools such as Tracer.
+      <br><br>
+</div>
 
 
