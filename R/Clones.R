@@ -112,9 +112,27 @@ makeAirrClone <-
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
-                                    unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
+                                    unique(c(id, seq, germ, clone, 
                                              text_fields, num_fields, seq_fields, traits)))
     if (check != TRUE) { stop(check) }
+
+    if(!v_call %in% names(data)){
+      vcall <- "missing"
+    }else{
+      vcall <- alakazam::getGene(data[[v_call]][1])
+    }
+
+    if(!j_call %in% names(data)){
+      jcall <- "missing"
+    }else{
+      jcall <- alakazam::getGene(data[[j_call]][1])
+    }
+
+    if(!junc_len %in% names(data)){
+      junclen <- 0
+    }else{
+      junclen <- data[[junc_len]][1]
+    }
     
     if(chain=="HL"){
       check <- alakazam::checkColumns(data, c(cell,locus))
@@ -511,9 +529,9 @@ makeAirrClone <-
                                                     outer_only=FALSE),
                     hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
                                                      outer_only=FALSE), 
-                    v_gene=alakazam::getGene(data[[v_call]][1]), 
-                    j_gene=alakazam::getGene(data[[j_call]][1]), 
-                    junc_len=data[[junc_len]][1],
+                    v_gene=vcall, 
+                    j_gene=jcall, 
+                    junc_len=junclen,
                     locus=chains,
                     region=regions,
                     numbers=numbers,
@@ -777,6 +795,22 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     data <- data[!ptcs,]
   }
+  if(!v_call %in% names(data) && !j_call %in% names(data) && !junc_len %in% names(data)){
+      warning(paste("v_call, j_call, and junc_len not found in data. Using non B cell mode\n.",
+        "Setting use_regions, split_light, pad_end, and mod3 to FALSE."))
+      use_regions <- FALSE
+      split_light <- FALSE
+      pad_end <- FALSE
+      mod3 <- FALSE
+      if(!clone %in% names(data)){
+        data[[clone]] <- 0
+      }
+      if(!locus %in% names(data)){
+        data[[locus]] <- "N"
+        heavy <- "N"
+      }
+  }
+
   if(!clone %in% names(data)){
     stop(clone," column not found.")
   }
