@@ -15,15 +15,17 @@
     border: none !important;
 }
 
-ol.os {
+.rst-content ol.os {
   list-style-type: none;
   counter-reset: elementcounter;
 }
-.os li {
+.rst-content .os li {
+  list-style-type: none;
+  color: red;
   position: relative;
   left: 6em;
   }
-.os li:before{
+.rst-content .os li:before{
   position: absolute;
   left: -6em;
   width: 3.5em;
