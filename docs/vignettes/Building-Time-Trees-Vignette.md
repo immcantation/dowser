@@ -1,20 +1,20 @@
 # Build Time Trees Using TyCHE and BEAST
 ---
-title: "Build Time Trees Using TyCHE and BEAST"
+title: 'Build Time Trees Using TyCHE and BEAST'
 author: "Jessie Fielding"
-date: "2025-10-10"
+date: '2025-10-10'
 output:
-  html_document:
-    fig_height: 4
-    fig_width: 7.5
-    highlight: pygments
-    theme: readable
-    toc: yes
   pdf_document:
     dev: pdf
     fig_height: 4
     fig_width: 7.5
     highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
     toc: yes
   md_document:
     fig_height: 4
@@ -24,10 +24,10 @@ output:
 geometry: margin=1in
 fontsize: 11pt
 vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Build Time Trees Using TyCHE and BEAST}
   %\VignetteEncoding{UTF-8}  
   %\usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ## Building Time Trees
@@ -411,7 +411,6 @@ it is important to always specify a unique combination of `dir` and `id` for eac
 
 
 
-
 ``` r
 mixed_trees <- readBEAST(clones, dir="temp", id="tyche_eo_est", beast=beast, trait=trait)
 ```
@@ -420,5 +419,4 @@ See `?readBEAST` for more details.
 
 > **Tip:** You can find all of BEAST's output files, including the trees, logs, console logs, and TreeAnnotator outputs, in the `dir` you specified (here, "temp"). You can view these files using BEAST tools such as Tracer.
 
----
 
