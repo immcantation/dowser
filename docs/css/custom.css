@@ -15,29 +15,27 @@
     border: none !important;
 }
 
-.rst-content ol.os {
+.rst-content .section ul.os {
   list-style-type: none;
-  counter-reset: elementcounter;
 }
-.rst-content .os li {
+
+.rst-content .section .os li {
   list-style-type: none;
-  color: red;
+
   position: relative;
   left: 6em;
   }
-.rst-content .os li:before{
+.rst-content .section .os li:before{
   position: absolute;
   left: -6em;
   width: 3.5em;
   text-align: left;
 }
-li.mac:before {
+.rst-content .section .os li.mac:before {
   content: "Mac:";
-  counter-increment: elementcounter;
   font-weight: bold;
 }
-li.windows:before {
+.rst-content .section .os li.windows:before {
   content: "Windows:";
-  counter-increment: elementcounter;
   font-weight: bold;
 }

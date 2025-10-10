@@ -1,39 +1,12 @@
 # Build Time Trees Using TyCHE and BEAST
----
-title: 'Build Time Trees Using TyCHE and BEAST'
-author: "Jessie Fielding"
-date: '2025-10-10'
-output:
-  pdf_document:
-    dev: pdf
-    fig_height: 4
-    fig_width: 7.5
-    highlight: pygments
-    toc: yes
-  html_document:
-    fig_height: 4
-    fig_width: 7.5
-    highlight: pygments
-    theme: readable
-    toc: yes
-  md_document:
-    fig_height: 4
-    fig_width: 7.5
-    preserve_yaml: no
-    toc: yes
-geometry: margin=1in
-fontsize: 11pt
-vignette: >
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Build Time Trees Using TyCHE and BEAST}
-  %\VignetteEncoding{UTF-8}  
-  %\usepackage[utf8]{inputenc}
----
 
 ## Building Time Trees
-!!! **Expected tutorial time:** This tutorial takes approximately an hour to complete,
-  including 45 minutes of BEAST2 run time. You can reduce the run time by following
-  the suggestions in the tip boxes above each code chunk that runs BEAST2.
+
+<div class="admonition-announcement attention">
+  <p class="admonition-title">Expected tutorial time</p>
+      This tutorial takes approximately an hour to complete, including 45 minutes of BEAST2 run time. You can reduce the run time by following the suggestions in the tip boxes above each code chunk that runs BEAST2.
+      <br><br>
+</div>
 
 There are many options for building time trees using BEAST2. Here we demonstrate
 how to use TyCHE to fit a trait-linked clock for heterogeneous evolution to
@@ -59,45 +32,18 @@ This tutorial requires Dowser 2.4 or later.
 You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine.
 
 
-<style>
-ol.os {
-  list-style-type: none;
-  counter-reset: elementcounter;
-}
-.os li {
-  position: relative;
-  left: 6em;
-  }
-.os li:before{
-  position: absolute;
-  left: -6em;
-  width: 3.5em;
-  text-align: left;
-}
-li.mac:before {
-  content: "Mac:";
-  counter-increment: elementcounter;
-  font-weight: bold;
-}
-li.windows:before {
-  content: "Windows:";
-  counter-increment: elementcounter;
-  font-weight: bold;
-}
-</style>
-
 
 #### For Mac and Windows machines, we recommend:
 
 <ol>
  <li>
-    <ol class="os">
-     <li><br/></li>
-     <li class="mac">Click to [download the BEAST 2.7.7 dmg](https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Mac.dmg)</li>
-     <li class="windows">Click to [download the BEAST 2.7.7 zip](https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Windows.zip)</li>
-    </ol>
-**OR** download the appropriate version from  [https://github.com/CompEvol/beast2/releases/tag/v2.7.7](https://github.com/CompEvol/beast2/releases/tag/v2.7.7)
-or [www.beast2.org](https://www.beast2.org/).
+    <ul class="os">
+     <br/>
+     <li class="mac">Click to <a href="https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Mac.dmg">download the BEAST 2.7.7 dmg</a> </li>
+     <li class="windows">Click to <a href="https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Windows.zip">download the BEAST 2.7.7 zip</a></li>
+    </ul>
+   <b>OR</b> download the appropriate version from <a href="https://github.com/CompEvol/beast2/releases/tag/v2.7.7">https://github.com/CompEvol/beast2/releases/tag/v2.7.7</a>
+or <a href="https://www.beast2.org">www.beast2.org</a>.
   </li>
  <li>
  <ol class="os">
@@ -214,9 +160,7 @@ print(table(ExampleAirrTyCHE[[trait]]))
 
 
 ```
-## 
-## germinal_center           other 
-##             100             100
+## Error in eval(expr, envir, enclos): object 'ExampleAirrTyCHE' not found
 ```
 ---
 
