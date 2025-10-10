@@ -1,0 +1,61 @@
+---
+title: "Using data from non-B cells"
+author: "Kenneth B. Hoehn"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteIndexEntry{Using data from non-B cells}
+  %\VignetteEncoding{UTF-8}  
+  %\usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+While originally designed for B cells, Dowser also supports phylogenetic inference for non B cells, especially cells evolving from a known ancestral sequence, such as tumor lineages.
+
+If sequences are from a single lineage, the only requirement for non-B cell data is that the sequences supplied to `formatClones` are aligned and in a data.frame with a column for sequences and a column for sequence IDs. If from multiple lineages, they can be deliminated using the `clone_id` column.
+
+In the code block below, we show how trees can be built using data with only sequence IDs, sequences, and germline sequences.
+
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
+library(dowser)
+
+data(ExampleAirr)
+
+ExampleAirr <- dplyr::select(dplyr::filter(ExampleAirr, clone_id=="3128"),
+ sequence_id, sequence_alignment, germline_alignment)
+
+clones <- formatClones(ExampleAirr, germ="germline_alignment")
+
+trees <- getTrees(clones)
+
+```
+
+Note that if specified `v_call`, `j_call`, and `junction_length` columns are not found in the input data.frame, the options `use_regions` will be set to false, as it is only for BCR sequences. If not already present, the `clone_id` and `locus` columns will be added to the dataframe with values 0 and "N", respectively.
+
+When using `getTimeTrees` or `getTimeTreesIterate`, a meaninful germline is not required. Instead, you can set a `germline_alignment` which is series of N nucleotides the same length as the sequences in the sequence_alignment column, and set `include_germline=FALSE.`
+
+
+
+
+
+
+

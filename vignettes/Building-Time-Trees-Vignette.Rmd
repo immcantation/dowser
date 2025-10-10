@@ -240,7 +240,7 @@ gctrees = getTrees(gcf, build="pml", sub_model="HKY")
 
 plotTrees(gctrees)[[1]] + geom_tippoint(aes(color=sample_time))
 ```
-![](figure/Building-Time-Trees-gc-trees.png) 
+![](Building-Time-Trees-gc-trees.png) 
 
 
 > **Tip:** With two processors available, this step takes about 15 minutes to run, depending on your machine. 
@@ -393,7 +393,7 @@ so we set `scale=10` to make the scale bar more visually interpretable.
 ```{r plot-mixed-trees-result, eval=FALSE}
 plotTrees(mixed_trees, scale=10)[[1]] + geom_point(aes(fill=location), pch=21, size=3)
 ```
-![](figure/Building-Time-Trees-mixed-trees.png)
+![](Building-Time-Trees-mixed-trees.png)
 
 If you want to revisit an analysis and no longer have the `mixed_trees` object 
 in your R environment, you can use `readBEAST` to read in the BEAST log and tree 

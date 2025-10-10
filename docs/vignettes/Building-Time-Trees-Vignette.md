@@ -2,7 +2,7 @@
 ---
 title: "Build Time Trees Using TyCHE and BEAST"
 author: "Jessie Fielding"
-date: "2025-10-09"
+date: "2025-10-10"
 output:
   html_document:
     fig_height: 4
@@ -213,6 +213,11 @@ print(table(ExampleAirrTyCHE[[trait]]))
 ```
 
 
+```
+## 
+## germinal_center           other 
+##             100             100
+```
 ---
 
 ## Estimating the GC clock rate
@@ -238,7 +243,7 @@ gctrees = getTrees(gcf, build="pml", sub_model="HKY")
 
 plotTrees(gctrees)[[1]] + geom_tippoint(aes(color=sample_time))
 ```
-![](figure/Building-Time-Trees-gc-trees.png) 
+![](Building-Time-Trees-gc-trees.png) 
 
 
 > **Tip:** With two processors available, this step takes about 15 minutes to run, depending on your machine. 
@@ -276,7 +281,7 @@ print(gcrate_tree)
 ```
 
 ```
-## [1] 0.0004308
+## [1] 0.000363
 ```
 
 If it is not feasible to run a strict clock analysis, you can use the slope from a
@@ -291,7 +296,7 @@ print(gcrate_slope)
 
 
 ```
-## [1] 0.0003716162
+## [1] 0.0003686277
 ```
 ---
 
@@ -315,8 +320,8 @@ for the prior normal distributions of each clock rate.
 `getTimeTreesIterate` is designed to run each analysis iteratively, checking for
 convergence after each iteration. If the analyses converge before 
 reaching the max iterations, it will stop early. It will run each analysis for `mcmc_length`
-MCMC samples (here, `1e6`), and it will repeat this up to `iterations` times (here, `10`), 
-so here we have a maximum of 1e7 MCMC samples. 
+MCMC samples (here, `1e6`), and it will repeat this up to `iterations` times (here, `20`), 
+so here we have a maximum of 2e7 MCMC samples. 
 
 The convergence check is based 
 on the ESS of the parameters reported in the log files. You can exclude parameters
@@ -354,7 +359,7 @@ mixed_trees <- getTimeTreesIterate(
   log_target   = 2000,
   mcmc_length  = 1e6,
   ignore       = c("freqParameter"),
-  iterations   = 10
+  iterations   = 20
 )
 ```
 
@@ -397,7 +402,7 @@ so we set `scale=10` to make the scale bar more visually interpretable.
 ``` r
 plotTrees(mixed_trees, scale=10)[[1]] + geom_point(aes(fill=location), pch=21, size=3)
 ```
-![](figure/Building-Time-Trees-mixed-trees.png)
+![](Building-Time-Trees-mixed-trees.png)
 
 If you want to revisit an analysis and no longer have the `mixed_trees` object 
 in your R environment, you can use `readBEAST` to read in the BEAST log and tree 

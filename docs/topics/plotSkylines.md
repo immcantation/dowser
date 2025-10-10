@@ -9,7 +9,7 @@ Description
 Usage
 --------------------
 ```
-plotSkylines(clones, file = NULL, width = 8.5, height = 11)
+plotSkylines(clones, file = NULL, width = 8.5, height = 11, ...)
 ```
 
 Arguments

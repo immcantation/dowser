@@ -796,12 +796,9 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     data <- data[!ptcs,]
   }
   if(!v_call %in% names(data) && !j_call %in% names(data) && !junc_len %in% names(data)){
-      warning(paste("v_call, j_call, and junc_len not found in data. Using non B cell mode\n.",
-        "Setting use_regions, split_light, pad_end, and mod3 to FALSE."))
+      print(paste("v_call, j_call, and junc_len not found in data. Using non B cell mode\n.",
+        "Setting use_regions to FALSE."))
       use_regions <- FALSE
-      split_light <- FALSE
-      pad_end <- FALSE
-      mod3 <- FALSE
       if(!clone %in% names(data)){
         data[[clone]] <- 0
       }

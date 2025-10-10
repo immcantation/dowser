@@ -32,6 +32,9 @@ clones
 dir
 :   directory of BEAST trees file
 
+id
+:   unique identifer for this analysis
+
 time
 :   name of time column
 
@@ -49,6 +52,9 @@ forward
 
 nproc
 :   processors for parallelization (by clone)
+
+max_height
+:   max height to use (min, median, mean, max)
 
 
 

@@ -41,6 +41,9 @@ youngest
 clone_id
 :   name of the clone being analyzed (if desired)
 
+max_height
+:   max height to use (min, median, mean, max)
+
 
 
 

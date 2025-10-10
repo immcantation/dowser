@@ -63,6 +63,7 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 
 [Kenneth Hoehn](mailto:kenneth.b.hoehn@dartmouth.edu) (aut, cre)  
 [Cole Jensen](mailto:cole.jensen@yale.edu) (aut)  
+[Jessie Fielding](mailto:jessie.jo.fielding@dartmouth.edu) (aut)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)

@@ -51,6 +51,7 @@ Examples
 # which are the gene assignments for ExampleDb[1,]
 vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
 imgt <- readIMGT(vdj_dir)
+
 ```
 
 
