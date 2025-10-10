@@ -14,3 +14,28 @@
 .rst-content .admonition-announcement td {
     border: none !important;
 }
+
+ol.os {
+  list-style-type: none;
+  counter-reset: elementcounter;
+}
+.os li {
+  position: relative;
+  left: 6em;
+  }
+.os li:before{
+  position: absolute;
+  left: -6em;
+  width: 3.5em;
+  text-align: left;
+}
+li.mac:before {
+  content: "Mac:";
+  counter-increment: elementcounter;
+  font-weight: bold;
+}
+li.windows:before {
+  content: "Windows:";
+  counter-increment: elementcounter;
+  font-weight: bold;
+}

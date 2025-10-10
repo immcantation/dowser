@@ -30,9 +30,9 @@ vignette: >
 ---
 
 ## Building Time Trees
-> **Expected tutorial time:** This tutorial takes approximately an hour to complete,
-> including 45 minutes of BEAST2 run time. You can reduce the run time by following
-> the suggestions in the tip boxes above each code chunk that runs BEAST2.
+!!! **Expected tutorial time:** This tutorial takes approximately an hour to complete,
+  including 45 minutes of BEAST2 run time. You can reduce the run time by following
+  the suggestions in the tip boxes above each code chunk that runs BEAST2.
 
 There are many options for building time trees using BEAST2. Here we demonstrate
 how to use TyCHE to fit a trait-linked clock for heterogeneous evolution to
