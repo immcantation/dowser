@@ -71,12 +71,12 @@ You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine
     list-style: none;
     list-style-type: none;
     position: relative;
-    left: 6em;
+    padding-left: 6em;
   }
   .os li:before{
     position: absolute;
-    left: -6em;
-    width: 3.5em;
+    left: 0;
+    width: 6em;
     text-align: left;
   }
   li.mac:before {
@@ -92,29 +92,21 @@ You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine
  <li>
     <ul class="os">
      <br/>
-     <li class="mac">Click to <a href="https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Mac.dmg">download the BEAST 2.7.7 dmg</a> </li>
-     <li class="windows">Click to <a href="https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Windows.zip">download the BEAST 2.7.7 zip</a></li>
+     <li class="mac">Click to <a href="https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Mac.dmg">download the BEAST 2.7.7 dmg</a>. Open the dmg file and drag the BEAST application to your Applications folder. </li>
+     <li class="windows">Click to <a href="https://github.com/CompEvol/beast2/releases/download/v2.7.7/BEAST.v2.7.7.Windows.zip">download the BEAST 2.7.7 zip</a>. Right click on the zip file to extract the BEAST folder. </li>
     </ul>
    <b>OR</b> download the appropriate version from <a href="https://github.com/CompEvol/beast2/releases/tag/v2.7.7">https://github.com/CompEvol/beast2/releases/tag/v2.7.7</a>
 or <a href="https://www.beast2.org">www.beast2.org</a>.
   </li>
-  <br/>
- <li>
- <ul class="os">
-     <li><br/></li>
-     <li class="mac">Open the dmg file and drag the BEAST application to your Applications folder</li>
-     <li class="windows">Right click on the zip file to extract the BEAST folder</li>
-    </ul>
- </li>
 </ol>
-3. Open BEAUti, click on the "File" menu, and select "Manage Packages...".
+2. Open BEAUti, click on the "File" menu, and select "Manage Packages...".
 
-4. In the package manager, find and install the "BEAST Classic" package.
+3. In the package manager, find and install the "BEAST Classic" package.
 
-5. Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/tyche) "by hand":
+4. Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/tyche) "by hand":
 [www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
 
-6. Follow this tutorial to install the [rootfreqs package](https://github.com/rbouckaert/rootfreqs) "by hand":
+5. Follow this tutorial to install the [rootfreqs package](https://github.com/rbouckaert/rootfreqs) "by hand":
 [www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
 
 #### For Linux machines, we recommend running:

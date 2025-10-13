@@ -42,12 +42,12 @@ You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine
     list-style: none;
     list-style-type: none;
     position: relative;
-    left: 6em;
+    padding-left: 6em;
   }
   .os li:before{
     position: absolute;
-    left: -6em;
-    width: 3.5em;
+    left: 0;
+    width: 6em;
     text-align: left;
   }
   li.mac:before {
