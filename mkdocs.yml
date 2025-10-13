@@ -25,7 +25,7 @@ nav:
     - 'Migration, Differentiation, Class-switching Analysis': vignettes/Discrete-Trait-Vignette.md
     - 'Time-based Longitudinal Analysis': vignettes/Measurable-Evolution.md
     - 'Build Time Trees with TyCHE': vignettes/Building-Time-Trees-Vignette.md
-    - 'Using data from non-B cells': vignettes/NonB-Cell-Data.md
+    - 'Use data from non-B cells': vignettes/NonB-Cell-Data.md
   - 'Help Topics':
     - topics/airrClone-class.md
     - topics/BiopsyTrees.md
