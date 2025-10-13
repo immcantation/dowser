@@ -1699,71 +1699,6 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones
 }
 
-#'\code{sampleClone} Down-sample clone to specified size
-#' @param    clone       an \link{airrClone} object
-#' @param    size        target size
-#' @param    weight      column for weighting sample probability
-#' @param    group       column to sample evenly among groups
-#' @return   a down-sampled airrClone object
-# @export
-sampleClone = function(clone, size, weight=NULL, group=NULL){
-  if(size > nrow(clone@data)){
-    return(clone)
-  }
-  if(sum(!group %in% names(clone@data)) != 0){
-    stop(paste("grouping columns not found in clone data"))
-  }
-
-  if(is.null(group)){
-    if(is.null(weight)){
-      sd = sample(clone@data$sequence_id, size=size)
-    }else{
-      sd = sample(clone@data$sequence_id, size=size, prob=clone@data[[weight]])
-    }
-  }else{
-    groups = unique(clone@data[[group]])
-    groups = sample(groups, size=length(groups))
-    ngroups = length(groups)
-    group_list = lapply(groups, function(x){
-      temp = clone@data[clone@data[[group]] == x,]
-      if(is.null(weight)){
-        sample(temp$sequence_id, size=nrow(temp))
-      }else{
-        sample(temp$sequence_id, size=nrow(temp), prob=temp[[weight]])
-      }
-    })
-    group_sizes = sapply(group_list, function(x)length(x))
-
-    sd = c()
-    grops = c()
-    sd_index = 1 #index in sd return vector
-    group_index = 1 #index in group_list (1->ngroups)
-    counters = rep(1, ngroups)
-    while(sd_index <= size){
-      # if not enough left in group, move to next one
-      while(counters[group_index] > group_sizes[group_index]){
-        group_index = group_index + 1
-        if(group_index > ngroups){
-          group_index = 1
-        }
-      }
-      # get next element in group
-      #print(paste(sd_index, group_index, paste(counters,collapse=",")))
-      sd[sd_index] = group_list[[group_index]][counters[group_index]]
-      #grops = c(grops, group_index)
-      sd_index = sd_index + 1
-      # increase counter
-      counters[group_index] = counters[group_index] + 1
-      group_index = group_index + 1
-      if(group_index > ngroups){
-        group_index = 1
-      }
-    }
-  }
-
-  clone@data = clone@data[clone@data$sequence_id %in% sd,]
-  return(clone)
-}
 
 #'\code{sampleClones} Down-sample clones to specified size
 #' @param    clones      a tibble of \link{airrClone} objects
@@ -1773,33 +1708,28 @@ sampleClone = function(clone, size, weight=NULL, group=NULL){
 #' @return   The input object with sequences down-sampled
 #' @export
 sampleClones = function(clones, size, weight=NULL, group=NULL){
-  if (is.null(group) || length(group) == 1){
-      clones$data <- lapply(clones$data, function(x) sampleClone(x, size, weight, group))
+  clones$data <- lapply(clones$data, function(x) sampleCloneMultiGroup(x, size, weight, group))
   clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
-  } else {
-      clones$data <- lapply(clones$data, function(x) sampleCloneMultiGroup(x, size, weight, groups=group))
-      clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
-  }
   return(clones)
 }
 
 
-#'\code{sampleCloneMultiGroup} Down-sample clone to specified size with multiple groups to sample evenly
+#'\code{sampleCloneMultiGroup} Down-sample clone to specified size with one or multiple groups to sample evenly
 #' @param    clone       an \link{airrClone} object
 #' @param    size        target size
 #' @param    weight      column for weighting sample probability
-#' @param    groups      columns to sample evenly among groups
+#' @param    group      column(s) to sample evenly among group
 #' @return   a down-sampled airrClone object
 # @export
-sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
+sampleCloneMultiGroup = function(clone, size, weight=NULL, group=NULL){
   if(size > nrow(clone@data)){
     return(clone)
   }
-  if(sum(!groups %in% names(clone@data)) != 0){
+  if(sum(!group %in% names(clone@data)) != 0){
     stop(paste("One or more grouping columns not found in clone data"))
   }
 
-  if(is.null(groups)){
+  if(is.null(group)){
     if(is.null(weight)){
       sd = sample(clone@data$sequence_id, size=size)
     } else {
@@ -1807,20 +1737,25 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
     }
   } else {
 
-    combos = lapply(1:length(groups), function(x){
-      unique(clone@data[[groups[x]]])
+    combos = lapply(1:length(group), function(x){
+      unique(clone@data[[group[x]]])
     })
-    combo_sets = expand.grid(combos) 
-    colnames(combo_sets) = groups
-    combo_sets = combo_sets[sample(1:nrow(combo_sets)),]
+
+    if (length(group) > 1){
+      combo_sets = expand.grid(combos) 
+    } else {
+      combo_sets = data.frame(combos[[1]])
+    }
+    colnames(combo_sets) = group
+    combo_sets = combo_sets[sample(1:nrow(combo_sets)), , drop = FALSE]
     ncombo_sets = nrow(combo_sets)
 
     group_list = vector("list", ncombo_sets)
     group_sizes = numeric(ncombo_sets)
 
-    # Get all sequences in each combination of groups
+    # Get all sequences in each combination of group(s)
     for (i in seq_len(ncombo_sets)) {
-      subset_idx = Reduce(`&`, lapply(groups, function(g) clone@data[[g]] == combo_sets[[g]][i]))
+      subset_idx = Reduce(`&`, lapply(group, function(g) clone@data[[g]] == combo_sets[[g]][i]))
       temp = clone@data[subset_idx, ]
       if (nrow(temp) == 0) next
       if (is.null(weight)) {
@@ -1838,13 +1773,19 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, groups=NULL){
     sd_index = 1
 
     while (sd_index <= size) {
+      # If we run out of sequences in a group, go onto the next one
       if (group_sizes[group_index] == 0 || counters[group_index] > group_sizes[group_index]) {
         group_index = group_index %% ncombo_sets + 1
         next
       }
+      # Append the next sequence from the current group
       sd[sd_index] = group_list[[group_index]][counters[group_index]]
+
+      # Increase the counters for the group and the overall sampling (sd)
       counters[group_index] = counters[group_index] + 1
       sd_index = sd_index + 1
+
+      # Iterate to the next group
       group_index = group_index %% ncombo_sets + 1
     }
   }
