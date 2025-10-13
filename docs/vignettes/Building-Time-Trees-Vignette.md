@@ -8,7 +8,7 @@
 </div>
 
 There are many options for building time trees using BEAST2. Here we demonstrate
-how to use TyCHE to fit a trait-linked clock for heterogeneous evolution to
+how to use TyCHE to fit a type-linked clock for heterogeneous evolution to
 B-cell data. 
 
 Inferring time-resolved phylogenies requires a clock model, which describes the 
@@ -22,7 +22,7 @@ periods of rapid somatic hypermutation in germinal centers during immune
 responses before becoming quiescent memory cells.
 
 In contrast to other methods, TyCHE simultaneously reconstructs ancestral trait 
-states and dates of tree nodes using trait-specific clock rates. 
+states and dates of tree nodes using type-specific clock rates. 
 
 ## Requirements
 
@@ -69,6 +69,7 @@ You will also need to have BEAST2, TyCHE and rootfreqs installed on your machine
    <b>OR</b> download the appropriate version from <a href="https://github.com/CompEvol/beast2/releases/tag/v2.7.7">https://github.com/CompEvol/beast2/releases/tag/v2.7.7</a>
 or <a href="https://www.beast2.org">www.beast2.org</a>.
   </li>
+  <br/>
  <li>
  <ul class="os">
      <li><br/></li>
@@ -211,7 +212,7 @@ plotTrees(gctrees)[[1]] + geom_tippoint(aes(color=sample_time))
 
 <div class="admonition-announcement tip">
   <p class="admonition-title">Tip</p>
-  With two processors available, this step takes about 15 minutes to run, depending on your machine. 
+  With two processors available, the next step takes about 15 minutes to run, depending on your machine. 
   For a quick demonstration set smaller `mcmc_length` or `iterations`, but expect
   results to be unconverged.
       <br><br>
@@ -376,9 +377,9 @@ plotTrees(mixed_trees, scale=10)[[1]] + geom_point(aes(fill=location), pch=21, s
 
 The `parameters` column of `mixed_trees` contains a table that collates the output from the BEAST2 analysis. Columns include the parameter (item), the posterior mean, standard error, standard deviation, median, 95% highest posterior density interval, autocorrelation time (ACT), effective sample size, and geometric mean.
 
-The effective sample size (ESS) of a parameter is a measure of how much independent information your MCMC sample contains. Even though MCMC generates many samples, they are typically autocorrelated—each sample depends on the previous one. ESS estimates how many of those samples are equivalent to independent draws from the target distribution.
+The effective sample size (ESS) of a parameter is a measure of how much independent information your MCMC sample contains. Even though MCMC generates many samples, they are typically autocorrelated—each sample depends on the previous one. ESS is the number of independent draws from the target distribution with the same estimation power and can be thought of as the sample size for that parameter.
 
-A higher ESS means your sample more reliably represents the posterior distribution. Low ESS indicates strong autocorrelation and less trustworthy inference, which can indicate the need for longer MCMC runs.
+A higher ESS means your sample more reliably represents the posterior distribution. Low ESS indicates that you need more information, which can indicate the need for longer MCMC runs. We typically recommend an ESS of at least 200 for each estimated parameter.
 
 The autocorrelation time (ACT) of a parameter measures how strongly each sample in the MCMC chain depends on previous samples. The ACT tells you how long the MCMC chain takes to produce a roughly independent sample. ACT is inversely related to ESS.
 
@@ -386,44 +387,44 @@ If we're interested in the estimated tree height, we can filter the parameters t
 
 
 ``` r
-print(mixed_trees$parameters[[1]] %>% filter(item=="TreeHeight"))
+print(mixed_trees$parameters[[2]] %>% filter(item=="TreeHeight"))
 ```
 
 
 ```
-##          item     mean   stderr   stddev   median X95.HPDlo X95.HPDup      ACT      ESS geometric.mean
-## 1 TreeHeight 247.2976 1.126495 20.78793 245.4723  210.1209  289.7387 52859.16 340.5369         246.44
+##         item     mean   stderr   stddev   median X95.HPDlo X95.HPDup      ACT      ESS geometric.mean
+## 1 TreeHeight 236.0621 1.595335 19.36631 234.2536  201.9269  275.1676 122150.1 147.3636       235.2881
 ```
 
-We see that even though our model hasn't fully converged, the ESS for the tree height is high. The mean tree height is around 247 time units, with a 95% highest posterior density interval from about 210 to 290 time units. Since we know the data spans 200 time units, this is a high estimate, likely due to the unconverged analysis.
+Our model likely hasn't converged, with multiple parameters having ESS values below 200, particularly the posterior which describes how well the model has converged as a whole. The mean tree height is around 236 time units, with a 95% highest posterior density interval from about 200 to 275 time units. Since we know the data spans 200 time units, this is a high estimate, but this is unsurprising given that the ESS is below 200 and the analysis has likely not converged.
 
 The parameters available will depend on the model you used and what is specified for
 logging in the XML template. In this case, we can see all the items that were logged:
 
 
 ``` r
-print(mixed_trees$parameters[[1]]$item)
+print(mixed_trees$parameters[[2]]$item)
 ```
 
 ```
 ##  [1] "posterior"                      "likelihood"                    
-##  [3] "prior"                          "treeLikelihood.tyche_eo_est_1t"
+##  [3] "prior"                          "treeLikelihood.tyche_eo_est_2" 
 ##  [5] "TreeHeight"                     "rateIndicator.type.1"          
 ##  [7] "rateIndicator.type.2"           "relativeGeoRates.type.1"       
 ##  [9] "relativeGeoRates.type.2"        "typeSwitchClockRate"           
-## [11] "kappa.tyche_eo_est_1"           "BayesianSkyline"               
+## [11] "kappa.tyche_eo_est_2"           "BayesianSkyline"               
 ## [13] "bPopSizes.1"                    "bPopSizes.2"                   
 ## [15] "bPopSizes.3"                    "bPopSizes.4"                   
 ## [17] "bPopSizes.5"                    "bGroupSizes.1"                 
 ## [19] "bGroupSizes.2"                  "bGroupSizes.3"                 
 ## [21] "bGroupSizes.4"                  "bGroupSizes.5"                 
-## [23] "freqParameter.tyche_eo_est_1.1" "freqParameter.tyche_eo_est_1.2"
-## [25] "freqParameter.tyche_eo_est_1.3" "freqParameter.tyche_eo_est_1.4"
+## [23] "freqParameter.tyche_eo_est_2.1" "freqParameter.tyche_eo_est_2.2"
+## [25] "freqParameter.tyche_eo_est_2.3" "freqParameter.tyche_eo_est_2.4"
 ## [27] "traitfrequencies.type.1"        "traitfrequencies.type.2"       
 ## [29] "typeLinkedRates.1"              "typeLinkedRates.2"
 ```
 
-These include the posterior, likelihood, and prior probabilities; the tree likelihood; estimated values of the tree height, the clock rates for each trait (`typeLinkedRates`), the relative transition rates between traits (`relativeGeoRates`), the rate of switching traits (`typeSwitchClockRate`); parameters relating to BayesianSkyline (`BayesianSkyline`, `bPopSizes`, `bGroupSizes`); and some fixed parameters that are included in logging for record-keeping convenience (the kappa value of the HKY substitution model, the empirical frequencies of the nucleotides, the frequencies of the traits).
+These include the posterior, likelihood, and prior probabilities of the full model; the tree likelihood; estimated values of the tree height, the clock rates for each trait (`typeLinkedRates`), the relative transition rates between traits (`relativeGeoRates`), the rate of switching traits (`typeSwitchClockRate`); parameters relating to BayesianSkyline (`BayesianSkyline`, `bPopSizes`, `bGroupSizes`); and some fixed parameters that are included in logging for record-keeping convenience (the kappa value of the HKY substitution model, the empirical frequencies of the nucleotides, the frequencies of the traits).
 
 If you want to revisit an analysis and no longer have the `mixed_trees` object 
 in your R environment, you can use `readBEAST` to read in the BEAST log and tree 
