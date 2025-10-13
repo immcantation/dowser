@@ -103,7 +103,7 @@ or <a href="https://www.beast2.org">www.beast2.org</a>.
 
 3. In the package manager, find and install the "BEAST Classic" package.
 
-4. Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/tyche) "by hand":
+4. Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/) "by hand":
 [www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
 
 5. Follow this tutorial to install the [rootfreqs package](https://github.com/rbouckaert/rootfreqs) "by hand":
@@ -148,7 +148,7 @@ rm -f $ROOTFREQS
 BEAST models are specified and run through XML files. A template is required to run BEAST2 through Dowser.
 
 We provide several BEAST XML templates in the 
-[xml-templates repository](https://github.com/hoehnlab/xml-templates/). You can 
+[xml-templates repository](https://github.com/hoehnlab/). You can 
 download these and modify them as needed. Additionally, you can create your own
 XML templates for custom analyses.
 
