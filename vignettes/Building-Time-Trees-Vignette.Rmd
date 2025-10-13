@@ -154,8 +154,8 @@ XML templates for custom analyses.
 
 The templates used in this tutorial are:
 
-- `custom/StrictClock_Standard_EmpFreq.xml`: A simple strict clock model with empirical nucleotide frequencies.
-- `custom/TraitLinkedExpectedOccupancy_EstTraitClockRates_EmpFreq.xml`: A trait-linked clock model using an expected occupancy method for determining the proportion of each branch in each state, estimating separate clock rates for each state, and using empirical nucleotide frequencies.
+- `StrictClock/StrictClock_Standard_EmpFreq.xml`: A simple strict clock model with empirical nucleotide frequencies.
+- `TypeLinked/TypeLinkedExpectedOccupancy_EstTraitClockRates_EmpFreq.xml`: A trait-linked clock model using an expected occupancy method for determining the proportion of each branch in each state, estimating separate clock rates for each state, and using empirical nucleotide frequencies.
 
 You can specify the path to the
 template in the `template` argument of `getTimeTreesIterate`, or you can pass a 
