@@ -112,9 +112,27 @@ makeAirrClone <-
 
     # Check for valid fields
     check <- alakazam::checkColumns(data, 
-                                    unique(c(id, seq, germ, v_call, j_call, junc_len, clone, 
+                                    unique(c(id, seq, germ, clone, 
                                              text_fields, num_fields, seq_fields, traits)))
     if (check != TRUE) { stop(check) }
+
+    if(!v_call %in% names(data)){
+      vcall <- "missing"
+    }else{
+      vcall <- alakazam::getGene(data[[v_call]][1])
+    }
+
+    if(!j_call %in% names(data)){
+      jcall <- "missing"
+    }else{
+      jcall <- alakazam::getGene(data[[j_call]][1])
+    }
+
+    if(!junc_len %in% names(data)){
+      junclen <- 0
+    }else{
+      junclen <- data[[junc_len]][1]
+    }
     
     if(chain=="HL"){
       check <- alakazam::checkColumns(data, c(cell,locus))
@@ -511,9 +529,9 @@ makeAirrClone <-
                                                     outer_only=FALSE),
                     hlgermline=alakazam::maskSeqGaps(hlgermline, mask_char=mask_char, 
                                                      outer_only=FALSE), 
-                    v_gene=alakazam::getGene(data[[v_call]][1]), 
-                    j_gene=alakazam::getGene(data[[j_call]][1]), 
-                    junc_len=data[[junc_len]][1],
+                    v_gene=vcall, 
+                    j_gene=jcall, 
+                    junc_len=junclen,
                     locus=chains,
                     region=regions,
                     numbers=numbers,
@@ -777,6 +795,19 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     data <- data[!ptcs,]
   }
+  if(!v_call %in% names(data) && !j_call %in% names(data) && !junc_len %in% names(data)){
+      print(paste("v_call, j_call, and junc_len not found in data. Using non B cell mode\n.",
+        "Setting use_regions to FALSE."))
+      use_regions <- FALSE
+      if(!clone %in% names(data)){
+        data[[clone]] <- 0
+      }
+      if(!locus %in% names(data)){
+        data[[locus]] <- "N"
+        heavy <- "N"
+      }
+  }
+
   if(!clone %in% names(data)){
     stop(clone," column not found.")
   }
@@ -1668,65 +1699,94 @@ processClones <- function(clones, nproc=1 ,minseq=2, seq){
   clones
 }
 
-#'\code{sampleClone} Down-sample clone to specified size
+
+#'\code{sampleClones} Down-sample clones to specified size
+#' @param    clones      a tibble of \link{airrClone} objects
+#' @param    size        target size
+#' @param    weight      column for weighting sample probability
+#' @param    group       column (or columns) to sample evenly among groups
+#' @return   The input object with sequences down-sampled
+#' @export
+sampleClones = function(clones, size, weight=NULL, group=NULL){
+  clones$data <- lapply(clones$data, function(x) sampleCloneMultiGroup(x, size, weight, group))
+  clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
+  return(clones)
+}
+
+
+#'\code{sampleCloneMultiGroup} Down-sample clone to specified size with one or multiple groups to sample evenly
 #' @param    clone       an \link{airrClone} object
 #' @param    size        target size
 #' @param    weight      column for weighting sample probability
-#' @param    group       column to sample evenly among groups
+#' @param    group      column(s) to sample evenly among group
 #' @return   a down-sampled airrClone object
 # @export
-sampleClone = function(clone, size, weight=NULL, group=NULL){
+sampleCloneMultiGroup = function(clone, size, weight=NULL, group=NULL){
   if(size > nrow(clone@data)){
     return(clone)
   }
   if(sum(!group %in% names(clone@data)) != 0){
-    stop(paste("grouping columns not found in clone data"))
+    stop(paste("One or more grouping columns not found in clone data"))
   }
 
   if(is.null(group)){
     if(is.null(weight)){
       sd = sample(clone@data$sequence_id, size=size)
-    }else{
+    } else {
       sd = sample(clone@data$sequence_id, size=size, prob=clone@data[[weight]])
     }
-  }else{
-    groups = unique(clone@data[[group]])
-    groups = sample(groups, size=length(groups))
-    ngroups = length(groups)
-    group_list = lapply(groups, function(x){
-      temp = clone@data[clone@data[[group]] == x,]
-      if(is.null(weight)){
-        sample(temp$sequence_id, size=nrow(temp))
-      }else{
-        sample(temp$sequence_id, size=nrow(temp), prob=temp[[weight]])
-      }
-    })
-    group_sizes = sapply(group_list, function(x)length(x))
+  } else {
 
+    combos = lapply(1:length(group), function(x){
+      unique(clone@data[[group[x]]])
+    })
+
+    if (length(group) > 1){
+      combo_sets = expand.grid(combos) 
+    } else {
+      combo_sets = data.frame(combos[[1]])
+    }
+    colnames(combo_sets) = group
+    combo_sets = combo_sets[sample(1:nrow(combo_sets)), , drop = FALSE]
+    ncombo_sets = nrow(combo_sets)
+
+    group_list = vector("list", ncombo_sets)
+    group_sizes = numeric(ncombo_sets)
+
+    # Get all sequences in each combination of group(s)
+    for (i in seq_len(ncombo_sets)) {
+      subset_idx = Reduce(`&`, lapply(group, function(g) clone@data[[g]] == combo_sets[[g]][i]))
+      temp = clone@data[subset_idx, ]
+      if (nrow(temp) == 0) next
+      if (is.null(weight)) {
+        group_list[[i]] = sample(temp$sequence_id, size=nrow(temp))
+      } else {
+        group_list[[i]] = sample(temp$sequence_id, size=nrow(temp), prob=temp[[weight]])
+      }
+      group_sizes[i] = length(group_list[[i]])
+    }
+
+    # Sample sequences evenly (as much as possible) from each group
     sd = c()
-    grops = c()
-    sd_index = 1 #index in sd return vector
-    group_index = 1 #index in group_list (1->ngroups)
-    counters = rep(1, ngroups)
-    while(sd_index <= size){
-      # if not enough left in group, move to next one
-      while(counters[group_index] > group_sizes[group_index]){
-        group_index = group_index + 1
-        if(group_index > ngroups){
-          group_index = 1
-        }
+    counters = rep(1, ncombo_sets)
+    group_index = 1
+    sd_index = 1
+
+    while (sd_index <= size) {
+      # If we run out of sequences in a group, go onto the next one
+      if (group_sizes[group_index] == 0 || counters[group_index] > group_sizes[group_index]) {
+        group_index = group_index %% ncombo_sets + 1
+        next
       }
-      # get next element in group
-      #print(paste(sd_index, group_index, paste(counters,collapse=",")))
+      # Append the next sequence from the current group
       sd[sd_index] = group_list[[group_index]][counters[group_index]]
-      #grops = c(grops, group_index)
-      sd_index = sd_index + 1
-      # increase counter
+
+      # Increase the counters for the group and the overall sampling (sd)
       counters[group_index] = counters[group_index] + 1
-      group_index = group_index + 1
-      if(group_index > ngroups){
-        group_index = 1
-      }
+      sd_index = sd_index + 1
+
+      # Iterate to the next group
+      group_index = group_index %% ncombo_sets + 1
     }
   }
 
@@ -1734,18 +1794,7 @@ sampleClone = function(clone, size, weight=NULL, group=NULL){
   return(clone)
 }
 
-#'\code{sampleClones} Down-sample clones to specified size
-#' @param    clones      a tibble of \link{airrClone} objects
-#' @param    size        target size
-#' @param    weight      column for weighting sample probability
-#' @param    group       column to sample evenly among groups
-#' @return   The input object with sequences down-sampled
-#' @export
-sampleClones = function(clones, size, weight=NULL, group=NULL){
-  clones$data <- lapply(clones$data, function(x) sampleClone(x, size, weight, group))
-  clones$seqs <- sapply(clones$data, function(x)nrow(x@data))
-  return(clones)
-}
+
 
 
 

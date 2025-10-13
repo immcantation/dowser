@@ -221,6 +221,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    node_palette       deprecated, use palette
 #' @param    tip_palette        deprecated, use palette
 #' @param    guide_title        Title of color guide. Defaults to tips variable if specified.
+#' @param    branch_lengths     Use branch lenghts? Use "none" if not.
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -241,7 +242,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     scale=0.01, palette="Dark2", base=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
-    tip_palette=NULL, node_palette=NULL, guide_title=NULL){
+    tip_palette=NULL, node_palette=NULL, guide_title=NULL, branch_lengths=NULL){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
@@ -268,21 +269,38 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             }
             tipstates = c(sort(tipstates),"Germline")
             if(is.null(names(palette))){
-              nodestates <- sort(unique(unlist(lapply(trees$trees,function(x)
-                unique(unlist(strsplit(x$state,split=",")))
-              ))))
-            } else{
+              if(!"treedata" %in% class(trees$trees[[1]])){
+                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                     unique(unlist(strsplit(x$state,split=",")))
+                    )))
+                }else{
+                    if(is.null(tips)){
+                        stop("`tips` option must be specified if nodes=TRUE with this tree type")
+                    }
+                    if(!tips %in% names(trees$trees[[1]]@data)){
+                        stop(paste(tips, "column not found in trees data object"))
+                    }
+                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                     unique(unlist(x@data[[tips]])))
+                    ))
+                }
+            }else{
               nodestates <- names(palette)
             }
             combpalette <- getPalette(unique(c(nodestates,tipstates)),palette)
-            trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
-            nodestates <- unlist(lapply(trees$trees,function(x){
-                colors <- x$node.color
-                names(colors) <- x$state
-                colors
-                }))
-            nodepalette <- nodestates[unique(names(nodestates))]
-            cols <- c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
+            combpalette["Germline"] = "grey"
+            if(!"treedata" %in% class(trees$trees[[1]])){
+                trees$trees <- colorTrees(trees$trees,palette=combpalette,ambig=ambig)
+                nodestates <- unlist(lapply(trees$trees,function(x){
+                    colors <- x$node.color
+                    names(colors) <- x$state
+                    colors
+                    }))
+                nodepalette <- nodestates[unique(names(nodestates))]
+                cols <- c(combpalette,nodepalette[!names(nodepalette) %in% names(combpalette)])
+            }else{
+                cols <- combpalette
+            }
         }else if(!is.null(tips)){
             # set up global tip palette
             if(!is.null(tips)){
@@ -309,9 +327,15 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }else if(nodes){
             # set up global node palette
             if(is.null(names(palette))){
-                nodestates <- unique(unlist(lapply(trees$trees,function(x)
-                    unique(unlist(strsplit(x$state,split=",")))
+                if(!"treedata" %in% class(trees$trees[[1]])){
+                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                     unique(unlist(strsplit(x$state,split=",")))
                     )))
+                }else{
+                    if(is.null(tips)){
+                        stop("`tips` option must be specified if nodes=TRUE with this tree type")
+                    }
+                }
                 statepalette <- getPalette(sort(nodestates),palette)
                 statepalette <- statepalette[!is.na(names(statepalette))]
             }else{
@@ -336,7 +360,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
             tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
-            bootstrap_scores=bootstrap_scores, guide_title=guide_title))
+            bootstrap_scores=bootstrap_scores, guide_title=guide_title, branch_lengths=branch_lengths))
         if(!is.null(tips) || nodes){
             if(!is.null(guide_title)){
                 gt <- guide_title
@@ -368,8 +392,12 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
 
     tree <- trees$trees[[1]]
     data <- trees$data[[1]]
-    p <- ggtree::ggtree(tree,layout=layout)
 
+    if(!is.null(branch_lengths)){
+        p <- ggtree::ggtree(tree, layout=layout, branch.length=branch_lengths)
+    }else{
+        p <- ggtree::ggtree(tree, layout=layout)
+    }
     #add bootstrap scores to ggplot object
     if(bootstrap_scores){
         scores <- unlist(lapply(tree$nodes, function(x)x$bootstrap_value))
@@ -378,7 +406,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }
         p$data$bootstrap_score = scores[p$data$node]
     }
-    if(!is.null(data)){
+    if(!is.null(data) && !"treedata" %in% class(tree)){
         if(!is(data,"list")){
             data <- list(data)
         }
@@ -403,9 +431,15 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         data@data <- rbind(data@data,gl)
         p <- p %<+% data@data
     }
-    if(!is.null(tree$pars_recon)){
+    if(!"treedata" %in% class(tree)){
+        if(!is.null(tree$pars_recon)){
+            if(nodes){
+                p <- p + aes(color=tree$state)
+            }
+        }
+    }else{
         if(nodes){
-            p <- p + aes(color=tree$state)
+            p <- p + geom_nodepoint(aes(color=!!rlang::sym(tips)))
         }
     }
     if(!is.null(tips)){
@@ -501,4 +535,46 @@ treesToPDF = function(plots, file, nrow=2, ncol=2, ...){
     }
     grDevices::dev.off()
 }
+
+
+#' Simple function for plotting Bayesian skyline plots
+#' 
+#' \code{plotSkylines} Simple Bayesian skyline plots
+#' @param  clones output from getTrees using BEAST
+#' @param  file   pdf file name for printing plots
+#' @param  width  width of plot in inches if file specified
+#' @param  height height of plot in inches if file specified
+#' @param  ...   optional arguments passed to grDevices::pdf
+#' 
+#' @return   if no file specified, a list of ggplot objects. If file specified
+#' will plot to specified file
+#'  
+#' @seealso \link{getSkylines} \link{readBEAST} \link{getTrees}
+#' @export
+plotSkylines = function(clones, file=NULL, width=8.5, height=11, ...){
+    plots <- list()
+    for(i in 1:nrow(clones)){
+        skyline <- clones$skyline[[i]]
+        if(is.na(clones$skyline[i])){
+            warning(clones$clone_id[i], "skyline not found, skipping")
+            next
+        }
+
+        plots[[i]] <- ggplot(skyline, aes(x=!!rlang::sym("bin"), y=!!rlang::sym("median"), ymin=!!rlang::sym("lci"), ymax=!!rlang::sym("uci"))) +
+            geom_ribbon(fill = "grey70") + scale_y_log10() + theme_bw() + 
+            geom_line() + xlab("Time") + ylab("Effective pop. size") +
+            ggtitle(clones$clone_id[i])
+    }
+
+    if(!is.null(file)){
+        grDevices::pdf(file, width=width, height=height)
+        for(i in 1:length(plots)){
+            gridExtra::grid.arrange(grobs=plots[i], ncol=1)    
+        }
+        grDevices::dev.off()
+    }else{
+        return(plots)
+    }
+}
+
 

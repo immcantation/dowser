@@ -13,7 +13,7 @@ sampleClones(clones, size, weight = NULL, group = NULL)
 
 \item{weight}{column for weighting sample probability}
 
-\item{group}{column to sample evenly among groups}
+\item{group}{column (or columns) to sample evenly among groups}
 }
 \value{
 The input object with sequences down-sampled

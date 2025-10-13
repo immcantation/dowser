@@ -27,7 +27,8 @@ ambig = "grey",
 bootstrap_scores = FALSE,
 tip_palette = NULL,
 node_palette = NULL,
-guide_title = NULL
+guide_title = NULL,
+branch_lengths = NULL
 )
 ```
 
@@ -92,6 +93,9 @@ node_palette
 
 guide_title
 :   Title of color guide. Defaults to tips variable if specified.
+
+branch_lengths
+:   Use branch lenghts? Use "none" if not.
 
 
 

@@ -852,7 +852,9 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
   }
   
   clone@data <- data
-  slope <- summary(stats::lm(data$divergence ~ data[[time]]))$coefficients[2,1]
+  summary <- summary(stats::lm(data$divergence ~ data[[time]]))
+  slope <- summary$coefficients[2,1]
+  intercept <- summary$coefficients[1,1]
   results <- list(correlation=true)
   results[["clone"]] <- clone
   results[["tree"]] <- phy
@@ -868,6 +870,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
   results[["p"]] <- mean(true <= random)
   results[["min_p"]] <- max(minp/nposs, minp/(permutations+1))
   results[["slope"]] <- slope
+  results[["intercept"]] <- intercept
   results
 }
 
@@ -955,7 +958,7 @@ stop("clones must have trees column!")
   }
   
   cols <- c("slope", "p", "correlation", "random_correlation",
-            "min_p", "nposs", "nclust")
+            "min_p", "nposs", "nclust", "intercept")
   if(alternative[1] == "two.sided"){
     cols <- c(cols, c("p_gt", "p_lt"))
   }

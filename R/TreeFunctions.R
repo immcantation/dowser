@@ -929,7 +929,10 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     }
   }
   if(is.null(tree)){
-    dm  <- phangorn::dist.ml(data)
+    dm  <- tryCatch(phangorn::dist.ml(data), error=function(e)e)
+    if(sum(is.na(dm)) > 0){
+      dm  <- phangorn::dist.hamming(data)
+    }
     treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random)
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
     pml <- phangorn::pml(ape::unroot(treeNJ),data=data)

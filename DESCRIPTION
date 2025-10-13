@@ -5,6 +5,7 @@ Date: 2025-10-7
 Authors@R: c(
     person("Kenneth", "Hoehn", email = "kenneth.b.hoehn@dartmouth.edu", role = c("aut", "cre")),
     person("Cole", "Jensen", email = "cole.jensen@yale.edu", role = "aut"),
+    person("Jessie", "Fielding", email = "jessie.jo.fielding@dartmouth.edu", role = "aut"),
     person("Susanna", "Marquez", email = "susanna.marquez@yale.edu", role = "ctb"),
     person("Jason", "Vander Heiden", email = "jason.vanderheiden@gmail.com", role = "ctb"),
     person("Steven", "Kleinstein", email = "steven.kleinstein@yale.edu", role = c("aut", "cph"))
@@ -51,7 +52,8 @@ Imports:
     stringr,
     tidyselect,
     tidyr,
-    utils
+    utils,
+    treeio
 Suggests:
     knitr,
     rmarkdown,
@@ -68,4 +70,5 @@ Collate:
     'Germlines.R'
     'Statistics.R'
     'TreeFunctions.R'
+    'TimeTreesFunctions.R'
     'zzz.R'
