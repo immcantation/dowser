@@ -1,11 +1,12 @@
 Package: dowser
 Type: Package
-Version: 2.3.2.999
-Date: 2025-10-7
+Version: 2.4.0
+Date: 2025-10-13
 Authors@R: c(
     person("Kenneth", "Hoehn", email = "kenneth.b.hoehn@dartmouth.edu", role = c("aut", "cre")),
     person("Cole", "Jensen", email = "cole.jensen@yale.edu", role = "aut"),
     person("Jessie", "Fielding", email = "jessie.jo.fielding@dartmouth.edu", role = "aut"),
+    person("Hunter", "Melton", email = "hunter.j.melton@dartmouth.edu", role = "aut"),
     person("Susanna", "Marquez", email = "susanna.marquez@yale.edu", role = "ctb"),
     person("Jason", "Vander Heiden", email = "jason.vanderheiden@gmail.com", role = "ctb"),
     person("Steven", "Kleinstein", email = "steven.kleinstein@yale.edu", role = c("aut", "cph"))

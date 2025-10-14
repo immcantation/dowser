@@ -1714,7 +1714,8 @@ sampleClones = function(clones, size, weight=NULL, group=NULL){
 }
 
 
-#'\code{sampleCloneMultiGroup} Down-sample clone to specified size with one or multiple groups to sample evenly
+#'\code{sampleCloneMultiGroup} Down-sample clone to specified size 
+#' with one or multiple groups to sample evenly
 #' @param    clone       an \link{airrClone} object
 #' @param    size        target size
 #' @param    weight      column for weighting sample probability

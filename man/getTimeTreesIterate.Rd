@@ -19,7 +19,7 @@ getTimeTreesIterate(
 \item{clones}{a tibble of \code{airrClone} objects, the output of
 \link{formatClones}}
 
-\item{iterations}{Maximum number of iterations}
+\item{iterations}{Maximum number of times to resume MCMC chain}
 
 \item{ess_cutoff}{Minimum number of ESS for all parameters}
 

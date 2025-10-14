@@ -19,19 +19,19 @@ readBEAST(
 )
 }
 \arguments{
-\item{clones}{either a tibble (getTrees) or list of \code{airrClone} object}
+\item{clones}{either a tibble (getTrees) or list of \code{airrClone} objects}
 
-\item{dir}{directory where temporary files will be placed.}
+\item{dir}{directory where BEAST output files have been placed.}
 
 \item{id}{unique identifer for this analysis}
 
 \item{beast}{location of beast binary directory (beast/bin)}
 
-\item{burnin}{percent of initial tree samples to discard (1-100)}
+\item{burnin}{percent of initial tree samples to discard (default 10)}
 
 \item{trait}{Trait coolumn used}
 
-\item{nproc}{cores to use}
+\item{nproc}{Number of cores for parallelization. Uses at most 1 core per tree.}
 
 \item{quiet}{amount of rubbish to print to console}
 
@@ -39,7 +39,7 @@ readBEAST(
 
 \item{asr}{Log ancestral sequences?}
 
-\item{low_ram}{run with less memory (slower)}
+\item{low_ram}{run with less memory (slightly slower)}
 }
 \value{
 If data is a tibble, then the input clones tibble with additional columns for 

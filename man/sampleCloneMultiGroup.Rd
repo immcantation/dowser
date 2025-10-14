@@ -2,9 +2,10 @@
 % Please edit documentation in R/Clones.R
 \name{sampleCloneMultiGroup}
 \alias{sampleCloneMultiGroup}
-\title{\code{sampleCloneMultiGroup} Down-sample clone to specified size with multiple groups to sample evenly}
+\title{\code{sampleCloneMultiGroup} Down-sample clone to specified size 
+with one or multiple groups to sample evenly}
 \usage{
-sampleCloneMultiGroup(clone, size, weight = NULL, groups = NULL)
+sampleCloneMultiGroup(clone, size, weight = NULL, group = NULL)
 }
 \arguments{
 \item{clone}{an \link{airrClone} object}
@@ -13,11 +14,12 @@ sampleCloneMultiGroup(clone, size, weight = NULL, groups = NULL)
 
 \item{weight}{column for weighting sample probability}
 
-\item{groups}{columns to sample evenly among groups}
+\item{group}{column(s) to sample evenly among group}
 }
 \value{
 a down-sampled airrClone object
 }
 \description{
-\code{sampleCloneMultiGroup} Down-sample clone to specified size with multiple groups to sample evenly
+\code{sampleCloneMultiGroup} Down-sample clone to specified size 
+with one or multiple groups to sample evenly
 }

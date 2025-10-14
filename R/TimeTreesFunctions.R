@@ -7,7 +7,7 @@
 #' \code{getTimeTreesIterate} Iteratively resume getTimeTrees til convergence.
 #' @param    clones     a tibble of \code{airrClone} objects, the output of
 #'                      \link{formatClones}
-#' @param    iterations Maximum number of iterations
+#' @param    iterations Maximum number of times to resume MCMC chain
 #' @param    ess_cutoff Minimum number of ESS for all parameters
 #' @param    ignore     Vector of parameters to ignore for ESS calculation
 #' @param    quiet      quiet notifications if > 0
@@ -22,35 +22,35 @@
 getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
   ignore = c("traitfrequencies"), quiet=0, ...){
 
-  resume = NULL
-  iter = 0
+  resume <- NULL
+  iter <- 0
   while((length(resume) > 0 || iter == 0 ) && iter < iterations){
         
         if(quiet < 1){
           print(paste("Starting iteration", iter))
         }
 
-        clones = getTimeTrees(clones, resume_clones=resume, ...)
+        clones <- getTimeTrees(clones, resume_clones=resume, ...)
 
-        params = clones$parameters
+        params <- clones$parameters
         for(regex in ignore){
-            params = lapply(params, function(x){
+            params <- lapply(params, function(x){
                 dplyr::filter(x, !grepl(regex, !!rlang::sym("item")))
                 })
         }
         
-        clones$below_ESS = sapply(params, 
+        clones$below_ESS <- sapply(params, 
           function(x)sum(x$ESS[!x$item %in% ignore] < ess_cutoff, na.rm=TRUE))
         if(quiet < 1){
           print(clones$below_ESS)
-          ess_items = unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
+          ess_items <- unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
           if(length(ess_items) > 0){
             print(table(ess_items))
           }
         }
     
-        resume = dplyr::filter(clones, !!rlang::sym("below_ESS") > 0)$clone_id
-        iter = iter + 1
+        resume <- dplyr::filter(clones, !!rlang::sym("below_ESS") > 0)$clone_id
+        iter <- iter + 1
     }
     if(iter == iterations & length(resume) != 0){
       warning(paste(paste(resume, collapse=","), "failed to converge after",
@@ -69,28 +69,27 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 #' @param    beast      location of beast binary directory (beast/bin)
 #' @param    dir        directory where temporary files will be placed.
 #' @param    id         unique identifer for this analysis
-#' @param    mcmc_length  Number of MCMC iterations
+#' @param    mcmc_length  Number of MCMC steps
 #' @param    time         Name of sample time column  
 #' @param    log_every    Frequency of states logged. "auto" will divide
 #'                        mcmc_length by log_target         
 #' @param    burnin       Burnin percent (default 10)                 
-#' @param    trait        Trait coolumn used         
-#' @param    resume_clones  Clones to resume for mcmc_length more iterations            
-#' @param    include_germline Include germline in analysis?     
+#' @param    trait        Trait column to be used         
+#' @param    resume_clones  Clones to resume for \code{mcmc_length} more steps            
+#' @param    include_germline Include germline sequence in analysis?     
 #' @param    seq          Sequence column in data      
 #' @param    germline_range   Possible date range of germline tip     
 #' @param    java         Use the -java flag for BEAST run      
-#' @param    seed         Used for the -seed option for BEASTrun    
-#' @param    log_target   Target number of samples over mcmc_length         
+#' @param    seed         Use specified seeed for the -seed option for BEAST   
+#' @param    log_target   Target number of samples from MCMC chain         
 #' @param    tree_states  Use \code{states} vector for starting tree
-#' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
+#' @param    nproc      Number of cores for parallelization. At most 1 core/tree can be used.
 #' @param    quiet      amount of rubbish to print to console
 #' @param    rm_temp    remove temporary files (default=TRUE)
 #' @param    trees      optional list of starting trees, either phylo objects or newick strings
 #' @param    ...        Additional arguments passed to tree building programs
 #'
-#' @return   A list of \code{phylo} objects in the same order as \code{data}.
-#'
+#' @return   A tibble with a column of \code{phylo} objects and \code{parameters} column
 #' @details
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'
@@ -249,8 +248,8 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
     stop("Tree column names don't match clone IDs")
   }
   clones$parameters <- lapply(clones$trees, function(x)x@info$parameters)
-  clones$ESS_100 = sapply(clones$parameters, function(x)sum(x$ESS < 100, na.rm=TRUE))
-  clones$ESS_200 = sapply(clones$parameters, function(x)sum(x$ESS < 200, na.rm=TRUE))
+  clones$ESS_100 <- sapply(clones$parameters, function(x)sum(x$ESS < 100, na.rm=TRUE))
+  clones$ESS_200 <- sapply(clones$parameters, function(x)sum(x$ESS < 200, na.rm=TRUE))
 
   clones
 }
@@ -263,25 +262,25 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    beast      location of beast binary directory (beast/bin)
 #' @param    dir        directory where temporary files will be placed.
 #' @param    id         unique identifer for this analysis
-#' @param    mcmc_length  Number of MCMC iterations
+#' @param    mcmc_length  Number of MCMC steps
 #' @param    time         Name of sample time column 
 #' @param    log_every    Frequency of states logged. \code{auto} will divide mcmc_length by log_target         
 #' @param    burnin       Burnin percent (default 10)                 
-#' @param    trait        Trait coolumn used         
+#' @param    trait        Trait column used         
 #' @param    asr          Log ancestral sequences?
 #' @param    full_posterior  Read un full distribution of parameters and trees?
-#' @param    resume_clones  Clones to resume for mcmc_length more iterations            
+#' @param    resume_clones  Clones to resume for \code{mcmc_length} more steps            
 #' @param    include_germline Include germline in analysis?     
 #' @param    start_date       Starting date of time tree if desired
 #' @param    max_start_date   Maximum starting date of time tree if desired
 #' @param    germline_range   Possible date range of germline tip     
 #' @param    java         Use the -java flag for BEAST run      
-#' @param    seed         Used for the -seed option for BEASTrun    
-#' @param    log_target   Target number of samples over mcmc_length         
+#' @param    seed         Use specified seeed for the -seed option for BEAST   
+#' @param    log_target   Target number of samples over \code{mcmc_length}         
 #' @param    tree_states  Use \code{states} vector for starting tree
-#' @param    nproc      Number of cores for parallelization. Uses 1 core per tree.
-#' @param    quiet      amount of rubbish to print to console
-#' @param    low_ram    run with less memory (slower)  
+#' @param    nproc      Number of cores for parallelization. Uses at most 1 core per tree.
+#' @param    quiet      Amount of rubbish to print to console
+#' @param    low_ram    run with less memory (slightly slower)  
 #' @param    trees                    optional list of starting trees, either phylo objects or newick strings
 #' @param    start_edge_length        edge length to use for all branches in starting tree 
 #' @param    ...      Additional arguments for XML writing functions
@@ -369,8 +368,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
 
-  # Run BEAST on each tree sequentially
-  # TODO: option to parallelize by tree?
+  # Run BEAST on each tree in parallel
   capture <- parallel::mclapply(1:length(xml_filepath), function(x) {
     y <- xml_filepath[x]
     overwrite <- "-overwrite"
@@ -644,13 +642,12 @@ create_traitset <- function(clone, trait_name, column, id, trait_data_type=NULL,
 create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_states, start_edge_length) {
   # create a starting tree in newick format
   if (inherits(tree, "phylo")) {
-    ntips = length(tree$tip.label)
+    ntips <- length(tree$tip.label)
     if(tree_states){
-      tree$node.label = (ntips + 1): (ntips + 1 + tree$Nnode - 1)
+      tree$node.label <- (ntips + 1): (ntips + 1 + tree$Nnode - 1)
       tree$edge.length <- rep(start_edge_length, length(tree$edge.length)) # set all edge lengths to 10
     }else{
-      tree$node.label = NULL
-      #tree$edge.length = rep(start_edge_length, length(tree$edge.length))
+      tree$node.label <- NULL
       tree <- ape::multi2di(tree)
       terminal <- tree$edge[,2]<= length(tree$tip.label)
       tree$edge.length[terminal] <- start_edge_length
@@ -726,7 +723,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   # read in a template file
   if (is.null(template)) {
     # template <- system.file("extdata", "template.xml", package = "scoper")
-    template = "template.xml"
+    template <- "template.xml"
   }
   xml <- readLines(template)
 
@@ -972,7 +969,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
     trait_data_type <- paste0('<userDataType id="traitDataType.newTrait" spec="beast.base.evolution.datatype.UserDataType" codeMap="',
      codeMap, '" codelength="-1" states="', length(trait_list), '"/>')
   }
-  xmls = c()
+  xmls <- c()
   for (i in 1:length(data)){
     #if ("trees" %in% names(kwargs)) {
     if(!is.null(trees)){
@@ -981,7 +978,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
     } else {
       tree <- NULL
     }
-    xmls = c(xmls, write_clone_to_xml(data[[i]], 
+    xmls <- c(xmls, write_clone_to_xml(data[[i]], 
                      file=outfile, 
                      id=id, 
                      time=time, 
@@ -1008,18 +1005,17 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #' Reads in a BEAST output directory
 #' 
 #' \code{readBEAST} Reads in data from BEAST output directory
-#' @param clones     either a tibble (getTrees) or list of \code{airrClone} object
+#' @param clones     either a tibble (getTrees) or list of \code{airrClone} objects
 #' @param beast      location of beast binary directory (beast/bin)
-#' @param dir        directory where temporary files will be placed.
+#' @param dir        directory where BEAST output files have been placed.
 #' @param id         unique identifer for this analysis
 #' @param trait      Trait coolumn used         
 #' @param asr        Log ancestral sequences?
 #' @param full_posterior  Read un full distribution of parameters and trees?
-#' @param nproc      Number of cores for parallelization. Uses 1 core per tree.
+#' @param nproc      Number of cores for parallelization. Uses at most 1 core per tree.
 #' @param quiet      amount of rubbish to print to console
-#' @param burnin         percent of initial tree samples to discard (1-100)
-#' @param nproc          cores to use
-#' @param low_ram        run with less memory (slower)       
+#' @param burnin         percent of initial tree samples to discard (default 10)
+#' @param low_ram        run with less memory (slightly slower)       
 #'
 #' @return   
 #' If data is a tibble, then the input clones tibble with additional columns for 
@@ -1070,8 +1066,6 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
     }
 
     console_log <- file.path(dir, paste0(id, "_", data[[x]]@clone,".log"))
-
-    #command <- paste(command, ">>", console_log)
 
     if(quiet < 1){
       print(paste(annotator_exec,command))
@@ -1154,7 +1148,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
       treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".trees"))
       l <- readLines(treesfile, warn=FALSE)
       if(!grepl("End;",l[length(l)])){
-        l[length(l) + 1] = "End;"
+        l[length(l) + 1] <- "End;"
         warning("Adding End; to ",treesfile)
         #make new file to avoid overwriting
         treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
@@ -1183,7 +1177,6 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     clones$trees <- trees
     clones$parameters <- lapply(trees, function(x)x@info$parameters)
-    #clones <- getParams(clones, burnin=burnin)
     return(clones)
   }else if("list" %in% class(clones)){
     return(trees)
@@ -1285,7 +1278,6 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
       maxheight <- max(times)
       nodes <- maxheight - times[(length(tr$tip.label)+1):length(times)]
       nodes <- nodes[order(nodes, decreasing=FALSE)]
-
 
       pop <- dplyr::filter(pops, !!rlang::sym("Sample") == sample)
       group <- dplyr::filter(groups, !!rlang::sym("Sample") == sample)

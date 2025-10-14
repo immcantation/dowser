@@ -45,24 +45,24 @@ getTimeTrees(
 
 \item{time}{Name of sample time column}
 
-\item{mcmc_length}{Number of MCMC iterations}
+\item{mcmc_length}{Number of MCMC steps}
 
 \item{log_every}{Frequency of states logged. "auto" will divide
 mcmc_length by log_target}
 
 \item{burnin}{Burnin percent (default 10)}
 
-\item{trait}{Trait coolumn used}
+\item{trait}{Trait column to be used}
 
-\item{resume_clones}{Clones to resume for mcmc_length more iterations}
+\item{resume_clones}{Clones to resume for \code{mcmc_length} more steps}
 
-\item{nproc}{Number of cores for parallelization. Uses 1 core per tree.}
+\item{nproc}{Number of cores for parallelization. At most 1 core/tree can be used.}
 
 \item{quiet}{amount of rubbish to print to console}
 
 \item{rm_temp}{remove temporary files (default=TRUE)}
 
-\item{include_germline}{Include germline in analysis?}
+\item{include_germline}{Include germline sequence in analysis?}
 
 \item{seq}{Sequence column in data}
 
@@ -70,9 +70,9 @@ mcmc_length by log_target}
 
 \item{java}{Use the -java flag for BEAST run}
 
-\item{seed}{Used for the -seed option for BEASTrun}
+\item{seed}{Use specified seeed for the -seed option for BEAST}
 
-\item{log_target}{Target number of samples over mcmc_length}
+\item{log_target}{Target number of samples from MCMC chain}
 
 \item{tree_states}{Use \code{states} vector for starting tree}
 
@@ -81,7 +81,7 @@ mcmc_length by log_target}
 \item{...}{Additional arguments passed to tree building programs}
 }
 \value{
-A list of \code{phylo} objects in the same order as \code{data}.
+A tibble with a column of \code{phylo} objects and \code{parameters} column
 }
 \description{
 \code{getTimeTrees} Tree building function.

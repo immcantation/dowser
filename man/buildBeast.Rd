@@ -47,11 +47,11 @@ buildBeast(
 
 \item{id}{unique identifer for this analysis}
 
-\item{mcmc_length}{Number of MCMC iterations}
+\item{mcmc_length}{Number of MCMC steps}
 
-\item{resume_clones}{Clones to resume for mcmc_length more iterations}
+\item{resume_clones}{Clones to resume for \code{mcmc_length} more steps}
 
-\item{trait}{Trait coolumn used}
+\item{trait}{Trait column used}
 
 \item{asr}{Log ancestral sequences?}
 
@@ -61,21 +61,21 @@ buildBeast(
 
 \item{include_germline}{Include germline in analysis?}
 
-\item{nproc}{Number of cores for parallelization. Uses 1 core per tree.}
+\item{nproc}{Number of cores for parallelization. Uses at most 1 core per tree.}
 
-\item{quiet}{amount of rubbish to print to console}
+\item{quiet}{Amount of rubbish to print to console}
 
 \item{burnin}{Burnin percent (default 10)}
 
-\item{low_ram}{run with less memory (slower)}
+\item{low_ram}{run with less memory (slightly slower)}
 
 \item{germline_range}{Possible date range of germline tip}
 
 \item{java}{Use the -java flag for BEAST run}
 
-\item{seed}{Used for the -seed option for BEASTrun}
+\item{seed}{Use specified seeed for the -seed option for BEAST}
 
-\item{log_target}{Target number of samples over mcmc_length}
+\item{log_target}{Target number of samples over \code{mcmc_length}}
 
 \item{trees}{optional list of starting trees, either phylo objects or newick strings}
 
