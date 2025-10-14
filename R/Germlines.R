@@ -1804,7 +1804,7 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
     cons <- findConsensus(receptors = data[data[[clone]] == sub$clone_id & data$locus != "IGH",],
                           clone_id = sub$clone_id)
   }
-  cons <- data[data$sequence_id == cons$cons_id,]
+  cons <- data[data$sequence_id == cons$cons_id & data[[clone]] == sub$clone_id,]
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     numbers <- sub$data[[1]]@numbers
     restart_point <- which(diff(numbers) < 0) + 1
@@ -2061,17 +2061,49 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
 # @param chain      HL or H?
 # @param check_genes Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
 # @param references IMGT references read in using \link{readIMGT}
+# @param repertoire_wide Were the trees made using repertoire_wide parameters or do they need to made still?
+# @param igblast    Exec for igblast
+# @param igblast_database path to where the igblast database is 
+# @param ref_path   The path to the reference parent folder to use with igblast
+# @param organism   The organism to use igblast with 
+# @param ig_locus   The locus to use igblast with 
 #
 processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                  quiet = 0, clone = clone, chain = "H",
-                                 check_genes = FALSE, references = NULL){
+                                 check_genes = FALSE, references = NULL, 
+                                 repertoire_wide = TRUE, igblast = NULL, 
+                                 igblast_database = NULL, ref_path = NULL,
+                                 organism = 'human', ig_locus = 'Ig', ...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
     dir.create(subDir, recursive = T)
   }
+  if(quiet > 0){
+    print("constructing trees")
+  }
+  if(build == "igphyml"){
+    sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                       asrp = TRUE, chain = chain, nproc = 1, ...)
+  } else if(build == "pml"){
+    sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
+                       nproc = 1, ...)
+  } else{
+    stop("the tree bulding method ", build, "is not supported")
+  }
   saveRDS(sub, file.path(subDir, "clone.rds"))
   
+  if(!is.null(igblast)){
+    subdata <- data[data[[clone]] == sub$clone_id,]
+    if(quiet > 0){
+      print("updating cuts based on MRCA")
+    }
+    subdata <- updateAIRRGerm(airr_data = subdata, clones = sub, igblast = igblast, 
+                           igblast_database = igblast_database, references = ref_path, 
+                           organism = organism, locus = ig_locus, outdir = subDir, 
+                           nproc = nproc, clone = clone)
+    data <- subdata
+  }
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     test_hl <- paste0(strsplit(sub$data[[1]]@hlgermline, "")[[1]][(nchar(sub$data[[1]]@germline) + 1):
                                                              nchar(sub$data[[1]]@hlgermline)], collapse = "")
@@ -2094,13 +2126,23 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   } else if(sub$data[[1]]@phylo_seq == "lsequence"){
     cdr3_index <- (min(which(r == "cdr3")) - 3):(max(which(r == "cdr3")) + 3)
   }
+  
   if(build == "igphyml"){
-    tree_df <- suppressWarnings(read.table(file = file.path(dir, "sample", "sample_recon_sample",
-                                           paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                                           header = F, sep = "\t"))
-    file.copy(file.path(dir, "sample", "sample_recon_sample",
-                        paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-              file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
+    if(repertoire_wide){
+      tree_df <- suppressWarnings(read.table(file = file.path(dir, "sample", "sample_recon_sample",
+                                                              paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                                             header = F, sep = "\t"))
+      file.copy(file.path(dir, "sample", "sample_recon_sample",
+                          paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
+    } else{
+      tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample", "sample_recon_sample",
+                                                              paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                                             header = F, sep = "\t"))
+      file.copy(file.path(subDir, "sample", "sample_recon_sample",
+                          paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
+    }
   } else if(build == "pml"){
     tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
                                            header = F, sep = "\t"))
@@ -2275,7 +2317,6 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       write.table(tree_df_light, file.path(subDir, "light_table.txt"), quote = FALSE,
                   sep = "\t", col.names = FALSE, row.names = FALSE)
     }
-
   }
   return(sub)
 }
@@ -2428,6 +2469,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param build         Name of the tree building method. Currently only igphyml is supported.
 #' @param exec          File path to the tree building executable
+#' @param repertoire_wide Build build trees using parameters inferred from the entire dataset?
 #' @param model_folder  The file path to the OLGA default model files for heavy chains
 #' @param model_folder_igk  The file path to the OLGA default model files for IGK
 #' @param model_folder_igl  The file path to the OLGA default model files for IGL
@@ -2466,7 +2508,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @seealso \link{getTrees} 
 #' @export
 getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", 
-                            exec = NULL, model_folder, 
+                            exec = NULL, repertoire_wide = FALSE, model_folder, 
                             model_folder_igk = NULL, model_folder_igl = NULL, 
                             python = "python3", id = "sample", max_iters = 100, 
                             nproc = 1, rm_temp = TRUE, quiet = 0, chain = "H",
@@ -2573,28 +2615,31 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     }
     saveRDS(clones, file = file.path(dir, "clones.rds"))
   }
-  if(quiet > 0){
-    print("constructing trees")
-  }
-  if(build == "igphyml"){
-    clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                    asrp = TRUE, chain = chain, nproc = nproc, ...)
-  } else if(build == "pml"){
-    clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,
-                       nproc = nproc, ...)
-  } else{
-    stop("the tree bulding method ", build, "is not supported")
-  }
-  saveRDS(clones, file.path(dir, "clones.rds"))
-  if(!is.null(igblast)){
+  if(repertoire_wide){
     if(quiet > 0){
-      print("updating cuts based on MRCA")
+      print("constructing trees")
     }
-    data <- updateAIRRGerm(airr_data = data, clones = clones, igblast = igblast, 
-                           igblast_database = igblast_database, references = ref_path, 
-                           organism = organism, locus = 'Ig', outdir = dir, 
-                           nproc = nproc, clone = clone, ...)
+    if(build == "igphyml"){
+      clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
+                         asrp = TRUE, chain = chain, nproc = nproc, ...)
+    } else if(build == "pml"){
+      clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,
+                         nproc = nproc, ...)
+    } else{
+      stop("the tree bulding method ", build, "is not supported")
+    }
+    saveRDS(clones, file.path(dir, "clones.rds"))
+    if(!is.null(igblast)){
+      if(quiet > 0){
+        print("updating cuts based on MRCA")
+      }
+      data <- updateAIRRGerm(airr_data = data, clones = clones, igblast = igblast, 
+                             igblast_database = igblast_database, references = ref_path, 
+                             organism = organism, locus = 'Ig', outdir = dir, 
+                             nproc = nproc, clone = clone, ...)
+    }
   }
+  
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
@@ -2602,7 +2647,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                          build = build, id = id, quiet = quiet, clone = clone,
                          chain = chain, check_genes = check_genes, 
-                         references = references)
+                         references = references, repertoire_wide = repertoire_wide, ...)
   }, mc.cores = nproc)))
   # run the UCA
   if(quiet > 0){

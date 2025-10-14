@@ -10,6 +10,7 @@ getTreesAndUCAs(
   dir = NULL,
   build = "igphyml",
   exec = NULL,
+  repertoire_wide = FALSE,
   model_folder,
   model_folder_igk = NULL,
   model_folder_igl = NULL,
@@ -45,6 +46,8 @@ getTreesAndUCAs(
 \item{build}{Name of the tree building method. Currently only igphyml is supported.}
 
 \item{exec}{File path to the tree building executable}
+
+\item{repertoire_wide}{Build build trees using parameters inferred from the entire dataset?}
 
 \item{model_folder}{The file path to the OLGA default model files for heavy chains}
 
