@@ -2323,6 +2323,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                   sep = "\t", col.names = FALSE, row.names = FALSE)
     }
   }
+  return(sub)
 }
 
 # Runs clones through a UCA inference. 
@@ -2488,7 +2489,6 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param references    Reference genes. See \link{readIMGT}
 #' @param clone         The name of the clone id column used in \link{formatClones}
 #' @param cell          The name of the cell id in the AIRR table used to generate \link{formatClones}
-#' @param heavy         The name of the heavy chain locus. Default is IGH. 
 #' @param sampling_method How to subsample. Methods include 'random', 'lm' (least mutated),
 #'                      and 'ratio' (a weighted sampling with heavier weights
 #'                      towards the least mutated sequences). The later two methods
@@ -2510,13 +2510,12 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", 
-                            exec = NULL, repertoire_wide = FALSE, model_folder, 
+getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", exec = NULL,
+                            repertoire_wide = FALSE, model_folder, 
                             model_folder_igk = NULL, model_folder_igl = NULL, 
                             python = "python3", id = "sample", max_iters = 100, 
                             nproc = 1, rm_temp = TRUE, quiet = 0, chain = "H",
-                            references = NULL, clone = "clone_id", 
-                            cell = "cell_id", heavy = "IGH", 
+                            references = NULL, clone = "clone_id", cell = "cell_id",
                             sampling_method = 'random', subsample_size = NA,
                             search = "codon", check_genes = TRUE,
                             igblast = NULL, igblast_database = NULL, 
@@ -2652,14 +2651,15 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
-  invisible(parallel::mclapply(clones$clone_id, function(x){
+  clones <- invisible(do.call(rbind, parallel::mclapply(clones$clone_id, function(x){
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                          build = build, id = id, quiet = quiet, clone = clone,
                          chain = chain, check_genes = check_genes, exec = exec,
                          references = references, repertoire_wide = repertoire_wide,
                          igblast = igblast, igblast_database = igblast_database, 
                          ref_path = ref_path, organism = organism, ...)
-  }, mc.cores = nproc))
+  }, mc.cores = nproc)))
+  saveRDS(clones, file.path(dir, "clones.rds"))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")
@@ -2673,7 +2673,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     print("updating clones")
   }
   clones <- updateClone(clones, dir, id, nproc)
-
+  saveRDS(clones, file.path(dir, "clones.rds"))
   unlink(rm_dir,recursive=TRUE)
   return(clones)
 }
