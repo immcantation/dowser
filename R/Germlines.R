@@ -2066,14 +2066,13 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
 # @param igblast_database path to where the igblast database is 
 # @param ref_path   The path to the reference parent folder to use with igblast
 # @param organism   The organism to use igblast with 
-# @param ig_locus   The locus to use igblast with 
 #
 processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                  quiet = 0, clone = clone, chain = "H",
                                  check_genes = FALSE, references = NULL, 
-                                 repertoire_wide = TRUE, igblast = NULL, 
+                                 repertoire_wide = FALSE, exec = NULL, igblast = NULL, 
                                  igblast_database = NULL, ref_path = NULL,
-                                 organism = 'human', ig_locus = 'Ig', ...){
+                                 organism = 'human', ...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
@@ -2083,8 +2082,14 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     print("constructing trees")
   }
   if(build == "igphyml"){
-    sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                       asrp = TRUE, chain = chain, nproc = 1, ...)
+    if(sub$data[[1]]@phylo_seq == "hlsequence"){
+      sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                      asrp = TRUE, chain = chain, nproc = 1, partition = "hl", ...)
+    } else{
+      sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                      asrp = TRUE, chain = chain, nproc = 1, ...)
+    }
+    
   } else if(build == "pml"){
     sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
                        nproc = 1, ...)
@@ -2100,10 +2105,10 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     }
     subdata <- updateAIRRGerm(airr_data = subdata, clones = sub, igblast = igblast, 
                            igblast_database = igblast_database, references = ref_path, 
-                           organism = organism, locus = ig_locus, outdir = subDir, 
-                           nproc = nproc, clone = clone)
+                           organism = organism, locus = "Ig", outdir = subDir, 
+                           nproc = 1, clone = clone,...)
     data <- subdata
-  }
+  } 
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     test_hl <- paste0(strsplit(sub$data[[1]]@hlgermline, "")[[1]][(nchar(sub$data[[1]]@germline) + 1):
                                                              nchar(sub$data[[1]]@hlgermline)], collapse = "")
@@ -2318,7 +2323,6 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                   sep = "\t", col.names = FALSE, row.names = FALSE)
     }
   }
-  return(sub)
 }
 
 # Runs clones through a UCA inference. 
@@ -2337,11 +2341,10 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
 # @param model_folder_igl The file path to the model parameters for IGL provide by OLGA
 # @param quiet      Amount of noise to print out
 # @param search     Search the codon or nt space
-# @param batch_size The number of jobs to run at a time 
 #
 
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
-                     model_folder_igk, model_folder_igl, quiet, search, batch_size = 250){
+                     model_folder_igk, model_folder_igl, quiet, search){
   clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- z
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -2620,8 +2623,14 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
       print("constructing trees")
     }
     if(build == "igphyml"){
-      clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                         asrp = TRUE, chain = chain, nproc = nproc, ...)
+      if(chain == "HL"){
+        clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
+                           asrp = TRUE, chain = chain, nproc = nproc, partition = "hl", ...)
+      } else{
+        clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
+                           asrp = TRUE, chain = chain, nproc = nproc, ...)
+      }
+
     } else if(build == "pml"){
       clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,
                          nproc = nproc, ...)
@@ -2643,12 +2652,14 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
-  clones <- do.call(rbind, invisible(parallel::mclapply(clones$clone_id, function(x){
+  invisible(parallel::mclapply(clones$clone_id, function(x){
     processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                          build = build, id = id, quiet = quiet, clone = clone,
-                         chain = chain, check_genes = check_genes, 
-                         references = references, repertoire_wide = repertoire_wide, ...)
-  }, mc.cores = nproc)))
+                         chain = chain, check_genes = check_genes, exec = exec,
+                         references = references, repertoire_wide = repertoire_wide,
+                         igblast = igblast, igblast_database = igblast_database, 
+                         ref_path = ref_path, organism = organism, ...)
+  }, mc.cores = nproc))
   # run the UCA
   if(quiet > 0){
     print("running UCA analysis")
