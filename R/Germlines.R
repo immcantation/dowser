@@ -2404,7 +2404,7 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
   )
   args_keys <- args[seq(1, length(args), 2)]
   args_values <- args[seq(2, length(args), 2)]
-  args_list <- setNames(as.list(args_values), gsub("^--", "", args_keys))
+  args_list <- stats::setNames(as.list(args_values), gsub("^--", "", args_keys))
   json_str <- paste0(
     "{\n",
     paste(
