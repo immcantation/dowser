@@ -2471,9 +2471,10 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @param clones        AIRR-table containing sequences \link{formatClones}
 #' @param data          The AIRR-table that was used to make the clones object.
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
-#' @param build         Name of the tree building method. Currently only igphyml is supported.
+#' @param build         Name of the tree building method. Currently only IgPhyML is supported.
 #' @param exec          File path to the tree building executable
 #' @param repertoire_wide Build build trees using parameters inferred from the entire dataset?
+#' @param partition     The partition model to use with IgPhyML. "single" is the default.
 #' @param model_folder  The file path to the OLGA default model files for heavy chains
 #' @param model_folder_igk  The file path to the OLGA default model files for IGK
 #' @param model_folder_igl  The file path to the OLGA default model files for IGL
@@ -2511,7 +2512,7 @@ updateClone <- function(clones, dir, id, nproc = 1){
 #' @seealso \link{getTrees} 
 #' @export
 getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", exec = NULL,
-                            repertoire_wide = FALSE, model_folder, 
+                            repertoire_wide = FALSE, partition = "single", model_folder, 
                             model_folder_igk = NULL, model_folder_igl = NULL, 
                             python = "python3", id = "sample", max_iters = 100, 
                             nproc = 1, rm_temp = TRUE, quiet = 0, chain = "H",
@@ -2622,13 +2623,12 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", exec = 
       print("constructing trees")
     }
     if(build == "igphyml"){
-      if(chain == "HL"){
-        clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                           asrp = TRUE, chain = chain, nproc = nproc, partition = "hl", ...)
-      } else{
-        clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                           asrp = TRUE, chain = chain, nproc = nproc, ...)
-      }
+      if(chain == "HL" & partition != "hl"){
+        warning("Paired analysis is being requested but the paired partition is not being requested. To build the best paired trees use partition = 'hl'")
+      } 
+      clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
+                         asrp = TRUE, chain = chain, nproc = nproc, partition = partition, ...)
+
 
     } else if(build == "pml"){
       clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,

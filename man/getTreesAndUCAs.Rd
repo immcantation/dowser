@@ -11,6 +11,7 @@ getTreesAndUCAs(
   build = "igphyml",
   exec = NULL,
   repertoire_wide = FALSE,
+  partition = "single",
   model_folder,
   model_folder_igk = NULL,
   model_folder_igl = NULL,
@@ -24,7 +25,6 @@ getTreesAndUCAs(
   references = NULL,
   clone = "clone_id",
   cell = "cell_id",
-  heavy = "IGH",
   sampling_method = "random",
   subsample_size = NA,
   search = "codon",
@@ -43,11 +43,13 @@ getTreesAndUCAs(
 
 \item{dir}{The file path of the directory of where data is saved. NULL is default.}
 
-\item{build}{Name of the tree building method. Currently only igphyml is supported.}
+\item{build}{Name of the tree building method. Currently only IgPhyML is supported.}
 
 \item{exec}{File path to the tree building executable}
 
 \item{repertoire_wide}{Build build trees using parameters inferred from the entire dataset?}
+
+\item{partition}{The partition model to use with IgPhyML. "single" is the default.}
 
 \item{model_folder}{The file path to the OLGA default model files for heavy chains}
 
@@ -76,8 +78,6 @@ on command line that issues the python you want to use.
 \item{clone}{The name of the clone id column used in \link{formatClones}}
 
 \item{cell}{The name of the cell id in the AIRR table used to generate \link{formatClones}}
-
-\item{heavy}{The name of the heavy chain locus. Default is IGH.}
 
 \item{sampling_method}{How to subsample. Methods include 'random', 'lm' (least mutated),
 and 'ratio' (a weighted sampling with heavier weights

@@ -704,18 +704,18 @@ buildPhylo <- function(clone, exec, temp_path=NULL, verbose=0,
   if(nrow(clone@data) < 2){
     stop("Clone ",paste0(clone@clone," has only one sequence, skipping"))
   }
+  if(is.null(tree)){
+    tree <- tryCatch(
+      alakazam::buildPhylipLineage(clone, exec, rm_temp=rm_temp,
+                                   branch_length="distance", verbose=verbose>0,
+                                   temp_path=temp_path,onetree=onetree),
+      error=function(e)e)
     if(is.null(tree)){
-        tree <- tryCatch(
-            alakazam::buildPhylipLineage(clone, exec, rm_temp=rm_temp,
-                branch_length="distance", verbose=verbose>0,
-                temp_path=temp_path,onetree=onetree),
-            error=function(e)e)
-        if(is.null(tree)){
-            stop(paste0("buildPhylipLineage failed for clone ",clone@clone))
-        }
-        if(inherits(tree, "error")){
-            stop(tree)
-        }
+      stop(paste0("buildPhylipLineage failed for clone ",clone@clone))
+    }
+    if(inherits(tree, "error")){
+      stop(tree)
+    }
     tree <- alakazam::graphToPhylo(tree)
     tree <- rerootTree(tree, germline="Germline",verbose=0)
     tree <- ape::ladderize(tree,right=FALSE)
@@ -1171,7 +1171,6 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    asrc       Intermediate sequence cutoff probability
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    asrp       Run ASRp?
-#' @param    make_gyrep Create the grep file?
 #' @param    ...        Additional arguments (not currently used)
 #'
 #' @details Partition options in rate order:
@@ -1189,10 +1188,9 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @export
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
-                         partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
+                         partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"), 
                          omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
-                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, 
-                         make_gyrep=TRUE,...){
+                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, ...){
   warning("Dowser igphyml doesn't mask split codons!")
   partition <- match.arg(partition)
   
@@ -1214,7 +1212,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }
   file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
                            partition=partition)
-  if(length(os) != 2 && (partition == "cf" | partition == "hl")){
+  if(length(os) != 2 && (partition == "cf" | partition == "hl")){ 
     warning("Omega parameter incompatible with partition, setting to e,e")
     omega = "e,e"
     os <- strsplit(omega,split=",")[[1]]
@@ -1257,44 +1255,38 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }else{
     rseed <- paste("--r_seed",rseed)
   }
-  # CGJ 5/20/25 -- for the UCA tree rebuilding -- gyrep is already made
-  if(make_gyrep){
-    gyrep <- paste0(file,"_gyrep")
-    if(!is.null(trees)){
-      command <- paste("--repfile",file,"--outrep",gyrep,
-                       "--threads",nproc,"-o lr -m GY --run_id gy",rseed,log)
-    }else{
-      command <- paste("--repfile",file,"--outrep",gyrep,
-                       "--threads",nproc,"-o tlr -m GY --run_id gy",rseed,log)
-    }
-    params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
-    if(quiet > 2){
-      print(paste(params,collapse=" "))
-    }
-    status <- tryCatch(do.call(base::system2, params), error=function(e){
-      print(paste("igphyml error, trying again: ",e));
-      cat(paste(readLines(logfile),"\n"))
-      return(e)
-    }, warning=function(w){
-      print(paste("igphyml warnings, trying again: ",w));
-      cat(paste(readLines(logfile),"\n"))
-      return(w)
-    })
-    if(length(status) != 0){
-      status <- tryCatch(do.call(base::system2, params), error=function(e){
-        print(paste("igphyml error, again! quitting: ",e));
-        cat(paste(readLines(logfile),"\n"))
-        stop()
-      }, warning=function(w){
-        print(paste("igphyml warnings, again! quitting: ",w));
-        cat(paste(readLines(logfile),"\n"))
-        stop()
-      })
-    }
-  } else{
-    gyrep <- path.expand(file.path(temp_path, paste0(id, "_lineages_sample_pars.tsv_gyrep")))
+  gyrep <- paste0(file,"_gyrep")
+  if(!is.null(trees)){
+    command <- paste("--repfile",file,"--outrep",gyrep,
+                     "--threads",nproc,"-o lr -m GY --run_id gy",rseed,log)
+  }else{
+    command <- paste("--repfile",file,"--outrep",gyrep,
+                     "--threads",nproc,"-o tlr -m GY --run_id gy",rseed,log)
   }
-  
+  params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
+  if(quiet > 2){
+    print(paste(params,collapse=" "))
+  }
+  status <- tryCatch(do.call(base::system2, params), error=function(e){
+    print(paste("igphyml error, trying again: ",e));
+    cat(paste(readLines(logfile),"\n"))
+    return(e)
+  }, warning=function(w){
+    print(paste("igphyml warnings, trying again: ",w));
+    cat(paste(readLines(logfile),"\n"))
+    return(w)
+  })
+  if(length(status) != 0){
+    status <- tryCatch(do.call(base::system2, params), error=function(e){
+      print(paste("igphyml error, again! quitting: ",e));
+      cat(paste(readLines(logfile),"\n"))
+      stop()
+    }, warning=function(w){
+      print(paste("igphyml warnings, again! quitting: ",w));
+      cat(paste(readLines(logfile),"\n"))
+      stop()
+    })
+  }
   if(splitfreqs){
     splitf = "--splitfreqs"
   }else{
@@ -1305,10 +1297,19 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }else{
     ratestring = ""
   }
-  command <- paste("--repfile",gyrep,
-                   "--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
-                   "--hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
-                   ratestring,splitf,rseed,log)
+  if(asrp){
+    command <- paste("--repfile", gyrep,
+                     "--threads",nproc,"--omega",omega,"-o", optimize,"--motifs", motifs, 
+                     "--hotness", hotness,"-m HLP --run_id hlp --oformat tab --ASRp --ASRc",
+                     asrc,ratestring,splitf,rseed,log
+    )
+  } else{
+    command <- paste("--repfile",gyrep,
+                     "--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
+                     "--hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
+                     ratestring,splitf,rseed,log)
+  }
+  
   params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
   if(quiet > 2){
     print(paste(params,collapse=" "))
@@ -1333,28 +1334,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       stop()
     })
   }
-  
-  # CGJ 3/10/25
   if(asrp){
-    command <- paste("--repfile", gyrep,
-                     "--threads 1 --omega", omega,
-                     "-o", optimize, 
-                     "--motifs", motifs, 
-                     "--hotness", hotness,
-                     "-m HLP --run_id hlp --oformat tab --ASRp")
-    params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
-    if(quiet > 2){
-      print(paste(params,collapse=" "))
-    }
-    status <- tryCatch(do.call(base::system2, params), error=function(e){
-      print(paste("igphyml error, trying again: ",e));
-      cat(paste(readLines(logfile),"\n"))
-      return(e)
-    }, warning=function(w){
-      print(paste("igphyml warnings, trying again: ",w));
-      cat(paste(readLines(logfile),"\n"))
-      return(w)
-    })
     n_root_probs <- length(list.files(
       path = file.path(temp_path, paste0(id, "_recon_", id)),
       pattern = "\\.fasta_igphyml_rootprobs_hlp\\.txt$",
@@ -1365,7 +1345,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
       stop(diff_clones, " root probabilities not found")
     }
   }
-  #trees <- readLineages(file=gyrep,run_id="hlp",type="asr")
+  
   ofile <- file.path(temp_path,paste0(id,"_lineages_",id,
                                       "_pars.tsv_gyrep_igphyml_stats_hlp.tab"))
   results <- alakazam::readIgphyml(ofile,format="phylo",
@@ -2462,7 +2442,7 @@ scaleBranches <- function(clones, edge_type="mutations"){
         clones$trees[[x]]$edge.length*lengths[x]
       clones$trees[[x]]$edge_type <- "mutations"
       clones$trees[[x]]
-        }else if(clones$trees[[x]]$edge_type == "genetic_distance_codon" &&
+    }else if(clones$trees[[x]]$edge_type == "genetic_distance_codon" &&
              edge_type == "mutations"){
       clones$trees[[x]]$edge.length <-
         clones$trees[[x]]$edge.length*lengths[x]/3
