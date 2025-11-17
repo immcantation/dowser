@@ -882,20 +882,23 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, referen
                          outfile = file.path(outdir, "igblast.tsv"),
                          nproc = nproc, ...)
   ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus, ...)
-  # ig_data[[clone]] <- unlist(parallel::mclapply(1:nrow(ig_data), function(x){
-  #   
-  #   if(clones$data[[x]]@phylo_seq == "hlsequence"){
-  #     # need the same clone_id twice
-  #   } else{
-  #     # only need one
-  #   }
-  # }))
+  airr::write_rearrangement(ig_data, file.path(outdir, "igblast.tsv"))
   ig_data[[clone]] <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
 
   # get the length values 
   ig_data$v_germline_length <- as.numeric(ig_data$v_germline_end - ig_data$v_germline_start + 1)
   ig_data$d_germline_length <- as.numeric(ig_data$d_germline_end - ig_data$d_germline_start + 1)
   ig_data$j_germline_length <- as.numeric(ig_data$j_germline_end - ig_data$j_germline_start + 1)
+  
+  if(sum(is.na(ig_data$j_germline_length)) != 0){
+    bad_clones <- ig_data[[clone]][which(is.na(ig_data$j_germline_length))]
+    tmp <- airr_data[airr_data[[clone]] %in% bad_clones,]
+    ig_data <- ig_data[!ig_data[[clone]] %in% bad_clones,]
+    if(nrow(ig_data) == 0){
+      # return the the orignal data as the MRCA failed 
+      return(airr_data)
+    }
+  }
   
   # make the germline__mask column 
   ig_data$germline_alignment_d_mask <- unlist(parallel::mclapply(1:nrow(ig_data), function(x){
@@ -2066,13 +2069,14 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
 # @param igblast_database path to where the igblast database is 
 # @param ref_path   The path to the reference parent folder to use with igblast
 # @param organism   The organism to use igblast with 
+# @param partition The partition to use when building the tree
 #
 processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
-                                 quiet = 0, clone = clone, chain = "H",
+                                 quiet = 0, clone = "clone_id", chain = "H",
                                  check_genes = FALSE, references = NULL, 
                                  repertoire_wide = FALSE, exec = NULL, igblast = NULL, 
                                  igblast_database = NULL, ref_path = NULL,
-                                 organism = 'human', ...){
+                                 organism = 'human', partition = "single", ...){
   sub <- dplyr::filter(clones, !!rlang::sym("clone_id") == clone_ids)
   subDir <- file.path(dir, paste0(id, "_",clone_ids))
   if(!dir.exists(subDir)){
@@ -2082,14 +2086,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     print("constructing trees")
   }
   if(build == "igphyml"){
-    if(sub$data[[1]]@phylo_seq == "hlsequence"){
-      sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                      asrp = TRUE, chain = chain, nproc = 1, partition = "hl", ...)
-    } else{
-      sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                      asrp = TRUE, chain = chain, nproc = 1, ...)
-    }
-    
+    sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                    asrp = TRUE, chain = chain, nproc = 1, partition = partition, ...)
   } else if(build == "pml"){
     sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
                        nproc = 1, ...)
@@ -2657,7 +2655,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", exec = 
                          chain = chain, check_genes = check_genes, exec = exec,
                          references = references, repertoire_wide = repertoire_wide,
                          igblast = igblast, igblast_database = igblast_database, 
-                         ref_path = ref_path, organism = organism, ...)
+                         ref_path = ref_path, organism = organism, partition = partition,
+                         ...)
   }, mc.cores = nproc)))
   saveRDS(clones, file.path(dir, "clones.rds"))
   # run the UCA
