@@ -1,9 +1,9 @@
 # Release Notes
 
-Version 2.3.2 October 7, 2025
+Version 2.4.0 October 14, 2025
 -------------------------------------------------------------------------------
 
-+ Added light chain UCA inference to getTreesAndUCAs and addressed minor bugs
++ Added getTimeTrees and getTimeTreesIterate and associated functions
 
 Version 2.3.1 March 13, 2025
 -------------------------------------------------------------------------------
