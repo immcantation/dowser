@@ -1,5 +1,10 @@
 # Release Notes
 
+Version 2.4.0 October 14, 2025
+-------------------------------------------------------------------------------
+
++ Added getTimeTrees and getTimeTreesIterate and associated functions
+
 Version 2.3.2 October 7, 2025
 -------------------------------------------------------------------------------
 
