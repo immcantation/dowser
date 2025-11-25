@@ -1174,6 +1174,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    asrc       Intermediate sequence cutoff probability
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    asrp       Run ASRp?
+#' @param    trunkl     Set trunk length to specified number
 #' @param    make_gyrep Create the grep file?
 #' @param    ...        Additional arguments (not currently used)
 #'
@@ -1194,7 +1195,7 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
                          partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
                          omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
-                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, 
+                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, trunkl=NULL,
                          make_gyrep=TRUE,...){
   warning("Dowser igphyml doesn't mask split codons!")
   partition <- match.arg(partition)
@@ -1308,10 +1309,14 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }else{
     ratestring = ""
   }
+  trunklength <- ""
+  if(!is.null(trunkl)){
+    trunklength <- paste("--trunkl",trunkl)
+  }
   command <- paste("--repfile",gyrep,
                    "--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
                    "--hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
-                   ratestring,splitf,rseed,log)
+                   trunklength,ratestring,splitf,rseed,log)
   params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
   if(quiet > 2){
     print(paste(params,collapse=" "))
@@ -1343,8 +1348,8 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                      "--threads 1 --omega", omega,
                      "-o", optimize, 
                      "--motifs", motifs, 
-                     "--hotness", hotness,
-                     "-m HLP --run_id hlp --oformat tab --ASRp")
+                     "--hotness", hotness, trunklength,
+                     "-m HLP --run_id hlp --oformat tab --ASRp", log)
     params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
     if(quiet > 2){
       print(paste(params,collapse=" "))
