@@ -1,7 +1,20 @@
-theme: readthedocs
 site_name: dowser
+site_url: https://dowser.readthedocs.io
+repo_url: https://github.com/immcantation/dowser
+edit_uri: src/master/docs/
+theme:
+  name: readthedocs
+  navigation_depth: 2
+  collapse_navigation: False
+  sticky_navigation: False
+  locale: en
+  titles_only: False
+  #logo: img/rod_white_leaf_light_background.png
+  analytics:
+    gtag: G-CD0939NYSC
 docs_dir: docs
 markdown_extensions:
+  - admonition
   - def_list
   - sane_lists
   - smarty
@@ -10,9 +23,14 @@ markdown_extensions:
       permalink: True
 extra_javascript:
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - path: js/custom.js
+    defer: true
+extra_css:
+  - css/custom.css
 nav:
   - 'About':
     - 'Introduction': index.md
+    - 'Contributing': contributing.md
     - 'Package Overview': topics/dowser.md
     - 'Release Notes': news.md
   - 'Vignettes':
