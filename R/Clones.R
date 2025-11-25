@@ -811,6 +811,9 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
   if(!clone %in% names(data)){
     stop(clone," column not found.")
   }
+  if(dup_singles && minseq > 1){
+    warning("dup_singles: Singleton clones will be removed unless minseq=1.")
+  }
   
   # CGJ 8/10/23
   # added factor check for trait and fields columns 
