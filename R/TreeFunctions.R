@@ -2167,6 +2167,10 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
     repeats <- paste(unique(names(clone_counts)[clone_counts > 1]), collapse=" ")
     stop(paste("Clone IDs not unique. Repeated names:", repeats))
   }
+  if(!is.null(igphyml) && check_divergence){
+    warning("Divergence check not run (no intermediate seqs reconstructed) if option igphyml != NULL")
+    check_divergence <- FALSE
+  }
 
   # make sure all sequences and germlines within a clone are the same length
   unlist(lapply(data, function(x){
@@ -2379,6 +2383,17 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
                            rm_files=rm_temp, rm_dir=rm_dir, states=states, 
                            palette=palette, ...)
     
+    edges <- rbind(sapply(trees, function(x){
+      c(x$name, x$edge_type)
+    }))
+    etype <- edges[2,]
+    names(etype) <- edges[1,]
+
+    mtrees <- lapply(mtrees, function(x){
+      x$edge_type <- etype[x$name]
+      x
+    })
+
     # remove trait value from tips
     mtrees <- lapply(mtrees,function(x){
       ids <- strsplit(x$tip.label,split="_")
@@ -2387,7 +2402,7 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
       x$tip.label[x$tip.label == x$name] <- "Germline"
       x
     })
-    
+
   }else{
     mtrees <- trees
   }

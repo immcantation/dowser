@@ -69,7 +69,7 @@ get a separate rate (e.g. omega=e,e rates=0,1).}
 
 \item{asrp}{Run ASRp?}
 
-\item{trunkl}{Set trunk length?}
+\item{trunkl}{Set trunk length to specified number}
 
 \item{make_gyrep}{Create the grep file?}
 
