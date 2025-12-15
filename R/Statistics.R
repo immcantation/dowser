@@ -800,6 +800,7 @@ runCorrelationTest = function(phy, clone, permutations, minlength=0.001,
     results[["p"]] <- NA
     results[["min_p"]] <- NA
     results[["slope"]] <- NA
+    results[['intercept']] <- NA
     return(results)
   }
   
@@ -932,9 +933,9 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
       stop("clones must be a list of airrClone objects!")
     }
   }
-if(!"trees" %in% names(clones)){
-stop("clones must have trees column!")
-}
+  if(!"trees" %in% names(clones)){
+    stop("clones must have trees column!")
+  }
   time_check <- unlist(lapply(clones$data, function(x)!time %in% names(x@data)))
   if(sum(time_check) > 0){
     stop(paste("Time column",time,"not found in clone object (must be trait value in formatClones)"))
