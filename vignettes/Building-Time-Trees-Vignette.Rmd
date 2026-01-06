@@ -103,11 +103,13 @@ or <a href="https://www.beast2.org">www.beast2.org</a>.
 
 3. In the package manager, find and install the "BEAST Classic" package.
 
-4. Follow this tutorial to install the [TyCHE package](https://github.com/hoehnlab/) "by hand":
+4. Follow this tutorial to add the "extra packages" package repository (use https://github.com/CompEvol/CBAN/blob/master/packages-extra-2.7.xml as the package repository URL):
 [www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
 
-5. Follow this tutorial to install the [rootfreqs package](https://github.com/rbouckaert/rootfreqs) "by hand":
-[www.beast2.org/managing-packages](https://www.beast2.org/managing-packages/index.html)
+5. In the package manager, find and install the "TyCHE" package.
+
+6. In the package manager, find and install the "rootfreqs" package.
+
 
 #### For Linux machines, we recommend running:
 ```{bash install, eval=FALSE}
@@ -127,16 +129,14 @@ rm $BEAST
 # install BEAST Classic package
 ~/beast/bin/packagemanager -add BEAST_CLASSIC
 
-# install TyCHE package (currently not released on BEAST package manager)
-curl -O https://github.com/hoehnlab/tyche/releases/download/v0.0.3/TyCHE.v0.0.3.zip 
-unzip -o -d ~/.beast/2.7/TyCHE TyCHE.v0.0.3.zip
-rm -f TyCHE.v0.0.3.zip
+# add "extra packages" package repo
+echo "packages.url=https\://raw.githubusercontent.com/CompEvol/CBAN/master/packages-extra-2.7.xml" >> ~/.beast/2.7/beauti.properties
+
+# install TyCHE package
+~/beast/bin/packagemanager -add TyCHE
 
 # install rootfreqs package
-ROOTFREQS=rootfreqs.package.v0.0.2.zip
-curl -O https://github.com/rbouckaert/rootfreqs/releases/download/v0.0.2/$ROOTFREQS
-unzip -o -d ~/.beast/2.7/rootfreqs $ROOTFREQS
-rm -f $ROOTFREQS
+~/beast/bin/packagemanager -add rootfreqs
 
 ```
 
@@ -340,8 +340,8 @@ mixed_trees <- getTimeTreesIterate(
   TRAIT_RATE_SIGMA_2 = 0.001,
   RATE_INDICATORS = "1 0",
   TRANSITION_RATE_ALPHA_1 = 0.1,
-  TRANSITION_RATE_ALPHA_2 = 1.0,
-  TRANSITION_RATE_BETA_1  = 0.1,
+  TRANSITION_RATE_BETA_1  = 1.0,
+  TRANSITION_RATE_ALPHA_2 = 0.1,
   TRANSITION_RATE_BETA_2  = 1.0,
   log_target   = 2000,
   mcmc_length  = 1e6,
