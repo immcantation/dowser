@@ -807,10 +807,15 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
     # can add other potential operators here
     operators <- ""
     if (include_germline_as_tip) {
-      
+      if(any(grepl("GermlineRootTree", xml))) {
+        warning("GermlineRootTree operator found in template, skipping TipDatesRandomWalker operator addition")
+        operators <- ""
+      }
+      else {
       operators <-  
       paste0('<operator id="TipDatesRandomWalker.01" windowSize="1" spec="beast.base.evolution.operator.TipDatesRandomWalker" taxonset="@germSet" tree="@Tree.t:',
         id, '_', clone@clone,'" weight="1.0"/>\n')
+      }
     }
     
     xml <- gsub("\\$\\{OPERATORS\\}", operators, xml)
