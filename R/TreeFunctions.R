@@ -588,6 +588,12 @@ writeLineageFile <- function(data, trees=NULL, dir=".", id="N", rep=NULL,
       cdrs <- rep(0,length(chains))
       cdrs[chains == heavy] <- 13
       cdrs[chains != heavy] <- 30
+    }else if(partition == "junction"){
+      nomega <- 2
+      regions <- data[[i]]@region
+      cdrs <- rep(0,length(regions))
+      cdrs[regions == "cdr3"] <- 13
+      cdrs[regions != "cdr3"] <- 30
     }else if(partition == "hlc"){
       nomega <- 3
       chains <- data[[i]]@locus
@@ -1171,6 +1177,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    asrc       Intermediate sequence cutoff probability
 #' @param    splitfreqs Calculate codon frequencies on each partition separately?
 #' @param    asrp       Run ASRp?
+#' @param    trunkl     Set trunk length to specified number
 #' @param    ...        Additional arguments (not currently used)
 #'
 #' @details Partition options in rate order:
@@ -1188,9 +1195,10 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @export
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
-                         partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"), 
+                         partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf", "junction"), 
                          omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
-                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, ...){
+                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, trunkl=NULL, 
+                         ...){
   warning("Dowser igphyml doesn't mask split codons!")
   partition <- match.arg(partition)
   
@@ -1212,11 +1220,11 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }
   file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
                            partition=partition)
-  if(length(os) != 2 && (partition == "cf" | partition == "hl")){ 
+  if(length(os) != 2 && (partition == "cf" | partition == "hl" | partition == "junction")){ 
     warning("Omega parameter incompatible with partition, setting to e,e")
     omega = "e,e"
     os <- strsplit(omega,split=",")[[1]]
-    if(partition == "hl" && is.null(rates)){
+    if(partition %in% c("hl", "junction") && is.null(rates)){
       rates = "0,1"
     }
   }
@@ -1297,17 +1305,22 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }else{
     ratestring = ""
   }
+  trunklength <- ""
+  if(!is.null(trunkl)){
+    trunklength <- paste("--trunkl",trunkl)
+  }
   if(asrp){
     command <- paste("--repfile", gyrep,
                      "--threads",nproc,"--omega",omega,"-o", optimize,"--motifs", motifs, 
-                     "--hotness", hotness,"-m HLP --run_id hlp --oformat tab --ASRp --ASRc",
-                     asrc,ratestring,splitf,rseed,log
-    )
+                     "--hotness", hotness, trunklength, 
+                     "-m HLP --run_id hlp --oformat tab --ASRp --ASRc",
+                     asrc, trunklength, ratestring,splitf,rseed,log)
   } else{
     command <- paste("--repfile",gyrep,
                      "--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
-                     "--hotness",hotness,"-m HLP --run_id hlp --oformat tab --ASRc",asrc,
-                     ratestring,splitf,rseed,log)
+                     "--hotness",hotness, trunklength, 
+                     "-m HLP --run_id hlp --oformat tab --ASRc",asrc,
+                     trunklength, ratestring,splitf,rseed,log)
   }
   
   params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
@@ -1353,6 +1366,9 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(partition == "hl"){
     names(results$param) = gsub("fwr","heavy",names(results$param))
     names(results$param) = gsub("cdr","light",names(results$param))
+  }else if(partition == "junction"){
+    names(results$param) = gsub("fwr","junction",names(results$param))
+    names(results$param) = gsub("cdr","nonjunction",names(results$param))
   }else if(partition == "hlf"){
     names(results$param) = gsub("omega_1","omega_heavyfwr",names(results$param))
     names(results$param) = gsub("omega_2","omega_cdr",names(results$param))
@@ -1682,7 +1698,7 @@ buildRAxML <- function(clone, exec, seq = "sequence", sub_model = 'GTR', partiti
     ASR <- list()
     for(i in 1:nnodes){
       if(i <= length(tree$tip.label)){
-        # find the ith value in tip.label (assiocated with 1-x on the edge table)
+        # find the ith value in tip.label (associated with 1-x on the edge table)
         seq_id <- tree$tip.label[i]
         if(seq_id == "Germline"){
           if(clone@phylo_seq == "sequence"){

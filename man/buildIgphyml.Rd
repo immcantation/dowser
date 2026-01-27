@@ -15,7 +15,7 @@ buildIgphyml(
   quiet = 0,
   rm_files = TRUE,
   rm_dir = NULL,
-  partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
+  partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf", "junction"),
   omega = NULL,
   optimize = "lr",
   motifs = "FCH",
@@ -24,6 +24,7 @@ buildIgphyml(
   asrc = 0.95,
   splitfreqs = FALSE,
   asrp = FALSE,
+  trunkl = NULL,
   ...
 )
 }
@@ -66,6 +67,8 @@ get a separate rate (e.g. omega=e,e rates=0,1).}
 \item{splitfreqs}{Calculate codon frequencies on each partition separately?}
 
 \item{asrp}{Run ASRp?}
+
+\item{trunkl}{Set trunk length to specified number}
 
 \item{...}{Additional arguments (not currently used)}
 }

@@ -10,6 +10,7 @@ getTreesAndUCAs(
   dir = NULL,
   build = "igphyml",
   exec = NULL,
+  resolve_germ = FALSE,
   repertoire_wide = FALSE,
   partition = "single",
   model_folder,
@@ -33,6 +34,7 @@ getTreesAndUCAs(
   igblast_database = NULL,
   ref_path = NULL,
   organism = "human",
+  trunklength = NULL,
   ...
 )
 }
@@ -46,6 +48,8 @@ getTreesAndUCAs(
 \item{build}{Name of the tree building method. Currently only IgPhyML is supported.}
 
 \item{exec}{File path to the tree building executable}
+
+\item{resolve_germ}{Resolve the V and J gene annotations within each clone?}
 
 \item{repertoire_wide}{Build build trees using parameters inferred from the entire dataset?}
 
@@ -98,6 +102,8 @@ require 'mu_freq' to be passed as a trait when running
 \item{ref_path}{The file path to your references parent folder.}
 
 \item{organism}{The type of organism to align to if using igblast.}
+
+\item{trunklength}{The specified trunklength}
 
 \item{...}{Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}}
 }
