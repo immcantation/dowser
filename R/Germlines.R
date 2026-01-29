@@ -1901,9 +1901,23 @@ checkGenesUCA <- function(sub, data, v, mrcacdr3, j, references, tree_df, subDir
   v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
     temp <- tree_df[tree_df$site == i - 1,]
     if(length(v_con_indx) > 0){
-      if(i != v_con_indx){
+      if(!(i %in% v_con_indx)){
         if(length(v_groups[[i]]) == 3){
-          temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
+          codon_value <- paste0(ref_v[v_groups[[i]]], collapse = "")
+          if(alakazam::translateDNA(codon_value) != "*"){
+            temp <- temp[temp$codon == codon_value,]
+          } else{
+            # remove the T/U and take the rest -- all stop codons start with T/U with
+            ending_values <- substring(codon_value, 2, 3)
+            temp <- temp[endsWith(temp$codon, ending_values),]
+            warning("A stop codon was detected in the reference for clone ", 
+                    cons$clone_id, "which may indicate the improper reference is",
+                    " being used")
+            writeLines(paste("A stop codon was detected in the reference for clone", 
+                              cons$clone_id, "which may indicate the improper",
+                             "reference is being used"), 
+                       file.path(subDir, "annotation_warning.txt"))
+          }
         } else{
           values <- paste0(ref_v[v_groups[[i]]], collapse = "")
           temp <- temp[startsWith(temp$codon, values), ]
@@ -2102,10 +2116,14 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     if(quiet > 0){
       print("updating cuts based on MRCA")
     }
-    subdata <- updateAIRRGerm(airr_data = subdata, clones = sub, igblast = igblast, 
-                           igblast_database = igblast_database, references = ref_path, 
-                           organism = organism, locus = "Ig", outdir = subDir, 
-                           nproc = 1, clone = clone, ...)
+    subdata <- tryCatch({
+      updateAIRRGerm(airr_data = subdata, clones = sub, igblast = igblast, 
+                     igblast_database = igblast_database, references = ref_path, 
+                     organism = organism, locus = "Ig", outdir = subDir, 
+                     nproc = 1, clone = clone, ...)
+    }, error = function(e) {
+      subdata
+    })
     data <- subdata
   } 
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
