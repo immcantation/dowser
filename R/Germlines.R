@@ -3215,6 +3215,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", exec = 
          'ref_path: the path to the imgt parent folder')
   }
   
+  saveRDS(clones, file = file.path(dir, "clones.rds"))
+  
   if(resolve_germ){
     all_germlines <- createAllGermlines(data = data, references = references,
                                         nproc = nproc, clone = clone, 
@@ -3222,6 +3224,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", exec = 
     saveRDS(all_germlines, file.path(dir, "all_germlines.rds"))
     clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
                                          nproc = nproc, clone = clone, chain = chain)
+  } else{
+    all_germlines <- NULL
   }
   
   if(!is.na(subsample_size)){
