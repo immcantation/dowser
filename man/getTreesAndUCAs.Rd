@@ -33,6 +33,7 @@ getTreesAndUCAs(
   igblast = NULL,
   igblast_database = NULL,
   ref_path = NULL,
+  igdata = NULL,
   organism = "human",
   trunklength = NULL,
   ...
@@ -100,6 +101,8 @@ require 'mu_freq' to be passed as a trait when running
 \item{igblast_database}{The file path to the database setup for igblast}
 
 \item{ref_path}{The file path to your references parent folder.}
+
+\item{igdata}{The file path to the data used for igblast (NULL for internal data with igblast)}
 
 \item{organism}{The type of organism to align to if using igblast.}
 
