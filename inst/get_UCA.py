@@ -539,8 +539,12 @@ if __name__ == '__main__':
     junction_locations_list = params.get("junction_locations", "").split(',')
     tree_table_list = params.get("tree_tables", "").split(',')
     chains_list = params.get("chains", "").split(',')
-    mrcas_list = params.get("mrcas", "").split(',') 
-    centers_list = params.get("centers", "").split(',')
+    if params.get("mrcas", "NULL") != "NULL" and params.get("centers", "NULL") != "NULL":
+        mrcas_list = params.get("mrcas", "").split(',') 
+        centers_list = params.get("centers", "").split(',')
+    else:
+        mrcas_list = ["NULL"] * len(clone_ids_list)
+        centers_list = ["NULL"] * len(clone_ids_list)
 
     if params.get("search", "") == "codon":
         index_table = pd.DataFrame({
@@ -710,7 +714,9 @@ if __name__ == '__main__':
             'quiet': int(params.get("quiet", 0)),
             'model_folder': params.get("model_folder", ""),
             'model_folder_igk': params.get("model_folder_igk", ""),
-            'model_folder_igl': params.get("model_folder_igl", "")
+            'model_folder_igl': params.get("model_folder_igl", ""),
+            'mrcas': mrcas_list,
+            'centers': centers_list
         })
 
         rows = [row.to_dict() for _, row in index_table.iterrows()]
