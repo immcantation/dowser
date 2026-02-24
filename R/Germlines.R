@@ -3077,6 +3077,15 @@ buildAllClonalGermlines <- function(receptors, references,
   
   # remove any padding on the sequence alignment (in case it was already padded)
   receptors[[seq]] <- unlist(lapply(1:nrow(receptors), function(x){
+    if(is.na(receptors[[np1_length]][x])){
+      receptors[[np1_length]][x] <- 0
+    }
+    if(is.na(receptors[[d_germ_length]][x])){
+      receptors[[d_germ_length]][x] <- 0
+    }
+    if(is.na(receptors[[np2_length]][x])){
+      receptors[[np2_length]][x] <- 0
+    }
     germline_len <- sum(receptors[[v_germ_length]][x], receptors[[np1_length]][x],
                         receptors[[d_germ_length]][x], receptors[[np2_length]][x],
                         receptors[[j_germ_length]][x])
