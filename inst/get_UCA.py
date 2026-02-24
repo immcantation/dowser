@@ -11,6 +11,7 @@ import os
 import pandas as pd 
 import random
 from scipy.stats import norm
+from scipy.stats import poisson
 import sys
 
 def read_starting_and_ending_points(file_path):
@@ -40,7 +41,7 @@ def propose_new_combination(current_germline, codon_number, igphyml_df):
     new_germline = current_germline[:codon_number] + new_codon["codon"].values[0] + current_germline[codon_number+3:]
     return new_germline 
     
-def get_new_lhood(proposed_combination, starting_point, ending_point, pgen_model, igphyml_df, expected_mu=None, mrca=None):
+def get_new_lhood(proposed_combination, starting_point, ending_point, pgen_model, igphyml_df, expected_mu=None, mrca=None, sd=0.5):
     cdr3 = proposed_combination[starting_point:ending_point]
     new_pgen = pgen_model.compute_nt_CDR3_pgen(cdr3)
     if new_pgen == 0:
@@ -62,7 +63,12 @@ def get_new_lhood(proposed_combination, starting_point, ending_point, pgen_model
     lhood_vector = [new_pgen, new_tree_likelihood, new_lhood]
     if expected_mu is not None and mrca is not None:
         n_muts = sum(1 for a, b in zip(cdr3, mrca) if a != b)
-        dist_likelihood = norm.logcdf(n_muts, loc=expected_mu, scale=0.5)
+        if sd == "tree":
+            dist_likelihood = poisson.logpmf(n_muts, mu=expected_mu)
+            # Scale dist_likelihood by the minimum of pgen and tree magnitude
+            dist_likelihood = dist_likelihood * min(abs(new_pgen), abs(new_tree_likelihood))
+        else:
+            dist_likelihood = poisson.logpmf(n_muts, mu=expected_mu) * sd
         new_lhood = new_lhood + dist_likelihood
         lhood_vector = [new_pgen, new_tree_likelihood, dist_likelihood, new_lhood]
     return lhood_vector
@@ -70,13 +76,13 @@ def get_new_lhood(proposed_combination, starting_point, ending_point, pgen_model
 def translate_to_amino_acid(codon):
     return str(Seq(codon).translate())
 
-def process_option(option, filtered_df, codon, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu=None, mrca=None):
+def process_option(option, filtered_df, codon, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu=None, mrca=None, sd=0.5):
     testing_df = filtered_df.iloc[option]
     testing_germline = current_germline 
     testing_germline = [testing_germline[i:i+3] for i in range(0, len(testing_germline), 3)]
     testing_germline[codon // 3] = testing_df['codon']
     testing_germline = ''.join(testing_germline)
-    new_lhoods = get_new_lhood(testing_germline, starting_point, ending_point, pgen_model, igphyml_df_new, expected_mu, mrca)
+    new_lhoods = get_new_lhood(testing_germline, starting_point, ending_point, pgen_model, igphyml_df_new, expected_mu, mrca, sd)
     if expected_mu is not None and mrca is not None:
         temp_data = {
             'site': codon//3,
@@ -100,7 +106,7 @@ def process_option(option, filtered_df, codon, current_germline, starting_point,
 def process_option_wrapper(args):
     return process_option(*args)
 
-def process_nt_option(base, codons, codon_numbers, codon_group_index, site_codon_indx, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu, mrca):
+def process_nt_option(base, codons, codon_numbers, codon_group_index, site_codon_indx, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu, mrca, sd):
     codon_list = list(codons[codon_group_index])
     codon_list[site_codon_indx] = base
     test_codon = ''.join(codon_list)
@@ -110,7 +116,7 @@ def process_nt_option(base, codons, codon_numbers, codon_group_index, site_codon
     for idx, b in zip(codon_numbers[codon_group_index], test_codon):
         seq_list[idx-1] = b
     testing_germline = ''.join(seq_list)
-    new_lhoods = get_new_lhood(testing_germline, starting_point, ending_point, pgen_model, igphyml_df_new, expected_mu, mrca)
+    new_lhoods = get_new_lhood(testing_germline, starting_point, ending_point, pgen_model, igphyml_df_new, expected_mu, mrca, sd)
     if expected_mu is not None and mrca is not None:
         temp_data = {
             'site': (max(codon_numbers[codon_group_index]) // 3) - 1,
@@ -134,11 +140,10 @@ def process_nt_option(base, codons, codon_numbers, codon_group_index, site_codon
             }
     return testing_germline, new_lhoods, temp_data
 
-
-def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=100, nproc = 1, quiet = 0, expected_mu=None, mrca=None):
+def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=100, nproc = 1, quiet = 0, expected_mu=None, mrca=None, sd=0.5):
     current_codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
     current_germline = starting_germline
-    current_lhoods = get_new_lhood(current_germline, starting_point, ending_point, pgen_model, igphyml_df, expected_mu, mrca)
+    current_lhoods = get_new_lhood(current_germline, starting_point, ending_point, pgen_model, igphyml_df, expected_mu, mrca, sd)
     starting_site = starting_point/3
     ending_site = ending_point/3 - 1
     starting_options = igphyml_df[igphyml_df["site"] == starting_site]
@@ -166,9 +171,11 @@ def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_mode
         for codon in codon_list:           
             filtered_df = igphyml_df_new[igphyml_df_new["site"] == codon/3]
             with Pool(nproc) as pool:
-                results = pool.map(process_option_wrapper, [(option, filtered_df, codon, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu, mrca) for option in range(0, len(filtered_df))])
+                results = pool.map(process_option_wrapper, [(option, filtered_df, codon, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu, mrca, sd) for option in range(0, len(filtered_df))])
             results_array = np.array([result[1] for result in results])
-            best_index = np.argmax(results_array[:, 2])
+            # Determine which index to use based on whether prior is present
+            lhood_index = 3 if (expected_mu is not None and mrca is not None) else 2
+            best_index = np.argmax(results_array[:, lhood_index])
             if mrca is not None and expected_mu is not None:
                 tested_combinations.append(results[best_index][0])
                 tested_lhoods_pgen.append(results[best_index][1][0])
@@ -183,8 +190,6 @@ def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_mode
             
             indices = [i for i, x in enumerate(codon_list) if x == codon]
             tested_iterations.extend([f"{iteration}_{index}" for index in indices])
-            # Determine which index to use based on whether prior is present
-            lhood_index = 3 if (expected_mu is not None and mrca is not None) else 2
             if results_array[best_index][lhood_index] > current_lhoods[lhood_index]:
                 current_lhoods = list(results_array[best_index])
                 current_germline = results[best_index][0]
@@ -221,10 +226,10 @@ def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_mode
     data = pd.DataFrame(data)
     return current_germline, current_lhoods, data, iteration_df
 
-def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=100, nproc=1, expected_mu=None, mrca=None):
+def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=100, nproc=1, expected_mu=None, mrca=None, sd=0.5):
     current_codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
     current_germline = starting_germline
-    current_lhoods = get_new_lhood(current_germline, starting_point, ending_point, pgen_model, igphyml_df, expected_mu, mrca)
+    current_lhoods = get_new_lhood(current_germline, starting_point, ending_point, pgen_model, igphyml_df, expected_mu, mrca, sd)
     starting_site = starting_point/3 + 1
     ending_site = ending_point/3 - 1
     starting_options = igphyml_df[igphyml_df["site"] == starting_site]
@@ -270,7 +275,7 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
             testing_bases = ['A', 'C', 'G', 'T']
             results = []
             for base in testing_bases:
-                result = process_nt_option(base, current_codons, codon_numbers, codon_group_index, site_codon_indx, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu, mrca)
+                result = process_nt_option(base, current_codons, codon_numbers, codon_group_index, site_codon_indx, current_germline, starting_point, ending_point, igphyml_df_new, pgen_model, expected_mu, mrca, sd)
                 if result is not None and result[0] is not None and result[1] is not None:  # Only append if not a stop codon
                     results.append(result)
             if not results:
@@ -278,7 +283,8 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
             results_array = np.array([result[1] for result in results])
             if results_array.size == 0:
                 continue
-            best_index = np.argmax(results_array[:, 2])
+            lhood_index = 3 if (expected_mu is not None and mrca is not None) else 2
+            best_index = np.argmax(results_array[:, lhood_index])
             if mrca is not None and expected_mu is not None:
                 tested_combinations.append(results[best_index][0])
                 tested_lhoods_pgen.append(results[best_index][1][0])
@@ -292,7 +298,6 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
                 tested_lhoods_combo.append(results[best_index][1][2])
             indices = [i for i, x in enumerate(testing_bases) if x == base]
             tested_iterations.extend([f"{iteration}_{index}" for index in indices])
-            lhood_index = 3 if (expected_mu is not None and mrca is not None) else 2
             if results_array[best_index][lhood_index] > current_lhoods[lhood_index]:
                 current_lhoods = list(results_array[best_index])
                 current_germline = results[best_index][0]
@@ -418,7 +423,7 @@ def process_row(row):
         generative_model.load_and_process_igor_model(marginals_file_name)
         pgen_model = pgen.GenerationProbabilityVJ(generative_model, genomic_data)
     
-    values = get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=int(params.get("max_iters", 100)), expected_mu=expected_mu, mrca=mrca, nproc = 1)
+    values = get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=int(params.get("max_iters", 100)), expected_mu=expected_mu, mrca=mrca, sd = sd, nproc = 1)
 
     new_germline = values[0]
     new_lhoods = values[1]
@@ -539,6 +544,11 @@ if __name__ == '__main__':
     junction_locations_list = params.get("junction_locations", "").split(',')
     tree_table_list = params.get("tree_tables", "").split(',')
     chains_list = params.get("chains", "").split(',')
+    sd_param = params.get("sd", "0.5")
+    if sd_param in ("tree", "olga"):
+        sd = sd_param
+    else:
+        sd = float(sd_param)
     if params.get("mrcas", "NULL") != "NULL" and params.get("centers", "NULL") != "NULL":
         mrcas_list = params.get("mrcas", "").split(',') 
         centers_list = params.get("centers", "").split(',')
@@ -820,7 +830,7 @@ if __name__ == '__main__':
                 generative_model.load_and_process_igor_model(marginals_file_name)
                 pgen_model = pgen.GenerationProbabilityVJ(generative_model, genomic_data)
 
-            values = get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=int(params.get("max_iters", 100)), expected_mu=expected_mu, mrca=mrca, nproc=int(params.get("nproc", 1)))
+            values = get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_model, starting_point, ending_point, cdr3_only=True, max_iter=int(params.get("max_iters", 100)), expected_mu=expected_mu, mrca=mrca, sd = sd, nproc=int(params.get("nproc", 1)))
 
             new_germline = values[0]
             new_lhoods = values[1]

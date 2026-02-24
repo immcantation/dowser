@@ -36,6 +36,7 @@ getTreesAndUCAs(
   igdata = NULL,
   organism = "human",
   trunklength = NULL,
+  sd = 0.5,
   ...
 )
 }
@@ -107,6 +108,8 @@ require 'mu_freq' to be passed as a trait when running
 \item{organism}{The type of organism to align to if using igblast.}
 
 \item{trunklength}{The specified trunklength}
+
+\item{sd}{The standard deviation for the "depth" search methods}
 
 \item{...}{Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}}
 }
