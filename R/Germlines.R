@@ -3074,6 +3074,22 @@ buildAllClonalGermlines <- function(receptors, references,
   }else{
     pad_char <- "N"
   }
+  
+  # remove any padding on the sequence alignment (in case it was already padded)
+  receptors[[seq]] <- unlist(lapply(1:nrow(receptors), function(x){
+    germline_len <- sum(receptors[[v_germ_length]][x], receptors[[np1_length]][x],
+                        receptors[[d_germ_length]][x], receptors[[np2_length]][x],
+                        receptors[[j_germ_length]][x])
+    seq_len <- nchar(receptors[[seq]][x])
+    if(germline_len != seq_len){
+      diff <- abs(germline_len - seq_len)
+      value <- substring(receptors[[seq]][x], 1, nchar(receptors[[seq]][x])-diff)
+    } else{
+      value <- receptors[[seq]][x]
+    }
+    return(value)
+  }))
+  
   # has to be first due to the igblast coordinates 
   v_dict <- unlist(lapply(receptors[[v_call]],function(x)
     alakazam::getAllele(x, strip_d=FALSE, first = TRUE))) 
