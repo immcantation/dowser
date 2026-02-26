@@ -917,7 +917,7 @@ updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database,
     jseq <- substring(ig_data$germline_alignment[x], nchar(ig_data$germline_alignment[x]) - ig_data$j_germline_length[x] + 1, 
                       nchar(ig_data$germline_alignment[x]))
     nseq <- paste0(rep("N", nchar(ig_data$germline_alignment[x]) - sum(nchar(vseq), nchar(jseq))),
-                    collapse = "")
+                   collapse = "")
     gmask <- paste0(vseq, nseq, jseq)
     return(gmask)
   }, mc.cores = nproc))
@@ -2375,7 +2375,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       has_multiple <- has_multiple[heavy_indx,]
       # make sure that has_multiple_light has the padded ungapped 
       has_multiple_light$ungapped <- unlist(lapply(1:nrow(has_multiple_light), function(z){
-        value <- has_multiple_light$germline_d_mask[z]
+        value <- has_multiple_light$ungapped[z]
         if(nchar(value) %% 3 != 0){
           padding <- 3 - nchar(value) %% 3
           value <- paste0(value, paste0(rep("N", padding), collapse = ""))
@@ -2385,51 +2385,51 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       saveRDS(has_multiple_light, file.path(subDir, "all_germlines_light.rds"))
       germlines_light <- do.call(rbind, parallel::mclapply(1:nrow(has_multiple_light), function(x){
         value <- has_multiple_light$ungapped[x]
-         v_alt <- substring(value, 1, nchar(v_light))
-         j_alt <- substring(value, nchar(paste0(v_light, light_cdr3)) + 1, nchar(value))
-         if(nchar(j_alt) > nchar(j_light)){
-           j_alt <- substring(j_alt, 1, nchar(j_light))
-         }
-         sub_tree_df <- tree_df_light[tree_df_light$site %in%
-                                        c(1:(nchar(v_light)/3),
-                                          (max(tree_df_light$new_site) - (nchar(j_light)/3) + 1):
-                                            max(tree_df_light$new_site)),]
-         # get the likelihood of the v_alt and j_alt combo
-         vj <- paste0(v_alt, j_alt, collapse = "")
-         gene_list <- strsplit(vj, "")[[1]]
-         groupedSeq <- split(gene_list, ceiling(seq_along(gene_list) / 3))
-         contains_N <- sapply(groupedSeq, function(x) any(x == "N"))
-         if(sum(contains_N) > 0){
-           n_sites <- which(contains_N) - 1
-           for(i in n_sites){
-             pattern <- groupedSeq[[i+1]]
-             non_n_positions <- which(pattern != "N")
-             df_row <- sub_df[sub_df$site == i,]
-             condition <- rep(TRUE, nrow(df_row))
-             for (pos in non_n_positions) {
-               condition <- condition & (substr(df_row$codon, pos, pos) == pattern[pos])
-             }
-             matching_codons <- df_row[condition, ]
-             value <- sum(matching_codons$value)
-             new_row <- sub_df[1,]
-             new_row$site <- i
-             new_row$codon <- paste0(groupedSeq[[i+1]], collapse = "")
-             new_row$partial_likelihood <- value
-             sub_df <- rbind(sub_df, new_row)
-           }
-         }
-         likelihood <- unlist(lapply(1:length(groupedSeq), function(i){
-           codon <- paste0(groupedSeq[[i]], collapse = "")
-           sitedf <- sub_tree_df[sub_tree_df$site == unique(sub_tree_df$site)[i],]
-           return(sitedf$partial_likelihood[sitedf$codon == codon])
-         }))
-         likelihood <- sum(likelihood)
-         temp <- data.frame(clone_id = x, likelihood = likelihood, v = v_alt, j = j_alt,
-                            v_call = has_multiple_light$v_call[x], j_call = has_multiple_light$j_call[x],
-                            v_start = has_multiple_light$v_start[z], v_end = has_multiple_light$v_end[z], 
-                            j_start = has_multiple_light$j_start[z], j_end = has_multiple_light$j_end[z])
-         return(temp)
-       }, mc.cores = nproc))
+        v_alt <- substring(value, 1, nchar(v_light))
+        j_alt <- substring(value, nchar(paste0(v_light, light_cdr3)) + 1, nchar(value))
+        if(nchar(j_alt) > nchar(j_light)){
+          j_alt <- substring(j_alt, 1, nchar(j_light))
+        }
+        sub_tree_df <- tree_df_light[tree_df_light$site %in%
+                                       c(1:(nchar(v_light)/3),
+                                         (max(tree_df_light$new_site) - (nchar(j_light)/3) + 1):
+                                           max(tree_df_light$new_site)),]
+        # get the likelihood of the v_alt and j_alt combo
+        vj <- paste0(v_alt, j_alt, collapse = "")
+        gene_list <- strsplit(vj, "")[[1]]
+        groupedSeq <- split(gene_list, ceiling(seq_along(gene_list) / 3))
+        contains_N <- sapply(groupedSeq, function(x) any(x == "N"))
+        if(sum(contains_N) > 0){
+          n_sites <- which(contains_N) - 1
+          for(i in n_sites){
+            pattern <- groupedSeq[[i+1]]
+            non_n_positions <- which(pattern != "N")
+            df_row <- sub_df[sub_df$site == i,]
+            condition <- rep(TRUE, nrow(df_row))
+            for (pos in non_n_positions) {
+              condition <- condition & (substr(df_row$codon, pos, pos) == pattern[pos])
+            }
+            matching_codons <- df_row[condition, ]
+            value <- sum(matching_codons$value)
+            new_row <- sub_df[1,]
+            new_row$site <- i
+            new_row$codon <- paste0(groupedSeq[[i+1]], collapse = "")
+            new_row$partial_likelihood <- value
+            sub_df <- rbind(sub_df, new_row)
+          }
+        }
+        likelihood <- unlist(lapply(1:length(groupedSeq), function(i){
+          codon <- paste0(groupedSeq[[i]], collapse = "")
+          sitedf <- sub_tree_df[sub_tree_df$site == unique(sub_tree_df$site)[i],]
+          return(sitedf$partial_likelihood[sitedf$codon == codon])
+        }))
+        likelihood <- sum(likelihood)
+        temp <- data.frame(clone_id = x, likelihood = likelihood, v = v_alt, j = j_alt,
+                           v_call = has_multiple_light$v_call[x], j_call = has_multiple_light$j_call[x],
+                           v_start = has_multiple_light$v_start[z], v_end = has_multiple_light$v_end[z], 
+                           j_start = has_multiple_light$j_start[z], j_end = has_multiple_light$j_end[z])
+        return(temp)
+      }, mc.cores = nproc))
       index <- which(germlines_light$likelihood == max(germlines_light$likelihood, na.rm = TRUE))[1]
       germlines_light <- germlines_light[index,]
       v_light <- germlines_light$v
@@ -2449,7 +2449,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       has_multiple <- has_multiple[light_indx,]
     }
     has_multiple$ungapped <- unlist(parallel::mclapply(1:nrow(has_multiple), function(y){
-      current <- gsub("\\.", "", has_multiple$germline_d_mask[y])
+      current <- has_multiple$ungapped[y]
       if(nchar(current) %% 3 > 0){
         current <- paste0(current, paste0(rep("N", 3 - nchar(current) %% 3), collapse = ""))
       }
@@ -2832,7 +2832,7 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
   )
   olga_check <- tryCatch(system(cmd), error=function(e)e)
   if("error" %in% class(olga_check)){
-      stop("there was an error running the get_UCA script. This is likely due to 
+    stop("there was an error running the get_UCA script. This is likely due to 
            not having the required python packages installed for the python version found
            at", path.expand(Sys.which(python)))
   }
@@ -3166,6 +3166,8 @@ buildAllClonalGermlines <- function(receptors, references,
   
   cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
   cons_normal <- receptors[receptors[[id]] == cons_id,]
+  v_cons_normal <- v_cons
+  j_cons_normal <- j_cons
   
   # info for all the germlines 
   v_split <- lapply(strsplit(receptors[[v_call]], ",", fixed = TRUE), function(x) sub("\\*.*$", "", x))
@@ -3185,24 +3187,6 @@ buildAllClonalGermlines <- function(receptors, references,
   
   # All combinations
   combinations <- expand.grid(v_all, j_all, stringsAsFactors = FALSE)
-  # observed_pairs <- unique(
-  #   do.call(
-  #     rbind,
-  #     lapply(seq_along(v_split), function(i) {
-  #       v_i <- trimws(v_split[[i]])
-  #       j_i <- trimws(j_split[[i]])
-  #       if (length(v_i) == 0 || length(j_i) == 0) {
-  #         return(NULL)
-  #       }
-  #       expand.grid(v_i, j_i, stringsAsFactors = FALSE)
-  #     })
-  #   )
-  # )
-  # 
-  # # Filter to observed pairs
-  # combo_key <- paste(combinations$Var1, combinations$Var2, sep = "\t")
-  # obs_key <- paste(observed_pairs$Var1, observed_pairs$Var2, sep = "\t")
-  # combinations <- combinations[combo_key %in% obs_key, ]
   colnames(combinations) <- c(v_call, j_call)
   
   all_germlines <- c()
@@ -3336,15 +3320,19 @@ buildAllClonalGermlines <- function(receptors, references,
   }
   
   all_germlines$ungapped <- unlist(lapply(1:nrow(all_germlines), function(x){
-    numbers <- which(strsplit(cons_normal[[seq]], "")[[1]] == ".")
-    germ <- strsplit(all_germlines$germline_d_mask[x], "")[[1]]
-    germ <- germ[-numbers]
-    germ <- paste0(germ, collapse = "")
+    germ <- gsub("\\.", "", all_germlines$germline_d_mask[x])
     return(germ)
   }))
   all_germlines$nchar <- nchar(all_germlines$ungapped)
   if(max(all_germlines$nchar) - min(all_germlines$nchar) >= threshold){
-    all_germlines <- all_germlines[-which(all_germlines$nchar < max(all_germlines$nchar - threshold)),]
+    all_germlines <- all_germlines[-which(all_germlines$nchar <= max(all_germlines$nchar - threshold)),]
+  }
+  # that should have done this but it didn't -- unsure why it's inconsistent
+  # remove the germlines that are not the correct length -- happens with the gaps 
+  norm_germ <- which(all_germlines$v_call == v_cons_normal & all_germlines$j_call == j_cons_normal)
+  bad_germs <- which(nchar(all_germlines$ungapped) != nchar(all_germlines$ungapped)[norm_germ])
+  if(length(bad_germs) > 0){
+    all_germlines <- all_germlines[-bad_germs,]
   }
   return(all_germlines)
 }
