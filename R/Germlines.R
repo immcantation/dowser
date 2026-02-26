@@ -3166,9 +3166,7 @@ buildAllClonalGermlines <- function(receptors, references,
   
   cons_id <- sort(as.character(receptors[cons_index,][[id]]))[1]
   cons_normal <- receptors[receptors[[id]] == cons_id,]
-  v_cons_normal <- v_cons
-  j_cons_normal <- j_cons
-  
+
   # info for all the germlines 
   v_split <- lapply(strsplit(receptors[[v_call]], ",", fixed = TRUE), function(x) sub("\\*.*$", "", x))
   j_split <- lapply(strsplit(receptors[[j_call]], ",", fixed = TRUE), function(x) sub("\\*.*$", "", x))
@@ -3226,13 +3224,9 @@ buildAllClonalGermlines <- function(receptors, references,
       }
     }
     
-    # make sure the first v and j calls here are the v_cons and j_cons
-    # otherwise update the cons to have them be other only values and get 
-    # start and end positions from findCoordinates
     igblast_values <- do.call(rbind, lapply(c("v", "j"), function(z){
       findCoordinates(cons, references, gene = z)
     }))
-    # the combo cannot be made due to length requirements 
     if(!v_cons %in% igblast_values$call | !j_cons %in% igblast_values$call){
       next
     }
@@ -3326,13 +3320,6 @@ buildAllClonalGermlines <- function(receptors, references,
   all_germlines$nchar <- nchar(all_germlines$ungapped)
   if(max(all_germlines$nchar) - min(all_germlines$nchar) >= threshold){
     all_germlines <- all_germlines[-which(all_germlines$nchar <= max(all_germlines$nchar - threshold)),]
-  }
-  # that should have done this but it didn't -- unsure why it's inconsistent
-  # remove the germlines that are not the correct length -- happens with the gaps 
-  norm_germ <- which(all_germlines$v_call == v_cons_normal & all_germlines$j_call == j_cons_normal)
-  bad_germs <- which(nchar(all_germlines$ungapped) != nchar(all_germlines$ungapped)[norm_germ])
-  if(length(bad_germs) > 0){
-    all_germlines <- all_germlines[-bad_germs,]
   }
   return(all_germlines)
 }
@@ -3704,7 +3691,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   if(resolve_germ){
     all_germlines <- createAllGermlines(data = data, references = references,
                                         nproc = nproc, clone = clone, 
-                                        trim_lengths = TRUE, ...)
+                                        trim_lengths = TRUE, 
+                                        threshold = 1, ...)
     saveRDS(all_germlines, file.path(dir, "all_germlines.rds"))
     clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
                                          nproc = nproc, clone = clone, chain = chain)
