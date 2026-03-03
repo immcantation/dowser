@@ -28,7 +28,6 @@ buildAllClonalGermlines(
   np2_length = "np2_length",
   j_germ_aa_length = "j_germline_aa_length",
   amino_acid = FALSE,
-  threshold = 3,
   ...
 )
 }
@@ -79,9 +78,12 @@ buildAllClonalGermlines(
 
 \item{amino_acid}{Perform reconstruction on amino acid sequence (experimental)}
 
+\item{...}{Additional arguments passed to \link{buildGermline}}
+
 \item{threshold}{The maximum germline length difference within a clone. Default is 3.}
 
-\item{...}{Additional arguments passed to \link{buildGermline}}
+\item{aligned_threshold}{A logical to use a threshold of the base alignment length
+rather than the max clone length}
 }
 \value{
 A data frame with all possible reconstructed germlines
