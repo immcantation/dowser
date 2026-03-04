@@ -7,6 +7,7 @@
 buildAllClonalGermlines(
   receptors,
   references,
+  genotype_list = NULL,
   chain = "IGH",
   use_regions = FALSE,
   vonly = FALSE,
