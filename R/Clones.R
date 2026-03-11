@@ -1482,8 +1482,8 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     # make the gene level partitions be only gene level -- no allele
     ltemp$temp_v <- ltemp[[v_call]]
     ltemp$temp_j <- ltemp[[j_call]]
-    ltemp[[v_call]] <- alakazam::getGene(ltemp[[v_call]])
-    ltemp[[j_call]] <- alakazam::getGene(ltemp[[j_call]])
+    ltemp[[v_call]] <- alakazam::getGene(ltemp[[v_call]], first=FALSE)
+    ltemp[[j_call]] <- alakazam::getGene(ltemp[[j_call]], first=FALSE)
     ltemp[[clone]] <- -1
     ld <- list()
     lclone <- 1
