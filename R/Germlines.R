@@ -2503,7 +2503,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         temp <- data.frame(clone_id = z, likelihood = likelihood, v = v_alt, j = j_alt,
                            v_call = has_multiple_light$v_call[z], j_call = has_multiple_light$j_call[z],
                            v_start = has_multiple_light$v_start[z], v_end = has_multiple_light$v_end[z], 
-                           j_start = has_multiple_light$j_start[z], j_end = has_multiple_light$j_end[z])
+                           j_start = has_multiple_light$j_start[z], j_end = has_multiple_light$j_end[z],
+                           germline = has_multiple_light$germline[z])
         return(temp)
       }))
       index <- which(germlines_light$likelihood == max(germlines_light$likelihood, na.rm = TRUE))[1]
@@ -2533,6 +2534,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       }
       return(value)
     }))
+    
     has_multiple$ungapped <- unlist(lapply(1:nrow(has_multiple), function(y){
       current <- has_multiple$ungapped[y]
       if(nchar(current) %% 3 > 0){
@@ -2626,7 +2628,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       temp <- data.frame(clone_id = z, likelihood = likelihood, v = v_alt, j = j_alt,
                          v_call = has_multiple$v_call[z], j_call = has_multiple$j_call[z],
                          v_start = has_multiple$v_start[z], v_end = has_multiple$v_end[z], 
-                         j_start = has_multiple$j_start[z], j_end = has_multiple$j_end[z])
+                         j_start = has_multiple$j_start[z], j_end = has_multiple$j_end[z],
+                         germline = has_multiple$germline[z])
       return(temp)
     }))
     index <- which(germlines$likelihood == max(germlines$likelihood, na.rm = TRUE))[1]
@@ -2717,7 +2720,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       light_r <- regions[(nchar(sub$data[[1]]@germline) + 1): length(regions)]
       cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
     }
-    germline_values1 <- get_starting_junction(tree_df, sub, regions)
+    germline_values <- get_starting_junction(tree_df, sub, regions)
     v <- germline_values$v
     j <- germline_values$j
     cdr3 <- germline_values$cdr3
@@ -3032,22 +3035,13 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
     if(fill_gaps){
       full_ucas <- c()
       for(i in 1:length(uca_gapped)){
-        c_uca <- uca_gapped[i]
-        locus_val <- names(c_uca)
+        locus_val <- names(uca_gapped[i])
+        c_uca <- strsplit(uca_gapped[i], "")[[1]]
         germ_values <- findConsensus(data[data[[clone_id]] == clone$clone_id &
                                     data[[locus]] == locus_val, ])
         cell_df <- data[data[[seq_id]] == germ_values$cons_id, ]
-        v_len <- cell_df[[v_end]] - cell_df[[v_start]] + 1
-        j_len <- cell_df[[j_end]] - cell_df[[j_start]] + 1
-        c_v <- substring(c_uca, 1, v_len)
-        ns <- sum(strsplit(substring(c_uca, nchar(c_uca) - 2, nchar(c_uca)), "")[[1]] == "N")
-        if(ns > 0){
-          c_uca <- substring(c_uca, 1, nchar(c_uca)-ns)
-        }
-        c_j <- substring(c_uca, nchar(c_uca) - j_len + 1, nchar(c_uca))
-        c_cdr3 <- substring(c_uca, nchar(c_v) + 1, nchar(c_uca) - j_len)
         if(resolve_germ){
-          if(locus_val == "IGH"){
+          if(locus_val == "IGH" | clone$data[[1]]@phylo_seq == "lsequence"){
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines.rds"))
           } else{
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_like_germlines_light.rds"))
@@ -3058,6 +3052,10 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
           j_ref <- references[[locus_val]]$J[j_indx]
           v_ref <- substring(v_ref, ml_germ$v_start, ml_germ$v_end)
           j_ref <- substring(j_ref, ml_germ$j_start, ml_germ$j_end)
+          v_gaps <- which(strsplit(v_ref, "")[[1]] == ".")
+          j_gaps <- which(strsplit(j_ref, "")[[1]] == ".")
+          gaps <- append(v_gaps, j_gaps)
+          clone_germ <- ml_germ$germline
         } else{
           v_indx <- which(names(references[[locus_val]]$V) == strsplit(cell_df[[v_call]], ",")[[1]][1])
           j_indx <- which(names(references[[locus_val]]$J) == strsplit(cell_df[[j_call]], ",")[[1]][1])
@@ -3065,34 +3063,21 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
           j_ref <- references[[locus_val]]$J[j_indx]
           v_ref <- substring(v_ref, cell_df[[v_start]], cell_df[[v_end]])
           j_ref <- substring(j_ref, cell_df[[j_start]], cell_df[[j_end]])
+          v_gaps <- which(strsplit(v_ref, "")[[1]] == ".")
+          j_gaps <- which(strsplit(j_ref, "")[[1]] == ".")
+          gaps <- append(v_gaps, j_gaps)
+          clone_germ <- cell_df$germline_alignment
         }
-        updated <- FALSE
-        if(v_ref != c_v){
-          updated <- TRUE
-          c_v <- v_ref
-        }
-        if(j_ref != c_j){
-          updated <- TRUE
-          c_j <- j_ref
-        }
-        if(ns > 0){
-          c_j <- paste0(c_j, paste0(rep("N", ns), collapse = ""))
-        }
-        c_uca <- paste0(c_v, c_cdr3, c_j)
-        names(c_uca) <- locus_val
-        if(updated){
-          if(clone$data[[1]]@phylo_seq == "hlsequence"){
-            if(locus_val == "IGH"){
-              writeLines(gsub("\\.", "", c_uca), 
-                         file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"))
-            } else{
-              writeLines(gsub("\\.", "", c_uca), 
-                         file.path(dir, paste0(id, "_", clone$clone_id), "UCA_light.txt"))
-            }
-          } else{
-            writeLines(gsub("\\.", "", c_uca), 
-                       file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"))
-          }
+        clone_gaps <- dplyr::setdiff(1:max(clone$data[[1]]@numbers), 
+                                     clone$data[[1]]@numbers)
+        if(!identical(clone_gaps, gaps)){
+          # get the values that are not found in the current UCA
+          missing_values <- dplyr::setdiff(clone_gaps, gaps)
+          germ_gapped <- strsplit(clone_germ, "")[[1]]
+          c_uca[missing_values] <- germ_gapped[missing_values]
+          c_uca <- paste0(c_uca, collapse = "")
+        } else{
+          c_uca <- paste0(c_uca, collapse = "")
         }
         full_ucas <- append(full_ucas, c_uca)
       }
@@ -3344,7 +3329,7 @@ buildAllClonalGermlines <- function(receptors, references, genotype_list = NULL,
                                     d_germ_length="d_germline_length", j_germ_start="j_germline_start", 
                                     j_germ_end="j_germline_end", j_germ_length="j_germline_length", 
                                     np1_length="np1_length", np2_length="np2_length",
-                                    j_germ_aa_length= "j_germline_aa_length", 
+                                    j_germ_aa_length="j_germline_aa_length", 
                                     amino_acid=FALSE, ...){
   
   if(amino_acid){
@@ -3483,7 +3468,7 @@ buildAllClonalGermlines <- function(receptors, references, genotype_list = NULL,
                                         j_germ_length=j_germ_length,
                                         amino_acid=amino_acid),error=function(e)e)
     
-    if("error" %in% class(germlines)){
+    if("error" %in% class(germlines) | "N" %in% strsplit(germlines$vonly, "")[[1]]){
       warning(paste("Clone",unique(receptors[[clone]]),"with v and j genes:", v_cons, j_cons),
               "germline reconstruction error.\n",
               germlines)
@@ -3510,6 +3495,7 @@ buildAllClonalGermlines <- function(receptors, references, genotype_list = NULL,
       all_germlines <- rbind(all_germlines, temp)
       next
     }
+    
     positions <- as.numeric(gregexpr("\\.", germlines$full)[[1]])
     temp <- data.frame(clone_id = unique(receptors[[clone]]),
                        clone_id_unique = paste0(unique(receptors[[clone]]), "_", x),
@@ -3806,6 +3792,10 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
          'ref_path: the path to the imgt parent folder')
   }
   
+  if(genotyped){
+    warning('Novel alleles are not yet supported')
+  }
+  
   if(resolve_germ){
     all_germlines <- suppressWarnings(
       createAllGermlines(data = data, references = references, nproc = nproc,
@@ -3934,7 +3924,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   }
   clones <- updateClone(clones = clones, data = data, references = references, 
                         dir = dir, id = id, nproc = nproc, clone_id = clone, 
-                        resolve_germ = resolve_germ, fill_gaps = fill_gaps, ...)
+                        resolve_germ = resolve_germ, fill_gaps = fill_gaps)
   saveRDS(clones, file.path(dir, "clones.rds"))
   unlink(rm_dir,recursive=TRUE)
   return(clones)

@@ -68,7 +68,7 @@ def get_new_lhood(proposed_combination, starting_point, ending_point, pgen_model
             # Scale dist_likelihood by the minimum of pgen and tree magnitude
             dist_likelihood = dist_likelihood * min(abs(new_pgen), abs(new_tree_likelihood))
         else:
-            dist_likelihood = poisson.logpmf(n_muts, mu=expected_mu) * sd
+            dist_likelihood = poisson.logpmf(n_muts, mu=expected_mu) + np.log(sd)
         new_lhood = new_lhood + dist_likelihood
         lhood_vector = [new_pgen, new_tree_likelihood, dist_likelihood, new_lhood]
     return lhood_vector
@@ -372,9 +372,9 @@ def process_row(row):
             expected_mu = float(f.read().strip())
     v_gene = starting_germline[0:starting_point]
     j_gene = starting_germline[ending_point:len(starting_germline)]
-    if "N" in v_gene or "N" in j_gene:
+    if "N" in v_gene or "N" in j_gene or "N" in starting_cdr3:
         if(quiet > 0):
-            print("N in the J gene -- adding to the codon df")
+            print("N starting sequence")
         codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
         indices_with_N = [index for index, value in enumerate(codons) if 'N' in value and not (len(v_gene) // 3 + 1 <= index <= len(codons) - len(j_gene) // 3  - 1)]
         new_rows = []
@@ -384,14 +384,9 @@ def process_row(row):
             new_rows.append({'site': index, 'codon': codons[index], 'partial_likelihood': sub_sum, 'nope': 0, 'nada': 0, 'no': 0, 'equilibrium': 0, 'value': 0})
         igphyml_df = pd.concat([igphyml_df, pd.DataFrame(new_rows)], ignore_index=True)
         igphyml_df = igphyml_df.sort_values(by='site', ascending=True)
-        cdr3 = starting_germline.split(v_gene)
-        cdr3  = cdr3[1].split(j_gene)[0]
+        cdr3 = starting_germline[len(v_gene):len(v_gene) + len(starting_cdr3)]
         starting_germline = v_gene + cdr3.replace("N", "C") + j_gene
 
-    
-    if "N" in starting_cdr3:
-        starting_cdr3 = starting_cdr3.replace("N", "C")
-        starting_germline = v_gene + starting_cdr3 + j_gene
 
     codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
 
@@ -773,9 +768,9 @@ if __name__ == '__main__':
                     expected_mu = float(f.read().strip())
             v_gene = starting_germline[0:starting_point]
             j_gene = starting_germline[ending_point:len(starting_germline)]
-            if "N" in v_gene or "N" in j_gene:
+            if "N" in v_gene or "N" in j_gene or "N" in starting_cdr3:
                 if int(params.get("quiet", 0)) > 0:
-                    print("N in the J gene -- adding to igphyml df")
+                    print("N in the sequence -- adding to igphyml df")
                 codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
                 indices_with_N = [index for index, value in enumerate(codons) if 'N' in value and not (len(v_gene) // 3 + 1 <= index <= len(codons) - len(j_gene) // 3  - 1)]
                 new_rows = []
@@ -786,18 +781,8 @@ if __name__ == '__main__':
                 igphyml_df = pd.concat([igphyml_df, pd.DataFrame(new_rows)], ignore_index=True)
                 igphyml_df = igphyml_df.sort_values(by='site', ascending=True)
                 # replace the Ns in the cdr3 with C and stitch it back together
-                cdr3 = starting_germline.split(v_gene)
-                cdr3  = cdr3[1].split(j_gene)[0]
+                cdr3 = starting_germline[len(v_gene):len(v_gene) + len(starting_cdr3)]
                 starting_germline = v_gene + cdr3.replace("N", "C") + j_gene
-            
-            #igphyml_df['value'] = igphyml_df['partial_likelihood'] + np.log(igphyml_df['equilibrium'])
-            
-            if "N" in starting_cdr3:
-                if int(params.get("quiet", 0)) > 0:
-                    print("N in starting CDR3 -- replacing with C")
-                starting_cdr3 = starting_cdr3.replace("N", "C")
-                # replace the Ns in the cdr3 with C and stitch it back together
-                starting_germline = v_gene + starting_cdr3 + j_gene
 
             # split the germline into a list of codons
             codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
