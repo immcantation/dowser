@@ -1148,7 +1148,13 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
       stop(paste("Couldn't read in ",treefile))
     }
     l <- readLines(logoutfile)
-    log <- read.table(text=l[4:(length(l)-1)], header=TRUE)
+    # just in case there are extra lines at the top of the log file, find the line where the parameter table starts
+    item_lines <- grep("item", l)
+    if (length(item_lines) == 1) {
+      log <- read.table(text=l[(item_lines):(length(l)-1)], header=TRUE)
+    } else {
+      log <- read.table(text=l[4:(length(l)-1)], header=TRUE)
+    }
 
     # add parameter summary
     beast@info$parameters <- log
