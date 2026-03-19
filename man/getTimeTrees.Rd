@@ -28,6 +28,7 @@ getTimeTrees(
   log_target = 10000,
   tree_states = FALSE,
   trees = NULL,
+  germline_trait_value = "?",
   ...
 )
 }

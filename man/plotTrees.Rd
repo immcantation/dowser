@@ -12,6 +12,7 @@ plotTrees(
   scale = 0.01,
   palette = "Dark2",
   base = FALSE,
+  show_occupancy = FALSE,
   layout = "rectangular",
   node_nums = FALSE,
   tip_nums = FALSE,
@@ -23,7 +24,8 @@ plotTrees(
   tip_palette = NULL,
   node_palette = NULL,
   guide_title = NULL,
-  branch_lengths = NULL
+  branch_lengths = NULL,
+  pch = 16
 )
 }
 \arguments{
@@ -44,6 +46,11 @@ ggplot2::scale_color_brewer (e.g. "Dark2", "Paired", "Set1") or
 ggplot2::scale_color_distiller (e.g. RdYlBu) or}
 
 \item{base}{recursion base case (don't edit)}
+
+\item{show_occupancy}{if plotting trees from an expectedOccupancy model in TyCHE, will 
+color branch lengths by expected occupancy in the second state if
+true. Requires palette to be specified as a named vector in order
+of: c(state1=color1, state2+state1=color2, state2=color3).}
 
 \item{layout}{rectangular or circular tree layout?}
 
@@ -69,6 +76,8 @@ determined by sequence with highest divergence}
 \item{guide_title}{Title of color guide. Defaults to tips variable if specified.}
 
 \item{branch_lengths}{Use branch lenghts? Use "none" if not.}
+
+\item{pch}{Numeric tip/node shape. If >20 will use "fill" instead of "color"}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.

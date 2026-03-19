@@ -11,7 +11,8 @@ create_traitset(
   id,
   trait_data_type = NULL,
   isSet = FALSE,
-  include_germline_as_tip = FALSE
+  include_germline_as_tip = FALSE,
+  germline_value = "?"
 )
 }
 \arguments{

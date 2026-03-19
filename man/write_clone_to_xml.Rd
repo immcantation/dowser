@@ -25,6 +25,7 @@ write_clone_to_xml(
   start_edge_length = 100,
   start_date = NULL,
   max_start_date = NULL,
+  germline_trait_value = "?",
   ...
 )
 }

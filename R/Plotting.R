@@ -215,6 +215,11 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    tip_nums           plot tip numbers?
 #' @param    title              use clone id as title?
 #' @param    labelsize          text size
+#' @param    show_occupancy     if plotting trees from an expectedOccupancy model in TyCHE, will 
+#'                              color branch lengths by expected occupancy in the second state if
+#'                              true. Requires palette to be specified as a named vector in order
+#'                              of: c(state1=color1, state2+state1=color2, state2=color3).
+#' @param    pch                Numeric tip/node shape. If >20 will use "fill" instead of "color"
 #' @param    base               recursion base case (don't edit)
 #' @param    ambig              How to color ambiguous node reconstructions? (grey or blend)
 #' @param    bootstrap_scores    Show bootstrap scores for internal nodes? See getBootstraps.
@@ -239,10 +244,10 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' plotTrees(trees)[[1]]
 #' @export
 plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL, 
-    scale=0.01, palette="Dark2", base=FALSE,
+    scale=0.01, palette="Dark2", base=FALSE, show_occupancy=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
-    tip_palette=NULL, node_palette=NULL, guide_title=NULL, branch_lengths=NULL){
+    tip_palette=NULL, node_palette=NULL, guide_title=NULL, branch_lengths=NULL, pch=16){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
@@ -258,6 +263,27 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             palette <- node_palette
         }
     }
+
+    if(!base && show_occupancy){
+        if(length(palette) != 3 || is.null(names(palette))){
+            stop("Manual, ordered palette (state 1, ambiguous, state 2) required to plot expected occupancy")
+        }
+        if(!is.null(branch_lengths)){
+            stop("branch_lengths must be NULL when show_occupancy=TRUE")
+        }
+        if(pch < 21){
+            pch <- 21
+            warning("pch > 20 required for show_occupancy=TRUE, setting to 21")
+        }
+        occupancy_palette <- ggplot2::scale_color_gradient2(
+            low = palette[1],
+            mid = palette[2],
+            high = palette[3],
+            midpoint = 0.5,
+            breaks = c(0, 0.25, 0.5, 0.75, 1),
+            limits = c(0, 1))
+    }
+
     if(!base){
         cols <- c()
         # set up global tip and node palette
@@ -326,16 +352,16 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             }
         }else if(nodes){
             # set up global node palette
-            if(is.null(names(palette))){
-                if(!"treedata" %in% class(trees$trees[[1]])){
-                    nodestates <- unique(unlist(lapply(trees$trees,function(x)
-                     unique(unlist(strsplit(x$state,split=",")))
-                    )))
-                }else{
-                    if(is.null(tips)){
-                        stop("`tips` option must be specified if nodes=TRUE with this tree type")
-                    }
+             if(!"treedata" %in% class(trees$trees[[1]])){
+                nodestates <- unique(unlist(lapply(trees$trees,function(x)
+                 unique(unlist(strsplit(x$state,split=",")))
+                )))
+            }else{
+                if(is.null(tips)){
+                    stop("`tips` option must be specified if nodes=TRUE with this tree type")
                 }
+            }
+            if(is.null(names(palette))){
                 statepalette <- getPalette(sort(nodestates),palette)
                 statepalette <- statepalette[!is.na(names(statepalette))]
             }else{
@@ -358,10 +384,10 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         
         ps <- lapply(1:nrow(trees),function(x)plotTrees(trees[x,],
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
-            tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,
-            tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, 
+            tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,show_occupancy=show_occupancy,
+            tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, pch=pch,
             bootstrap_scores=bootstrap_scores, guide_title=guide_title, branch_lengths=branch_lengths))
-        if(!is.null(tips) || nodes){
+        if(!is.null(tips) || nodes || show_occupancy){
             if(!is.null(guide_title)){
                 gt <- guide_title
             }else{
@@ -371,16 +397,34 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                     gt <- "State"
                 }
             }
-            ps  <- lapply(ps,function(x){
-                    x <- x + theme(legend.position="right",
-                    legend.box.margin=margin(0, -10, 0, 0))+
-                    guides(color=guide_legend(title=gt))
-                    if(tiptype == "character"){
-                        x <- x + scale_color_manual(values=cols)
-                    }else{
-                        x <- x + scale_color_distiller(limits=cols,
-                            palette=palette)
-                    }})
+            if(pch < 21){
+                ps  <- lapply(ps,function(x){
+                        x <- x + theme(legend.position="right",
+                        legend.box.margin=margin(0, -10, 0, 0))+
+                        guides(color=guide_legend(title=gt))
+                        if(tiptype == "character"){
+                            x <- x + scale_color_manual(values=cols)
+                        }else{
+                            x <- x + scale_color_distiller(limits=cols,
+                                palette=palette)
+                        }})
+            }else{
+                ps  <- lapply(ps,function(x){
+                        x <- x + theme(legend.position="right",
+                        legend.box.margin=margin(0, -10, 0, 0))+
+                        guides(fill=guide_legend(title=gt))
+                        if(tiptype == "character"){
+                            x <- x + scale_fill_manual(values=cols)
+                        }else{
+                            x <- x + scale_fill_distiller(limits=cols,
+                                palette=palette)
+                        }
+                        if(show_occupancy){
+                            x <- x + occupancy_palette +
+                            labs(color=paste("Occupancy\nin",names(palette)[3]))
+                        }
+                    })
+            }
         }
         if(common_scale){
              ps  <- lapply(ps,function(x){
@@ -396,7 +440,12 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     if(!is.null(branch_lengths)){
         p <- ggtree::ggtree(tree, layout=layout, branch.length=branch_lengths)
     }else{
-        p <- ggtree::ggtree(tree, layout=layout)
+        if(show_occupancy){
+            p <- ggtree::ggtree(tree, layout=layout, 
+                aes(color=1-as.numeric(expectedOccupancies)))
+        }else{
+            p <- ggtree::ggtree(tree, layout=layout)
+        }
     }
     #add bootstrap scores to ggplot object
     if(bootstrap_scores){
@@ -439,22 +488,39 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
         }
     }else{
         if(nodes){
-            p <- p + geom_nodepoint(aes(color=!!rlang::sym(tips)))
+            if(pch < 21){
+                p <- p + geom_nodepoint(pch=pch, aes(color=!!rlang::sym(tips)))
+            }else{
+                 p <- p + geom_nodepoint(pch=pch, aes(fill=!!rlang::sym(tips)))
+            }
         }
     }
     if(!is.null(tips)){
         if(is.null(data)){
             stop("dataframe must be provided when tip trait specified")
         }
-        if(!is.null(tipsize)){
-            if(is(tipsize, "numeric")){
-                p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)),size=tipsize)
-            }else if(is(tipsize, "character")){
-                p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips),
-                    size=!!rlang::sym(tipsize)))
+        if(pch < 21){
+            if(!is.null(tipsize)){
+                if(is(tipsize, "numeric")){
+                    p <- p + ggtree::geom_tippoint(pch=pch,aes(color=!!rlang::sym(tips)),size=tipsize)
+                }else if(is(tipsize, "character")){
+                    p <- p + ggtree::geom_tippoint(pch=pch,aes(color=!!rlang::sym(tips),
+                        size=!!rlang::sym(tipsize)))
+                }
+            }else{
+                p <- p + ggtree::geom_tippoint(pch=pch,aes(color=!!rlang::sym(tips)))
             }
         }else{
-            p <- p + ggtree::geom_tippoint(aes(color=!!rlang::sym(tips)))
+            if(!is.null(tipsize)){
+                if(is(tipsize, "numeric")){
+                    p <- p + ggtree::geom_tippoint(pch=pch,aes(fill=!!rlang::sym(tips)),size=tipsize)
+                }else if(is(tipsize, "character")){
+                    p <- p + ggtree::geom_tippoint(pch=pch,aes(fill=!!rlang::sym(tips),
+                        size=!!rlang::sym(tipsize)))
+                }
+            }else{
+                p <- p + ggtree::geom_tippoint(pch=pch,aes(fill=!!rlang::sym(tips)))
+            }
         }
     }
     if(scale != FALSE){
