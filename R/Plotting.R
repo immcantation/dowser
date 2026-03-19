@@ -216,7 +216,7 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    title              use clone id as title?
 #' @param    labelsize          text size
 #' @param    show_occupancy     if plotting trees from an expectedOccupancy model in TyCHE, will 
-#'                              color branch lengths by expected occupancy in the second state if
+#'                              color branch lengths by expected occupancy in the first state if
 #'                              true. Requires palette to be specified as a named vector in order
 #'                              of: c(state1=color1, state2+state1=color2, state2=color3).
 #' @param    pch                Numeric tip/node shape. If >20 will use "fill" instead of "color"
@@ -276,9 +276,9 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             warning("pch > 20 required for show_occupancy=TRUE, setting to 21")
         }
         occupancy_palette <- ggplot2::scale_color_gradient2(
-            low = palette[1],
+            low = palette[3],
             mid = palette[2],
-            high = palette[3],
+            high = palette[1],
             midpoint = 0.5,
             breaks = c(0, 0.25, 0.5, 0.75, 1),
             limits = c(0, 1))
@@ -421,7 +421,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
                         }
                         if(show_occupancy){
                             x <- x + occupancy_palette +
-                            labs(color=paste("Occupancy\nin",names(palette)[3]))
+                            labs(color=paste("Occupancy\nin",names(palette)[1]))
                         }
                     })
             }
@@ -442,7 +442,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     }else{
         if(show_occupancy){
             p <- ggtree::ggtree(tree, layout=layout, 
-                aes(color=1-as.numeric(expectedOccupancies)))
+                aes(color=as.numeric(expectedOccupancies)))
         }else{
             p <- ggtree::ggtree(tree, layout=layout)
         }

@@ -48,7 +48,7 @@ ggplot2::scale_color_distiller (e.g. RdYlBu) or}
 \item{base}{recursion base case (don't edit)}
 
 \item{show_occupancy}{if plotting trees from an expectedOccupancy model in TyCHE, will 
-color branch lengths by expected occupancy in the second state if
+color branch lengths by expected occupancy in the first state if
 true. Requires palette to be specified as a named vector in order
 of: c(state1=color1, state2+state1=color2, state2=color3).}
 
