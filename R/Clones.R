@@ -795,6 +795,9 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
     }
     data <- data[!ptcs,]
   }
+  if(sum(data[[id]] == "Germline") > 0){
+    stop("'Germline' may not be used as a sequence id.")
+  }
   if(!v_call %in% names(data) && !j_call %in% names(data) && !junc_len %in% names(data)){
       print(paste("v_call, j_call, and junc_len not found in data. Using non B cell mode\n.",
         "Setting use_regions to FALSE."))
