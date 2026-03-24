@@ -602,6 +602,7 @@ create_max_height_prior <- function(clone, id, max_start_date) {
 #' @param    trait_data_type          optional data type for the trait
 #' @param    isSet                    is this a traitSet (TRUE) or a trait (FALSE)?
 #' @param    include_germline_as_tip  include the germline as a tip
+#' @param    germline_value           trait value for germline, default '?' for ambiguous
 #'
 #' @return   String of XML of the trait or traitSet
 #'  
@@ -710,6 +711,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_
 #' @param    start_edge_length        edge length to use for all branches in starting tree
 #' @param    start_date               starting date to use as prior, in forward time
 #' @param    max_start_date           max starting date to use as prior, in forward time
+#' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    ...                      additional arguments for XML writing functions
 #'
 #' @return   File path of the written XML file
