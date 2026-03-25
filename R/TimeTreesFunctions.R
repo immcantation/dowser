@@ -87,6 +87,7 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 #' @param    quiet      amount of rubbish to print to console
 #' @param    rm_temp    remove temporary files (default=TRUE)
 #' @param    trees      optional list of starting trees, either phylo objects or newick strings
+#' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    ...        Additional arguments passed to tree building programs
 #'
 #' @return   A tibble with a column of \code{phylo} objects and \code{parameters} column
@@ -284,6 +285,7 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    low_ram    run with less memory (slightly slower)  
 #' @param    trees                    optional list of starting trees, either phylo objects or newick strings
 #' @param    start_edge_length        edge length to use for all branches in starting tree 
+#' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    ...      Additional arguments for XML writing functions
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
@@ -950,6 +952,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
 #' @param    start_edge_length        edge length to use for all branches in starting tree
 #' @param    start_date               starting date to use as prior, in forward time
 #' @param    max_start_date           max starting date to use as prior, in forward time
+#' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    ...                      additional arguments for XML writing functions
 #'
 #' @return   File paths of the written XML files
