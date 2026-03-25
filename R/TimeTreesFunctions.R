@@ -891,6 +891,16 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
       stop("Could not find <init> tag in the template file")
     }
   }
+  
+  curr_replace_name = "NODES_TYPE_INIT"
+  if (any(grepl("\\$\\{NODES_TYPE_INIT\\}", xml))) {
+    if (!curr_replace_name %in% names(kwargs)) {
+      nodes_type_init = 0
+    } else {
+      nodes_type_init = kwargs[[curr_replace_name]]
+    }
+    xml <- gsub(paste0("\\$\\{", curr_replace_name, "\\}"), nodes_type_init, xml)
+  }
 
   matches <- unlist(regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml)))
   template_variables <- unique(sub("\\$\\{([^}]+)\\}", "\\1", matches))
