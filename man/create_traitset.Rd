@@ -29,6 +29,8 @@ create_traitset(
 \item{isSet}{is this a traitSet (TRUE) or a trait (FALSE)?}
 
 \item{include_germline_as_tip}{include the germline as a tip}
+
+\item{germline_value}{trait value for germline, default '?' for ambiguous}
 }
 \value{
 String of XML of the trait or traitSet

@@ -1067,9 +1067,10 @@ maskCodons <- function(id, q, s, keep_alignment=FALSE, gap_opening=5,
   sg <- gsub("---", "XXX", sg)
   
   # perform global alignment
-  if (packageVersion("BiocManager") >= "1.30.20") {
-    bioc_ver <- as.character(BiocManager::version())
-    has_bioc_3_19 <- utils::compareVersion(bioc_ver, "3.19") >= 0
+  if (packageVersion("Biostrings") >= "2.72.0") {
+    #bioc_ver <- as.character(Biostrings::version())
+    #has_bioc_3_19 <- utils::compareVersion(bioc_ver, "2.72.0") >= 0
+    has_bioc_3_19 <- TRUE
   } else {
     has_bioc_3_19 <- FALSE
   }

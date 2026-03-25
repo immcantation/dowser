@@ -79,6 +79,8 @@ mcmc_length by log_target}
 
 \item{trees}{optional list of starting trees, either phylo objects or newick strings}
 
+\item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
+
 \item{...}{Additional arguments passed to tree building programs}
 }
 \value{

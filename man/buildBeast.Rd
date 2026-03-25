@@ -88,6 +88,8 @@ buildBeast(
 
 \item{max_start_date}{Maximum starting date of time tree if desired}
 
+\item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
+
 \item{...}{Additional arguments for XML writing functions}
 }
 \value{

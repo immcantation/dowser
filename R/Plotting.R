@@ -442,7 +442,7 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     }else{
         if(show_occupancy){
             p <- ggtree::ggtree(tree, layout=layout, 
-                aes(color=as.numeric(expectedOccupancies)))
+                aes(color=as.numeric(!!rlang::sym("expectedOccupancies"))))
         }else{
             p <- ggtree::ggtree(tree, layout=layout)
         }
