@@ -1829,7 +1829,7 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
 
 # checkGenesUCA is what is run if check_genes = TRUE in getTreesAndUCAs
 # sub is an clones object for only 1 clone
-# cosn is the airr table entry for the consensus clone 
+# cons is the airr table entry for the consensus clone 
 # v is a string for the v gene
 # cdr3 is a string of the junction (conserved site to conserved site)
 # j is a string for the j gene 
@@ -2479,10 +2479,12 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                           j_call = j_call, id = seq_id, ...)
     cons_light <- sub_data[sub_data[[seq_id]] == cons_light$cons_id,] 
   } else if(sub$data[[1]]@phylo_seq == "sequence"){
-    cons <- findConsensus(sub_data[sub_data[[locus]] == "IGH",], v_call = v_call, j_call = j_call, id = seq_id, ...)
+    cons <- findConsensus(sub_data[sub_data[[locus]] == "IGH",], v_call = v_call, 
+                          j_call = j_call, id = seq_id, ...)
     cons <- sub_data[sub_data[[seq_id]] == cons$cons_id,]
   } else{
-    cons <- findConsensus(sub_data[sub_data[[locus]] != "IGH",], v_call = v_call, j_call = j_call, id = seq_id, ...)
+    cons <- findConsensus(sub_data[sub_data[[locus]] != "IGH",], v_call = v_call, 
+                          j_call = j_call, id = seq_id, ...)
     cons <- sub_data[sub_data[[seq_id]] == cons$cons_id,]
   }
   regions <- sub$data[[1]]@region
