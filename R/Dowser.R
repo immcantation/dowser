@@ -51,6 +51,7 @@
 #'                          summarize summarize_at
 #'                          transmute rename
 #' @importFrom airr		    read_rearrangement
+#' @importFrom pwalign		pairwiseAlignment
 #' @importFrom treeio       read.beast
 
 NULL
