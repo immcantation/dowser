@@ -2662,8 +2662,16 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
   }
   clone <- dplyr::filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
   seqs <- c()
-  seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
-  loci <- unique(clone@locus)
+  if("sequence" %in% names(tree$nodes[[node]])){
+    if(is.null(tree$nodes[[node]]$sequence)){
+      return(NULL)
+    }else{
+      seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
+      loci <- unique(clone@locus)
+    }
+  }else{
+    return(NULL)
+  }
   for(locus in loci){
     if(length(seq) < length(clone@locus)){
       warning("Sequences are shorter than chain vector. Exiting")
