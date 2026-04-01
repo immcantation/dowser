@@ -16,7 +16,8 @@ column,
 id,
 trait_data_type = NULL,
 isSet = FALSE,
-include_germline_as_tip = FALSE
+include_germline_as_tip = FALSE,
+germline_value = "?"
 )
 ```
 
@@ -43,6 +44,9 @@ isSet
 
 include_germline_as_tip
 :   include the germline as a tip
+
+germline_value
+:   trait value for germline, default '?' for ambiguous
 
 
 

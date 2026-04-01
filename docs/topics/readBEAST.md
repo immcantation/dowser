@@ -28,10 +28,10 @@ Arguments
 -------------------
 
 clones
-:   either a tibble (getTrees) or list of `airrClone` object
+:   either a tibble (getTrees) or list of `airrClone` objects
 
 dir
-:   directory where temporary files will be placed.
+:   directory where BEAST output files have been placed.
 
 id
 :   unique identifer for this analysis
@@ -40,13 +40,13 @@ beast
 :   location of beast binary directory (beast/bin)
 
 burnin
-:   percent of initial tree samples to discard (1-100)
+:   percent of initial tree samples to discard (default 10)
 
 trait
 :   Trait coolumn used
 
 nproc
-:   cores to use
+:   Number of cores for parallelization. Uses at most 1 core per tree.
 
 quiet
 :   amount of rubbish to print to console
@@ -58,7 +58,7 @@ asr
 :   Log ancestral sequences?
 
 low_ram
-:   run with less memory (slower)
+:   run with less memory (slightly slower)
 
 
 

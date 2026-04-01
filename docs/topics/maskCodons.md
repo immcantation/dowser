@@ -37,10 +37,10 @@ keep_alignment
 :   store q and s alignments
 
 gap_opening
-:   gap opening penalty (Biostrings::pairwiseAlignment)
+:   gap opening penalty (pwalign::pairwiseAlignment)
 
 gap_extension
-:   gap extension penalty (Biostrings::pairwiseAlignment)
+:   gap extension penalty (pwalign::pairwiseAlignment)
 
 keep_insertions
 :   return removed insertion sequences?
@@ -80,33 +80,7 @@ print(maskCodons(1,q,s,TRUE))
 
 ```
 
-
-```
-$sequence_id
-[1] 1
-
-$sequence_masked
-[1] ""
-
-$masking_note
-[1] ""
-
-$insertions
-[1] ""
-
-$subject_alignment
-[1] "ATC---ATCATC"
-
-$query_alignment
-[1] "ATCTTTATCATC"
-
-$sequence_masked_v
-[1] "ATCATCATC..."
-
-
-```
-
-
+**Error in loadNamespace(x)**: there is no package called ‘pwalign’
 ```R
 
 s <- "ATCATCATC..."
@@ -115,38 +89,12 @@ print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
 
 ```
 
-
-```
-$sequence_id
-[1] "test"
-
-$sequence_masked
-[1] ""
-
-$masking_note
-[1] "1,2"
-
-$insertions
-[1] "3-TTT"
-
-$subject_alignment
-[1] "AT---CATCATC"
-
-$query_alignment
-[1] "ATTTTCATCATC"
-
-$sequence_masked_v
-[1] "NNNATCATC..."
-
-
-```
-
-
+**Error in loadNamespace(x)**: there is no package called ‘pwalign’
 
 See also
 -------------------
 
-[maskSequences](maskSequences.md), Biostrings::pairwiseAlignment.
+[maskSequences](maskSequences.md), pwalign::pairwiseAlignment.
 
 
 

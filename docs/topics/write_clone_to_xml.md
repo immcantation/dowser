@@ -30,6 +30,7 @@ tree_states = FALSE,
 start_edge_length = 100,
 start_date = NULL,
 max_start_date = NULL,
+germline_trait_value = "?",
 ...
 )
 ```
@@ -96,6 +97,9 @@ start_date
 
 max_start_date
 :   max starting date to use as prior, in forward time
+
+germline_trait_value
+:   trait value for germline, default '?' for ambiguous
 
 ...
 :   additional arguments for XML writing functions

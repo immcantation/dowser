@@ -1,15 +1,17 @@
-**sampleCloneMultiGroup** - *`sampleCloneMultiGroup` Down-sample clone to specified size with multiple groups to sample evenly*
+**sampleCloneMultiGroup** - *`sampleCloneMultiGroup` Down-sample clone to specified size 
+with one or multiple groups to sample evenly*
 
 Description
 --------------------
 
-`sampleCloneMultiGroup` Down-sample clone to specified size with multiple groups to sample evenly
+`sampleCloneMultiGroup` Down-sample clone to specified size 
+with one or multiple groups to sample evenly
 
 
 Usage
 --------------------
 ```
-sampleCloneMultiGroup(clone, size, weight = NULL, groups = NULL)
+sampleCloneMultiGroup(clone, size, weight = NULL, group = NULL)
 ```
 
 Arguments
@@ -24,8 +26,8 @@ size
 weight
 :   column for weighting sample probability
 
-groups
-:   columns to sample evenly among groups
+group
+:   column(s) to sample evenly among group
 
 
 
