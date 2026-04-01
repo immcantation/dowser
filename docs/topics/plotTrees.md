@@ -17,6 +17,7 @@ tipsize = NULL,
 scale = 0.01,
 palette = "Dark2",
 base = FALSE,
+show_occupancy = FALSE,
 layout = "rectangular",
 node_nums = FALSE,
 tip_nums = FALSE,
@@ -28,7 +29,8 @@ bootstrap_scores = FALSE,
 tip_palette = NULL,
 node_palette = NULL,
 guide_title = NULL,
-branch_lengths = NULL
+branch_lengths = NULL,
+pch = 16
 )
 ```
 
@@ -59,6 +61,12 @@ ggplot2::scale_color_distiller (e.g. RdYlBu) or
 
 base
 :   recursion base case (don't edit)
+
+show_occupancy
+:   if plotting trees from an expectedOccupancy model in TyCHE, will 
+color branch lengths by expected occupancy in the first state if
+true. Requires palette to be specified as a named vector in order
+of: c(state1=color1, state2+state1=color2, state2=color3).
 
 layout
 :   rectangular or circular tree layout?
@@ -97,6 +105,9 @@ guide_title
 branch_lengths
 :   Use branch lenghts? Use "none" if not.
 
+pch
+:   Numeric tip/node shape. If >20 will use "fill" instead of "color"
+
 
 
 
@@ -127,12 +138,7 @@ plotTrees(trees)[[1]]
 
 ```
 
-*Warning*:Arguments in `...` must be used.
-✖ Problematic arguments:
-• as.Date = as.Date
-• yscale_mapping = yscale_mapping
-• hang = hang
-ℹ Did you misspell an argument name?![3](plotTrees-3.png)
+![2](plotTrees-2.png)
 
 
 See also

@@ -40,7 +40,7 @@ ExampleMixedDb <- createGermlines(ExampleMixedDb, references = references, clone
 
 ## Format clones
 
-The next step is to convert the data into airrClone objects that can be used for tree building. As with heavy chain sequences, this is done using the `formatClones` function. To build trees with paired heavy and light chains, specify `chain = "HL"`. This will concatenate the paired heavy and light chains into a single sequence alignment. To only use the heavy chain, simply leave `chain = "H"`, the default. For more information on formatClones see the [Building Trees Vignette](Building-Trees-Vignette.md).
+The next step is to convert the data into airrClone objects that can be used for tree building. As with heavy chain sequences, this is done using the `formatClones` function. To build trees with paired heavy and light chains, specify `chain = "HL"`. This will concatenate the paired heavy and light chains into a single sequence alignment. To only use the heavy chain, simply leave `chain = "H"`, the default. For more information on formatClones see the [Building Trees Vignette](https://dowser.readthedocs.io/en/stable/vignettes/Building-Trees-Vignette/).
 
 
 ``` r
@@ -52,7 +52,7 @@ print(clones)
 
 Trees can be built from paired heavy and light chains with any of the methods that Dowser supports. Methods are divided into three broad categories: maximum parsimony, maximum likelihood, and partitioned maximum likelihood. IgPhyML v2.0.0 and RAxML can use maximum likelihood models with multiple partitions. Both of these methods support "scaled" branch lengths models. These models group information from paired heavy and light chain data separately into different groups called partitions, and allows the branch lengths of heavy and light chain partitions to differ by a scalar factor estimated by maximum likelihood. This creates more accurate branch length estimates, particularly when some light chains are missing. Branch lengths then represent the number of mutations per site along both heavy and light chains. To use these models in IgPhyML, specify `partition = "hl"` as below.
 
-For details on each of the different methods, including the specifics about different partition models, see the [Building Trees Vignette](Building-Trees-Vignette.md).
+For details on each of the different methods, including the specifics about different partition models, see the [Building Trees Vignette](https://dowser.readthedocs.io/en/stable/vignettes/Building-Trees-Vignette/).
 
 
 ``` r

@@ -130,12 +130,7 @@ plotTrees(trees)[[1]]
 
 ```
 
-*Warning*:`aes_()` was deprecated in ggplot2 3.0.0.*Warning*:Arguments in `...` must be used.
-✖ Problematic arguments:
-• as.Date = as.Date
-• yscale_mapping = yscale_mapping
-• hang = hang
-ℹ Did you misspell an argument name?*Warning*:Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.![5](getTrees-5.png)
+![2](getTrees-2.png)
 
 ```R
 
