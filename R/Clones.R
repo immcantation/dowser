@@ -1792,6 +1792,396 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, group=NULL){
 }
 
 
+#'\code{writeTreesAirr}
+# (Experimental) save clones/trees into something resembling this schema
+# https://docs.airr-community.org/en/stable/datarep/clone.html
+#' @param    object     Dowser tibble (output of formatClones or getTrees)
+#' @param    file       JSON file for output
+#' @param    check      Check if object saved faithfull
+#' @param    verbose    Print number of checks if check=TRUE
+#' @param    edge_tol   Allowable difference among edge lengths if check=TRUE
+#' data(ExampleAirr)
+#' # Select two clones, for demonstration purpose
+#' sel <- c("3170", "3184")
+#' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
+#' saveTreesAirr(clones, "clones.json")
+#' @export
+writeTreesAirr = function(object, file, check=TRUE, verbose=TRUE, edge_tol=1e-8){
+  clones <- list()
+  clones$clones <- list()
+  for(row in 1:nrow(object)){
+
+    if("treedata" %in% class(object$trees[[row]])){
+      stop("writeTreesAirr doesn't currently support treedata objects (ie from getTimeTrees)")
+    }
+
+    phy <- object$trees[[row]]
+    phy$node.label <- paste0("Node",(length(phy$tip.label)+1):length(phy$nodes))
+
+    # AIRR standard fields for clone
+    clone <- list()
+    clone$clone_id <- object$clone_id[row]
+    clone$v_call <- object$data[[row]]@v_gene
+    clone$j_call <- object$data[[row]]@j_gene
+    clone$junction_length <- object$data[[row]]@junc_len
+    clone$germline_alignment <- object$data[[row]]@germline
+    clone$clone_count <- object$seqs[row]
+    clone$sequences <- object$data[[row]]@data$sequence_id
+
+    # nonstandard but important for dowser
+    clone$info <- list()
+    clone$info$program_origin <- "dowser"
+    clone$info$locus <- object$data[[row]]@locus
+    clone$info$region <- object$data[[row]]@region
+    clone$info$numbers <- object$data[[row]]@numbers
+    clone$info$phylo_seq <- object$data[[row]]@phylo_seq
+    clone$info$germline <- object$data[[row]]@germline
+    clone$info$lgermline <- object$data[[row]]@lgermline
+    clone$info$hlgermline <- object$data[[row]]@hlgermline
+
+    # add info from other columns
+    forbidden <- c("region", "numbers", "phylo_seq", "germline", 
+      "lgermline", "hlgermline","program_origin")
+    for(n in names(object)){
+      if(n %in% c("clone_id","data","locus","seqs","trees")){
+        next
+      }
+      if(n %in% forbidden){
+        stop(paste("Forbidden column names:",paste(forbidden, collapse=",")))
+      }
+      clone$info[[n]] <- object[[n]][[row]]
+    }
+
+    tipcols <- names(object$data[[row]]@data)
+    tipdata <- list()
+    for(i in 1:nrow(object$data[[row]]@data)){
+      tip <- list()
+      for(col in tipcols){
+        tip[[col]] <- object$data[[row]]@data[i,][[col]]
+      }
+      tipdata[[i]] <- tip
+    }
+    clone$info$data <- tipdata
+
+    # ARR standard fields for tree
+    tree <- list()
+    tree$clone_id <- phy$name
+    tree$tree_id <- paste0(phy$name)
+
+    tree$newick <- ape::write.tree(phy)
+    tree$info <- list()
+    for(n in names(phy)){
+      if(n %in% c("edge","tip.label","Nnode",
+        "edge.length","nodes","node.label", "state")){
+        next
+      }
+      tree$info[[n]] <- phy[[n]]
+    }
+
+    # metadata columns for tips
+    nodes <- list()
+    for(i in 1:length(phy$nodes)){
+      node <- list()
+      node$info <- list()
+      if(i <= length(phy$tip.label)){
+        node$sequence_id <- phy$tip.label[i]
+        node$info$isTip <- TRUE
+      }else{
+        node$sequence_id <- phy$node.label[i-length(phy$tip.label)]
+        node$info$isTip <- FALSE
+      }
+      nodenames <- names(phy$nodes[[i]])
+      for(n in nodenames){
+        node$info[[n]] <- unlist(phy$nodes[[i]][n])
+      }
+      node$info$number <- i
+
+      node$info$parent <- phy$edge[phy$edge[,2] == i,1]
+      node$info$children <- phy$edge[phy$edge[,1] == i,2]
+
+      node$sequence_alignment <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
+
+      if(!is.null(phy$state)){
+        node$info$state_vector_value <- phy$state[i]
+      }
+
+      nodes[[node$sequence_id]] <- node
+    }
+    tree$nodes <- nodes
+    clone$trees <- list(tree)
+
+    clones$clones[[row]] <- clone
+  }
+  jsonlite::write_json(clones, file, pretty=TRUE)
+
+  # verify object was stored faithfully
+  if(check){
+    if(verbose){
+      print("Loading object to check consistency")
+    }
+    nobject <- readTreesAirr(file)
+    validate <- dowserObjectEqual(object, nobject, verbose, edge_tol)
+  }
+}
+
+#'\code{readTreesAirr}
+# (Experimental) read clones/trees saved by \code{writeTreesAirr}
+# https://docs.airr-community.org/en/stable/datarep/clone.html
+#' @param    file       JSON file for output
+#' @return  A Dowser object with airrClones and trees
+#' trees = readTreesAirr("clones.json")
+#' @export
+readTreesAirr = function(file){
+  rclones <- jsonlite::read_json(file)
+  output <- dplyr::tibble()
+  outtrees <- list()
+  outdata <- list()
+  for(ci in 1:length(rclones$clones)){
+    clone <- rclones$clones[[ci]]
+    
+    data <- list()
+    for(i in 1:length(clone$info$data)){
+      row <- lapply(clone$info$data[[i]], function(x)unlist(x))
+      data[[i]] <- row
+    }
+    bdata <- dplyr::bind_rows(data)
+
+    outclone <- new("airrClone", 
+          data=bdata,
+          clone=as.character(clone$clone_id[[1]]),
+          germline=clone$info$germline[[1]],
+          lgermline=clone$info$lgermline[[1]],
+          hlgermline=clone$info$hlgermline[[1]], 
+          v_gene=unlist(clone$v_call), 
+          j_gene=unlist(clone$j_call), 
+          junc_len=clone$junction_length[[1]],
+          locus=unlist(clone$info$locus),
+          region=unlist(clone$info$region),
+          numbers=unlist(clone$info$numbers),
+          phylo_seq=clone$info$phylo_seq[[1]])
+
+    seqs <- clone$clone_count[[1]]
+    locus <- paste(unique(unlist(clone$info$locus)),collapse=",")
+
+    tree <- clone$trees[[1]]
+    rphy <- ape::read.tree(text=tree$newick[[1]])
+
+    nodes <- tree$nodes
+    rnodes <- list()
+    for(i in 1:length(nodes)){
+      node <- nodes[[i]]
+      node_num =  node$info$number[[1]]
+      if(node$info$isTip[[1]]){
+        new_num <- which(rphy$tip.label == node$sequence_id[[1]])
+      }else{
+        new_num <- which(rphy$node.label == node$sequence_id[[1]]) + length(rphy$tip.label)
+      }
+      new_node <- list()
+      for(name in names(node$info)){
+        if(name %in% c("isTip","number","parent","children")){
+          next
+        }else if(name == "state_vector_value"){
+          if(is.null(rphy$state)){
+            rphy$state <- rep(NA, length=length(nodes))
+          }
+          rphy$state[new_num] <- unlist(node$info[[name]])
+        }else{
+          new_node[[name]] <- unlist(node$info[[name]])
+        }
+      }
+      rnodes[[new_num]] <- new_node
+    }
+    rphy$nodes <- rnodes
+    rphy$node.label <- NULL
+
+    for(n in names(tree$info)){
+      if(n == "state"){
+        next
+      }
+      ni <- tree$info[[n]]
+      if(length(ni) > 1){
+        ni <- lapply(ni, function(x)unlist(x))
+        rphy[[n]] <- ni
+      }else{
+        rphy[[n]] <- ni[[1]]
+      }
+    }
+    outdata[[ci]] <- outclone
+    outtrees[[ci]] <- rphy
+
+    # store info in other columns
+    temp <- dplyr::tibble(clone_id=clone$clone_id[[1]], seqs=seqs, locus=locus)
+    for(n in names(clone$info)){
+      if(!n %in% c("region", "numbers", "phylo_seq", "germline", "lgermline", 
+        "hlgermline", "trees", "data", "clone_id", "seqs", "locus", "program_origin")){
+        ni <- clone$info[[n]]
+        if(length(ni) > 1){
+          ni <- lapply(ni, function(x)unlist(x))
+          temp[[n]] <- list(ni)
+        }else{
+          temp[[n]] <- ni[[1]]
+        }
+        
+      }
+    }
+    output <- dplyr::bind_rows(output, temp)
+  }
+  output$data <- outdata
+  output$trees <- outtrees
+  onames <- names(output)
+  standard <- c("clone_id", "data", "seqs", "locus", "trees")
+  nonstandard <- setdiff(onames, standard)
+
+  output <- dplyr::select(output, dplyr::any_of(standard), dplyr::any_of(nonstandard))
+  output
+}
+
+#'\code{dowserObjectsEqual}
+# (Experimental) Check whether two Dowser objects are equivalent
+#' @param    obj1     First Dowser object
+#' @param    obj2     Second Dowser object
+#' @param    verbose    Print number of checks performed
+#' @param    edge_tol   Allowable difference among edge lengths 
+#' @return  Error if objects not equivalent, 0 all pass
+#' 
+#' @export
+dowserObjectEqual = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8){
+  a <- obj1
+  b <- obj2
+  a <- a[order(a$clone_id),]
+  b <- b[order(b$clone_id),]
+
+  if(nrow(a) != nrow(b)){
+    stop("unequal row numbers")
+  }
+  if(sum(a$clone_id != b$clone_id)){
+    stop("different clone ids")
+  }
+  if(sum(a$seqs != b$seqs) != 0){
+    stop("different seq numbers")
+  }
+  if(sum(a$locus != b$locus) != 0){
+    stop("different locus columns")
+  }
+
+  treecheck <- 0
+  datacheck <- 0
+  nodewarn <- 0
+  for(row in 1:nrow(a)){
+    # check trees
+    treea <- a$trees[[row]]
+    treeb <- b$trees[[row]]
+
+    tipsa <- treea$tip.label
+    tipsb <- treeb$tip.label
+    if(!setequal(tipsa, tipsb)){
+      stop(paste(a$clone_id[row],"tips not the same"))
+    }else{
+      treecheck <- treecheck + 1
+    }
+    all_subtrees_a <- lapply(1:length(treea$nodes), function(x)getSubTaxa(x, treea))
+    all_subtrees_b <- lapply(1:length(treeb$nodes), function(x)getSubTaxa(x, treeb))
+    if(length(all_subtrees_a) != length(all_subtrees_b)){
+      stop(paste(a$clone_id[row],"trees don't have the same subtree numbers"))
+      treecheck <- treecheck + 1
+    }
+    # check if trees have the same subtrees with corresponding edge lengths and sequences
+    for(sta in 1:length(all_subtrees_a)){
+      sa <- all_subtrees_a[[sta]]
+      match <- -1
+      for(stb in 1:length(all_subtrees_b)){
+        if(setequal(sa, all_subtrees_b[[stb]])){
+          match <- stb
+        }
+      }
+      if(match < 0){
+        stop(paste(a$clone_id[row],"Subtrees don't match"))
+      }else{
+        treecheck <- treecheck + 1
+      }
+      seqa <- getNodeSeq(a, clone=a$clone_id[row], node=sta)
+      seqb <- getNodeSeq(b, clone=b$clone_id[row], node=match)
+      if(!is.null(seqa)){
+        if(is.null(seqb)){
+          stop(paste(a$clone_id[row], "One seq is NULL", sta, match))
+        }
+        if(!seqa == seqb){
+          stop(paste(a$clone_id[row], "Seqs don't match", sta, match))
+        }else{
+          treecheck <- treecheck + 1
+        }
+      }
+      ea <- round(treea$edge.length[treea$edge[,2] == sta], digits=11)
+      eb <- round(treeb$edge.length[treeb$edge[,2] == match], digits=11)
+      if(length(ea) > 0 || length(eb) > 0){
+        if(abs(ea - eb) > edge_tol){
+          stop(paste(a$clone_id[row], "Edges not within edge_tol",ea, eb, sta, match))
+        }else{
+          treecheck <- treecheck + 1
+        }
+      }
+      #to do: add check for node names
+      if(!is.null(treea$state) || !is.null(treeb$state)){
+        if(treea$state[sta] != treeb$state[match]){
+          stop(paste(a$clone_id[row], "node states not equal",treea$state[sta], 
+            treea$state[match], sta, match))
+        }
+      }
+
+    }
+    # check remaining tree info
+    if(!setequal(names(treea), names(treeb))){
+      namediff <- setdiff(names(treea), names(treeb))
+      if(length(namediff) > 1 || namediff != "node.label"){
+        print(namediff)
+        stop(paste(a$clone_id[row], "Tree names not equal"))
+      }
+      if("node.label" %in% c(names(treea),names(treeb))){
+        if(nodewarn == 0){
+          warning("node.label not currently checked, or preserved by writeTreesAirr")
+        }
+        nodewarn <- nodewarn + 1
+      }
+    }else{
+      treecheck <- treecheck + 1
+    }
+    for(n in names(treea)){
+      if(n %in% c("edge","tip.label","Nnode","edge.length","nodes","node.label")){
+        next
+      }
+      null <- FALSE
+      if(sum(!is.na(treea[[n]])) || sum(!is.null(treea[[n]]))){
+        if(sum(!is.na(treeb[[n]])) || sum(!is.null(treeb[[n]]))){
+          null <- TRUE
+        }
+      }
+      if(!null && sum(treea[[n]] != treeb[[n]]) != 0){
+        stop(paste(a$clone_id[row], n, "not the same"))
+      }else{
+        treecheck <- treecheck + 1
+      }
+    }
+
+    # check data
+    da <- a$data[[row]]
+    db <- b$data[[row]]
+    da@data <- da@data[order(da@data$sequence_id),]
+    db@data <- db@data[order(db@data$sequence_id),]
+    for(n in slotNames(da)){
+      if(sum(slot(da,n) != slot(db, n)) != 0){
+        stop(paste(a$clone_id[row], n, "slot is not equal"))
+      }else{
+        datacheck <- datacheck + length(slot(da,n) != slot(db, n))
+      }
+    }
+  }
+  if(verbose){
+    print(paste("Objects equivalent:",treecheck,"tree checks,",datacheck,"data checks, 0 failures"))
+  }
+  return(0)
+}
+
+
 
 
 

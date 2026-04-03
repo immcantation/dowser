@@ -54,7 +54,8 @@ Imports:
     tidyr,
     utils,
     pwalign,
-    treeio
+    treeio,
+    jsonlite
 Suggests:
     knitr,
     rmarkdown,
