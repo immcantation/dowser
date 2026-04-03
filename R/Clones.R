@@ -1804,7 +1804,7 @@ sampleCloneMultiGroup = function(clone, size, weight=NULL, group=NULL){
 #' # Select two clones, for demonstration purpose
 #' sel <- c("3170", "3184")
 #' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
-#' saveTreesAirr(clones, "clones.json")
+#' writeTreesAirr(clones, "clones.json")
 #' @export
 writeTreesAirr = function(object, file, check=TRUE, verbose=TRUE, edge_tol=1e-8){
   clones <- list()
