@@ -722,7 +722,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
-  start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?', ...) {
+  start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?', root_trait=NULL, ...) {
   
   kwargs <- list(...)
 
@@ -889,6 +889,32 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
       }
     } else {
       stop("Could not find <init> tag in the template file")
+    }
+  }
+
+  if (!is.null(root_trait)) {
+    if (any(grepl("\\$\\{ROOT_TYPE_PROBABILITIES\\}", xml))) {
+      if (is.numeric(root_trait)) {
+        root_trait_index <- root_trait + 1 # add 1 because BEAST uses 0-based indexing for traits
+      } else {
+        root_trait_index <- match(root_trait, trait_list)
+        if (is.na(root_trait_index)) {
+          stop(paste0("root_trait ", root_trait, " not found in trait_list"))
+        }
+      }
+      root_trait_probabilities <- rep(0, length(trait_list))
+      root_trait_probabilities[root_trait_index] <- 1
+      root_trait_probabilities_string <- paste0(root_trait_probabilities, collapse=" ")
+      root_trait_probabilities_string <- paste0('<rootFrequencies id="rootfreqs.s:newTrait" spec="Frequencies">
+                        <parameter id="rootFrequencies.s:newTrait" spec="parameter.RealParameter" dimension="2" name="frequencies">', root_trait_probabilities_string, '</parameter>
+                    </rootFrequencies>')
+      xml <- gsub("\\$\\{ROOT_TYPE_PROBABILITIES\\}", root_trait_probabilities_string, xml)
+    } else {
+      warning("root_trait argument provided but ${ROOT_TYPE_PROBABILITIES} placeholder not found in template file")
+    }
+  } else {
+    if (any(grepl("\\$\\{ROOT_TYPE_PROBABILITIES\\}", xml))) {
+      xml <- gsub("\\$\\{ROOT_TYPE_PROBABILITIES\\}", "", xml)
     }
   }
   
