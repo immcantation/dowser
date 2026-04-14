@@ -2182,8 +2182,7 @@ dowserObjectEqual = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8){
 }
 
 #'\code{filterPartialSeqs}
-# (Experimental) save clones/trees into something resembling this schema
-# https://docs.airr-community.org/en/stable/datarep/clone.html
+# Remove partial BCR sequences. Highly recommended before clonal clustering!
 #' @param    data     Data table of sequences (preferably in AIRR format)
 #' @param    seq      name of sequence column for filtering
 #' @param    cutoff   number of matches to the \code{pattern} option required
