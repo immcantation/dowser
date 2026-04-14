@@ -20,7 +20,7 @@ data(ExampleAirr)
 # Select two clones, for demonstration purpose
 sel <- c("3170", "3184")
 clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
-saveTreesAirr(clones, "clones.json")}
+writeTreesAirr(clones, "clones.json")}
 }
 \description{
 \code{writeTreesAirr}

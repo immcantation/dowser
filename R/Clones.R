@@ -2181,8 +2181,28 @@ dowserObjectEqual = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8){
   return(0)
 }
 
-
-
+#'\code{filterPartialSeqs}
+# (Experimental) save clones/trees into something resembling this schema
+# https://docs.airr-community.org/en/stable/datarep/clone.html
+#' @param    data     Data table of sequences (preferably in AIRR format)
+#' @param    seq      name of sequence column for filtering
+#' @param    cutoff   number of matches to the \code{pattern} option required
+#' @param    pattern  regex for matching (defaults to A, T, C, or G)
+#' @param    verbose  print out number of seqs removed
+#' data(ExampleAirr)
+#' filtered = filterPartialSeqs(ExampleAirr)
+#' @export
+filterPartialSeqs = function(data, seq="sequence_alignment", cutoff=250, pattern="[ATCG]",verbose=TRUE){
+  if(!seq %in% names(data)){
+    stop(paste(seq," not a column in data object"))
+  }
+  counts <- stringr::str_count(data[[seq]], pattern)
+  if(verbose){
+    print(paste(sum(counts < cutoff), "partial sequences removed"))
+  }
+  data <- data[counts >= cutoff,]
+  return(data)
+}
 
 
 
