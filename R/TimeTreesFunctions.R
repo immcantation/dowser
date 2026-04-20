@@ -714,6 +714,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_
 #' @param    start_date               starting date to use as prior, in forward time
 #' @param    max_start_date           max starting date to use as prior, in forward time
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
+#' @param    root_trait               trait value of the root, if a fixed root state desired
 #' @param    ...                      additional arguments for XML writing functions
 #'
 #' @return   File path of the written XML file
@@ -1476,3 +1477,107 @@ getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, f
     }
     return(clones)
 }
+
+
+#' Recurse up to tree to find most recent node with different state, or the root
+#' 
+#' \code{getDiffPoint} 
+#' @param  tree    a treedata object, from getTimeTrees
+#' @param  targetnode    current node
+#' @param  trait   column name of the trait of interest
+#' @param  height  which height value to return
+#' @param verbose  print out run info
+# @export
+getDiffPoint = function(tree, targetnode, trait, height="CAheight_mean", verbose=FALSE){
+  type <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)[[trait]]
+  edge <- tree@phylo$edge[tree@phylo$edge[,2] == targetnode,]
+  if(verbose){
+    print(paste(targetnode,type))
+    print(edge)
+  }
+  if(length(edge) == 0){
+    return(dplyr::tibble(diff_node=targetnode, root=TRUE, node_type=type, 
+      node_height=filter(tree@data, !!rlang::sym("node")==targetnode)[[height]]))
+  }
+  if(!is.null(nrow(edge))){
+    stop("weird")
+  }
+  parent <- as.character(edge[1])
+  parent_type <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[trait]]
+  parent_height <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[height]]
+  if(parent_type == type){
+    return(getDiffPoint(tree, parent, trait, height, verbose))
+  }else{
+    return(dplyr::tibble(diff_node=parent, root=FALSE, node_type=parent_type, 
+      node_height=parent_height))
+  }
+}
+
+#' For each tree, recurse up to tree to find most recent 
+#' node with a different state, or the root
+#' 
+#' \code{getDiffPoints} 
+#' @param  data    a tibble containing trees column from getTimeTrees
+#' @param  trait   column name of the trait of interest
+#' @param  height  which height value to return
+#' @param  verbose print out info during run
+#' @param  tip_traits vector of other traits to include for each tip.
+#'           Must have been also specified as traits in formatClones.
+#' @details 
+#' Returns a data frame where each row is a tip in each tree
+#' clone_id = clone id for that tree
+#' tip = tip name
+#' tip_tip = trait value for that tip
+#' tip_height = height value for that tip
+#' diff_node = most recent ancestor node with different trait value, or root
+#' root = TRUE if at root node, FALSE otherwise
+#' node_type = type of diff_node, will be "root" if at root node
+#' node_height = height of diff_node 
+#' <other columns> copied over from airrClone object for each tip
+#' @export
+getDiffPoints = function(data, trait, height="CAheight_mean", verbose=FALSE,
+  tip_traits=NULL){
+  diffpoints <- dplyr::tibble()
+  for(row in 1:nrow(data)){
+    tree <- data$trees[[row]]
+    for(l in tree@phylo$tip.label){
+      if(verbose){
+        print(l)
+      }
+      d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
+        which(tree@phylo$tip.label == l))
+      df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
+        trait=trait, height=height, verbose=verbose)
+      temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
+        tip_type=d[[trait]], tip_height=d[[height]])
+      # copy over trait info for each tip
+      if(!is.null(tip_traits)){
+        for(tr in tip_traits){
+          if(!tr %in% names(data$data[[row]]@data)){
+            if(l == "Germline"){
+              temp[[tr]] <- "Germline"
+              next
+            }
+            stop(paste(tr, "not found in airrClone object"))
+          }
+          m <- match(l, data$data[[row]]@data$sequence_id)
+          if(is.na(m)){
+            stop(paste(l,"not found in airrClone object"))
+          }
+          temp[[tr]] <- data$data[[row]]@data[[tr]][m]
+        }
+      }
+      diffpoints <- dplyr::bind_rows(diffpoints, dplyr::bind_cols(temp, df))
+    }
+  }
+  diffpoints$node_height <- as.numeric(diffpoints$node_height)
+  diffpoints$tip_height <- as.numeric(diffpoints$tip_height)
+  return(diffpoints)
+}
+
+
+
+
+
+
+

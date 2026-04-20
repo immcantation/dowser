@@ -73,6 +73,8 @@ write_clone_to_xml(
 
 \item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
 
+\item{root_trait}{trait value of the root, if a fixed root state desired}
+
 \item{...}{additional arguments for XML writing functions}
 }
 \value{
