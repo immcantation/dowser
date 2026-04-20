@@ -2181,6 +2181,164 @@ dowserObjectEqual = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8){
   return(0)
 }
 
+#' \code{writeTreesOlmsted}
+#'
+#' (Experimental, provided by Erick Matsen)
+#' Write clones/trees in the Olmsted AIRR input format.
+#' Produces a JSON file that can be loaded directly by olmsted-cli
+#' (\url{https://github.com/matsengrp/olmsted-cli}).
+#'
+#' Nodes include explicit parent IDs (as node name strings, not numeric indices),
+#' node type (root/internal/leaf), amino acid translations, and branch lengths.
+#' Dowser-specific metadata is preserved in an \code{info} field on each object.
+#'
+#' @param    object     Dowser tibble (output of \code{formatClones} or \code{getTrees})
+#' @param    file       JSON file for output
+#' @param    dataset_id Dataset identifier (defaults to "dowser")
+#' @param    sample_id  Sample identifier (defaults to "unknown")
+#' @param    verbose    Print summary when done
+#'
+#' @examples
+#' data(ExampleAirr)
+#' sel <- c("3170", "3184")
+#' clones <- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,], traits="sample_id")
+#' clones <- getTrees(clones)
+#' writeTreesOlmsted(clones, "clones_olmsted.json")
+#'
+#' @export
+writeTreesOlmsted <- function(object, file, dataset_id="dowser",
+                               sample_id="unknown", verbose=TRUE) {
+
+  output <- list()
+  output$dataset_id <- dataset_id
+  output$clones <- list()
+
+  for (row in 1:nrow(object)) {
+    if ("treedata" %in% class(object$trees[[row]])) {
+      stop("writeTreesOlmsted doesn't currently support treedata objects (ie from getTimeTrees)")
+    }
+
+    phy <- object$trees[[row]]
+    ntips <- length(phy$tip.label)
+    phy$node.label <- paste0("Node", (ntips + 1):length(phy$nodes))
+
+    # Build a lookup: numeric node index -> node name string
+    node_name <- function(idx) {
+      if (idx <= ntips) phy$tip.label[idx]
+      else phy$node.label[idx - ntips]
+    }
+
+    # Find root (node that never appears as a child)
+    all_nodes <- 1:length(phy$nodes)
+    root_idx <- setdiff(all_nodes, phy$edge[, 2])
+
+    # Clone-level fields (Olmsted expects these)
+    clone <- list()
+    clone$clone_id <- as.character(object$clone_id[row])
+    clone$sample_id <- sample_id
+    clone$v_call <- object$data[[row]]@v_gene
+    clone$j_call <- object$data[[row]]@j_gene
+    clone$junction_length <- object$data[[row]]@junc_len
+    clone$germline_alignment <- object$data[[row]]@germline
+    clone$unique_seqs_count <- object$seqs[row]
+    clone$mean_mut_freq <- 0  # placeholder; olmsted-cli recomputes this
+
+    # Dowser-specific metadata in info bag
+    clone$info <- list()
+    clone$info$program_origin <- "dowser"
+    clone$info$locus <- object$data[[row]]@locus
+    clone$info$region <- object$data[[row]]@region
+    clone$info$numbers <- object$data[[row]]@numbers
+    clone$info$phylo_seq <- object$data[[row]]@phylo_seq
+    clone$info$germline <- object$data[[row]]@germline
+    clone$info$lgermline <- object$data[[row]]@lgermline
+    clone$info$hlgermline <- object$data[[row]]@hlgermline
+
+    # Tree
+    tree <- list()
+    tree$tree_id <- as.character(phy$name)
+    tree$newick <- ape::write.tree(phy)
+
+    # Dowser-specific tree metadata
+    tree$info <- list()
+    for (n in names(phy)) {
+      if (n %in% c("edge", "tip.label", "Nnode",
+                    "edge.length", "nodes", "node.label", "state")) {
+        next
+      }
+      tree$info[[n]] <- phy[[n]]
+    }
+
+    # Nodes
+    nodes <- list()
+    for (i in 1:length(phy$nodes)) {
+      node <- list()
+
+      # sequence_id: use tip label or internal node label
+      node$sequence_id <- node_name(i)
+
+      # sequence_alignment (DNA)
+      node$sequence_alignment <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
+
+      # sequence_alignment_aa (translate DNA -> AA)
+      dna <- node$sequence_alignment
+      if (!is.null(dna) && nchar(dna) > 0) {
+        node$sequence_alignment_aa <- tryCatch(
+          alakazam::translateDNA(dna),
+          error = function(e) NULL
+        )
+      }
+
+      # parent: string node name, null for root
+      parent_idx <- phy$edge[phy$edge[, 2] == i, 1]
+      if (length(parent_idx) == 0) {
+        node$parent <- NULL
+      } else {
+        node$parent <- node_name(parent_idx[1])
+      }
+
+      # type: root, leaf, or internal
+      if (i %in% root_idx) {
+        node$type <- "root"
+      } else if (i <= ntips) {
+        node$type <- "leaf"
+      } else {
+        node$type <- "internal"
+      }
+
+      # branch length
+      edge_row <- which(phy$edge[, 2] == i)
+      if (length(edge_row) > 0) {
+        node$length <- phy$edge.length[edge_row[1]]
+      }
+
+      # Dowser-specific node metadata in info bag
+      node$info <- list()
+      nodenames <- names(phy$nodes[[i]])
+      for (n in nodenames) {
+        node$info[[n]] <- unlist(phy$nodes[[i]][n])
+      }
+      if (!is.null(phy$state)) {
+        node$info$state_vector_value <- phy$state[i]
+      }
+
+      nodes[[node$sequence_id]] <- node
+    }
+    tree$nodes <- nodes
+    clone$trees <- list(tree)
+
+    output$clones[[row]] <- clone
+  }
+
+  jsonlite::write_json(output, file, pretty=TRUE, auto_unbox=TRUE)
+
+  if (verbose) {
+    cat(sprintf("Wrote %d clones to %s\n", nrow(object), file))
+    cat(paste("Output will need to be processed by olmsted-cli before upload, e.g.:\n",
+      "olmsted process -i",file,"-o processed.json\n"))
+  }
+}
+
 #'\code{filterPartialSeqs}
 # Remove partial BCR sequences. Highly recommended before clonal clustering!
 #' @param    data     Data table of sequences (preferably in AIRR format)
