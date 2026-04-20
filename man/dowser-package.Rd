@@ -30,6 +30,7 @@ Other contributors:
 \itemize{
   \item Susanna Marquez \email{susanna.marquez@yale.edu} [contributor]
   \item Jason Vander Heiden \email{jason.vanderheiden@gmail.com} [contributor]
+  \item Erick Matsen [contributor]
 }
 
 }
