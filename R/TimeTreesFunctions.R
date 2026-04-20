@@ -1554,14 +1554,14 @@ getDiffPoints = function(data, trait, height="CAheight_mean", verbose=FALSE,
       if(!is.null(tip_traits)){
         for(tr in tip_traits){
           if(!tr %in% names(data$data[[row]]@data)){
-            if(l == "Germline"){
-              temp[[tr]] <- "Germline"
-              next
-            }
             stop(paste(tr, "not found in airrClone object"))
           }
           m <- match(l, data$data[[row]]@data$sequence_id)
           if(is.na(m)){
+            if(l == "Germline"){
+              temp[[tr]] <- NA
+              next
+            }
             stop(paste(l,"not found in airrClone object"))
           }
           temp[[tr]] <- data$data[[row]]@data[[tr]][m]
