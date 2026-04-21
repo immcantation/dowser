@@ -1059,7 +1059,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #' @param beast      location of beast binary directory (beast/bin)
 #' @param dir        directory where BEAST output files have been placed.
 #' @param id         unique identifer for this analysis
-#' @param trait      Trait coolumn used         
+#' @param trait      Trait column used         
 #' @param asr        Log ancestral sequences?
 #' @param full_posterior  Read un full distribution of parameters and trees?
 #' @param nproc      Number of cores for parallelization. Uses at most 1 core per tree.
@@ -1251,11 +1251,12 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
 #' @param  youngest  timepoint of the most recently tip sampled (if 0, backward time used)
 #' @param  clone_id  name of the clone being analyzed (if desired)
 #' @param  max_height max height to use (min, median, mean, max)
+#' @param  exclude_germline exclude germline from skyline plot? (For TyCHE GRTs)
 #' @return   Bayesian Skyline values for given clone
 #'
 #' @export
 makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0, 
-    clone_id=NULL, max_height=c("min","median","mean","max")){
+    clone_id=NULL, max_height=c("min","median","mean","max"), exclude_germline=TRUE){
     
     l <- tryCatch(read.csv(logfile, header=TRUE, sep="\t", comment.char="#"),error=function(e)e)
     if("error" %in% class(l)){
@@ -1327,6 +1328,16 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     all_intervals <- dplyr::tibble()
     for(index in 1:length(phylos)){
       tr <- phylos[[index]]
+      if (exclude_germline){
+        germline_name <- ifelse("Germline" %in% tr$tip.label, "Germline", 
+          ifelse("germline" %in% tr$tip.label, "germline", 
+            ifelse("GL" %in% tr$tip.label, "GL", NA)))
+        if(is.na(germline_name)) {
+          warning(paste(logfile, "Couldn't find germline tip in tree, proceeding without dropping germline"))
+        } else {
+          tr <- ape::drop.tip(tr, germline_name)
+        }
+      }
       sample <- samples[index]
       mrca <- ape::getMRCA(tr, tip=tr$tip.label)
       d <- ape::dist.nodes(tr)
@@ -1438,11 +1449,12 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
 #' @param  forward   plot in forward or (FALSE) backward time?
 #' @param  nproc     processors for parallelization (by clone)
 #' @param  max_height max height to use (min, median, mean, max)
+#' @param  exclude_germline exclude germline from skyline plot? (For TyCHE GRTs)
 #' @return   Bayesian Skyline values for given clone
 #' @details Burnin set from readBEAST or getTrees
 #' @export
 getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, forward=TRUE,
-    nproc=1, max_height=c("min","median","mean","max")){
+    nproc=1, max_height=c("min","median","mean","max"), exclude_germline=TRUE){
 
     treesfiles <- sapply(clones$data, function(x)
         file.path(dir, paste0(id, "_", x@clone, ".trees")))
@@ -1464,7 +1476,8 @@ getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, f
         }
         tryCatch(makeSkyline(logfile=logfiles[x], treesfile=treesfiles[x],
             youngest=youngest[x], burnin=burnin, bins=bins, 
-            clone_id=clones$clone_id[x], max_height=max_height), error=function(e)e)
+            clone_id=clones$clone_id[x], max_height=max_height, exclude_germline=exclude_germline),
+            error=function(e)e)
     }, mc.cores=nproc)
 
     clones$skyline <- skylines
