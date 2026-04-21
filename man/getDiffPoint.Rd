@@ -8,8 +8,10 @@ getDiffPoint(
   tree,
   targetnode,
   trait,
-  height = "CAheight_mean",
-  verbose = FALSE
+  height = "height",
+  verbose = FALSE,
+  eo_adjust = FALSE,
+  eo_type = NULL
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ getDiffPoint(
 \item{height}{which height value to return}
 
 \item{verbose}{print out run info}
+
+\item{eo_adjust}{adjust heights using expectOccupancies (recommended, requires eo_type)}
+
+\item{eo_type}{if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)}
 }
 \description{
 \code{getDiffPoint}

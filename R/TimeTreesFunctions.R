@@ -1487,8 +1487,11 @@ getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, f
 #' @param  trait   column name of the trait of interest
 #' @param  height  which height value to return
 #' @param verbose  print out run info
+#' @param eo_adjust adjust heights using expectOccupancies (recommended, requires eo_type)
+#' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
 # @export
-getDiffPoint = function(tree, targetnode, trait, height="CAheight_mean", verbose=FALSE){
+getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
+  eo_adjust=FALSE, eo_type=NULL){
   type <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)[[trait]]
   edge <- tree@phylo$edge[tree@phylo$edge[,2] == targetnode,]
   if(verbose){
@@ -1497,17 +1500,28 @@ getDiffPoint = function(tree, targetnode, trait, height="CAheight_mean", verbose
   }
   if(length(edge) == 0){
     return(dplyr::tibble(diff_node=targetnode, root=TRUE, node_type=type, 
-      node_height=filter(tree@data, !!rlang::sym("node")==targetnode)[[height]]))
+      node_height=as.numeric(filter(tree@data, !!rlang::sym("node")==targetnode)[[height]])))
   }
   if(!is.null(nrow(edge))){
     stop("weird")
   }
   parent <- as.character(edge[1])
   parent_type <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[trait]]
-  parent_height <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[height]]
+  parent_height <- as.numeric(dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[height]])
   if(parent_type == type){
-    return(getDiffPoint(tree, parent, trait, height, verbose))
+    return(getDiffPoint(tree, parent, trait, height, verbose, eo_adjust, eo_type))
   }else{
+    if(eo_adjust){
+      child <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)
+      if(type == eo_type){
+        adjust <- (1-as.numeric(child$expectedOccupancies)) * 
+          as.numeric(child$length)
+      }else{ # if parent is EO type (i.e. tip is not, assumes only 2 types)
+        adjust <- as.numeric(child$expectedOccupancies) * 
+          as.numeric(child$length)
+      }
+      parent_height <- as.numeric(parent_height) - adjust
+    }
     return(dplyr::tibble(diff_node=parent, root=FALSE, node_type=parent_type, 
       node_height=parent_height))
   }
@@ -1523,6 +1537,9 @@ getDiffPoint = function(tree, targetnode, trait, height="CAheight_mean", verbose
 #' @param  verbose print out info during run
 #' @param  tip_traits vector of other traits to include for each tip.
 #'           Must have been also specified as traits in formatClones.
+#' @param eo_adjust adjust heights using expectOccupancies. Recommended if EO model used,
+#'         requires eo_type to specify the type whose occupancy is tracked)
+#' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
 #' @details 
 #' Returns a data frame where each row is a tip in each tree
 #' clone_id = clone id for that tree
@@ -1534,9 +1551,15 @@ getDiffPoint = function(tree, targetnode, trait, height="CAheight_mean", verbose
 #' node_type = type of diff_node, will be "root" if at root node
 #' node_height = height of diff_node 
 #' <other columns> copied over from airrClone object for each tip
+#' 
+#' @examples
+#' 
+#' \dontrun{dp = getDiffPoints(data, "location", verbose=TRUE, 
+#'  eo_adjust=TRUE, eo_type="germinal_center")}
+#' 
 #' @export
-getDiffPoints = function(data, trait, height="CAheight_mean", verbose=FALSE,
-  tip_traits=NULL){
+getDiffPoints = function(data, trait, height="height", verbose=FALSE,
+  tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL){
   diffpoints <- dplyr::tibble()
   for(row in 1:nrow(data)){
     tree <- data$trees[[row]]
@@ -1547,7 +1570,8 @@ getDiffPoints = function(data, trait, height="CAheight_mean", verbose=FALSE,
       d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
         which(tree@phylo$tip.label == l))
       df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
-        trait=trait, height=height, verbose=verbose)
+        trait=trait, height=height, verbose=verbose, eo_adjust=eo_adjust,
+        eo_type=eo_type)
       temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
         tip_type=d[[trait]], tip_height=d[[height]])
       # copy over trait info for each tip
