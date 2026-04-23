@@ -2346,8 +2346,10 @@ get_starting_junction <- function(tree_df, sub, regions, check_genes_val = FALSE
 # @param heavy    A logical to indicate if the process should be run on IGH or nonIGH BCRs
 # @param chain    The chain option used in formatClones ("H", "HL", or "L")
 # @param locus    The name of the locus column in sub_data
+# @param clone    The name of the clone_idcolumn in sub_data
 compute_germlines <- function(has_mult, sub_data_ref, v_len, j_len, tree_df_ref, heavy = TRUE, 
-                              chain = "H", locus = "locus", germ = "germline_alignment", ...) {
+                              chain = "H", locus = "locus", germ = "germline_alignment",
+                              clone = "clone_id", ...) {
   do.call(rbind, lapply(1:nrow(has_mult), function(z){
     germline_str <- has_mult$germline_d_mask[z]
     if(heavy){
@@ -2356,7 +2358,7 @@ compute_germlines <- function(has_mult, sub_data_ref, v_len, j_len, tree_df_ref,
       sub_data_ref$germline_alignment_d_mask[sub_data_ref[[locus]] != "IGH"] <- germline_str
     }
     
-    sub_ref <- formatClones(sub_data_ref, chain = chain, ...)
+    sub_ref <- formatClones(sub_data_ref, chain = chain, clone = clone, ...)
     
     if(heavy){
       base_germ <- sub_ref$data[[1]]@germline
@@ -3559,7 +3561,7 @@ buildAllClonalGermlines <- function(receptors, references, genotype_list = NULL,
 # @param locus Column name for the locus in data
 # @param nproc Number of cores to use for parallel processing. Default is 1.
 # @return A data frame with all possible reconstructed germlines.
-maskAmbigousReferenceSites <- function(clones, data, all_germlines,  
+maskAmbiguousReferenceSites <- function(clones, data, all_germlines,  
                                        clone = "clone_id", locus = "locus", nproc = 1){
   ambig_table <- data.frame(value = c("R", "K", "S", "Y", "M", "W", "B", "H", 
                                       "N", "D", "V"), 
@@ -3688,7 +3690,7 @@ maskAmbigousReferenceSites <- function(clones, data, all_germlines,
     }
     
     sub <- formatClones(sub_data, chain = chain, germ = "germline_alignment_d_mask",
-                        nproc = 1)
+                        clone = clone, nproc = 1)
     
     return(sub)
   }, mc.cores = nproc))
@@ -3823,7 +3825,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     warning('Novel alleles are not yet supported')
   }
   
-  if(chain %in% c("L", "HL")){
+  if(chain == "HL"){
     clone <- "clone_subgroup_id"
   }
   
@@ -3833,8 +3835,9 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
                          clone = clone, trim_lengths = TRUE, verbose = quiet, 
                          genotyped = genotyped, ...))
     saveRDS(all_germlines, file.path(dir, "all_germlines.rds"))
-    clones <- maskAmbigousReferenceSites(clones = clones, all_germlines = all_germlines,
-                                         data = data, nproc = nproc, clone = clone, ...)
+    clones <- maskAmbiguousReferenceSites(clones = clones, 
+                                         all_germlines = all_germlines, data = data,
+                                         nproc = nproc, clone = clone, ...)
   } else{
     all_germlines <- NULL
   }
