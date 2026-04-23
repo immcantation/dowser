@@ -69,9 +69,10 @@ getTreesAndUCAs(
 on command line that issues the python you want to use. 
 "python3" by default.}
 
-\item{id}{The run ID}
+\item{id}{The run ID, sample by default}
 
-\item{max_iters}{The maximum number of iterations to run before ending}
+\item{max_iters}{The maximum number of iterations to run before ending. 
+100 by default}
 
 \item{nproc}{The number of cores to use}
 

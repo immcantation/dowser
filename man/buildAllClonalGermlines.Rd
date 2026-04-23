@@ -37,6 +37,8 @@ buildAllClonalGermlines(
 
 \item{references}{Full list of reference segments, see \link{readIMGT}}
 
+\item{genotype_list}{A list of different V and J calls based on genotyping results}
+
 \item{chain}{chain in \code{references} being analyzed}
 
 \item{use_regions}{Return string of VDJ regions? (optional)}
@@ -80,11 +82,6 @@ buildAllClonalGermlines(
 \item{amino_acid}{Perform reconstruction on amino acid sequence (experimental)}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
-
-\item{threshold}{The maximum germline length difference within a clone. Default is 3.}
-
-\item{aligned_threshold}{A logical to use a threshold of the base alignment length
-rather than the max clone length}
 }
 \value{
 A data frame with all possible reconstructed germlines
