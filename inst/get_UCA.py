@@ -353,7 +353,11 @@ def process_row(row):
 
     table_path = row['tree_table']    
     igphyml_df = pd.read_csv(table_path, sep = "\t", header = None)
-    igphyml_df.columns = ["site", "codon", "partial_likelihood", "log_likelihood_site", "upper_partial_log_likelihood", "upper_partial_likelihood", "equilibrium"]
+    igphyml_df.columns = ["site", "codon", "partial_likelihood", "log_likelihood_site", 
+                          "upper_partial_log_likelihood", "upper_partial_likelihood", "equilibrium"]
+    igphyml_df['partial_likelihood'] = igphyml_df['partial_likelihood'].replace(
+        [np.inf, -np.inf], np.nan).fillna(-1e6)
+    igphyml_df['equilibrium'] = igphyml_df['equilibrium'].clip(lower=1e-300)
     igphyml_df['value'] = igphyml_df['partial_likelihood'] + np.log(igphyml_df['equilibrium'])
     germline_string = row['starting_germline']
     junction_string = row['junction_locations']

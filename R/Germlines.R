@@ -2500,14 +2500,45 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   }
   if(!repertoire_wide){
     if(build == "igphyml"){
-      sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                      asrp = TRUE, chain = chain, nproc = 1, partition = partition,
-                      trunkl = trunklength, ...)
+      sub <- tryCatch({
+        getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                 asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                 trunkl = trunklength, ...)
+      }, error = function(e){
+        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                      "Error was:", conditionMessage(e)))
+        tryCatch({
+          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   trunkl = trunklength, ...)
+        }, error = function(e2){
+          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                     "Final error was:", conditionMessage(e2)))
+          return(NULL)
+        })
+      })
     } else if(build == "pml"){
-      sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                      nproc = 1, ...)
+      sub <- tryCatch({
+        getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
+                        nproc = 1, ...)
+      }, error = function(e){
+        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                      "Error was:", conditionMessage(e)))
+        tryCatch({
+          getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
+                   nproc = 1, ...)
+        }, error = function(e2){
+          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                        "Final error was:", conditionMessage(e2)))
+          return(NULL)
+        })
+      })
     } else{
       stop("the tree bulding method ", build, "is not supported")
+    }
+    
+    if(is.null(sub)){
+      return(NULL)
     }
   }
   saveRDS(sub, file.path(subDir, "clone.rds"))
@@ -3720,7 +3751,8 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param chain         Set to HL to use both heavy and light chain sequences
 #' @param quiet         Amount of noise to print out
 #' @param references    Reference genes. See \link{readIMGT}
-#' @param clone         The name of the clone id column used in \link{formatClones}
+#' @param clone         The name of the clone id column used in \link{formatClones}. 
+#'                      If split_light was used in \link{formatClones}, use "clone_subgroup_id".
 #' @param cell          The name of the cell id in the AIRR table used to generate \link{formatClones}
 #' @param sampling_method How to subsample. Methods include 'random', 'lm' (least mutated),
 #'                      and 'ratio' (a weighted sampling with heavier weights
@@ -3825,7 +3857,31 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     warning('Novel alleles are not yet supported')
   }
   
-  if(chain == "HL"){
+  if(chain == "HL" && clone != "clone_subgroup_id"){
+    warning(
+      paste("Paired trees have been requested. If 'split_light' was used in",
+            "formatClones, the 'clone' parameter needs to be set to", 
+            "clone_subgroup_id"))
+    
+    clones$clone_id_orignal <- clones$clone_id
+    
+    clones$clone_id <- unlist(parallel::mclapply(1:nrow(clones), function(x){
+      current_id <- clones$clone_id[x]
+      if(current_id %in% unique(data[[clone]])){
+        subgroup_id <- unique(data$clone_subgroup_id[data[[clone]] == current_id])
+        if(length(subgroup_id) > 1){
+          stop(paste(clone, current_id, 'maps to multiple clone_subgroup_ids.",
+                     "Please rerun formatClones with split_light = TRUE and then",
+                     "infer UCAs'))
+        }
+        return(subgroup_id)
+      } else{
+        stop(paste(clone, current_id, "was not found in data. The clone_id",
+                   "will not be updated -- verify that the correct 'clone'",
+                   "parameter was supplied."))
+      }
+    }, mc.cores = nproc))
+    
     clone <- "clone_subgroup_id"
   }
   
@@ -3899,29 +3955,44 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     if(quiet > 0){
       print("constructing trees")
     }
-    if(build == "igphyml"){
-      if(chain == "HL" & partition != "hl"){
-        warning("Paired analysis is being requested but the paired partition is not being requested. To build the best paired trees use partition = 'hl'")
-      } 
-      clones <- getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                         asrp = TRUE, chain = chain, nproc = nproc, partition = partition,
-                         trunkl = trunklength, ...)
-      
-      
-    } else if(build == "pml"){
-      clones <- getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,
-                         nproc = nproc, ...)
-    } else{
-      stop("the tree bulding method ", build, "is not supported")
-    }
+    
+    clones <- tryCatch({
+      if(build == "igphyml"){
+        if(chain == "HL" & partition != "hl"){
+          warning("Paired analysis is being requested but the paired partition is not being requested. To build the best paired trees use partition = 'hl'")
+        } 
+        
+        getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
+                 asrp = TRUE, chain = chain, nproc = nproc, partition = partition,
+                 trunkl = trunklength, ...)
+        
+      } else if(build == "pml"){
+        getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,
+                 nproc = nproc, ...)
+        
+      } else{
+        stop("the tree bulding method ", build, "is not supported")
+      }
+    }, error = function(e){
+      stop(paste0("Error during tree building:\n", 
+                  e$message, "\n\n", 
+                  "This may be caused by one or more problemeatic clones, \n", 
+                  "Consider rerunning with `repertoire_wide = FALSE` ", 
+                  "to isolate failures at the clone level.\nThis will also allow ",
+                  "for results for the nonfailing clones"),
+           call. = FALSE)
+    })
     saveRDS(clones, file.path(dir, "clones.rds"))
+    
     if(!is.null(igblast)){
       if(quiet > 0){
         print("updating cuts based on MRCA")
       }
+      
       if(is.null(igdata)){
         igdata <- igblast
       }
+      
       data <- updateAIRRGerm(airr_data = data, clones = clones, igblast = igblast, 
                              igblast_database = igblast_database, references = ref_path, 
                              igdata = igdata, organism = organism, locus = 'Ig',
@@ -3932,21 +4003,30 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   if(quiet > 0){
     print("preparing the clones for UCA analysis")
   }
+  
   clones <- invisible(do.call(rbind, parallel::mclapply(clones$clone_id, function(x){
-    processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
-                         build = build, id = id, resolve_germ = resolve_germ, 
-                         all_germlines = all_germlines, quiet = quiet, 
-                         clone = clone, chain = chain, check_genes = check_genes, 
-                         exec = exec, repertoire_wide = repertoire_wide, igblast = igblast, 
-                         igblast_database = igblast_database, ref_path = ref_path, 
-                         organism = organism, partition = partition,
-                         trunklength = trunklength, search = search, ...) 
+    result <- tryCatch({
+      processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
+                           build = build, id = id, resolve_germ = resolve_germ, 
+                           all_germlines = all_germlines, quiet = quiet, 
+                           clone = clone, chain = chain, check_genes = check_genes, 
+                           exec = exec, repertoire_wide = repertoire_wide, igblast = igblast, 
+                           igblast_database = igblast_database, ref_path = ref_path, 
+                           organism = organism, partition = partition,
+                           trunklength = trunklength, search = search, ...)
+    }, error = function(e){
+      message(paste("Error in clone", x, ":", conditionMessage(e)))
+      return(NULL)
+    })
+    result
   }, mc.cores = nproc)))
   saveRDS(clones, file.path(dir, "clones.rds"))
-  # run the UCA
+  
+  
   if(quiet > 0){
     print("running UCA analysis")
   }
+  
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
            uca_script = uca_script, python = python, max_iters = max_iters,
@@ -3955,10 +4035,12 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   if(quiet > 0){
     print("updating clones")
   }
+  
   clones <- updateClone(clones = clones, data = data, references = references, 
                         dir = dir, id = id, nproc = nproc, clone_id = clone, 
                         resolve_germ = resolve_germ, fill_gaps = fill_gaps)
   saveRDS(clones, file.path(dir, "clones.rds"))
+  
   unlink(rm_dir,recursive=TRUE)
   return(clones)
 }
