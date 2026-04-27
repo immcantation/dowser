@@ -84,7 +84,8 @@ on command line that issues the python you want to use.
 
 \item{references}{Reference genes. See \link{readIMGT}}
 
-\item{clone}{The name of the clone id column used in \link{formatClones}}
+\item{clone}{The name of the clone id column used in \link{formatClones}. 
+If split_light was used in \link{formatClones}, use "clone_subgroup_id".}
 
 \item{cell}{The name of the cell id in the AIRR table used to generate \link{formatClones}}
 

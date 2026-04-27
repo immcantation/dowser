@@ -2520,7 +2520,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     } else if(build == "pml"){
       sub <- tryCatch({
         getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                        nproc = 1, ...)
+                 nproc = 1, ...)
       }, error = function(e){
         message(paste("getTrees failed for clone", clone_ids, "--retrying,",
                       "Error was:", conditionMessage(e)))
@@ -2569,7 +2569,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                           j_call = j_call, id = seq_id, ...)
     cons <- sub_data[sub_data[[seq_id]] == cons$cons_id,]
   }
+  
   regions <- sub$data[[1]]@region
+  
   if(sub$data[[1]]@phylo_seq == "sequence"){
     cdr3_index <- (min(which(regions == "cdr3")) - 3):(max(which(regions == "cdr3")) + 3)
   } else if(sub$data[[1]]@phylo_seq == "hlsequence"){
@@ -2586,6 +2588,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   v <- germline_values$v
   j <- germline_values$j
   cdr3 <- germline_values$cdr3
+  
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     v_light <- germline_values$v_light
     j_light <- germline_values$j_light
@@ -2618,6 +2621,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                            tree_df_ref = tree_df_light, 
                                            heavy = FALSE, chain = chain, 
                                            locus = locus, germ = germ_align, ...)
+      
       index <- which.max(germlines_light$likelihood)
       germlines_light <- germlines_light[index, ]
       v_light <- substring(germlines_light$v, 1, nchar(v_light))
@@ -2643,12 +2647,14 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     } else{
       heavy_val = TRUE
     }
+    
     germlines <- compute_germlines(has_mult = has_multiple, 
                                    sub_data_ref = sub_data,
                                    v_len = nchar(v), j_len = nchar(j), 
                                    tree_df_ref = tree_df, heavy = heavy_val, 
                                    chain = chain, locus = locus, 
                                    germ = germ_align, ...)
+    
     index <- which.max(germlines$likelihood)
     germlines <- germlines[index, ]
     v <- germlines$v
@@ -2730,12 +2736,39 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
     
     if(build == "igphyml"){
-      sub <- getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                      asrp = TRUE, chain = chain, nproc = 1, partition = partition,
-                      trunkl = trunklength, ...)
+      sub <- tryCatch({
+        getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                 asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                 trunkl = trunklength, ...)
+      }, error = function(e){
+        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                      "Error was:", conditionMessage(e)))
+        tryCatch({
+          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   trunkl = trunklength, ...)
+        }, error = function(e2){
+          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                        "Final error was:", conditionMessage(e2)))
+          return(NULL)
+        })
+      })
     } else if(build == "pml"){
-      sub <- getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                      nproc = 1, ...)
+      sub <- tryCatch({
+        getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
+                 nproc = 1, ...)
+      }, error = function(e){
+        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                      "Error was:", conditionMessage(e)))
+        tryCatch({
+          getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
+                   nproc = 1, ...)
+        }, error = function(e2){
+          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                        "Final error was:", conditionMessage(e2)))
+          return(NULL)
+        })
+      })
     } else{
       stop("the tree bulding method ", build, "is not supported")
     }
@@ -2753,6 +2786,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     v <- germline_values$v
     j <- germline_values$j
     cdr3 <- germline_values$cdr3
+    
     if(sub$data[[1]]@phylo_seq == "hlsequence"){
       v_light <- germline_values$v_light
       j_light <- germline_values$j_light
@@ -3086,7 +3120,7 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
           if(locus_val == "IGH" | clone$data[[1]]@phylo_seq == "lsequence"){
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines.rds"))
           } else{
-            ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_like_germlines_light.rds"))
+            ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines_light.rds"))
           }
           v_indx <- which(names(references[[locus_val]]$V) == ml_germ$v_call)
           j_indx <- which(names(references[[locus_val]]$J) == ml_germ$j_call)
