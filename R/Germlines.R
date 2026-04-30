@@ -1778,28 +1778,42 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
                           d_germ_length="d_germline_length", 
                           j_germ_length="j_germline_length", 
                           np1_length="np1_length", np2_length="np2_length"){
+  
+  if (nrow(receptors) == 0) {
+    stop("findConsensus received an empty data frame. ",
+         "No sequences were found for this locus/clone combination. ",
+         "Check that locus column values and clone membership are correct.")
+  }
+  
   v_dict <- c()
   j_dict <- c()
   pad_char <- "N"
   
-  receptors[[seq]] <- unlist(lapply(1:nrow(receptors), function(x){
-    if(is.na(receptors[[np1_length]][x])){
-      receptors[[np1_length]][x] <- 0
-    }
-    if(is.na(receptors[[d_germ_length]][x])){
-      receptors[[d_germ_length]][x] <- 0
-    }
-    if(is.na(receptors[[np2_length]][x])){
-      receptors[[np2_length]][x] <- 0
-    }
-    germline_len <- sum(receptors[[v_germ_length]][x], receptors[[np1_length]][x],
-                        receptors[[d_germ_length]][x], receptors[[np2_length]][x],
-                        receptors[[j_germ_length]][x])
+  receptors[[seq]] <- unlist(lapply(seq_len(nrow(receptors)), function(x) {
+    if (is.na(receptors[[np1_length]][x]))   receptors[[np1_length]][x]   <- 0
+    if (is.na(receptors[[d_germ_length]][x])) receptors[[d_germ_length]][x] <- 0
+    if (is.na(receptors[[np2_length]][x]))   receptors[[np2_length]][x]   <- 0
+    
+    germline_len <- sum(receptors[[v_germ_length]][x],
+                        receptors[[np1_length]][x],
+                        receptors[[d_germ_length]][x],
+                        receptors[[np2_length]][x],
+                        receptors[[j_germ_length]][x],
+                        na.rm = TRUE) 
+    
     seq_len <- nchar(receptors[[seq]][x])
-    if(germline_len != seq_len){
-      diff <- abs(germline_len - seq_len)
-      value <- substring(receptors[[seq]][x], 1, nchar(receptors[[seq]][x])-diff)
-    } else{
+    
+    if (is.na(germline_len) || is.na(seq_len)) {
+      warning("NA detected in germline or sequence length for row ", x,
+              " of clone ", receptors[id][x],
+              ". Returning sequence as-is.")
+      return(receptors[[seq]][x])
+    }
+    
+    if (germline_len != seq_len) {
+      diff  <- abs(germline_len - seq_len)
+      value <- substring(receptors[[seq]][x], 1, nchar(receptors[[seq]][x]) - diff)
+    } else {
       value <- receptors[[seq]][x]
     }
     return(value)
@@ -1837,6 +1851,7 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
   return(temp)
 }
 
+
 # checkGenesUCA is what is run if check_genes = TRUE in getTreesAndUCAs
 # @param sub    A clones object for only 1 clone
 # @param cons   The airr table entry for the consensus sequence within a clone 
@@ -1854,7 +1869,8 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
 # @param seq_id   The name of the sequence_id varaible in the airr table used to 
 #                 create the clone
 checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, regions, 
-                          chain = "H", clone = "clone_id", seq_id = "sequence_id"){
+                          chain = "H", clone = "clone_id", 
+                          seq_id = "sequence_id"){
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
     numbers <- sub$data[[1]]@numbers
     restart_point <- which(diff(numbers) < 0) + 1
@@ -1884,7 +1900,7 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
   }
   
   ref_v <- substring(uca, cons$v_germline_start, cons$v_germline_end)
-  ref_v <- sub("N+$", "", ref_v)
+  ref_v <- sub("N.*$", "", ref_v)
   
   if(chain == "L" | sub$data[[1]]@phylo_seq == "lsequence"){
     pad_length <- sum(strsplit(substring(sub$data[[1]]@lgermline, (nchar(sub$data[[1]]@lgermline)-2),
@@ -1897,22 +1913,27 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
   if(is.na(cons$d_germline_length)){
     cons$d_germline_length <- 0 
   } 
+  
   if(is.na(cons$np2_length)){
     cons$np2_length <- 0 
   }
+  
   igblast_len <- sum(as.numeric(cons$v_germline_length), as.numeric(cons$np1_length),
                      as.numeric(cons$d_germline_length), as.numeric(cons$np2_length),
                      as.numeric(cons$j_germline_length))
+  
   if(igblast_len < nchar(cons$germline_alignment)){
     ig_diff <- nchar(cons$germline_alignment) - igblast_len
     cons$j_germline_length <- as.numeric(cons$j_germline_length) + ig_diff
     cons$j_germline_end <- as.numeric(cons$j_germline_end) + ig_diff
   }
   
-  ref_j <- substring(uca, nchar(uca) - cons$j_germline_length + 1 - pad_length, nchar(uca))
-  ref_j <- sub("^N+", "", ref_j)
-  
-  
+  ref_j <- substring( uca, nchar(uca) - cons$j_germline_length + 1 - pad_length,
+                      nchar(uca))
+  ref_j <- substring(ref_j, 1, nchar(ref_j) - pad_length)
+  ref_j <- sub("^.*N", "", ref_j)
+  ref_j <- paste0(ref_j, paste(rep("N", pad_length), collapse = ""))
+
   ref_v <- paste0(strsplit(ref_v, "")[[1]][-gaps], collapse = "")
   j_gaps <- gaps[gaps >= nchar(uca) - nchar(ref_j) + 1]
   
@@ -1920,6 +1941,7 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
     j_gaps <- j_gaps - (nchar(uca) - nchar(ref_j) + 1)
     ref_j <- paste0(strsplit(ref_j, "")[[1]][-j_gaps], collapse = "")
   }
+  
   if(cons$locus == "IGH"){
     if(nchar(ref_j) > (nchar(sub$data[[1]]@germline) - sum(nchar(ref_v),  
                                                            as.numeric(cons$np1_length),
@@ -1960,6 +1982,7 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
     
     j_groups <- c(j_groups, complete_groups)
   }
+  
   ref_j <- strsplit(ref_j, "")[[1]]
   
   # update the tree_df to only have the values at each site for the v gene 
@@ -2501,16 +2524,20 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   if(!repertoire_wide){
     if(build == "igphyml"){
       sub <- tryCatch({
-        getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                 asrp = TRUE, chain = chain, nproc = 1, partition = partition,
-                 trunkl = trunklength, ...)
+        withr::with_dir(subDir, {
+          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   trunkl = trunklength, ...)
+        })
       }, error = function(e){
         message(paste("getTrees failed for clone", clone_ids, "--retrying,",
                       "Error was:", conditionMessage(e)))
         tryCatch({
-          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
-                   trunkl = trunklength, ...)
+          withr::with_dir(subDir, {
+            getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                     trunkl = trunklength, ...)
+          })
         }, error = function(e2){
           message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
                      "Final error was:", conditionMessage(e2)))
@@ -2541,6 +2568,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       return(NULL)
     }
   }
+  
   saveRDS(sub, file.path(subDir, "clone.rds"))
   
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
@@ -2554,12 +2582,23 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   }
   
   if(sub$data[[1]]@phylo_seq == "hlsequence"){
-    cons <- findConsensus(sub_data[sub_data[[locus]] == "IGH",], v_call = v_call,
-                          j_call = j_call, id = seq_id, ...)
+    heavy_sub <- sub_data[sub_data[[locus]] == "IGH",]
+    light_sub <- sub_data[sub_data[[locus]] != "IGH",]
+    
+    if (nrow(heavy_sub) == 0){
+      stop("Clone ", clone_ids, " has no IGH sequences in sub_data. ",
+           "Check locus column values.")
+    }
+    if (nrow(light_sub) == 0){
+      stop("Clone ", clone_ids, " has no light-chain sequences in sub_data. ",
+           "Check locus column values.")
+    }
+    
+    cons <- findConsensus(heavy_sub, v_call = v_call, j_call = j_call, id = seq_id, ...)
     cons <- sub_data[sub_data[[seq_id]] == cons$cons_id,] 
-    cons_light <- findConsensus(sub_data[sub_data[[locus]] != "IGH",], v_call = v_call,
-                                j_call = j_call, id = seq_id, ...)
+    cons_light <- findConsensus(light_sub, v_call = v_call, j_call = j_call, id = seq_id, ...)
     cons_light <- sub_data[sub_data[[seq_id]] == cons_light$cons_id,] 
+    
   } else if(sub$data[[1]]@phylo_seq == "sequence"){
     cons <- findConsensus(sub_data[sub_data[[locus]] == "IGH",], v_call = v_call,
                           j_call = j_call, id = seq_id, ...)
@@ -2737,16 +2776,20 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     
     if(build == "igphyml"){
       sub <- tryCatch({
-        getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                 asrp = TRUE, chain = chain, nproc = 1, partition = partition,
-                 trunkl = trunklength, ...)
+        withr::with_dir(subDir, {
+          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   trunkl = trunklength, ...)
+        })
       }, error = function(e){
         message(paste("getTrees failed for clone", clone_ids, "--retrying,",
                       "Error was:", conditionMessage(e)))
         tryCatch({
-          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
-                   trunkl = trunklength, ...)
+          withr::with_dir({
+            getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                     trunkl = trunklength, ...)
+          })
         }, error = function(e2){
           message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
                         "Final error was:", conditionMessage(e2)))
@@ -4054,6 +4097,10 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     })
     result
   }, mc.cores = nproc)))
+  
+  if(nrow(clones) == 0){
+    stop('No clones remain')
+  }
   saveRDS(clones, file.path(dir, "clones.rds"))
   
   
