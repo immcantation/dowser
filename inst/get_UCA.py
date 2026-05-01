@@ -144,8 +144,8 @@ def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_mode
     current_codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
     current_germline = starting_germline
     current_lhoods = get_new_lhood(current_germline, starting_point, ending_point, pgen_model, igphyml_df, expected_mu, mrca, sd)
-    starting_site = starting_point/3
-    ending_site = ending_point/3 - 1
+    starting_site = starting_point//3
+    ending_site = ending_point//3 - 1
     starting_options = igphyml_df[igphyml_df["site"] == starting_site]
     starting_options = starting_options[starting_options['codon'].apply(translate_to_amino_acid) == 'C']
     ending_options = igphyml_df[igphyml_df["site"] == ending_site]
@@ -162,10 +162,24 @@ def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_mode
     if mrca is not None and expected_mu is not None:
         tested_lhoods_expected_mu = []
     iteration = 0
+
+    if mrca is not None and expected_mu is not None:
+        empty_cols = ['site', 'codon', 'joint_log_likelihood', 'tree_log_likelihood',
+                      'pgen_log_likelihood', 'expected_mu_likelihood', 'relative_likelihood']
+    else:
+        empty_cols = ['site', 'codon', 'joint_log_likelihood', 'tree_log_likelihood',
+                      'pgen_log_likelihood', 'relative_likelihood']
+    iteration_df = pd.DataFrame(columns=empty_cols)
     
     while still_improving and iteration < max_iter:
         still_improving = False
         codon_list = generate_codon_list(current_codons, current_germline, starting_point, ending_point, cdr3_only, igphyml_df_new)
+        # No variable CDR3 sites — nothing to optimise, return starting germline unchanged.
+        if len(codon_list) == 0:
+            if quiet > 0:
+                print("Alignment reference genes ellapse entire sequence. No variable CDR3 sites found (all positions have only 1 codon option). "
+                      "Returning starting germline unchanged.")
+            break
         iteration += 1
         iteration_data = []
         for codon in codon_list:           
@@ -201,6 +215,7 @@ def get_updated_germline(starting_germline, starting_cdr3, igphyml_df, pgen_mode
                 iteration_data.append(temp_data)
         
         iteration_df = pd.DataFrame(iteration_data)
+        iteration_df['site'] = iteration_df['site'].astype(int)
         iteration_df = iteration_df.sort_values(by=['site', 'codon'], ascending=[True, True])
         iteration_df['relative_likelihood'] = iteration_df.groupby('site')['joint_log_likelihood'].transform(
             lambda x: np.exp(x - np.logaddexp.reduce(x))
@@ -230,8 +245,8 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
     current_codons = [starting_germline[i:i+3] for i in range(0, len(starting_germline), 3)]
     current_germline = starting_germline
     current_lhoods = get_new_lhood(current_germline, starting_point, ending_point, pgen_model, igphyml_df, expected_mu, mrca, sd)
-    starting_site = starting_point/3 + 1
-    ending_site = ending_point/3 - 1
+    starting_site = starting_point//3 + 1
+    ending_site = ending_point//3 - 1
     starting_options = igphyml_df[igphyml_df["site"] == starting_site]
     starting_options = starting_options[starting_options['codon'].apply(translate_to_amino_acid) == 'C']
     ending_options = igphyml_df[igphyml_df["site"] == ending_site]
@@ -248,13 +263,23 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
     if mrca is not None and expected_mu is not None:
         tested_lhoods_expected_mu = []
     iteration = 0
+
+    if mrca is not None and expected_mu is not None:
+        _empty_cols_nt = ['site', 'nt_site', 'codon', 'nt', 'joint_log_likelihood',
+                          'tree_log_likelihood', 'pgen_log_likelihood',
+                          'expected_mu_likelihood', 'relative_likelihood']
+    else:
+        _empty_cols_nt = ['site', 'nt_site', 'codon', 'nt', 'joint_log_likelihood',
+                          'tree_log_likelihood', 'pgen_log_likelihood', 'relative_likelihood']
+    iteration_df = pd.DataFrame(columns=_empty_cols_nt)
+
     junction_sites = list(range(starting_point + 1, ending_point + 1))
     junction_site_groups = [junction_sites[i:i+3] for i in range(0, len(junction_sites), 3)]
     positions = [max(group) // 3 - 1 for group in junction_site_groups]
     positions = [
         pos for pos in positions
         if len(igphyml_df_new[igphyml_df_new['site'] == pos]) > 1
-  ]
+    ]
     positions = [
         group for group in junction_site_groups
         if (max(group) // 3 - 1) in positions
@@ -308,11 +333,15 @@ def get_updated_germline_nt(starting_germline, starting_cdr3, igphyml_df, pgen_m
                 temp_data = result[2]
                 iteration_data.append(temp_data)
 
-        iteration_df = pd.DataFrame(iteration_data)
-        iteration_df = iteration_df.sort_values(by=['site', 'codon'], ascending=[True, True])
-        iteration_df['relative_likelihood'] = iteration_df.groupby('site')['joint_log_likelihood'].transform(
-           lambda x: np.exp(x - np.logaddexp.reduce(x))
-        ) 
+        iteration_df = pd.DataFrame(iteration_data) 
+        if not iteration_df.empty and 'site' in iteration_df.columns:
+            iteration_df['site'] = iteration_df['site'].astype(int)
+            if 'nt_site' in iteration_df.columns:
+                iteration_df['nt_site'] = iteration_df['nt_site'].astype(int)
+            iteration_df = iteration_df.sort_values(by=['site', 'codon'], ascending=[True, True])
+
+            iteration_df['relative_likelihood'] = (iteration_df.groupby('site')['joint_log_likelihood'].transform(
+                lambda x: np.exp(x - np.logaddexp.reduce(x))))
 
     if mrca is not None and expected_mu is not None:
         data = {
@@ -355,6 +384,7 @@ def process_row(row):
     igphyml_df = pd.read_csv(table_path, sep = "\t", header = None)
     igphyml_df.columns = ["site", "codon", "partial_likelihood", "log_likelihood_site", 
                           "upper_partial_log_likelihood", "upper_partial_likelihood", "equilibrium"]
+    igphyml_df['site'] = igphyml_df['site'].astype(int)
     igphyml_df['partial_likelihood'] = igphyml_df['partial_likelihood'].replace(
         [np.inf, -np.inf], np.nan).fillna(-1e6)
     igphyml_df['equilibrium'] = igphyml_df['equilibrium'].clip(lower=1e-300)
@@ -428,6 +458,10 @@ def process_row(row):
     new_lhoods = values[1]
     data = values[2]
     iteration_df = values[3]
+    if not iteration_df.empty and 'site' in iteration_df.columns:
+        iteration_df['site'] = iteration_df['site'].astype(int)
+    if not iteration_df.empty and 'nt_site' in iteration_df.columns:
+        iteration_df['nt_site'] = iteration_df['nt_site'].astype(int)
     junction_sites_full = list(range(starting_point + 1, ending_point + 1))
     junction_site_groups = [junction_sites_full[i:i+3] for i in range(0, len(junction_sites_full), 3)]
     positions = [max(group) // 3 - 1 for group in junction_site_groups]
@@ -439,8 +473,16 @@ def process_row(row):
         group for group in junction_site_groups
         if (max(group) // 3 - 1) in positions
     ]
-    junction_sites = [site for group in positions for site in group]
-    only_in_positions_set = list(set(junction_sites_full) - set(junction_sites))
+    
+    #junction_sites = [site for group in positions for site in group]
+
+    if iteration_df.empty or 'nt_site' not in iteration_df.columns:
+        tested_sites = []
+    else:
+        tested_sites = iteration_df['nt_site'].tolist() if 'nt_site' in iteration_df.columns else []
+
+    only_in_positions_set = sorted(set(junction_sites_full) - set(tested_sites))
+
     rows = []
     for s in only_in_positions_set:
         codon_group_index = next(idx for idx, group in enumerate(junction_site_groups) if s in group)
@@ -476,6 +518,7 @@ def process_row(row):
         
     skipped_sites_df = pd.DataFrame(rows)
     iteration_df = pd.concat([iteration_df, skipped_sites_df], ignore_index=True)
+    iteration_df = iteration_df.sort_values(by=['site', 'codon'], ascending=[True, True])
     iteration_df['amino_acid'] = iteration_df['codon'].apply(translate_to_amino_acid)
     logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
         'relative_likelihood': 'sum'
@@ -576,6 +619,7 @@ if __name__ == '__main__':
             table_path = row['tree_table']    
             igphyml_df = pd.read_csv(table_path, sep = "\t", header = None)
             igphyml_df.columns = ["site", "codon", "partial_likelihood", "nope", "nada", "no", "equilibrium"]
+            igphyml_df['site'] = igphyml_df['site'].astype(int)
             igphyml_df['value'] = igphyml_df['partial_likelihood'] + np.log(igphyml_df['equilibrium'])
             germline_string = row['starting_germline']
             junction_string = row['junction_locations']
@@ -649,12 +693,19 @@ if __name__ == '__main__':
             new_lhoods = values[1]
             data = values[2]
             iteration_df = values[3]
+            iteration_df['site'] = iteration_df['site'].astype(int)
 
-            # check for skipped sites for the logo plot 
+            # check for skipped sites for the logo plot
             codons_cdr3 = [(i, starting_germline[i:i+3]) for i in range(starting_point, ending_point, 3)]
             positions = [pos for pos, _ in codons_cdr3]
             positions = [p // 3 for p in positions]
-            sites = iteration_df['site'].tolist()
+            # Guard: if iteration_df has no rows or no 'site' column (because every CDR3
+            # position had only 1 codon option and the optimiser never ran), treat ALL
+            # CDR3 positions as skipped and assign relative_likelihood = 1 to each.
+            if iteration_df.empty or 'site' not in iteration_df.columns:
+                sites = []
+            else:
+                sites = iteration_df['site'].tolist()
             only_in_positions_set = sorted(set(positions) - set(sites))
             rows = []
             for s in only_in_positions_set:
@@ -669,8 +720,9 @@ if __name__ == '__main__':
                     'relative_likelihood': 1
                 })
             skipped_sites_df = pd.DataFrame(rows)
-            iteration_df = pd.concat([skipped_sites_df, iteration_df])
+            iteration_df = pd.concat([skipped_sites_df, iteration_df], ignore_index=True)
             iteration_df = iteration_df.sort_values(by=['site', 'codon'], ascending=[True, True])
+            
 
             # make the logo plot
             iteration_df['amino_acid'] = iteration_df['codon'].apply(translate_to_amino_acid)
@@ -695,7 +747,7 @@ if __name__ == '__main__':
                         f.write(str(new_lhoods) + "\n")
                     data.to_csv(base_string + "/UCA_data.csv", index=False)
                     iteration_df.to_csv(base_string + "/recombination_stats.csv", index=False)
-                    pwm.to_csv(base_string + "/logo_plot_pwm.csv", index=False) 
+                    pwm.to_csv(base_string + "/logo_plot_pwm.csv", index=False)
                     plt.savefig(base_string + "/amino_acid_logo_plot.png", dpi=300, bbox_inches='tight')
                     plt.close('all')
                 else:
@@ -705,7 +757,7 @@ if __name__ == '__main__':
                         f.write(str(new_lhoods) + "\n")
                     data.to_csv(base_string + "/UCA_data_light.csv", index=False)
                     iteration_df.to_csv(base_string + "/recombination_stats_light.csv", index=False)
-                    pwm.to_csv(base_string + "/logo_plot_pwm_light.csv", index=False) 
+                    pwm.to_csv(base_string + "/logo_plot_pwm_light.csv", index=False)
                     plt.savefig(base_string + "/amino_acid_logo_plot_light.png", dpi=300, bbox_inches='tight')
                     plt.close('all')
             except Exception as e:
@@ -754,6 +806,7 @@ if __name__ == '__main__':
             table_path = row['tree_table']    
             igphyml_df = pd.read_csv(table_path, sep = "\t", header = None)
             igphyml_df.columns = ["site", "codon", "partial_likelihood", "nope", "nada", "no", "equilibrium"]
+            igphyml_df['site'] = igphyml_df['site'].astype(int)
             igphyml_df['value'] = igphyml_df['partial_likelihood'] + np.log(igphyml_df['equilibrium'])
             germline_string = row['starting_germline']
             junction_string = row['junction_locations']
@@ -825,6 +878,7 @@ if __name__ == '__main__':
             new_lhoods = values[1]
             data = values[2]
             iteration_df = values[3]
+            iteration_df['site'] = iteration_df['site'].astype(int)
 
             # check for skipped sites for the logo plot 
             codons_cdr3 = [(i, starting_germline[i:i+3]) for i in range(starting_point, ending_point, 3)]
