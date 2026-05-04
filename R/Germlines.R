@@ -2526,7 +2526,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub <- tryCatch({
         withr::with_dir(subDir, {
           getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   asrp = TRUE, nproc = 1, partition = partition,
                    trunkl = trunklength, ...)
         })
       }, error = function(e){
@@ -2535,7 +2535,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         tryCatch({
           withr::with_dir(subDir, {
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                     asrp = TRUE, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
         }, error = function(e2){
@@ -2778,7 +2778,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub <- tryCatch({
         withr::with_dir(subDir, {
           getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   asrp = TRUE, nproc = 1, partition = partition,
                    trunkl = trunklength, ...)
         })
       }, error = function(e){
@@ -2787,7 +2787,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         tryCatch({
           withr::with_dir({
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                     asrp = TRUE, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
         }, error = function(e2){
@@ -4040,7 +4040,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
         } 
         
         getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                 asrp = TRUE, chain = chain, nproc = nproc, partition = partition,
+                 asrp = TRUE, nproc = nproc, partition = partition,
                  trunkl = trunklength, ...)
         
       } else if(build == "pml"){
