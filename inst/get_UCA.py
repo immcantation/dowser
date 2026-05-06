@@ -523,7 +523,7 @@ def process_row(row):
     logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
         'relative_likelihood': 'sum'
     })
-    pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0)
+    pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0).infer_objects(copy=False)
 
     iteration_df['amino_acid'] = iteration_df['codon'].apply(translate_to_amino_acid)
     iteration_df['uca_codon'] = iteration_df.groupby('site')['relative_likelihood'].transform(
@@ -531,7 +531,7 @@ def process_row(row):
     logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
         'relative_likelihood': 'sum'  # Sum relative likelihoods for duplicates
     })
-    pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0)
+    pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0).infer_objects(copy=False)
     plt.figure(figsize=(max(10, pwm.shape[0]), 4))
     logo = logomaker.Logo(pwm, color_scheme='chemistry')
     logo.style_spines(visible=False)
@@ -729,7 +729,7 @@ if __name__ == '__main__':
             logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
                 'relative_likelihood': 'sum'  # Sum relative likelihoods for duplicates
             })
-            pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0)
+            pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0).infer_objects(copy=False)
 
             plt.figure(figsize=(10, 4))
             logo = logomaker.Logo(pwm, color_scheme='chemistry')
@@ -916,7 +916,7 @@ if __name__ == '__main__':
             logo_df = iteration_df.groupby(['site', 'amino_acid'], as_index=False).agg({
                 'relative_likelihood': 'sum'  # Sum relative likelihoods for duplicates
             })
-            pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0)
+            pwm = logo_df.pivot(index='site', columns='amino_acid', values='relative_likelihood').fillna(0).infer_objects(copy=False)
 
             plt.figure(figsize=(10, 4))
             logo = logomaker.Logo(pwm, color_scheme='chemistry')

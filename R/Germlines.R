@@ -1943,10 +1943,9 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
   }
   
   if(cons$locus == "IGH"){
-    if(nchar(ref_j) > (nchar(sub$data[[1]]@germline) - sum(nchar(ref_v),  
-                                                           as.numeric(cons$np1_length),
-                                                           as.numeric(cons$d_germline_length),
-                                                           as.numeric(cons$np2_length)))){
+    if(nchar(ref_j) > (nchar(sub$data[[1]]@germline) - sum(
+      nchar(ref_v), as.numeric(cons$np1_length), as.numeric(cons$d_germline_length),
+      as.numeric(cons$np2_length)))){
       diff <- nchar(ref_j) - (nchar(sub$data[[1]]@germline) - sum(nchar(ref_v),  
                                                                   cons$np1_length, cons$d_germline_length, cons$np2_length))
       ref_j <- substring(ref_j, 1, nchar(ref_j) - diff)
@@ -1985,49 +1984,57 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
   
   ref_j <- strsplit(ref_j, "")[[1]]
   
-  # update the tree_df to only have the values at each site for the v gene 
-  v_cons <- (nchar(v) + 1): (nchar(v) + 3)
-  v_con_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
+  # find the conserved sites to ensure those get saved no matter what
+  # V conserved
+  v_cons <- (nchar(v) + 1):(nchar(v) + 3)
+  # J conserved 
+  j_con <- (nchar(v) + nchar(cdr3) - 2):(nchar(v) + nchar(cdr3))
+  
+  v_con_in_v_indx <- which(sapply(v_groups, function(x) any(x %in% v_cons)))
+  j_con_in_v_indx <- which(sapply(v_groups, function(x) any(x %in% j_con)))
+  
   v_df <- do.call(rbind, lapply(1:length(v_groups), function(i){
     temp <- tree_df[tree_df$site == i - 1,]
-    if(length(v_con_indx) > 0){
-      if(!(i %in% v_con_indx)){
-        if(length(v_groups[[i]]) == 3){
-          codon_value <- paste0(ref_v[v_groups[[i]]], collapse = "")
-          if(!alakazam::translateDNA(codon_value) %in% c("*", "X")){
-            temp <- temp[temp$codon == codon_value,]
-          } else{
-            if("N" %in% ref_v[v_groups[[i]]]){
-              pattern <- ref_v[v_groups[[i]]]
-              non_n_positions <- which(pattern != "N")
-              condition <- rep(TRUE, nrow(temp))
-              for (pos in non_n_positions) {
-                condition <- condition & (substr(temp$codon, pos, pos) == pattern[pos])
-              }
-              matching_codons <- temp[condition, ]
-              value <- sum(matching_codons$value)
-              new_row <- temp[1,]
-              new_row$codon <- paste0(ref_v[v_groups[[i]]], collapse = "")
-              new_row$partial_likelihood <- value
-              temp <- new_row
-            } else{
-              # remove the T/U and take the rest -- all stop codons start with T/U with
-              ending_values <- substring(codon_value, 2, 3)
-              temp <- temp[endsWith(temp$codon, ending_values),]
-              warning("A stop codon was detected in the reference for clone ", 
-                      cons$clone_id, "which may indicate the improper reference is",
-                      " being used")
-              writeLines(paste("A stop codon was detected in the reference for clone", 
-                               cons$clone_id, "which may indicate the improper",
-                               "reference is being used"), 
-                         file.path(subDir, "annotation_warning.txt"))
-            }
-          }
+    
+    is_v_con <- i %in% v_con_in_v_indx   # V conserved C site
+    is_j_con <- i %in% j_con_in_v_indx   # J conserved W/F site (rare edge case)
+    
+    if(is_v_con){
+      # Allow reference codon OR any codon that translates to C
+      if(length(v_groups[[i]]) == 3){
+        temp <- temp[
+          (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+            (alakazam::translateDNA(temp$codon) == "C"), ]
+        if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
+          temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""), ]
+        }
+      } else{
+        values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+        temp <- temp[(startsWith(temp$codon, values)) |
+                       (alakazam::translateDNA(temp$codon) == "C"), ]
+      }
+    } else if(is_j_con){
+      # J conserved site landed in V region: allow reference codon OR W/F
+      if(length(v_groups[[i]]) == 3){
+        temp <- temp[
+          (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
+            (alakazam::translateDNA(temp$codon) %in% c("W", "F")), ]
+        if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) %in% c("W", "F")){
+          temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""), ]
+        }
+      } else{
+        values <- paste0(ref_v[v_groups[[i]]], collapse = "")
+        temp <- temp[(startsWith(temp$codon, values)) |
+                       (alakazam::translateDNA(temp$codon) %in% c("W", "F")), ]
+      }
+    } else{
+      # Non-conserved V site, but a conserved site exists nearby: N/stop-aware filter
+      if(length(v_groups[[i]]) == 3){
+        codon_value <- paste0(ref_v[v_groups[[i]]], collapse = "")
+        if(!alakazam::translateDNA(codon_value) %in% c("*", "X")){
+          temp <- temp[temp$codon == codon_value, ]
         } else{
-          if(!"N" %in% ref_v[v_groups[[i]]]){
-            values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-            temp <- temp[startsWith(temp$codon, values), ]
-          } else{
+          if("N" %in% ref_v[v_groups[[i]]]){
             pattern <- ref_v[v_groups[[i]]]
             non_n_positions <- which(pattern != "N")
             condition <- rep(TRUE, nrow(temp))
@@ -2036,32 +2043,40 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
             }
             matching_codons <- temp[condition, ]
             value <- sum(matching_codons$value)
-            new_row <- temp[1,]
+            new_row <- temp[1, ]
             new_row$codon <- paste0(ref_v[v_groups[[i]]], collapse = "")
             new_row$partial_likelihood <- value
             temp <- new_row
+          } else{
+            ending_values <- substring(codon_value, 2, 3)
+            temp <- temp[endsWith(temp$codon, ending_values), ]
+            warning("A stop codon was detected in the reference for clone ", 
+                    cons$clone_id, "which may indicate the improper reference is",
+                    " being used")
+            writeLines(paste("A stop codon was detected in the reference for clone", 
+                             cons$clone_id, "which may indicate the improper",
+                             "reference is being used"), 
+                       file.path(subDir, "v_annotation_warning.txt"))
           }
         }
       } else{
-        if(length(v_groups[[i]]) == 3){
-          temp <- temp[
-            (temp$codon == paste0(ref_v[v_groups[[i]]], collapse = "")) |
-              (alakazam::translateDNA(temp$codon) == "C"),]
-          if(alakazam::translateDNA(paste0(ref_v[v_groups[[i]]], collapse = "")) == "C"){
-            temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-          }
-        } else{
+        if(!"N" %in% ref_v[v_groups[[i]]]){
           values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-          temp <- temp[(startsWith(temp$codon, values)) |
-                         (alakazam::translateDNA(temp$codon) == "C"), ]
+          temp <- temp[startsWith(temp$codon, values), ]
+        } else{
+          pattern <- ref_v[v_groups[[i]]]
+          non_n_positions <- which(pattern != "N")
+          condition <- rep(TRUE, nrow(temp))
+          for (pos in non_n_positions) {
+            condition <- condition & (substr(temp$codon, pos, pos) == pattern[pos])
+          }
+          matching_codons <- temp[condition, ]
+          value <- sum(matching_codons$value)
+          new_row <- temp[1, ]
+          new_row$codon <- paste0(ref_v[v_groups[[i]]], collapse = "")
+          new_row$partial_likelihood <- value
+          temp <- new_row
         }
-      }
-    } else{
-      if(length(v_groups[[i]]) == 3){
-        temp <- temp[temp$codon == paste0(ref_v[v_groups[[i]]], collapse = ""),]
-      } else{
-        values <- paste0(ref_v[v_groups[[i]]], collapse = "")
-        temp <- temp[startsWith(temp$codon, values), ]
       }
     }
     return(temp)
@@ -2070,7 +2085,6 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
   j_df <- tree_df[tree_df$site %in% tail(sort(unique(tree_df$site)),
                                          length(j_groups)), ]
   j_df$new_site <- j_df$site - (min(j_df$site) - 1)
-  j_con <- (nchar(v)+ nchar(cdr3) - 2): (nchar(v)+ nchar(cdr3))
   
   if(chain == "L" | sub$data[[1]]@phylo_seq == "lsequence"){
     offset <- nchar(sub$data[[1]]@lgermline) - max(j_groups[[length(j_groups)]])
@@ -2079,73 +2093,100 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
   }
   
   j_groups_num <- lapply(j_groups, function(x) x + offset)
-  j_con_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
+  
+  v_con_in_j_indx <- which(sapply(j_groups_num, function(x) any(x %in% v_cons)))
+  j_con_in_j_indx <- which(sapply(j_groups_num, function(x) any(x %in% j_con)))
+  
   j_df <- do.call(rbind, lapply(1:length(j_groups), function(i){
-    temp <- j_df[j_df$new_site == i,]
-    if(length(j_con_indx) > 0){
-      if(!i %in% j_con_indx){
-        if(length(j_groups[[i]]) == 3){
-          if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-            if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
-            }
+    temp <- j_df[j_df$new_site == i, ]
+    
+    is_j_con <- i %in% j_con_in_j_indx   
+    is_v_con <- i %in% v_con_in_j_indx  
+    
+    if(is_j_con){
+      # Allow reference codon OR any codon translating to W/F
+      if(length(j_groups[[i]]) == 3){
+        if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+          if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+            temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
           } else{
-            if(i != length(j_groups) & pad_length > 0){
-              values <- ref_j[j_groups[[i]]]
-              values <- paste0(values[-which(values == "N")], collapse = "")
-              temp <- temp[startsWith(temp$codon, values), ]
-            }
+            temp <- temp[alakazam::translateDNA(temp$codon) %in% c("F", "W"), ]
           }
         } else{
-          values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-          temp <- temp[endsWith(temp$codon, values), ]
+          values <- ref_j[j_groups[[i]]]
+          values <- paste0(values[-which(values == "N")], collapse = "")
+          temp <- temp[(startsWith(temp$codon, values)) |
+                         (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
         }
       } else{
-        if(length(j_groups[[i]]) == 3){
-          if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-            if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
-              temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
-                             (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
-            } else{
-              temp <- temp[alakazam::translateDNA(temp$codon) %in% c("F", "W"),]
-            }
+        values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+        temp <- temp[(endsWith(temp$codon, values)) |
+                       (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+      }
+    } else if(is_v_con){
+      # V conserved C site landed in J region: allow reference codon OR C
+      if(length(j_groups[[i]]) == 3){
+        if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
+          if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+            temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = "") |
+                           (alakazam::translateDNA(temp$codon) == "C"), ]
           } else{
-            values <- ref_j[j_groups[[i]]]
-            values <- paste0(values[-which(values == "N")], collapse = "")
-            temp <- temp[(startsWith(temp$codon, values)) |
-                           (alakazam::translateDNA(temp$codon) %in% c("F", "W")), ]
+            temp <- temp[alakazam::translateDNA(temp$codon) == "C", ]
           }
         } else{
-          values <- paste0(ref_j[j_groups[[i]]], collapse = "")
-          temp <- temp[(endsWith(temp$codon, values)) |
-                         (alakazam::translateDNA(temp$codon) %in% c("F", "W")),]
+          values <- ref_j[j_groups[[i]]]
+          values <- paste0(values[-which(values == "N")], collapse = "")
+          temp <- temp[(startsWith(temp$codon, values)) |
+                         (alakazam::translateDNA(temp$codon) == "C"), ]
         }
+      } else{
+        values <- paste0(ref_j[j_groups[[i]]], collapse = "")
+        temp <- temp[(endsWith(temp$codon, values)) |
+                       (alakazam::translateDNA(temp$codon) == "C"), ]
       }
     } else{
       if(length(j_groups[[i]]) == 3){
         if(sum("N" %in% ref_j[j_groups[[i]]]) == 0){
-          temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""),]
+          if(alakazam::translateDNA(paste0(ref_j[j_groups[[i]]], collapse = "")) != "*"){
+            temp <- temp[temp$codon == paste0(ref_j[j_groups[[i]]], collapse = ""), ]
+          } else{
+            warning("A stop codon was detected in the reference for clone ", 
+                    cons$clone_id, "which may indicate the improper reference is",
+                    " being used")
+            writeLines(paste("A stop codon was detected in the reference for clone", 
+                             cons$clone_id, "which may indicate the improper",
+                             "reference is being used"), 
+                       file.path(subDir, "j_annotation_warning.txt"))
+          }
         } else{
-          values <- ref_j[j_groups[[i]]]
-          values <- paste0(values[-which(values == "N")], collapse = "")
-          temp <- temp[startsWith(temp$codon, values), ]
+          if(i != length(j_groups) & pad_length > 0){
+            values <- ref_j[j_groups[[i]]]
+            values <- paste0(values[-which(values == "N")], collapse = "")
+            temp <- temp[startsWith(temp$codon, values), ]
+          }
         }
       } else{
         values <- paste0(ref_j[j_groups[[i]]], collapse = "")
         temp <- temp[endsWith(temp$codon, values), ]
       }
-    }
+    } 
     return(temp)
   }))
   
   j_df <- j_df[, !names(j_df) %in% "new_site"]
   junc_df <- tree_df[!tree_df$site %in% c(unique(v_df$site), unique(j_df$site)),]
+  
   write.table(tree_df, file.path(subDir, paste0("original_", clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
               quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
+  
   tree_df <- rbind(v_df, junc_df, j_df)
   regions <- regions[regions!= "gap"]
+  
   germlines_values <- get_starting_junction(tree_df, sub, regions, check_genes_val = TRUE)
+  
   tree_df <- tree_df[, !names(tree_df) == "value"]
+  
   if(sub$data[[1]]@phylo_seq != "hlsequence"){
     write.table(tree_df, file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
                 quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
@@ -2158,6 +2199,7 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
                   quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
     }
   }
+  
   # update the starting values to reflect these changes 
   v <- germlines_values$v
   cdr3 <- germlines_values$cdr3
@@ -2526,7 +2568,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub <- tryCatch({
         withr::with_dir(subDir, {
           getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, nproc = 1, partition = partition,
+                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
                    trunkl = trunklength, ...)
         })
       }, error = function(e){
@@ -2535,7 +2577,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         tryCatch({
           withr::with_dir(subDir, {
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, nproc = 1, partition = partition,
+                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
         }, error = function(e2){
@@ -2778,7 +2820,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub <- tryCatch({
         withr::with_dir(subDir, {
           getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, nproc = 1, partition = partition,
+                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
                    trunkl = trunklength, ...)
         })
       }, error = function(e){
@@ -2787,7 +2829,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         tryCatch({
           withr::with_dir({
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, nproc = 1, partition = partition,
+                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
         }, error = function(e2){
@@ -4040,7 +4082,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
         } 
         
         getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                 asrp = TRUE, nproc = nproc, partition = partition,
+                 asrp = TRUE, chain = chain, nproc = nproc, partition = partition,
                  trunkl = trunklength, ...)
         
       } else if(build == "pml"){
