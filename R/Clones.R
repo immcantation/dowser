@@ -1365,7 +1365,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' 3. vj_cell which combines the vj_gene and vj_alt_cell columns by a ",".
 # TODO: add "fields" option consistent with other functions
 #' @export
-resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
+resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus", heavy="IGH",
                                id="sequence_id", seq="sequence_alignment",
                                clone="clone_id", cell="cell_id", v_call="v_call",
                                j_call="j_call", junc_len="junction_length",
@@ -1409,7 +1409,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
   }
 
   heavy$vj_gene <- nolight
-  heavy$vj_alt_cell <- NA # set these to NA, since they're pretty rare
+  heavy$vj_alt_cell <- NA 
   heavy[[subgroup]] <- 1
   light$vj_gene <- nolight
   light$vj_alt_cell <- NA
@@ -1433,6 +1433,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       return(hd)
     }
     ltemp <- ld[!is.na(ld[[cell]]),]
+    
     # CGJ 9/17/24
     # make the gene level partitions be only gene level -- no allele
     ltemp$temp_v <- ltemp[[v_call]]
@@ -1442,17 +1443,23 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     ltemp[[clone]] <- -1
     ld <- list()
     lclone <- 1
+    
     while(nrow(ltemp) > 0){
       #expand ambiguous V/J calls
       lvs <- strsplit(ltemp[[v_call]],split=",")
       ljs <- strsplit(ltemp[[j_call]],split=",")
       jlens <- ltemp[[junc_len]]
       # get all combinations of V/J calls for each light chain
-      combos <-
-        lapply(1:length(lvs),function(w)
-          unlist(lapply(lvs[[w]],function(x)
-            unlist(lapply(ljs[[w]],function(y)
-              lapply(jlens[[w]], function(z)paste0(x,":",y,";",z)))))))
+      combos <- lapply(seq_along(lvs), function(w) {
+        grid <- expand.grid(
+          x = lvs[[w]],
+          y = ljs[[w]],
+          z = jlens[[w]],
+          stringsAsFactors = FALSE
+        )
+        
+        paste0(grid$x, ":", grid$y, ";", grid$z)
+      })
 
       # get unique combinations per cell
       cells <- unique(ltemp[[cell]])
@@ -1481,6 +1488,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
         rmseqs <- c(rmseqs,rmtemp[[id]])
       }
+      
       # CGJ 1/27/25 -- old way now causes internal dplyr error
       include <- ltemp[cvs & !(ltemp[[id]] %in% rmseqs), ]
       leave <- ltemp[!cvs & (ltemp[[id]] %in% rmseqs), ]
@@ -1497,6 +1505,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
                   collapse=",")
         }
       }
+      
       # CGJ 9/17/24
       # update the include df to have proper v and j call and remove their temp cols
       include[[v_call]] <- include$temp_v
@@ -1508,8 +1517,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       ltemp <- dplyr::filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
       lclone <- lclone + 1
     }
+    
     ld <- dplyr::bind_rows(ld)
     ld[[clone]] <- cloneid
+    
     for(cellname in unique(hd_sc[[cell]])){
       if(cellname %in% ld[[cell]]){
         lclone <- ld[ld[[cell]] == cellname,][[subgroup]]
@@ -1519,6 +1530,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
           ld[ld[[cell]] == cellname,]$vj_alt_cell
       }
     }
+    
     # now get the subgroup_id for the heavy chains lacking paired light chains
     comb <- dplyr::bind_rows(hd_sc,ld)
     comb[[subgroup]] <- as.integer(comb[[subgroup]])
@@ -1536,9 +1548,11 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
           return(value)
         }))
         rating <- as.numeric(rating)
+        
         # row number of heavy chain only df with lowest seq dist
         proper_index <- which(rating == min(rating))
         # precomputed -- faster?
+        
         subgroup_tab <- table(hd_sc[[subgroup]])
         if(length(proper_index) > 1){
           # find the subgroups that belong to the lowest seq dists
@@ -1565,15 +1579,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         hd_bulk[[subgroup]][sequence] <- proper_index_value
       }
     } 
+    
     if(nrow(hd_bulk) != 0){
       comb <- dplyr::bind_rows(comb, hd_bulk)
     }
-    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
-    comb$vj_cell <- ifelse(
-      !is.na(comb$vj_alt_cell),
-      paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
-      comb$vj_gene
-    )
     
     size <- as.integer(table(comb[[subgroup]]))
     if(!all(diff(size) <= 0)){
@@ -1581,16 +1590,26 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       colnames(order_check) <- c(subgroup, "size")
       order_check <- order_check[order(-order_check$size), ]
       order_check$proper_subgroup <- seq_len(nrow(order_check))
+      
       # Vectorized assignment using match
       comb$new_subgroup <- order_check$proper_subgroup[match(comb[[subgroup]], order_check[[subgroup]])]
       comb <- comb[, setdiff(names(comb), subgroup)]
       names(comb)[names(comb) == "new_subgroup"] <- subgroup
     }
+    
+    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
+    comb$vj_cell <- ifelse(!is.na(comb$vj_alt_cell),
+                           paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
+                           comb$vj_gene)
+    
     comb
   },mc.cores=nproc)
+  
   paired <- dplyr::bind_rows(paired)
+  
   # remove the junction length from the vj_gene
   paired$vj_gene <- gsub("\\;.*", "", paired$vj_gene)
+  
   return(paired)
 }
 
