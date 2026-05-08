@@ -2568,7 +2568,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub <- tryCatch({
         withr::with_dir(subDir, {
           getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   asrp = TRUE, nproc = 1, partition = partition,
                    trunkl = trunklength, ...)
         })
       }, error = function(e){
@@ -2577,7 +2577,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         tryCatch({
           withr::with_dir(subDir, {
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                     asrp = TRUE, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
         }, error = function(e2){
@@ -2807,11 +2807,11 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     
     saveRDS(sub, file.path(subDir, "original_clone.rds"))
     sub_ids <- sub$data[[1]]@data$sequence_id
-    sub <- formatClones(sub_data, chain = chain, clone = clone, ...)
-    sub_clonedata <- sub$data[[1]]@data
-    sub_clonedata <- sub_clonedata[sub_clonedata$sequence_id %in% sub_ids,]
-    sub$data[[1]]@data <- sub_clonedata
-    sub$seqs <- nrow(sub_clonedata)
+    sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
+    
+    if(nrow(sub_data_clone) == 1) dup_single = TRUE else FALSE
+    sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
+                        dup_singles = dup_single, minseq = 1, ...)
     
     # rename the old folder 
     file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
@@ -2820,7 +2820,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       sub <- tryCatch({
         withr::with_dir(subDir, {
           getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                   asrp = TRUE, nproc = 1, partition = partition,
                    trunkl = trunklength, ...)
         })
       }, error = function(e){
@@ -2829,7 +2829,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         tryCatch({
           withr::with_dir({
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, chain = chain, nproc = 1, partition = partition,
+                     asrp = TRUE, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
         }, error = function(e2){
@@ -3946,10 +3946,10 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     )
   }
   
-  if(check_genes & is.null(references)){
-    stop("check_genes cannot be run without references. Pass a references object using references call.",
-         "References need to be read in using dowser::readIMGT()")
-  }
+  # if(check_genes & is.null(references)){
+  #   stop("check_genes cannot be run without references. Pass a references object using references call.",
+  #        "References need to be read in using dowser::readIMGT()")
+  # }
   
   if(resolve_germ & is.null(data) | resolve_germ & is.null(references)){
     stop('resolve_germ requires the data object and references', 
