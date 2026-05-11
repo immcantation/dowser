@@ -2811,8 +2811,9 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     sub_ids <- sub$data[[1]]@data$sequence_id
     sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
     
-    if(nrow(sub_data_clone) == 1) dup_single = TRUE else FALSE
-    if(chain == "HL" && clone == "clone_subgroup_id") split_l = TRUE else FALSE
+    dup_single <- nrow(sub_data_clone) == 1
+    split_l <- chain == "HL" && clone == "clone_subgroup_id"
+    
     sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
                         dup_singles = dup_single, minseq = 1, 
                         split_light = split_l, ...)
@@ -4134,7 +4135,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     print("preparing the clones for UCA analysis")
   }
   
-  clones <- invisible(do.call(rbind, parallel::mclapply(clones$clone_id, function(x){
+  clones <- invisible(do.call(rbind, parallel::mclapply(
+    clones$clone_id, function(x){
     result <- tryCatch({
       processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
                            build = build, id = id, resolve_germ = resolve_germ, 
