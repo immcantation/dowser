@@ -2560,9 +2560,11 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   if(!dir.exists(subDir)){
     dir.create(subDir, recursive = T)
   }
+  
   if(quiet > 0){
     print(paste("constructing trees for", clone_ids))
   }
+  
   if(!repertoire_wide){
     if(build == "igphyml"){
       sub <- tryCatch({
@@ -2810,8 +2812,10 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
     
     if(nrow(sub_data_clone) == 1) dup_single = TRUE else FALSE
+    if(chain == "HL" && clone == "clone_subgroup_id") split_l = TRUE else FALSE
     sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
-                        dup_singles = dup_single, minseq = 1, ...)
+                        dup_singles = dup_single, minseq = 1, 
+                        split_light = split_l, ...)
     
     # rename the old folder 
     file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
@@ -3732,6 +3736,13 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
       chain <- "L"
     }
     
+    if(chain == "HL" && clone == "clone_subgroup_id"){
+      clone <- "clone_id"
+      split_l <- TRUE
+    } else{
+      split_l <- FALSE
+    }
+    
     if(nrow(sub_germs[grepl("^IGH", sub_germs$v_call),]) %in% c(1,0) & chain == "H" |
        nrow(sub_germs[!grepl("^IGH", sub_germs$v_call),]) %in% c(1,0) & chain == "L" |
        nrow(sub_germs) %in% c(2,0) & chain == "HL"){
@@ -3838,9 +3849,9 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
       sub_data$germline_alignment_d_mask[sub_data[[locus]] == "IGH"] <- new_clone_germ_h
       sub_data$germline_alignment_d_mask[sub_data[[locus]] != "IGH"] <- new_clone_germ_l
     }
-    
+
     sub <- formatClones(sub_data, chain = chain, germ = "germline_alignment_d_mask",
-                        clone = clone, nproc = 1)
+                        clone = clone, nproc = 1, split_light = split_l)
     
     return(sub)
   }, mc.cores = nproc))
@@ -3946,11 +3957,6 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     )
   }
   
-  # if(check_genes & is.null(references)){
-  #   stop("check_genes cannot be run without references. Pass a references object using references call.",
-  #        "References need to be read in using dowser::readIMGT()")
-  # }
-  
   if(resolve_germ & is.null(data) | resolve_germ & is.null(references)){
     stop('resolve_germ requires the data object and references', 
          "References need to be read in using dowser::readIMGT()")
@@ -4012,7 +4018,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     saveRDS(all_germlines, file.path(dir, "all_germlines.rds"))
     clones <- maskAmbiguousReferenceSites(clones = clones, 
                                          all_germlines = all_germlines, data = data,
-                                         nproc = nproc, clone = clone, ...)
+                                         nproc = nproc, clone = clone)
   } else{
     all_germlines <- NULL
   }
@@ -4064,12 +4070,17 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
         cells <- data$sequence_id[data[[cell]] %in% filtered[[cell]]]
       }
       sub_data <- data[data$sequence_id %in% cells,]
-      clones <- formatClones(sub_data, nproc = nproc, 
+      
+      clone_val <- if(chain == "HL" && clone == "clone_subgroup_id") "clone_id" else clone
+      split_l <- if(chain == "HL" && clone == "clone_subgroup_id") TRUE else FALSE
+      
+      clones <- formatClones(sub_data, nproc = nproc, clone = clone_val,
                              filterstop = TRUE, chain = chain, minseq = 1, 
-                             dup_singles = T, ...)
+                             dup_singles = T, split_light = split_l, ...)
     }
     saveRDS(clones, file = file.path(dir, "clones.rds"))
   }
+  
   if(repertoire_wide){
     if(quiet > 0){
       print("constructing trees")
