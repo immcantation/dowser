@@ -2696,199 +2696,215 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     heavy_indx <- grepl("^IGH", all_germ_clone$v_call)
     saveRDS(all_germ_clone, file.path(subDir, "all_germlines.rds"))
     
-    if(sub$data[[1]]@phylo_seq == "hlsequence"){
-      has_multiple_light <- all_germ_clone[!heavy_indx,]
-      has_multiple_light$ungapped <- pad_to_codon(has_multiple_light$ungapped)
-      has_multiple_light$germline_d_mask <- pad_to_codon(has_multiple_light$germline_d_mask)
-      saveRDS(has_multiple_light, file.path(subDir, "all_germlines_light.rds"))
-      
-      germlines_light <- compute_germlines(has_mult = has_multiple_light, 
-                                           sub_data_ref = sub_data,
-                                           v_len = nchar(v_light), 
-                                           j_len = nchar(j_light),
-                                           tree_df_ref = tree_df_light, 
-                                           heavy = FALSE, chain = chain, 
-                                           locus = locus, germ = germ_align, ...)
-      
-      index <- which.max(germlines_light$likelihood)
-      germlines_light <- germlines_light[index, ]
-      v_light <- substring(germlines_light$v, 1, nchar(v_light))
-      j_light <- substring(germlines_light$j, nchar(germlines_light$j) - nchar(j_light) + 1,
-                           nchar(germlines_light$j))
-      saveRDS(germlines_light, file.path(subDir, "most_likely_germlines_light.rds"))
-    } else{
-      v_light <- NULL
-      j_light <- NULL
-    }
+    needs_resolve <- switch(sub$data[[1]]@phylo_seq,
+                            "hlsequence" = nrow(all_germ_clone[ heavy_indx, ]) > 1 ||
+                              nrow(all_germ_clone[!heavy_indx, ]) > 1,
+                            "lsequence"  = nrow(all_germ_clone[!heavy_indx, ]) > 1,
+                            nrow(all_germ_clone[ heavy_indx, ]) > 1)
     
-    has_multiple <- switch(sub$data[[1]]@phylo_seq,
-                           "hlsequence" = all_germ_clone[heavy_indx, ],
-                           "lsequence"  = all_germ_clone[!heavy_indx, ],
-                           all_germ_clone[heavy_indx, ])
-    
-    has_multiple$germline_d_mask <- pad_to_codon(has_multiple$germline_d_mask)
-    has_multiple$ungapped <- pad_to_codon(has_multiple$ungapped)
-    saveRDS(has_multiple, file.path(subDir, "all_germlines.rds"))
-    
-    if(chain == "L"){
-      heavy_val = FALSE
-    } else{
-      heavy_val = TRUE
-    }
-    
-    germlines <- compute_germlines(has_mult = has_multiple, 
-                                   sub_data_ref = sub_data,
-                                   v_len = nchar(v), j_len = nchar(j), 
-                                   tree_df_ref = tree_df, heavy = heavy_val, 
-                                   chain = chain, locus = locus, 
-                                   germ = germ_align, ...)
-    
-    index <- which.max(germlines$likelihood)
-    germlines <- germlines[index, ]
-    v <- germlines$v
-    j <- germlines$j
-    saveRDS(germlines, file.path(subDir, "most_likely_germlines.rds"))
-    
-    if(!is.null(igblast)){
-      sub_data <- sub_data[sub_data[[clone]] == sub$clone_id,]
+    if(!needs_resolve){
       if(quiet > 0){
-        print("updating cuts based on MRCA")
+        print(paste("only one germline option for", sub$clone_id, "-- skipping resolution"))
       }
-      sub_data <- tryCatch({
-        updateAIRRGerm(airr_data = sub_data, clones = sub, igblast = igblast, 
-                       igblast_database = igblast_database, references = ref_path, 
-                       igdata = igdata, organism = organism, locus = "Ig", 
-                       outdir = subDir, nproc = 1, clone = data_clone, v = v, 
-                       j = j, v_light = v_light, j_light = j_light, ...)
-      }, error = function(e) {
-        sub_data
-      })
     } else{
-      if(sub$data[[1]]@phylo_seq == "sequence" || sub$data[[1]]@phylo_seq == "hlsequence"){
-        cons[[v_call]] <- germlines$v_call
-        cons[[j_call]] <- germlines$j_call
-        sub_data[[v_call]][sub_data[[locus]] == "IGH"] <- germlines$v_call
-        sub_data[[v_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$v_start
-        sub_data[[v_germ_end]][sub_data[[locus]] == "IGH" ] <- germlines$v_end
-        sub_data[[j_call]][sub_data[[locus]] == "IGH"] <- germlines$j_call
-        sub_data[[j_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$j_start
-        sub_data[[j_germ_end]][sub_data[[locus]] == "IGH"] <- germlines$j_end
-        indx <- which(has_multiple$v_call == germlines$v_call & 
-                        has_multiple$j_call == germlines$j_call)
-        sub_data[[germ_align]][sub_data[[locus]] == "IGH"] <- has_multiple$germline[indx]
-        sub_data[[germ_mask]][sub_data[[locus]] == "IGH"] <- has_multiple$germline_d_mask[indx]
-      } else if(sub$data[[1]]@phylo_seq == "lsequence"){
-        cons[[v_call]] <- germlines$v_call
-        cons[[j_call]] <- germlines$j_call
-        sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines$v_call
-        sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$v_start
-        sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$v_end
-        sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines$j_call
-        sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$j_start
-        sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$j_end
-        indx <- which(has_multiple$v_call == germlines$v_call & 
-                        has_multiple$j_call == germlines$j_call)
-        sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple$germline[indx]
-        sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple$germline_d_mask[indx]
-      }
       if(sub$data[[1]]@phylo_seq == "hlsequence"){
-        cons_light[[v_call]] <- germlines_light$v_call
-        cons_light[[j_call]] <- germlines_light$j_call
-        sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines_light$v_call
-        sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$v_start
-        sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$v_end
-        sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines_light$j_call
-        sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$j_start
-        sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$j_end
-        indx <- which(has_multiple_light$v_call == germlines_light$v_call & 
-                        has_multiple_light$j_call == germlines_light$j_call)
-        sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline[indx]
-        sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline_d_mask[indx]
+        has_multiple_light <- all_germ_clone[!heavy_indx,]
+        has_multiple_light$ungapped <- pad_to_codon(has_multiple_light$ungapped)
+        has_multiple_light$germline_d_mask <- pad_to_codon(has_multiple_light$germline_d_mask)
+        saveRDS(has_multiple_light, file.path(subDir, "all_germlines_light.rds"))
+        
+        # check to see if it is worth doing 
+        
+        germlines_light <- compute_germlines(has_mult = has_multiple_light, 
+                                             sub_data_ref = sub_data,
+                                             v_len = nchar(v_light), 
+                                             j_len = nchar(j_light),
+                                             tree_df_ref = tree_df_light, 
+                                             heavy = FALSE, chain = chain, 
+                                             locus = locus, germ = germ_align, ...)
+        
+        index <- which.max(germlines_light$likelihood)
+        germlines_light <- germlines_light[index, ]
+        v_light <- substring(germlines_light$v, 1, nchar(v_light))
+        j_light <- substring(germlines_light$j, nchar(germlines_light$j) - nchar(j_light) + 1,
+                             nchar(germlines_light$j))
+        saveRDS(germlines_light, file.path(subDir, "most_likely_germlines_light.rds"))
+      } else{
+        v_light <- NULL
+        j_light <- NULL
       }
-    }
-    
-    # update the germline of the clone and rerun the tree building 
-    if(quiet > 0){
-      print("reconstructing trees")
-    }
-    
-    saveRDS(sub, file.path(subDir, "original_clone.rds"))
-    sub_ids <- sub$data[[1]]@data$sequence_id
-    sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
-    sub_data_clone <- sub_data[sub_data[[cell]] %in% sub_data_clone[[cell]],]
-    
-    sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
-                        dup_singles = TRUE, minseq = 1, 
-                        split_light = split_light, ...)
-    
-    # rename the old folder 
-    file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
-    
-    if(build == "igphyml"){
-      sub <- tryCatch({
-        withr::with_dir(subDir, {
-          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, nproc = 1, partition = partition,
-                   trunkl = trunklength, ...)
+      
+      has_multiple <- switch(sub$data[[1]]@phylo_seq,
+                             "hlsequence" = all_germ_clone[heavy_indx, ],
+                             "lsequence"  = all_germ_clone[!heavy_indx, ],
+                             all_germ_clone[heavy_indx, ])
+      
+      has_multiple$germline_d_mask <- pad_to_codon(has_multiple$germline_d_mask)
+      has_multiple$ungapped <- pad_to_codon(has_multiple$ungapped)
+      saveRDS(has_multiple, file.path(subDir, "all_germlines.rds"))
+      
+      if(chain == "L"){
+        heavy_val = FALSE
+      } else{
+        heavy_val = TRUE
+      }
+      
+      germlines <- compute_germlines(has_mult = has_multiple, 
+                                     sub_data_ref = sub_data,
+                                     v_len = nchar(v), j_len = nchar(j), 
+                                     tree_df_ref = tree_df, heavy = heavy_val, 
+                                     chain = chain, locus = locus, 
+                                     germ = germ_align, ...)
+      
+      index <- which.max(germlines$likelihood)
+      germlines <- germlines[index, ]
+      v <- germlines$v
+      j <- germlines$j
+      saveRDS(germlines, file.path(subDir, "most_likely_germlines.rds"))
+      
+      if(!is.null(igblast)){
+        sub_data <- sub_data[sub_data[[clone]] == sub$clone_id,]
+        if(quiet > 0){
+          print("updating cuts based on MRCA")
+        }
+        sub_data <- tryCatch({
+          updateAIRRGerm(airr_data = sub_data, clones = sub, igblast = igblast, 
+                         igblast_database = igblast_database, references = ref_path, 
+                         igdata = igdata, organism = organism, locus = "Ig", 
+                         outdir = subDir, nproc = 1, clone = data_clone, v = v, 
+                         j = j, v_light = v_light, j_light = j_light, ...)
+        }, error = function(e) {
+          sub_data
         })
-      }, error = function(e){
-        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
-                      "Error was:", conditionMessage(e)))
-        tryCatch({
-          withr::with_dir({
+      } else{
+        if(sub$data[[1]]@phylo_seq == "sequence" || sub$data[[1]]@phylo_seq == "hlsequence"){
+          cons[[v_call]] <- germlines$v_call
+          cons[[j_call]] <- germlines$j_call
+          sub_data[[v_call]][sub_data[[locus]] == "IGH"] <- germlines$v_call
+          sub_data[[v_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$v_start
+          sub_data[[v_germ_end]][sub_data[[locus]] == "IGH" ] <- germlines$v_end
+          sub_data[[j_call]][sub_data[[locus]] == "IGH"] <- germlines$j_call
+          sub_data[[j_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$j_start
+          sub_data[[j_germ_end]][sub_data[[locus]] == "IGH"] <- germlines$j_end
+          indx <- which(has_multiple$v_call == germlines$v_call & 
+                          has_multiple$j_call == germlines$j_call)
+          sub_data[[germ_align]][sub_data[[locus]] == "IGH"] <- has_multiple$germline[indx]
+          sub_data[[germ_mask]][sub_data[[locus]] == "IGH"] <- has_multiple$germline_d_mask[indx]
+        } else if(sub$data[[1]]@phylo_seq == "lsequence"){
+          cons[[v_call]] <- germlines$v_call
+          cons[[j_call]] <- germlines$j_call
+          sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines$v_call
+          sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$v_start
+          sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$v_end
+          sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines$j_call
+          sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$j_start
+          sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$j_end
+          indx <- which(has_multiple$v_call == germlines$v_call & 
+                          has_multiple$j_call == germlines$j_call)
+          sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple$germline[indx]
+          sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple$germline_d_mask[indx]
+        }
+        if(sub$data[[1]]@phylo_seq == "hlsequence"){
+          cons_light[[v_call]] <- germlines_light$v_call
+          cons_light[[j_call]] <- germlines_light$j_call
+          sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines_light$v_call
+          sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$v_start
+          sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$v_end
+          sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines_light$j_call
+          sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$j_start
+          sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$j_end
+          indx <- which(has_multiple_light$v_call == germlines_light$v_call & 
+                          has_multiple_light$j_call == germlines_light$j_call)
+          sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline[indx]
+          sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline_d_mask[indx]
+        }
+      }
+      
+      # update the germline of the clone and rerun the tree building 
+      if(quiet > 0){
+        print("reconstructing trees")
+      }
+      
+      saveRDS(sub, file.path(subDir, "original_clone.rds"))
+      sub_ids <- sub$data[[1]]@data$sequence_id
+      sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
+      if(cell %in% colnames(sub_data)){
+        sub_data_clone <- sub_data[sub_data[[cell]] %in% sub_data_clone[[cell]],]
+      }
+      
+      sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
+                          dup_singles = TRUE, minseq = 1, 
+                          split_light = split_light, ...)
+      
+      # rename the old folder 
+      file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
+      
+      if(build == "igphyml"){
+        sub <- tryCatch({
+          withr::with_dir(subDir, {
             getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
                      asrp = TRUE, nproc = 1, partition = partition,
                      trunkl = trunklength, ...)
           })
-        }, error = function(e2){
-          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
-                        "Final error was:", conditionMessage(e2)))
-          return(NULL)
+        }, error = function(e){
+          message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                        "Error was:", conditionMessage(e)))
+          tryCatch({
+            withr::with_dir({
+              getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
+                       asrp = TRUE, nproc = 1, partition = partition,
+                       trunkl = trunklength, ...)
+            })
+          }, error = function(e2){
+            message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                          "Final error was:", conditionMessage(e2)))
+            return(NULL)
+          })
         })
-      })
-    } else if(build == "pml"){
-      sub <- tryCatch({
-        getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                 nproc = 1, ...)
-      }, error = function(e){
-        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
-                      "Error was:", conditionMessage(e)))
-        tryCatch({
+      } else if(build == "pml"){
+        sub <- tryCatch({
           getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
                    nproc = 1, ...)
-        }, error = function(e2){
-          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
-                        "Final error was:", conditionMessage(e2)))
-          return(NULL)
+        }, error = function(e){
+          message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                        "Error was:", conditionMessage(e)))
+          tryCatch({
+            getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
+                     nproc = 1, ...)
+          }, error = function(e2){
+            message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                          "Final error was:", conditionMessage(e2)))
+            return(NULL)
+          })
         })
-      })
-    } else{
-      stop("the tree bulding method ", build, "is not supported")
+      } else{
+        stop("the tree bulding method ", build, "is not supported")
+      }
+      
+      tree_df <- getTreeTable(build, dir, subDir, clone_ids, repertoire_wide)
+      regions <- sub$data[[1]]@region
+      
+      if(sub$data[[1]]@phylo_seq == "hlsequence"){
+        heavy_r <- regions[1:nchar(sub$data[[1]]@germline)]
+        light_r <- regions[(nchar(sub$data[[1]]@germline) + 1): length(regions)]
+        cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
+      }
+      
+      germline_values <- get_starting_junction(tree_df, sub, regions)
+      v <- germline_values$v
+      j <- germline_values$j
+      cdr3 <- germline_values$cdr3
+      
+      if(sub$data[[1]]@phylo_seq == "hlsequence"){
+        v_light <- germline_values$v_light
+        j_light <- germline_values$j_light
+        light_cdr3 <- germline_values$light_cdr3
+        nsite_heavy <- nchar(sub$data[[1]]@germline)/3
+        tree_df_light <- tree_df[tree_df$site >= nsite_heavy,]
+        tree_df <- tree_df[tree_df$site < nsite_heavy,]
+        tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
+      } 
     }
-    
-    tree_df <- getTreeTable(build, dir, subDir, clone_ids, repertoire_wide)
-    regions <- sub$data[[1]]@region
-    
-    if(sub$data[[1]]@phylo_seq == "hlsequence"){
-      heavy_r <- regions[1:nchar(sub$data[[1]]@germline)]
-      light_r <- regions[(nchar(sub$data[[1]]@germline) + 1): length(regions)]
-      cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
-    }
-    
-    germline_values <- get_starting_junction(tree_df, sub, regions)
-    v <- germline_values$v
-    j <- germline_values$j
-    cdr3 <- germline_values$cdr3
-    
-    if(sub$data[[1]]@phylo_seq == "hlsequence"){
-      v_light <- germline_values$v_light
-      j_light <- germline_values$j_light
-      light_cdr3 <- germline_values$light_cdr3
-      nsite_heavy <- nchar(sub$data[[1]]@germline)/3
-      tree_df_light <- tree_df[tree_df$site >= nsite_heavy,]
-      tree_df <- tree_df[tree_df$site < nsite_heavy,]
-      tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
-    } 
   } 
   
   saveRDS(sub, file.path(subDir, "clone.rds"))
@@ -3732,7 +3748,7 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
   updated_clones <- do.call(rbind, parallel::mclapply(clones$clone_id, function(x){
     sub <- clones[which(clones$clone_id == x),]
     sub_germs <- all_germlines[all_germlines$clone_id == x,]
-    sub_data <- data[data[[data_clone_val]] == x,]
+    sub_data <- data[data[[clone]] == x,]
     
     if(sub$data[[1]]@phylo_seq == "sequence"){
       chain <- "H"
@@ -3742,11 +3758,15 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
       chain <- "L"
     }
     
-    if(nrow(sub_germs[grepl("^IGH", sub_germs$v_call),]) %in% c(1,0) & chain == "H" |
-       nrow(sub_germs[!grepl("^IGH", sub_germs$v_call),]) %in% c(1,0) & chain == "L" |
-       nrow(sub_germs) %in% c(2,0) & chain == "HL"){
-      return(sub)
-    }
+    heavy_n <- nrow(sub_germs[grepl("^IGH", sub_germs$v_call), ])
+    light_n  <- nrow(sub_germs[!grepl("^IGH", sub_germs$v_call), ])
+    
+    needs_mask <- switch(chain, 
+                         "H" = heavy_n > 1,
+                         "L" = light_n  > 1,
+                         "HL" = heavy_n  > 1 || light_n > 1)
+    
+    if(!needs_mask) return(sub)
     
     if(chain == "H"){
       heavy_indx <- grepl("^IGH", sub_germs$v_call)
@@ -3988,6 +4008,10 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
             "This will result in only the major subgroup to be constructed."))
   }
   
+  if(!cell %in% colnames(data) && chain == "HL" && resolve_germ){
+    stop(cell, " is not found in data. Please provide a cell id")
+  }
+  
   if(split_light){
     # check for clone_subgroup_id
     if(!"clone_subgroup_id" %in% colnames(data)){
@@ -4006,7 +4030,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     saveRDS(all_germlines, file.path(dir, "all_germlines.rds"))
     clones <- maskAmbiguousReferenceSites(clones = clones, 
                                          all_germlines = all_germlines, data = data,
-                                         nproc = nproc, clone = clone, split_light = split_light, ...)
+                                         nproc = nproc, clone = data_clone_val,
+                                         split_light = split_light, ...)
   } else{
     all_germlines <- NULL
   }
