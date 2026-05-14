@@ -2411,7 +2411,8 @@ get_starting_junction <- function(tree_df, sub, regions, check_genes_val = FALSE
 # @param heavy    A logical to indicate if the process should be run on IGH or nonIGH BCRs
 # @param chain    The chain option used in formatClones ("H", "HL", or "L")
 # @param locus    The name of the locus column in sub_data
-# @param clone    The name of the clone_idcolumn in sub_data
+# @param clone    The name of the clone_id column in sub_data
+# @param split_light  Split by light chain subgroup?
 compute_germlines <- function(has_mult, sub_data_ref, v_len, j_len, tree_df_ref, heavy = TRUE, 
                               chain = "H", locus = "locus", germ = "germline_alignment",
                               clone = "clone_id", ...) {
@@ -2423,7 +2424,8 @@ compute_germlines <- function(has_mult, sub_data_ref, v_len, j_len, tree_df_ref,
       sub_data_ref$germline_alignment_d_mask[sub_data_ref[[locus]] != "IGH"] <- germline_str
     }
     
-    sub_ref <- formatClones(sub_data_ref, chain = chain, clone = clone, ...)
+    sub_ref <- formatClones(sub_data_ref, chain = chain, clone = clone, minseq = 1, 
+                            split_light = split_light, ...)
     
     if(heavy){
       base_germ <- sub_ref$data[[1]]@germline
@@ -2459,14 +2461,14 @@ compute_germlines <- function(has_mult, sub_data_ref, v_len, j_len, tree_df_ref,
     contains_N <- sapply(groupedSeq, function(x) any(x == "N"))
     if(any(contains_N)){
       for(i in which(contains_N) - 1){
-        pattern      <- groupedSeq[[i + 1]]
-        non_n_pos    <- which(pattern != "N")
-        df_row       <- sub_df[sub_df$site == i, ]
-        condition    <- rep(TRUE, nrow(df_row))
+        pattern <- groupedSeq[[i + 1]]
+        non_n_pos <- which(pattern != "N")
+        df_row <- sub_df[sub_df$site == i, ]
+        condition <- rep(TRUE, nrow(df_row))
         for(pos in non_n_pos)
           condition <- condition & (substr(df_row$codon, pos, pos) == pattern[pos])
-        value_i      <- sum(df_row[condition, ]$value)
-        new_row      <- sub_df[1, ]
+        value_i <- sum(df_row[condition, ]$value)
+        new_row <- sub_df[1, ]
         new_row$site <- i
         new_row$codon <- paste0(pattern, collapse = "")
         new_row$value <- value_i
@@ -2721,7 +2723,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                              j_len = nchar(j_light),
                                              tree_df_ref = tree_df_light, 
                                              heavy = FALSE, chain = chain, 
-                                             locus = locus, germ = germ_align, ...)
+                                             locus = locus, germ = germ_align,
+                                             split_light = split_light, ...)
         
         index <- which.max(germlines_light$likelihood)
         germlines_light <- germlines_light[index, ]
@@ -2754,7 +2757,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
                                      v_len = nchar(v), j_len = nchar(j), 
                                      tree_df_ref = tree_df, heavy = heavy_val, 
                                      chain = chain, locus = locus, 
-                                     germ = germ_align, ...)
+                                     germ = germ_align, 
+                                     split_light = split_light, ...)
       
       index <- which.max(germlines$likelihood)
       germlines <- germlines[index, ]
@@ -3870,7 +3874,8 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
     }
 
     sub <- formatClones(sub_data, chain = chain, germ = "germline_alignment_d_mask",
-                        clone = clone, nproc = 1, split_light = split_light, ...)
+                        clone = clone, nproc = 1, split_light = split_light,
+                        minseq = 1, ...)
     
     return(sub)
   }, mc.cores = nproc))
