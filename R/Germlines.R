@@ -2415,7 +2415,7 @@ get_starting_junction <- function(tree_df, sub, regions, check_genes_val = FALSE
 # @param split_light  Split by light chain subgroup?
 compute_germlines <- function(has_mult, sub_data_ref, v_len, j_len, tree_df_ref, heavy = TRUE, 
                               chain = "H", locus = "locus", germ = "germline_alignment",
-                              clone = "clone_id", ...) {
+                              clone = "clone_id", split_light = FALSE, ...) {
   do.call(rbind, lapply(1:nrow(has_mult), function(z){
     germline_str <- has_mult$germline_d_mask[z]
     if(heavy){
@@ -3925,7 +3925,7 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param sd            The standard deviation for the "depth" search methods
 #' @param fill_gaps     A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments
 #' @param genotyped     A logical that indicates that AIRR-table has been genotyped and will only use the found annotations to create various germlines
-#' @param split_light   A logical that indicates if different light chain groups should be used to furhter split a clone (reccommended for paired data)
+#' @param split_light   A logical that indicates if different light chain groups should be used to further split a clone (recommended for paired data)
 #' @param ...           Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}
 #' @return An \code{airrClone} object with trees and the inferred UCA
 #' @details Return object adds/edits following columns:

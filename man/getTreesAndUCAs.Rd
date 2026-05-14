@@ -39,6 +39,7 @@ getTreesAndUCAs(
   sd = 0.5,
   fill_gaps = TRUE,
   genotyped = FALSE,
+  split_light = FALSE,
   ...
 )
 }
@@ -118,6 +119,8 @@ require 'mu_freq' to be passed as a trait when running
 \item{fill_gaps}{A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments}
 
 \item{genotyped}{A logical that indicates that AIRR-table has been genotyped and will only use the found annotations to create various germlines}
+
+\item{split_light}{A logical that indicates if different light chain groups should be used to further split a clone (recommended for paired data)}
 
 \item{...}{Additional arguments passed to various other functions like \link{getTrees} and \link{buildGermline}}
 }
