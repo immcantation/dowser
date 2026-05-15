@@ -124,7 +124,6 @@ Examples
 data(ExampleClones)
 trees <- getTrees(ExampleClones[10,])
 plotTrees(trees)[[1]]
-
 ```
 
 *Warning*:Arguments in `...` must be used.

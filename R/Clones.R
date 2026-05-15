@@ -101,8 +101,7 @@
 #' data(ExampleAirr)
 #' airr_clone <- makeAirrClone(ExampleAirr[ExampleAirr$clone_id=="3184",])
 #' @export
-makeAirrClone <- 
-  function(data, id="sequence_id", seq="sequence_alignment", 
+makeAirrClone <- function(data, id="sequence_id", seq="sequence_alignment", 
            germ="germline_alignment_d_mask", v_call="v_call", j_call="j_call",
            junc_len="junction_length", clone="clone_id", subgroup = "clone_subgroup",
            mask_char="N", max_mask=0, pad_end=TRUE, text_fields=NULL, num_fields=NULL, 
@@ -111,9 +110,10 @@ makeAirrClone <-
            randomize=TRUE, use_regions=TRUE, dup_singles=FALSE, light_traits=FALSE){
 
     # Check for valid fields
-    check <- alakazam::checkColumns(data, 
-                                    unique(c(id, seq, germ, clone, 
-                                             text_fields, num_fields, seq_fields, traits)))
+    check <- alakazam::checkColumns(
+      data, unique(c(id, seq, germ, v_call, j_call, junc_len, clone,
+                     text_fields, num_fields, seq_fields, traits)))
+    
     if (check != TRUE) { stop(check) }
 
     if(!v_call %in% names(data)){
@@ -246,8 +246,10 @@ makeAirrClone <-
         hc[[seq]] <- alakazam::padSeqEnds(hc[[seq]], pad_char=mask_char, mod3=mod3)
         alt[[seq]] <- alakazam::padSeqEnds(alt[[seq]], pad_char=mask_char, mod3=mod3)
       }
+      
       hc_length <- unique(nchar(dplyr::pull(hc,rlang::sym(seq))))
       alt_length <- unique(nchar(dplyr::pull(alt,rlang::sym(seq))))
+      
       if(length(hc_length) > 1){
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "Heavy chain sequences must be same length!"))
@@ -256,29 +258,35 @@ makeAirrClone <-
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "Light chain sequences must be same length!"))
       }
+      
       hc$lsequence <- ""
       hc$hlsequence <- ""
+      
       for(cell_name in 1:nrow(hc)){
         if(is.na(hc[[cell]][cell_name])){
           hc[[cell]][cell_name] <- "bulk"
         }
       }
+      
       for(cell_name in unique(dplyr::pull(hc,!!rlang::sym(cell)))){
         if(!cell_name %in% dplyr::pull(alt,rlang::sym(cell))){
           altseq <- paste(rep(mask_char,alt_length),collapse="")
         }else{
-          altseq <- dplyr::pull(dplyr::filter(alt,
-                                              !!rlang::sym(cell) == cell_name),rlang::sym(seq))
+          altseq <- dplyr::pull(
+            dplyr::filter(alt, !!rlang::sym(cell) == cell_name),rlang::sym(seq))
         }
+        
         hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$lsequence <- altseq
         hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,]$hlsequence <- 
           paste0(hc[dplyr::pull(hc,!!rlang::sym(cell)) == cell_name,seq],altseq)
       }
+      
       for(cell_name in 1:nrow(hc)){
         if(hc[[cell]][cell_name] == "bulk"){
           hc[[cell]][cell_name] <- NA
         }
       }
+      
       hcd <- dplyr::filter(data,!!rlang::sym(locus)==rlang::sym(heavy))
       altd <- dplyr::filter(data,!!rlang::sym(locus)!=rlang::sym(heavy))
       
@@ -290,6 +298,7 @@ makeAirrClone <-
                     "must be identical for each locus within a clone. Be sure to use the ",
                     "createGermlines function before formatClones or makeAirrClone."))
       }
+      
       germline <- alakazam::maskSeqGaps(hcd[[germ]][1], mask_char=mask_char, 
                                         outer_only=FALSE)
       lgermline <- alakazam::maskSeqGaps(altd[[germ]][1], mask_char=mask_char, 
@@ -316,6 +325,7 @@ makeAirrClone <-
                                             pad_char=mask_char, mod3=mod3, len=llength)
         }
       }
+      
       hlgermline <- paste0(germline,lgermline)
       tmp_df <- hc
       loci <- unique(dplyr::pull(data,!!locus))
@@ -324,6 +334,7 @@ makeAirrClone <-
       chains <- c(rep(unique(dplyr::pull(hc,!!locus)),times=hc_length),
                   rep(unique(dplyr::pull(alt,!!locus)),times=alt_length))
       numbers <- c(1:hc_length,1:alt_length)
+      
       if(use_regions){
         hregions <- as.character(
           shazam::setRegionBoundaries(unique(hc[[junc_len]]),
@@ -337,20 +348,24 @@ makeAirrClone <-
       }else{
         regions <- rep("N", times=nchar(hlgermline))
       }
+      
       if(length(regions) != nchar(hlgermline)){
         warning(paste("Excluding clone",unique(dplyr::pull(data,clone)),
                       "due to incomplete region definition."))
         return(NULL)
       }
+      
       if(length(chains) != unique(nchar(tmp_df$hlsequence))){
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "chains vector not equal to total sequence length!"))
       }
+      
       if(length(chains) != nchar(hlgermline)){
         stop(paste("clone",unique(dplyr::pull(data,clone)),
                    "chains vector not equal to germline sequence length!"))
       }
       new_seq <- "hlsequence"
+      
     } else if(chain=="L"){
       tmp_df[[seq]] <- alakazam::maskSeqEnds(tmp_df[[seq]], 
                                              mask_char=mask_char, max_mask=max_mask, trim=FALSE)
@@ -462,7 +477,9 @@ makeAirrClone <-
         regions <- rep("N", times=nchar(germline))
       }
     }
+    
     seq_len <- nchar(tmp_df[[seq]])
+    
     if(any(seq_len != seq_len[1])){
       len_message <- paste0("All sequences are not the same length for data with first ", 
                             id, " = ", tmp_df[[id]][1], ".")
@@ -479,20 +496,20 @@ makeAirrClone <-
     # Remove duplicates
     if(collapse){
       if(is.null(traits)){
-        tmp_df <- alakazam::collapseDuplicates(tmp_df, id=id, seq=new_seq, 
-                                               text_fields=text_fields, 
-                                               num_fields=num_fields, seq_fields=seq_fields,
-                                               add_count=add_count, verbose=verbose)
+        tmp_df <- alakazam::collapseDuplicates(
+          tmp_df, id=id, seq=new_seq, text_fields=text_fields, num_fields=num_fields,
+          seq_fields=seq_fields, add_count=add_count, verbose=verbose)
       }else{
         tmp_df <- tmp_df %>%
           dplyr::group_by_at(dplyr::vars(tidyselect::all_of(traits))) %>%
-          dplyr::do(alakazam::collapseDuplicates(!!rlang::sym("."), id=id, seq=new_seq, 
-                                                 text_fields=text_fields, 
-                                                 num_fields=num_fields, seq_fields=seq_fields,
-                                                 add_count=add_count, verbose=verbose)) %>%
+          dplyr::do(alakazam::collapseDuplicates(
+            !!rlang::sym("."), id=id, seq=new_seq, text_fields=text_fields, 
+            num_fields=num_fields, seq_fields=seq_fields, add_count=add_count, 
+            verbose=verbose)) %>%
           dplyr::ungroup()
       }
     }
+    
     if(randomize){
       tmp_df <- tmp_df[sample(1:nrow(tmp_df),replace=FALSE),]
     }
@@ -861,11 +878,11 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
   if(chain == "H"){ #if chain is heavy and, discard all non-IGH sequences
     if(!is.null(heavy)){
       if(locus %in% names(data)){
-#        data <- dplyr::filter(data, !!rlang::sym(locus) == rlang::sym(heavy))
         data <- data[data[[locus]] == rlang::sym(heavy),]
       }
     }
   }
+  
   if(chain == "HL"){
     if(!subgroup %in% names(data)){
       stop("Need subgroup designation for heavy+light chain clones")
@@ -885,6 +902,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
                     "cells with no heavy chain information"))
     }
   }
+  
   if(chain == "L"){ #if chain is light and, discard all IGH sequences
     if(!is.null(heavy)){
       if(locus %in% names(data)){
@@ -892,6 +910,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       }
     }
   }
+  
   #edit based on subgroup options
   if(split_light){
     if(!subgroup %in% names(data)){
@@ -902,12 +921,13 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
       data[data[[subgroup]] == 0,][[subgroup]] <- 1
     }
     data[[clone]] <- paste0(data[[clone]],"_",data[[subgroup]])
-  }else if(!split_light && chain=="HL"){
+  } else if(!split_light && chain=="HL"){
     #since we're not splitting the light chains, can only include the biggest subgroup
     #for tree building
     data <- dplyr::filter(data, !(!!rlang::sym(locus) != rlang::sym(heavy) &
                                     !!rlang::sym(subgroup) > 1))
   }
+  
   if(!is.null(columns)){
     if(sum(!columns %in% names(data)) != 0){
       stop(paste("column",
@@ -915,6 +935,7 @@ formatClones <- function(data, seq="sequence_alignment", clone="clone_id",
                  "not in data table!"))
     }
   }
+  
   if(sum(is.na(data[[seq]])) > 0){
     warning(paste("Removing",sum(is.na(data[[seq]]))
                   ,"with missing sequences"))
@@ -1403,7 +1424,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' 3. vj_cell which combines the vj_gene and vj_alt_cell columns by a ",".
 # TODO: add "fields" option consistent with other functions
 #' @export
-resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
+resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus", heavy="IGH",
                                id="sequence_id", seq="sequence_alignment",
                                clone="clone_id", cell="cell_id", v_call="v_call",
                                j_call="j_call", junc_len="junction_length",
@@ -1447,7 +1468,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
   }
 
   heavy$vj_gene <- nolight
-  heavy$vj_alt_cell <- NA # set these to NA, since they're pretty rare
+  heavy$vj_alt_cell <- NA 
   heavy[[subgroup]] <- 1
   light$vj_gene <- nolight
   light$vj_alt_cell <- NA
@@ -1471,6 +1492,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       return(hd)
     }
     ltemp <- ld[!is.na(ld[[cell]]),]
+    
     # CGJ 9/17/24
     # make the gene level partitions be only gene level -- no allele
     ltemp$temp_v <- ltemp[[v_call]]
@@ -1480,17 +1502,23 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     ltemp[[clone]] <- -1
     ld <- list()
     lclone <- 1
+    
     while(nrow(ltemp) > 0){
       #expand ambiguous V/J calls
       lvs <- strsplit(ltemp[[v_call]],split=",")
       ljs <- strsplit(ltemp[[j_call]],split=",")
       jlens <- ltemp[[junc_len]]
       # get all combinations of V/J calls for each light chain
-      combos <-
-        lapply(1:length(lvs),function(w)
-          unlist(lapply(lvs[[w]],function(x)
-            unlist(lapply(ljs[[w]],function(y)
-              lapply(jlens[[w]], function(z)paste0(x,":",y,";",z)))))))
+      combos <- lapply(seq_along(lvs), function(w) {
+        grid <- expand.grid(
+          x = lvs[[w]],
+          y = ljs[[w]],
+          z = jlens[[w]],
+          stringsAsFactors = FALSE
+        )
+        
+        paste0(grid$x, ":", grid$y, ";", grid$z)
+      })
 
       # get unique combinations per cell
       cells <- unique(ltemp[[cell]])
@@ -1519,6 +1547,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         rmtemp <- ttemp[!ttemp[[id]] == keepseq,]
         rmseqs <- c(rmseqs,rmtemp[[id]])
       }
+      
       # CGJ 1/27/25 -- old way now causes internal dplyr error
       include <- ltemp[cvs & !(ltemp[[id]] %in% rmseqs), ]
       leave <- ltemp[!cvs & (ltemp[[id]] %in% rmseqs), ]
@@ -1535,6 +1564,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
                   collapse=",")
         }
       }
+      
       # CGJ 9/17/24
       # update the include df to have proper v and j call and remove their temp cols
       include[[v_call]] <- include$temp_v
@@ -1546,8 +1576,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       ltemp <- dplyr::filter(ltemp,!(!!rlang::sym(cell) %in% ltemp[cvs,][[!!cell]]))
       lclone <- lclone + 1
     }
+    
     ld <- dplyr::bind_rows(ld)
     ld[[clone]] <- cloneid
+    
     for(cellname in unique(hd_sc[[cell]])){
       if(cellname %in% ld[[cell]]){
         lclone <- ld[ld[[cell]] == cellname,][[subgroup]]
@@ -1557,6 +1589,7 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
           ld[ld[[cell]] == cellname,]$vj_alt_cell
       }
     }
+    
     # now get the subgroup_id for the heavy chains lacking paired light chains
     comb <- dplyr::bind_rows(hd_sc,ld)
     comb[[subgroup]] <- as.integer(comb[[subgroup]])
@@ -1574,9 +1607,11 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
           return(value)
         }))
         rating <- as.numeric(rating)
+        
         # row number of heavy chain only df with lowest seq dist
         proper_index <- which(rating == min(rating))
         # precomputed -- faster?
+        
         subgroup_tab <- table(hd_sc[[subgroup]])
         if(length(proper_index) > 1){
           # find the subgroups that belong to the lowest seq dists
@@ -1603,15 +1638,10 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
         hd_bulk[[subgroup]][sequence] <- proper_index_value
       }
     } 
+    
     if(nrow(hd_bulk) != 0){
       comb <- dplyr::bind_rows(comb, hd_bulk)
     }
-    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
-    comb$vj_cell <- ifelse(
-      !is.na(comb$vj_alt_cell),
-      paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
-      comb$vj_gene
-    )
     
     size <- as.integer(table(comb[[subgroup]]))
     if(!all(diff(size) <= 0)){
@@ -1619,16 +1649,26 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       colnames(order_check) <- c(subgroup, "size")
       order_check <- order_check[order(-order_check$size), ]
       order_check$proper_subgroup <- seq_len(nrow(order_check))
+      
       # Vectorized assignment using match
       comb$new_subgroup <- order_check$proper_subgroup[match(comb[[subgroup]], order_check[[subgroup]])]
       comb <- comb[, setdiff(names(comb), subgroup)]
       names(comb)[names(comb) == "new_subgroup"] <- subgroup
     }
+    
+    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
+    comb$vj_cell <- ifelse(!is.na(comb$vj_alt_cell),
+                           paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
+                           comb$vj_gene)
+    
     comb
   },mc.cores=nproc)
+  
   paired <- dplyr::bind_rows(paired)
+  
   # remove the junction length from the vj_gene
   paired$vj_gene <- gsub("\\;.*", "", paired$vj_gene)
+  
   return(paired)
 }
 

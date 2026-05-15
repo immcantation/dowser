@@ -112,7 +112,6 @@ $sequence_masked_v
 s <- "ATCATCATC..."
 q <- "ATTTTCATCATC"
 print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
-
 ```
 
 
