@@ -2223,20 +2223,23 @@ getTreeTable <- function(build, dir, subDir, clone_ids, repertoire_wide){
                                              header = F, sep = "\t"))
       file.copy(file.path(dir, "sample", "sample_recon_sample",
                           paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
+                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                overwrite = TRUE)
     } else{
       tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample", "sample_recon_sample",
                                                               paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
                                              header = F, sep = "\t"))
       file.copy(file.path(subDir, "sample", "sample_recon_sample",
                           paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
+                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                overwrite = TRUE)
     }
   } else if(build == "pml"){
     tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
                                            header = F, sep = "\t"))
     file.rename(file.path(subDir, "codon_table.txt"), 
-                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")))
+                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                overwrite = TRUE)
   }
   
   colnames(tree_df) = c("site", "codon", "partial_likelihood", "log_likelihood_site",
