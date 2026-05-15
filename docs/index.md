@@ -1,15 +1,4 @@
-# [![](http://cranlogs.r-pkg.org/badges/grand-total/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://cranlogs.r-pkg.org/badges/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=plastic)](https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html)
-
-**IMPORTANT!** 
-Dowser's source code has moved to https://github.com/immcantation/dowser
-
-To update Git configuration settings use:
-
-```
-   git config user.email "your-gh-user@email.com"
-   git config user.name "your-gh-user-name"
-   git remote set-url origin git@github.com:immcantation/dowser.git
-```
+# [![](https://www.r-pkg.org/badges/version/dowser)](https://cran.r-project.org/package=dowser) [![](http://cranlogs.r-pkg.org/badges/grand-total/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://cranlogs.r-pkg.org/badges/dowser)](https://www.r-pkg.org/pkg/dowser) [![](https://img.shields.io/static/v1?label=AIRR-C%20sw-tools%20v1&message=compliant&color=008AFF&labelColor=000000&style=plastic)](https://docs.airr-community.org/en/stable/swtools/airr_swtools_standard.html)
 
 Dowser
 -------------------------------------------------------------------------------
@@ -55,8 +44,8 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 ## Dependencies
 
 **Depends:** ggplot2  
-**Imports:** airr, alakazam, ape, Biostrings, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils, treeio  
-**Suggests:** knitr, rmarkdown, testthat, pwalign, BiocManager
+**Imports:** airr, alakazam, ape, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils, pwalign, treeio  
+**Suggests:** knitr, rmarkdown, testthat, BiocManager
 
 
 ## Authors
@@ -64,6 +53,7 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 [Kenneth Hoehn](mailto:kenneth.b.hoehn@dartmouth.edu) (aut, cre)  
 [Cole Jensen](mailto:cole.jensen@yale.edu) (aut)  
 [Jessie Fielding](mailto:jessie.jo.fielding@dartmouth.edu) (aut)  
+[Hunter Melton](mailto:hunter.j.melton@dartmouth.edu) (aut)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)

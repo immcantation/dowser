@@ -2638,31 +2638,20 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     tree <- dplyr::filter(data,!!rlang::sym("clone_id")==clone)$trees[[1]]
   }
   clone <- dplyr::filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
-  # CGJ 3/11/26
-  germ_node <- ape::getMRCA(data$trees[[which(data$clone_id == clone@clone)]], 
-                            data$trees[[which(data$clone_id == clone@clone)]]$tip.label)
-  if(germ_node == node & "UCA" %in% colnames(data)){
-    seqs <- data$UCA[[which(data$clone_id == clone@clone)]]$gapped
-  } else{
-    seqs <- c()
-    seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
-    loci <- unique(clone@locus)
-    for(locus in loci){
-      if(length(seq) < length(clone@locus)){
-        warning("Sequences are shorter than chain vector. Exiting")
-      }
-      if(length(seq) > length(clone@locus)){
-        stop("Sequences are longer than chain vector. Exiting")
-      }
-      lseq <- seq[clone@locus == locus]
-      lseq[is.na(lseq)] <- "N"
-      if(gaps){
-        nums <- clone@numbers[clone@locus == locus]
-        nseq <- rep(".",max(nums))
-        nseq[nums] <- lseq
-        lseq <- nseq
-      }
-      seqs <- c(seqs,paste(lseq,collapse=""))
+  seqs <- c()
+  if("sequence" %in% names(tree$nodes[[node]])){
+    if(is.null(tree$nodes[[node]]$sequence)){
+      return(NULL)
+    }else{
+      seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
+      loci <- unique(clone@locus)
+    }
+  }else{
+    return(NULL)
+  }
+  for(locus in loci){
+    if(length(seq) < length(clone@locus)){
+      warning("Sequences are shorter than chain vector. Exiting")
     }
     names(seqs) <- loci
   }

@@ -73,5 +73,5 @@ comma-separated list of each <position in query alignment>-<sequence>. See examp
 in masking_note.
 }
 \seealso{
-\link{maskCodons}, Biostrings::pairwiseAlignment.
+\link{maskCodons}, pwalign::pairwiseAlignment.
 }

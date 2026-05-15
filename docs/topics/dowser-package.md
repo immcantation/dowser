@@ -35,6 +35,7 @@ Authors:
 
 +  Cole Jensen [cole.jensen@yale.edu](cole.jensen@yale.edu)
 +  Jessie Fielding [jessie.jo.fielding@dartmouth.edu](jessie.jo.fielding@dartmouth.edu)
++  Hunter Melton [hunter.j.melton@dartmouth.edu](hunter.j.melton@dartmouth.edu)
 +  Steven Kleinstein [steven.kleinstein@yale.edu](steven.kleinstein@yale.edu) [copyright holder]
 
 

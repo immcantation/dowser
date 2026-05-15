@@ -714,6 +714,7 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_
 #' @param    start_date               starting date to use as prior, in forward time
 #' @param    max_start_date           max starting date to use as prior, in forward time
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
+#' @param    root_trait               trait value of the root, if a fixed root state desired
 #' @param    ...                      additional arguments for XML writing functions
 #'
 #' @return   File path of the written XML file
@@ -722,7 +723,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
-  start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?', ...) {
+  start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?', root_trait=NULL, ...) {
   
   kwargs <- list(...)
 
@@ -889,6 +890,32 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
       }
     } else {
       stop("Could not find <init> tag in the template file")
+    }
+  }
+
+  if (!is.null(root_trait)) {
+    if (any(grepl("\\$\\{ROOT_TYPE_PROBABILITIES\\}", xml))) {
+      if (is.numeric(root_trait)) {
+        root_trait_index <- root_trait + 1 # add 1 because BEAST uses 0-based indexing for traits
+      } else {
+        root_trait_index <- match(root_trait, trait_list)
+        if (is.na(root_trait_index)) {
+          stop(paste0("root_trait ", root_trait, " not found in trait_list"))
+        }
+      }
+      root_trait_probabilities <- rep(0, length(trait_list))
+      root_trait_probabilities[root_trait_index] <- 1
+      root_trait_probabilities_string <- paste0(root_trait_probabilities, collapse=" ")
+      root_trait_probabilities_string <- paste0('<rootFrequencies id="rootfreqs.s:newTrait" spec="Frequencies">
+                        <parameter id="rootFrequencies.s:newTrait" spec="parameter.RealParameter" dimension="2" name="frequencies">', root_trait_probabilities_string, '</parameter>
+                    </rootFrequencies>')
+      xml <- gsub("\\$\\{ROOT_TYPE_PROBABILITIES\\}", root_trait_probabilities_string, xml)
+    } else {
+      warning("root_trait argument provided but ${ROOT_TYPE_PROBABILITIES} placeholder not found in template file")
+    }
+  } else {
+    if (any(grepl("\\$\\{ROOT_TYPE_PROBABILITIES\\}", xml))) {
+      xml <- gsub("\\$\\{ROOT_TYPE_PROBABILITIES\\}", "", xml)
     }
   }
   
@@ -1450,3 +1477,131 @@ getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, f
     }
     return(clones)
 }
+
+
+#' Recurse up to tree to find most recent node with different state, or the root
+#' 
+#' \code{getDiffPoint} 
+#' @param  tree    a treedata object, from getTimeTrees
+#' @param  targetnode    current node
+#' @param  trait   column name of the trait of interest
+#' @param  height  which height value to return
+#' @param verbose  print out run info
+#' @param eo_adjust adjust heights using expectOccupancies (recommended, requires eo_type)
+#' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
+# @export
+getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
+  eo_adjust=FALSE, eo_type=NULL){
+  type <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)[[trait]]
+  edge <- tree@phylo$edge[tree@phylo$edge[,2] == targetnode,]
+  if(verbose){
+    print(paste(targetnode,type))
+    print(edge)
+  }
+  if(length(edge) == 0){
+    return(dplyr::tibble(diff_node=targetnode, root=TRUE, node_type=type, 
+      node_height=as.numeric(filter(tree@data, !!rlang::sym("node")==targetnode)[[height]])))
+  }
+  if(!is.null(nrow(edge))){
+    stop("weird")
+  }
+  parent <- as.character(edge[1])
+  parent_type <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[trait]]
+  parent_height <- as.numeric(dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[height]])
+  if(parent_type == type){
+    return(getDiffPoint(tree, parent, trait, height, verbose, eo_adjust, eo_type))
+  }else{
+    if(eo_adjust){
+      child <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)
+      if(type == eo_type){
+        adjust <- (1-as.numeric(child$expectedOccupancies)) * 
+          as.numeric(child$length)
+      }else{ # if parent is EO type (i.e. tip is not, assumes only 2 types)
+        adjust <- as.numeric(child$expectedOccupancies) * 
+          as.numeric(child$length)
+      }
+      parent_height <- as.numeric(parent_height) - adjust
+    }
+    return(dplyr::tibble(diff_node=parent, root=FALSE, node_type=parent_type, 
+      node_height=parent_height))
+  }
+}
+
+#' For each tree, recurse up to tree to find most recent 
+#' node with a different state, or the root
+#' 
+#' \code{getDiffPoints} 
+#' @param  data    a tibble containing trees column from getTimeTrees
+#' @param  trait   column name of the trait of interest
+#' @param  height  which height value to return
+#' @param  verbose print out info during run
+#' @param  tip_traits vector of other traits to include for each tip.
+#'           Must have been also specified as traits in formatClones.
+#' @param eo_adjust adjust heights using expectOccupancies. Recommended if EO model used,
+#'         requires eo_type to specify the type whose occupancy is tracked)
+#' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
+#' @details 
+#' Returns a data frame where each row is a tip in each tree
+#' clone_id = clone id for that tree
+#' tip = tip name
+#' tip_tip = trait value for that tip
+#' tip_height = height value for that tip
+#' diff_node = most recent ancestor node with different trait value, or root
+#' root = TRUE if at root node, FALSE otherwise
+#' node_type = type of diff_node, will be "root" if at root node
+#' node_height = height of diff_node 
+#' <other columns> copied over from airrClone object for each tip
+#' 
+#' @examples
+#' 
+#' \dontrun{dp = getDiffPoints(data, "location", verbose=TRUE, 
+#'  eo_adjust=TRUE, eo_type="germinal_center")}
+#' 
+#' @export
+getDiffPoints = function(data, trait, height="height", verbose=FALSE,
+  tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL){
+  diffpoints <- dplyr::tibble()
+  for(row in 1:nrow(data)){
+    tree <- data$trees[[row]]
+    for(l in tree@phylo$tip.label){
+      if(verbose){
+        print(l)
+      }
+      d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
+        which(tree@phylo$tip.label == l))
+      df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
+        trait=trait, height=height, verbose=verbose, eo_adjust=eo_adjust,
+        eo_type=eo_type)
+      temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
+        tip_type=d[[trait]], tip_height=d[[height]])
+      # copy over trait info for each tip
+      if(!is.null(tip_traits)){
+        for(tr in tip_traits){
+          if(!tr %in% names(data$data[[row]]@data)){
+            stop(paste(tr, "not found in airrClone object"))
+          }
+          m <- match(l, data$data[[row]]@data$sequence_id)
+          if(is.na(m)){
+            if(l == "Germline"){
+              temp[[tr]] <- NA
+              next
+            }
+            stop(paste(l,"not found in airrClone object"))
+          }
+          temp[[tr]] <- data$data[[row]]@data[[tr]][m]
+        }
+      }
+      diffpoints <- dplyr::bind_rows(diffpoints, dplyr::bind_cols(temp, df))
+    }
+  }
+  diffpoints$node_height <- as.numeric(diffpoints$node_height)
+  diffpoints$tip_height <- as.numeric(diffpoints$tip_height)
+  return(diffpoints)
+}
+
+
+
+
+
+
+

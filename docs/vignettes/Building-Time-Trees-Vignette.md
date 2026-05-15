@@ -1,4 +1,34 @@
 # Build Time Trees Using TyCHE and BEAST
+---
+title: 'Build Time Trees Using TyCHE and BEAST'
+author: "Jessie Fielding"
+date: '2026-04-01'
+output:
+  pdf_document:
+    dev: pdf
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    toc: yes
+  html_document:
+    fig_height: 4
+    fig_width: 7.5
+    highlight: pygments
+    theme: readable
+    toc: yes
+  md_document:
+    fig_height: 4
+    fig_width: 7.5
+    preserve_yaml: no
+    toc: yes
+geometry: margin=1in
+fontsize: 11pt
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Build Time Trees Using TyCHE and BEAST}
+  %\VignetteEncoding{UTF-8}  
+  %\usepackage[utf8]{inputenc}
+---
 
 ## Building Time Trees
 <div class="admonition-announcement attention">
@@ -81,6 +111,7 @@ or <a href="https://www.beast2.org">www.beast2.org</a>.
 
 6. In the package manager, find and install the "rootfreqs" package.
 
+
 #### For Linux machines, we recommend running:
 
 ``` bash
@@ -119,7 +150,7 @@ echo "packages.url=https\://raw.githubusercontent.com/CompEvol/CBAN/master/packa
 BEAST models are specified and run through XML files. A template is required to run BEAST2 through Dowser.
 
 We provide several BEAST XML templates in the 
-[xml-templates repository](https://github.com/hoehnlab/xml-templates/). You can 
+[xml-templates repository](https://github.com/hoehnlab/). You can 
 download these and modify them as needed. Additionally, you can create your own
 XML templates for custom analyses.
 

@@ -1,3 +1,12 @@
+Version 2.4.1 March 26, 2026
+-------------------------------------------------------------------------------
+
++ Updates due to BioConductor release. 
++ Now requires R >= 4.4 and pwalign (BioC) rather than Biostrings (BioC). 
++ Swapped RMarkDown URIs for URLs.
++ plot expected occupancies on trees in plotTrees
++ resolveLightChains bug fix
+
 Version 2.4.0 October 14, 2025
 -------------------------------------------------------------------------------
 

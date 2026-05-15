@@ -1,6 +1,6 @@
 Package: dowser
 Type: Package
-Version: 2.4.1
+Version: 2.4.1.999
 Date: 2026-03-25
 Authors@R: c(
     person("Kenneth", "Hoehn", email = "kenneth.b.hoehn@dartmouth.edu", role = c("aut", "cre")),
@@ -9,6 +9,7 @@ Authors@R: c(
     person("Hunter", "Melton", email = "hunter.j.melton@dartmouth.edu", role = "aut"),
     person("Susanna", "Marquez", email = "susanna.marquez@yale.edu", role = "ctb"),
     person("Jason", "Vander Heiden", email = "jason.vanderheiden@gmail.com", role = "ctb"),
+    person("Erick", "Matsen", role = "ctb"),
     person("Steven", "Kleinstein", email = "steven.kleinstein@yale.edu", role = c("aut", "cph"))
   )
 Title: B Cell Receptor Phylogenetics Toolkit
@@ -54,7 +55,8 @@ Imports:
     tidyr,
     utils,
     pwalign,
-    treeio
+    treeio,
+    jsonlite
 Suggests:
     knitr,
     rmarkdown,

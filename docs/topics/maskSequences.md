@@ -105,7 +105,7 @@ in masking_note.
 See also
 -------------------
 
-[maskCodons](maskCodons.md), Biostrings::pairwiseAlignment.
+[maskCodons](maskCodons.md), pwalign::pairwiseAlignment.
 
 
 

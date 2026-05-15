@@ -36,6 +36,7 @@ tree_states = FALSE,
 start_edge_length = 100,
 start_date = NULL,
 max_start_date = NULL,
+germline_trait_value = "?",
 ...
 )
 ```
@@ -62,13 +63,13 @@ id
 :   unique identifer for this analysis
 
 mcmc_length
-:   Number of MCMC iterations
+:   Number of MCMC steps
 
 resume_clones
-:   Clones to resume for mcmc_length more iterations
+:   Clones to resume for `mcmc_length` more steps
 
 trait
-:   Trait coolumn used
+:   Trait column used
 
 asr
 :   Log ancestral sequences?
@@ -83,16 +84,16 @@ include_germline
 :   Include germline in analysis?
 
 nproc
-:   Number of cores for parallelization. Uses 1 core per tree.
+:   Number of cores for parallelization. Uses at most 1 core per tree.
 
 quiet
-:   amount of rubbish to print to console
+:   Amount of rubbish to print to console
 
 burnin
 :   Burnin percent (default 10)
 
 low_ram
-:   run with less memory (slower)
+:   run with less memory (slightly slower)
 
 germline_range
 :   Possible date range of germline tip
@@ -101,10 +102,10 @@ java
 :   Use the -java flag for BEAST run
 
 seed
-:   Used for the -seed option for BEASTrun
+:   Use specified seeed for the -seed option for BEAST
 
 log_target
-:   Target number of samples over mcmc_length
+:   Target number of samples over `mcmc_length`
 
 trees
 :   optional list of starting trees, either phylo objects or newick strings
@@ -120,6 +121,9 @@ start_date
 
 max_start_date
 :   Maximum starting date of time tree if desired
+
+germline_trait_value
+:   trait value for germline, default '?' for ambiguous
 
 ...
 :   Additional arguments for XML writing functions

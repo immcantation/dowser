@@ -33,6 +33,7 @@ seed = NULL,
 log_target = 10000,
 tree_states = FALSE,
 trees = NULL,
+germline_trait_value = "?",
 ...
 )
 ```
@@ -60,7 +61,7 @@ time
 :   Name of sample time column
 
 mcmc_length
-:   Number of MCMC iterations
+:   Number of MCMC steps
 
 log_every
 :   Frequency of states logged. "auto" will divide
@@ -70,13 +71,13 @@ burnin
 :   Burnin percent (default 10)
 
 trait
-:   Trait coolumn used
+:   Trait column to be used
 
 resume_clones
-:   Clones to resume for mcmc_length more iterations
+:   Clones to resume for `mcmc_length` more steps
 
 nproc
-:   Number of cores for parallelization. Uses 1 core per tree.
+:   Number of cores for parallelization. At most 1 core/tree can be used.
 
 quiet
 :   amount of rubbish to print to console
@@ -85,7 +86,7 @@ rm_temp
 :   remove temporary files (default=TRUE)
 
 include_germline
-:   Include germline in analysis?
+:   Include germline sequence in analysis?
 
 seq
 :   Sequence column in data
@@ -97,16 +98,19 @@ java
 :   Use the -java flag for BEAST run
 
 seed
-:   Used for the -seed option for BEASTrun
+:   Use specified seeed for the -seed option for BEAST
 
 log_target
-:   Target number of samples over mcmc_length
+:   Target number of samples from MCMC chain
 
 tree_states
 :   Use `states` vector for starting tree
 
 trees
 :   optional list of starting trees, either phylo objects or newick strings
+
+germline_trait_value
+:   trait value for germline, default '?' for ambiguous
 
 ...
 :   Additional arguments passed to tree building programs
@@ -117,7 +121,7 @@ trees
 Value
 -------------------
 
-A list of `phylo` objects in the same order as `data`.
+A tibble with a column of `phylo` objects and `parameters` column
 
 
 Details

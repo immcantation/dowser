@@ -29,7 +29,7 @@ clones
 [formatClones](formatClones.md)
 
 iterations
-:   Maximum number of iterations
+:   Maximum number of times to resume MCMC chain
 
 ess_cutoff
 :   Minimum number of ESS for all parameters
