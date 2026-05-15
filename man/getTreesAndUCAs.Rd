@@ -8,7 +8,6 @@ getTreesAndUCAs(
   clones,
   data,
   dir = NULL,
-  build = "igphyml",
   exec = NULL,
   resolve_germ = FALSE,
   repertoire_wide = FALSE,
@@ -26,17 +25,9 @@ getTreesAndUCAs(
   references = NULL,
   clone = "clone_id",
   cell = "cell_id",
-  sampling_method = "random",
   subsample_size = NA,
   search = "codon",
   check_genes = TRUE,
-  igblast = NULL,
-  igblast_database = NULL,
-  ref_path = NULL,
-  igdata = NULL,
-  organism = "human",
-  trunklength = NULL,
-  sd = 0.5,
   fill_gaps = TRUE,
   genotyped = FALSE,
   split_light = FALSE,
@@ -49,8 +40,6 @@ getTreesAndUCAs(
 \item{data}{The AIRR-table that was used to make the clones object.}
 
 \item{dir}{The file path of the directory of where data is saved. NULL is default.}
-
-\item{build}{Name of the tree building method. Currently only IgPhyML is supported.}
 
 \item{exec}{File path to the tree building executable}
 
@@ -90,31 +79,11 @@ If split_light was used in \link{formatClones}, use "clone_subgroup_id".}
 
 \item{cell}{The name of the cell id in the AIRR table used to generate \link{formatClones}}
 
-\item{sampling_method}{How to subsample. Methods include 'random', 'lm' (least mutated),
-and 'ratio' (a weighted sampling with heavier weights
-towards the least mutated sequences). The later two methods
-require 'mu_freq' to be passed as a trait when running
-\link{formatClones}}
-
 \item{subsample_size}{The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample -- in testing}
 
 \item{search}{Search codon or nt space}
 
 \item{check_genes}{Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly.}
-
-\item{igblast}{File path to igblast}
-
-\item{igblast_database}{The file path to the database setup for igblast}
-
-\item{ref_path}{The file path to your references parent folder.}
-
-\item{igdata}{The file path to the data used for igblast (NULL for internal data with igblast)}
-
-\item{organism}{The type of organism to align to if using igblast.}
-
-\item{trunklength}{The specified trunklength}
-
-\item{sd}{The standard deviation for the "depth" search methods}
 
 \item{fill_gaps}{A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments}
 

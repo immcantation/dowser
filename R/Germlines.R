@@ -4,174 +4,6 @@
 # 
 # Loads all reference germlines from an Immcantation-formatted IMGT database.
 # 
-#TODO: make auto-download or internal IMGT database
-# param dir      directory to contain database
-# param organism  vector of species to download: human, mouse, rat, rabbit, rhesus_monkey
-# param timeout  max time allowed for each download (temporarily sets global timeout option)
-# return directory of downloaded IMGT BCR and TCR reference files
-# details 
-# Recoding of this script: 
-# https://bitbucket.org/kleinstein/immcantation/src/master/scripts/fetch_imgtdb.sh
-downloadIMGT <- function(dir="imgt", organism=c("human", "mouse", "rat", "rabbit", "rhesus_monkey"),
-                         timeout=300){
-  
-  old_timeout <- getOption("timeout")
-  options(timeout = max(timeout, getOption("timeout")))
-  
-  species_list <- organism
-  OUTDIR <- dir
-  REPERTOIRE <- "imgt"
-  DATE <- format(Sys.time(), "%Y.%m.%d")
-  
-  # Associative array (for BASH v3) where keys are species folder names and values are query strings
-  # rabbit:Oryctolagus_cuniculus, rat:Rattus_norvegicus, rhesus_monkey:Macaca_mulatta
-  SPECIES_QUERY=c("human"="Homo+sapiens",
-                  "mouse"="Mus",
-                  "rat"="Rattus+norvegicus",
-                  "rabbit"="Oryctolagus+cuniculus",
-                  "rhesus_monkey"="Macaca+mulatta")
-  # Associative array (for BASH v3) with species name replacements
-  SPECIES_REPLACE=c("human"="Homo sapiens/Homo_sapiens",
-                    "mouse"="Mus musculus/Mus_musculus",
-                    "rat"="Rattus norvegicus/Rattus_norvegicus",
-                    "rabbit"="Oryctolagus cuniculus/Oryctolagus_cuniculus",
-                    "rhesus_monkey"="Macaca mulatta/Macaca_mulatta")
-  
-  for(SPECIES in species_list){
-    KEY <- SPECIES
-    VALUE <- SPECIES_QUERY[SPECIES]
-    REPLACE_VALUE <- SPECIES_REPLACE[SPECIES]
-    
-    print(paste("Downloading", KEY,"repertoires into",OUTDIR))
-    
-    # Create directories
-    dir.create(file.path(OUTDIR, KEY, "vdj"), recursive=TRUE, showWarnings=FALSE)
-    dir.create(file.path(OUTDIR, KEY, "vdj_aa"), recursive=TRUE, showWarnings=FALSE)
-    dir.create(file.path(OUTDIR, KEY, "leader_vexon"), recursive=TRUE, showWarnings=FALSE)
-    dir.create(file.path(OUTDIR, KEY, "leader"), recursive=TRUE, showWarnings=FALSE)
-    dir.create(file.path(OUTDIR, KEY, "constant"), recursive=TRUE, showWarnings=FALSE)
-    
-    # Download functions
-    download_and_process <- function(url, outfile, replace) {
-      tmpfile <- paste0(outfile, ".tmp")
-      download.file(url, tmpfile, quiet=TRUE)
-      lines <- readLines(tmpfile, warn=F)
-      # fasta between last pre and /pre
-      pre_start <- max(grep("<pre>", lines))
-      pre_end <- max(grep("</pre>", lines))
-      data <- lines[(pre_start + 1):(pre_end - 1)]
-      
-      # replace names with spaces with unerlines
-      split <- strsplit(replace,split="/")[[1]]
-      sub <- gsub(split[1], split[2], data)
-      writeLines(sub, outfile)
-      file.remove(tmpfile)
-    }
-    
-    # Download VDJ regions
-    cat("|---- Ig\n")
-    for (CHAIN in c("IGHV", "IGHD", "IGHJ", "IGKV", "IGKJ", "IGLV", "IGLJ")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.1+", CHAIN, "&species=", VALUE)
-      FILE_NAME <- file.path(OUTDIR, KEY, "vdj", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # Download leader and V exon for Ig
-    for (CHAIN in c("IGHV", "IGKV", "IGLV")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+", CHAIN, "&species=", VALUE,"&IMGTlabel=L-PART1+V-EXON")
-      FILE_NAME <- file.path(OUTDIR, KEY, "leader_vexon", paste0(REPERTOIRE,"_lv_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # V amino acid for Ig
-    for (CHAIN in c("IGHV", "IGKV", "IGLV")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.3+",CHAIN,"&species=",VALUE)
-      FILE_NAME <- file.path(OUTDIR, KEY, "vdj_aa", paste0(REPERTOIRE,"_aa_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # VDJ TCR
-    cat("|---- TCR\n")
-    for (CHAIN in c("TRAV", "TRAJ", "TRBV", "TRBD", "TRBJ", "TRDV", "TRDD", "TRDJ", "TRGV", "TRGJ")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.1+",CHAIN,"&species=",VALUE)
-      FILE_NAME <- file.path(OUTDIR, KEY, "vdj", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # Download leader and V exon for Ig
-    for (CHAIN in c("TRAV", "TRBV", "TRDV", "TRGV")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+",CHAIN,"&species=",VALUE,"&IMGTlabel=L-PART1+V-EXON")
-      FILE_NAME <- file.path(OUTDIR, KEY, "leader_vexon", paste0(REPERTOIRE,"_lv_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # V amino acid for TCR
-    for (CHAIN in c("TRAV", "TRBV", "TRDV", "TRGV")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=7.3+",CHAIN,"&species=",VALUE)
-      FILE_NAME <- file.path(OUTDIR, KEY, "vdj_aa", paste0(REPERTOIRE,"_aa_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    
-    # Download leaders
-    cat("|- Spliced leader regions\n")
-    
-    # Download leader and V exon for Ig
-    cat("|---- Ig\n")
-    for (CHAIN in c("IGH", "IGK", "IGL")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+",CHAIN,"V&species=",VALUE,"&IMGTlabel=L-PART1+L-PART2")
-      FILE_NAME <- file.path(OUTDIR, KEY, "leader", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, "L.fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # Download leader and V exon for TCR
-    cat("|---- TCR\n")
-    for (CHAIN in c("TRA", "TRB", "TRG", "TRD")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=8.1+",CHAIN,"V&species=",VALUE,"&IMGTlabel=L-PART1+L-PART2")
-      FILE_NAME <- file.path(OUTDIR, KEY, "leader", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, "L.fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    # Download constant regions
-    cat("|- Spliced constant regions\n")
-    cat("|---- Ig\n")
-    for (CHAIN in c("IGHC", "IGKC", "IGLC")) {
-      # IMGT does not have artificially spliced IGKC / IGLC for multiple species
-      if(CHAIN == "IGHC"){
-        QUERY <- 14.1
-      }else{
-        QUERY <- 7.5
-      }
-      
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=",QUERY,"+",CHAIN,"&species=",VALUE)
-      FILE_NAME <- file.path(OUTDIR, KEY, "constant", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-    
-    cat("|---- TCR\n")
-    for (CHAIN in c("TRAC", "TRBC", "TRGC", "TRDC")) {
-      URL <- paste0("https://www.imgt.org/genedb/GENElect?query=14.1+",CHAIN,"&species=",VALUE)
-      FILE_NAME <- file.path(OUTDIR, KEY, "constant", paste0(REPERTOIRE,"_", KEY, "_", CHAIN, ".fasta"))
-      download_and_process(URL, FILE_NAME, REPLACE_VALUE)
-    }
-  }
-  
-  # Write download info
-  INFO_FILE <- file.path(OUTDIR, "IMGT.yaml")
-  info <- c(
-    "source:  https://www.imgt.org/genedb",
-    paste0("date:    ",DATE),
-    "species:",
-    paste0("    - ",paste0(species_list,":",SPECIES_QUERY[species_list]))
-  )
-  writeLines(info, con=INFO_FILE)
-  
-  options(timeout = old_timeout)
-  
-  return(dir)
-}
-
-
 #' \code{writeFasta} Write a fasta file of sequences given a 
 #' named list of sequences
 #' @param    seqs      named list of sequences (output from \code{readFasta})
@@ -186,759 +18,6 @@ writeFasta <- function(seqs, file){
   }else{
     file.create(file)
   }
-}
-
-# Format IMGT database to Igblast database
-# 
-# Cleans IMGT database and creates blast dbs for IgBlast
-# 
-# param imgt  directory containing IMGT sequences ("dir" in downloadIMGT)
-# param outdir   output directory for IgBlast databases, will contain /fasta and /database
-# param igblast  IgBlast home directory location
-# param organism   organism species to use (must be human, mouse, or rhesus_monkey)
-# return outdir
-# details 
-# Recoding of this script: 
-# https://bitbucket.org/kleinstein/immcantation/src/master/scripts/imgt2igblast.sh
-imgtToIgblast <- function(imgt, outdir, igblast, 
-                          organism=c("human", "mouse", "rhesus_monkey")){
-  
-  OUTDIR <- outdir
-  GERMDIR <- imgt
-  OUTFASTA <- file.path(OUTDIR, "fasta")
-  OUTDATA <- file.path(OUTDIR, "database")
-  
-  exec = file.path(igblast, "bin", "makeblastdb")
-  exec <- path.expand(exec)
-  if(file.access(exec, mode=1) == -1) {
-    stop("The file ", exec, " cannot be executed.")
-  }
-  
-  dir.create(file.path(OUTDIR), recursive=TRUE, showWarnings=FALSE)
-  dir.create(file.path(OUTFASTA), recursive=TRUE, showWarnings=FALSE)
-  dir.create(file.path(OUTDATA), recursive=TRUE, showWarnings=FALSE)
-  
-  species_list <- dir(GERMDIR)
-  species_list <- species_list[species_list != "IMGT.yaml"]
-  species_list <- species_list[species_list %in% organism]
-  
-  
-  vdj <- dir(file.path(GERMDIR, species_list, c("vdj")))
-  vdj <- vdj[grepl(".fasta$", vdj)]
-  vdj_aa <- dir(file.path(GERMDIR, species_list, c("vdj_aa")))
-  vdj_aa <- vdj_aa[grepl(".fasta$", vdj_aa)]
-  constant <- dir(file.path(GERMDIR, species_list, c("constant")))
-  constant <- constant[grepl(".fasta$", constant)]
-  
-  # Create fasta files of each species, chain and segment combination
-  for(SPECIES in species_list){
-    #dir(file.path(GERMDIR, SPECIES, "vdj"))
-    for(CHAIN in c("IG","TR")){
-      # VDJ nucleotides
-      for(SEGMENT in c("V","D","J")){
-        #F=$(echo imgt_${SPECIES}_${CHAIN}_${SEGMENT}.fasta | tr '[:upper:]' '[:lower:]')
-        #cat ${GERMDIR}/${SPECIES}/vdj/imgt_${SPECIES}_${CHAIN}?${SEGMENT}.fasta > ${TMPDIR}/${F}
-        # requires updated readFasta
-        fastas <- list.files(file.path(GERMDIR, SPECIES, "vdj"))
-        fastas <- fastas[grepl(paste0("imgt_", SPECIES, "_", CHAIN, ".", SEGMENT,".*.fasta$"), fastas)]
-        f <- unlist(lapply(fastas, function(x)readFasta(file.path(GERMDIR, SPECIES, "vdj", x))))
-        cf <- cleanSeqs(f)
-        writeFasta(cf, file.path(OUTFASTA, tolower(paste0("imgt_", SPECIES, "_", CHAIN, "_", SEGMENT, ".fasta"))))
-      }
-      
-      # C nucleotides
-      #F=$(echo imgt_${SPECIES}_${CHAIN}_c.fasta | tr '[:upper:]' '[:lower:]')
-      #cat ${GERMDIR}/${SPECIES}/constant/imgt_${SPECIES}_${CHAIN}?C.fasta > ${TMPDIR}/${F}
-      fastas <- list.files(file.path(GERMDIR, SPECIES, "constant"))
-      fastas <- fastas[grepl(paste0("imgt_", SPECIES, "_", CHAIN, ".C.*.fasta$"), fastas)]
-      f <- unlist(lapply(fastas, function(x)readFasta(file.path(GERMDIR, SPECIES, "constant", x))))
-      cf <- cleanSeqs(f)
-      writeFasta(cf, file.path(OUTFASTA, tolower(paste0("imgt_", SPECIES, "_", CHAIN, "_C", ".fasta"))))
-      
-      # V amino acids
-      #F=$(echo imgt_aa_${SPECIES}_${CHAIN}_v.fasta | tr '[:upper:]' '[:lower:]')
-      #cat ${GERMDIR}/${SPECIES}/vdj_aa/imgt_aa_${SPECIES}_${CHAIN}?V.fasta > ${TMPDIR}/${F}
-      fastas <- list.files(file.path(GERMDIR, SPECIES, "vdj_aa"))
-      fastas <- fastas[grepl(paste0("imgt_aa_", SPECIES, "_", CHAIN, ".V.*.fasta$"), fastas)]
-      f <- unlist(lapply(fastas, function(x)readFasta(file.path(GERMDIR, SPECIES, "vdj_aa", x))))
-      cf <- cleanSeqs(f)
-      writeFasta(cf, file.path(OUTFASTA, tolower(paste0("imgt_aa_", SPECIES, "_", CHAIN, "_V", ".fasta"))))
-    }
-  }
-  
-  fastas <- list.files(OUTFASTA, full.names=FALSE)
-  NT_FILES <- fastas[!grepl("imgt_aa_", fastas)]
-  AA_FILES <- fastas[grepl("imgt_aa_", fastas)]
-  
-  for(file in NT_FILES){
-    stem <- strsplit(file, split="\\.")[[1]][1]
-    command <- paste("-parse_seqids -dbtype nucl -in",
-                     file.path(OUTFASTA, file), "-out", file.path(OUTDATA, stem))
-    params <- list(exec, command, stdout="", stderr="")
-    status <- tryCatch(do.call(base::system2, params), error=function(e){
-      return(e)
-    }, warning=function(w){
-      return(w)
-    })
-    if(status != 0){
-      cat(paste(exec, command, "\n"))
-      warning(status, paste(exec, command, "\n"))
-    }
-  }
-  
-  for(file in AA_FILES){
-    stem <- strsplit(file, split="\\.")[[1]][1]
-    command <- paste("-parse_seqids -dbtype prot -in",
-                     file.path(OUTFASTA, file), "-out", file.path(OUTDATA, stem))
-    params <- list(exec, command, stdout="", stderr="")
-    status <- tryCatch(do.call(base::system2, params), error=function(e){
-      return(e)
-    }, warning=function(w){
-      return(w)
-    })
-    if(status != 0){
-      cat(paste(exec, command, "\n"))
-      warning(status, paste(exec, command, "\n"))
-    }
-  }
-  return(OUTDIR)
-}
-
-# remove IMGT gaps, uppercase sequences, and use second delimiter for name
-cleanSeqs <- function(seqs, rm_gaps=TRUE){
-  if(length(seqs) == 0){
-    return(NULL)
-  }
-  if(rm_gaps){
-    seqs <- toupper(gsub("\\.","",seqs))
-  }else{
-    seqs <- toupper(seqs)
-  }
-  names(seqs) <- sapply(strsplit(names(seqs), split="\\|"), function(x)x[2])
-  # if repeated IDs, use the first one
-  # might be consistent with cleanIMGT.py?
-  cseqs <- list()
-  for(x in 1:length(seqs)){
-    if(is.null(cseqs[[names(seqs)[x]]])){
-      cseqs[[names(seqs)[x]]] <- seqs[[x]]
-    }
-  }
-  cseqs
-}
-
-# Runs IgBlast on a fasta file
-#  
-# param file      Fasta file of Ig or TR sequences
-# param igblast   Location of IgBlast program directory, containing /bin/igblastn
-# param refs     Reference directory of sequences (see downloadIMGT)
-# param igdata  Internal data directory for IgBlast (defaults to \code{igblast}/internal_data)
-# param organism    Organism (human, mouse, rhesus_monkey)
-# param domain_system Currently only IMGT supported
-# param outfile       Name of AIRR rearrangement file (must end in TSV)
-# param nproc     Nummber of threads to use
-# param db_prefix   File prefix for reference fastas
-# param locus     Ig or TR
-# param set_igdata  Set IGDATA environment variable?
-# param return    Return data.frame of output?
-# param verbose   Print extra info?
-# return AIRR-rearrangement formatted data frame
-# details 
-# Runs IgBlast, similar to AssignGenes.py in Changeo.
-# Must have IgBlast downloaded, precompiled binaries recommended:
-# https://ncbi.github.io/igblast/
-# 
-# Note for M1/M2 Mac OS, may be necessary to install IgBlast .dmg and 
-# manually set igdata. Otherwise most issues stem from the internal_data
-# directory location.
-# 
-assignGenes <- function(file, igblast, refs, igdata = NULL, organism = "human",
-                        domain_system = "imgt", outfile = NULL, nproc = 1, db_prefix="imgt",
-                        locus = "Ig", set_igdata=TRUE, return=TRUE, verbose=TRUE){
-  
-  if(!organism %in% c("human", "mouse", "rhesus_monkey")){
-    stop(paste("organism must be either human, mouse, rhesus_monkey"))
-  }
-  
-  if(!locus %in% c("Ig", "TR")){
-    stop(paste("locus must be either Ig or TR"))
-  }
-  
-  exec <- file.path(igblast, "bin", "igblastn")
-  exec <- path.expand(exec)
-  if(file.access(exec, mode=1) == -1) {
-    stop("The file ", exec, " cannot be executed.")
-  }
-  
-  if(is.null(igdata)){
-    print(paste0("igdata not specified, using ",igblast," for IGDATA"))
-    igdata <- igblast
-  }
-  if(!is.null(igdata) && set_igdata){    
-    cat(paste0("Setting IGDATA to ", igdata,"\n"))
-    id <- file.path(igdata, "internal_data")
-    opt <- file.path(igdata, "optional_file")
-    if(!dir.exists(id)){
-      stop(paste("Error setting IGDATA, directory:", id, "does not exist. See ?assignGenes for help."))
-    }
-    if(!dir.exists(opt)){
-      stop(paste("Error setting IGDATA, directory:", opt, "does not exist. See ?assignGenes for help."))
-    }
-    Sys.setenv(IGDATA = igdata)
-  }
-  
-  db_dir <- file.path(refs, "database")
-  fasta_dir <- file.path(refs, "fasta")
-  if(!dir.exists(db_dir)){
-    stop(paste(db_dir, "does not exist."))
-  }
-  if(!dir.exists(fasta_dir)){
-    stop(paste(db_dir, "does not exist."))
-  }
-  
-  if(!grepl("\\.fasta$", file) && !grepl("\\.fa$", file)){
-    stop(paste(file, "is not a fasta file (at least, it doesn't end in .fasta or .fa)"))
-  }
-  
-  if(is.null(outfile)){
-    filestem <- gsub("\\.fasta$|\\.fa$","", file)
-  }else{
-    if(!grepl("\\.tsv$", outfile)){
-      stop(outfile, " must be a .tsv file")
-    }
-    filestem <- gsub("\\.tsv", "", outfile)
-  }
-  
-  blastout <- paste0(filestem, ".tsv")
-  #airrout <- paste0(filestem, ".tsv")
-  
-  db_v <- file.path(db_dir, paste(db_prefix, organism, tolower(locus), "v", sep="_"))
-  db_d <- file.path(db_dir, paste(db_prefix, organism, tolower(locus), "d", sep="_"))
-  db_j <- file.path(db_dir, paste(db_prefix, organism, tolower(locus), "j", sep="_"))
-  aux <- file.path(igdata, "optional_file", paste0(organism,"_gl.aux"))
-  
-  
-  stem <- strsplit(file, split="\\.")[[1]][1]
-  command <- paste(
-    paste0("-germline_db_V ", db_v),
-    paste0("-germline_db_D ", db_d),
-    paste0("-germline_db_J ", db_j),
-    paste0("-auxiliary_data ", aux),
-    paste0("-domain_system ", domain_system," -ig_seqtype ",locus," -organism ", organism),
-    #paste0("-outfmt '7 std qseq sseq btop'"),
-    paste0("-outfmt 19"),
-    paste0("-query ", file),
-    paste0("-num_threads ", nproc),
-    paste0("-out ", blastout)
-  )
-  if(verbose){
-    cat(paste(exec, command))
-  }
-  params <- list(exec, command, stdout="", stderr="")
-  status <- tryCatch(do.call(base::system2, params), error=function(e){
-    return(e)
-  }, warning=function(w){
-    return(w)
-  })
-  if(status != 0){
-    cat(paste(exec, command, "\n"))
-    stop("error running IgBlast")
-  }
-  
-  if(return){
-    return(airr::read_rearrangement(blastout))
-  }
-}
-
-# Add IMGT gaps to IgBlast output
-#  
-# param db      AIRR-rearrangment formatted dataframe outputted from \link{assignGenes}
-# param gapdb   Root directory of gapped fasta files (\code{dir} in \link{downloadIMGT})
-# param organism  Organism (human, mouse, rhesus_monkey)
-# param locus   Ig or TR
-# param gapped_d  Include IMGT gaps in D regions? Only applicable to 
-# return AIRR-rearrangement formatted data frame in which sequence_alignment and germline_alignment
-# have been updated with IMGT gaps
-# details 
-# Similar functionality to MakeDb.py in Change-O. 
-
-addGaps <- function(db, gapdb, organism="human", locus="Ig", gapped_d=FALSE){
-  
-  if(!organism %in% c("human", "mouse", "rhesus_monkey")){
-    stop(paste("organism must be either human, mouse, rhesus_monkey"))
-  }
-  
-  if(!locus %in% c("Ig", "TR")){
-    stop(paste("locus must be either Ig or TR"))
-  }
-  
-  gap_files <- list.files(file.path(gapdb, organism, "vdj"))
-  if(length(gap_files) == 0){
-    stop(paste("No files found in",file.path(gapdb, organism, "vdj")))
-  }
-  vgap_files <- gap_files[grepl(paste0("_",toupper(locus),".V\\.fasta$"), gap_files)]
-  gaps <- unlist(lapply(vgap_files, function(x)readFasta(file.path(gapdb, organism, "vdj", x))))
-  gaps <- cleanSeqs(gaps, rm_gaps=FALSE)
-  
-  # IGHD3-10*02 has a gap :-(
-  # need to account for that
-  dgap_files <- gap_files[grepl(paste0("_",toupper(locus),".D\\.fasta$"), gap_files)]
-  dgaps <- unlist(lapply(dgap_files, function(x)readFasta(file.path(gapdb, organism, "vdj", x))))
-  dgaps <- cleanSeqs(dgaps, rm_gaps=FALSE)
-  
-  
-  results <- dplyr::tibble()
-  for(i in 1:nrow(db)){
-    row <- db[i,]
-    
-    insertion_sites <- 0
-    
-    if(is.na(row$np1_length) || is.na(row$np1)){
-      row$np1_length <- 0
-      row$np1 <- ""
-    }
-    if(is.na(row$np2_length) || is.na(row$np2)){
-      row$np2_length <- 0
-      row$np2 <- ""
-    }
-    if(is.na(row$d_sequence_alignment) || is.na(row$d_germline_alignment)){
-      row$d_sequence_alignment <- ""
-      row$d_germline_alignment <- ""
-    }
-    if(is.na(row$j_sequence_alignment) || is.na(row$j_germline_alignment)){
-      row$j_sequence_alignment <- ""
-      row$j_germline_alignment <- ""
-    }
-    if(is.na(row$v_sequence_alignment)){
-      warning(row$sequence_id, " v alignment not found")
-      next
-    }
-    
-    if(paste0(row$v_sequence_alignment, row$np1, row$d_sequence_alignment, row$np2, row$j_sequence_alignment) != row$sequence_alignment){
-      warning(row$sequence_id, " alignments don't add up")
-      next
-    }
-    
-    vcall <- strsplit(row$v_call, split=",")[[1]][1]
-    dcall <- strsplit(row$d_call, split=",")[[1]][1]
-    jcall <- strsplit(row$j_call, split=",")[[1]][1]
-    
-    # add IMGT gaps
-    # remove germline-relative insertations
-    qv <- strsplit(as.character(row$v_sequence_alignment),"")[[1]]
-    gv <- strsplit(as.character(row$v_germline_alignment),"")[[1]]
-    
-    # remove insertions relative to germline
-    v_del_pos <- gv == "-"
-    gv <- gv[!v_del_pos]
-    qv <- qv[!v_del_pos]
-    
-    qj <- strsplit(as.character(row$j_sequence_alignment),"")[[1]]
-    gj <- strsplit(as.character(row$j_germline_alignment),"")[[1]]
-    
-    # remove insertions relative to germline
-    j_del_pos <- gj == "-"
-    gj <- gj[!j_del_pos]
-    qj <- qj[!j_del_pos]
-    
-    insertion_sites <- sum(v_del_pos) + sum(j_del_pos)
-    
-    qd <- strsplit(as.character(row$d_sequence_alignment),"")[[1]]
-    gd <- strsplit(as.character(row$d_germline_alignment),"")[[1]]
-    
-    # remove insertions relative to germline
-    d_del_pos <- gd == "-"
-    gd <- gd[!d_del_pos]
-    qd <- qd[!d_del_pos]
-    
-    # v gene with IMGT gaps
-    gappedv <- strsplit(gaps[[vcall]], split="")[[1]]
-    
-    # positions without gaps in IMGT
-    no_gap_pos <- 1:length(gappedv)
-    no_gap_pos <- no_gap_pos[gappedv != "."]
-    
-    # positions without gaps present in alignment
-    v_germ_gap <- rep(".", length(gappedv))
-    v_quer_gap <- rep(".", length(gappedv))
-    
-    # add non gap characters to non-gap sites
-    gstart <- row$v_germline_start
-    no_gap_pos_g <- no_gap_pos[1:row$v_germline_end] #gapped germline is always full length
-    no_gap_pos <- no_gap_pos[gstart:(gstart + length(gv) - 1)]
-    
-    v_germ_gap[no_gap_pos_g] <- gappedv[no_gap_pos_g]
-    v_quer_gap[no_gap_pos] <- qv
-    
-    if(length(v_germ_gap[no_gap_pos]) != length(gv)){
-      stop("Error processing gapped V segment: ", row$sequence_id)
-    }
-    if(length(v_quer_gap[no_gap_pos]) != length(qv)){
-      stop("Error processing gapped V segment: ", row$sequence_id)
-    }
-    
-    # remove trailing gaps
-    max_char <- max(which(v_germ_gap != "."))
-    v_germ_gap <- v_germ_gap[1:max_char]
-    v_quer_gap <- v_quer_gap[1:max_char]
-    
-    # correct germline coordinate positions
-    vgaps_added <- sum(v_quer_gap == ".")
-    vpos_del <- sum(v_del_pos)
-    jpos_del <- sum(j_del_pos)
-    
-    row$v_germline_end <- max(no_gap_pos_g)
-    # always start at 1 when adding IMGT gaps
-    row$v_germline_start <- 1
-    
-    if(!is.na(dcall) && gapped_d){
-      # d gene with IMGT gaps
-      gappedd <- strsplit(dgaps[[dcall]], split="")[[1]]
-      
-      # positions without gaps in IMGT
-      no_gap_pos <- 1:length(gappedd)
-      no_gap_pos <- no_gap_pos[gappedd != "."]
-      
-      # positions without gaps present in alignment
-      d_germ_gap <- rep(".", length(gappedd))
-      d_quer_gap <- rep(".", length(gappedd))
-      
-      # add non gap characters to non-gap sites
-      gdstart <- row$d_germline_start
-      no_gap_pos_gd <- no_gap_pos[gdstart:row$d_germline_end] #non-gap positions in germline 
-      no_gap_pos <- no_gap_pos[gdstart:row$d_germline_end] #non-gap positions in query
-      
-      d_germ_gap[no_gap_pos_gd] <- gappedd[no_gap_pos_gd]
-      d_quer_gap[no_gap_pos] <- qd
-      
-      if(length(d_germ_gap[no_gap_pos]) != length(gd)){
-        stop("Error processing gapped D segment: ", row$sequence_id)
-      }
-      if(length(d_quer_gap[no_gap_pos]) != length(qd)){
-        stop("Error processing gapped D segment: ", row$sequence_id)
-      }
-      
-      # remove trailing gaps
-      max_char <- max(which(d_germ_gap != "."))
-      d_germ_gap <- d_germ_gap[1:max_char]
-      d_quer_gap <- d_quer_gap[1:max_char]
-      
-      # remove trailing gaps
-      min_char <- min(which(d_germ_gap != "."))
-      if(min_char > 1){
-        d_germ_gap <- d_germ_gap[(min_char):length(d_germ_gap)]
-        d_quer_gap <- d_quer_gap[(min_char):length(d_quer_gap)]
-      }
-      
-      dgaps_added <- sum(d_quer_gap == ".")
-      dpos_del <- sum(d_del_pos)
-      row$d_germline_end <- max(no_gap_pos_gd) + dgaps_added
-      
-    }else{
-      d_germ_gap <- strsplit(row$d_germline_alignment, split="")[[1]]
-      d_quer_gap <- strsplit(row$d_sequence_alignment, split="")[[1]]
-      dgaps_added <- 0
-      dpos_del <- 0
-    }
-    
-    vdj_quer_gapped <- paste0(
-      paste(v_quer_gap,collapse=""),
-      row$np1, 
-      paste(d_quer_gap,collapse=""),
-      row$np2,
-      paste(qj,collapse=""))
-    
-    vdj_germ_gapped <- paste0(
-      paste(v_germ_gap,collapse=""),
-      paste0(rep("N",row$np1_length),collapse=""),
-      paste(d_germ_gap,collapse=""),
-      paste0(rep("N",row$np2_length),collapse=""),
-      paste(gj,collapse=""))
-    
-    row$sequence_alignment <- vdj_quer_gapped
-    row$germline_alignment <- vdj_germ_gapped
-    
-    # check region values
-    # https://www.imgt.org/IMGTScientificChart/Numbering/IMGTIGVLsuperfamily.html
-    if(!is.na(row$fwr1)){
-      row$fwr1_start <- 1
-      row$fwr1_end <- 26*3
-      if(gsub("\\.|-","",substr(row$sequence_alignment, row$fwr1_start, row$fwr1_end)) != row$fwr1){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " fwr1 doesn't match")
-          #next
-        }else{
-          warning(row$sequence_id, " fwr1 doesn't match but insertions present")
-        }
-      }#else{
-      row$fwr1 <- substr(row$sequence_alignment, row$fwr1_start, row$fwr1_end)
-      #}
-    }
-    if(!is.na(row$cdr1)){
-      row$cdr1_start <- 26*3+1
-      row$cdr1_end <- 38*3
-      if(gsub("\\.|-","",substr(row$sequence_alignment, row$cdr1_start, row$cdr1_end)) != row$cdr1){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " cdr1 doesn't match")
-          #next
-        }else{
-          warning(row$sequence_id, " cdr1 doesn't match but insertions present")
-        }
-      }#else{
-      row$cdr1 <- substr(row$sequence_alignment, row$cdr1_start, row$cdr1_end)
-      #}
-    }
-    if(!is.na(row$fwr2)){
-      row$fwr2_start <- 38*3+1
-      row$fwr2_end <- 55*3
-      if(gsub("\\.|-","",substr(row$sequence_alignment, row$fwr2_start, row$fwr2_end)) != row$fwr2){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " fwr2 doesn't match")
-          #next
-        }else{
-          warning(row$sequence_id, " fwr2 doesn't match but insertions present")
-        }
-      }#else{
-      row$fwr2 <- substr(row$sequence_alignment, row$fwr2_start, row$fwr2_end)
-      #}
-    }
-    if(!is.na(row$cdr2)){
-      row$cdr2_start <- 55*3+1
-      row$cdr2_end <- 65*3
-      if(gsub("\\.|\\-","",substr(row$sequence_alignment, row$cdr2_start, row$cdr2_end)) != row$cdr2){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " cdr2 doesn't match")
-          #next
-        }else{
-          warning(row$sequence_id, " cdr2 doesn't match but insertions present")
-        }
-      }#else{
-      row$cdr2 <- substr(row$sequence_alignment, row$cdr2_start, row$cdr2_end)
-      #}
-    }
-    if(!is.na(row$fwr3)){
-      row$fwr3_start <- 65*3+1
-      row$fwr3_end <- 104*3
-      if(gsub("\\.|-","",substr(row$sequence_alignment, row$fwr3_start, row$fwr3_end)) != row$fwr3){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " fwr3 doesn't match")
-          #next
-        }else{
-          warning(row$sequence_id, " fwr3 doesn't match but insertions present")
-        }
-      }#else{
-      row$fwr3 <- substr(row$sequence_alignment, row$fwr3_start, row$fwr3_end)
-      #}
-    }
-    if(!is.na(row$junction)){
-      row$cdr3_start <- 104*3+1
-      row$cdr3_end <- 104*3+1 + row$junction_length -6 - 1 + dgaps_added - dpos_del
-      row$fwr4_start <- 104*3+1 + row$junction_length -6 - 1 + 1 + dgaps_added - dpos_del
-      row$fwr4_end <- nchar(row$sequence_alignment)
-      if(gsub("\\.","",substr(row$sequence_alignment, row$cdr3_start, row$cdr3_end)) != row$cdr3){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " cdr3 doesn't match")
-          #next
-        }else{
-          warning(row$sequence_id, " cdr3 doesn't match but insertions present")
-        }
-      }#else{
-      row$cdr3 <- gsub("\\.","",substr(row$sequence_alignment, row$cdr3_start, row$cdr3_end))
-      #}
-      #if(substr(row$sequence_alignment, row$fwr4_start, row$fwr4_end) != row$fwr4){
-      # stop(row$sequence_id, " fwr4 doesn't match")
-      #}
-      row$fwr4 <- gsub("\\.","",substr(row$sequence_alignment, row$fwr4_start, row$fwr4_end))
-      if(gsub("\\.","",substr(row$sequence_alignment, 310, 
-                              310+row$junction_length-1 + dgaps_added - dpos_del)) != row$junction){
-        if(insertion_sites == 0){
-          warning(row$sequence_id, " junction doesn't match")
-          next
-        }else{
-          warning(row$sequence_id, " junction doesn't - insertions present")
-          next
-        }
-      }else{
-        row$junction <- gsub("\\.","",substr(row$sequence_alignment, 310, 
-                                             310+row$junction_length-1 + dgaps_added - dpos_del))
-        row$junction_aa <- alakazam::translateDNA(row$junction)
-      }
-    }
-    rm_cols <- c(
-      "v_sequence_alignment", "d_sequence_alignment", "j_sequence_alignment",
-      "v_germline_alignment", "d_germline_alignment", "j_germline_alignment",
-      "v_alignment_start", "d_alignment_start", "j_alignment_start",
-      "v_alignment_end", "d_alignment_end", "j_alignment_end",
-      "v_sequence_alignment_aa", "d_sequence_alignment_aa", "j_sequence_alignment_aa",
-      "v_germline_alignment_aa", "d_germline_alignment_aa", "j_germline_alignment_aa"
-    )
-    row <- row[,!names(row) %in% rm_cols]
-    results <- dplyr::bind_rows(results, row)
-  }
-  return(results)
-}
-
-# Get the MRCA sequence of a particular tree
-#
-# param clone      A row of a \link{formatClones} object
-# return The MRCA sequence of that clone
-getMRCASeq <- function(clone){
-  mrca_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
-  mrca <- clone$trees[[1]]$nodes[[mrca_node]]$sequence
-  return(mrca)
-}
-
-# \code{updateAIRRGerm} Updates an AIRR-table to have a new germline alignment and associated germline statistics 
-# 
-# Uses the MRCA of a given clone as the germline alignment and updates the statistics by the associated IgBlast values
-# 
-# param airr_data      the airr-table used to create the clones object
-# param clones   a clones object from \link{formatClones}
-# param igblast  the file path to igblast
-# param igblast_database the file path to the igblast database
-# param references the file path to the references to be used with igblast 
-# param organism the organism of the associated airr_data. Examples include "human" and "mouse"
-# param locus if BCR data use "Ig" if TCR data use "TR"
-# param outdir the directory to save intermediate files to
-# param nproc the number of processors to use. Default is one. 
-# param clone the name of the proper clone_id column to use
-# param v     the v string from resolving the germline previously
-# param j     the j string from resolving the germline previously 
-# param v_light the v string from resolving the germline previously. Only for HL trees
-# param j_light the j string from resolving the germline previously. Only for HL trees 
-# return directory of downloaded IMGT BCR and TCR reference files
-# 
-updateAIRRGerm <- function(airr_data, clones, igblast, igblast_database, 
-                           references, igdata = NULL, organism = "human", 
-                           locus = "Ig", outdir, nproc = 1, clone = "clone_id", 
-                           v = NULL, j = NULL, v_light = NULL, j_light = NULL,...){
-  if(is.null(igdata)){
-    igdata <- igblast
-  }
-  mrcas <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
-    if(clones$data[[x]]@phylo_seq != "hlsequence"){
-      value <- getMRCASeq(clones[x,])
-      if(!is.null(v) & !is.null(j)){
-        mrca_junc <- substring(value, nchar(v)+1, nchar(value) - nchar(j))
-        value <- paste0(v, mrca_junc, j)
-      }
-      if(clones$data[[x]]@phylo_seq == "sequence"){
-        seq_id <- paste0(clones$clone_id[x], "_heavy")
-        og_germ <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
-                                                  airr_data$locus == "IGH"][1]
-      } else{
-        seq_id <- paste0(clones$clone_id[x], "_light")
-        og_germ <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
-                                                  airr_data$locus != "IGH"][1]
-      }
-      numbers <- clones$data[[x]]@numbers
-      gaps <- dplyr::setdiff(1:max(numbers), numbers)
-      og_germ <- paste0(strsplit(og_germ, "")[[1]][-gaps], collapse = "")
-      if(nchar(og_germ) > nchar(value)){
-        diff <- nchar(og_germ) - nchar(value)
-        pad_val <- substring(og_germ, nchar(og_germ) - diff + 1, nchar(og_germ))
-        value <- paste0(value, pad_val)
-      }
-    }else{
-      value <- getMRCASeq(clones[x,])
-      restart_point <- which(diff(clones$data[[x]]@numbers) < 0) + 1
-      hnumbers <- clones$data[[x]]@numbers[1:restart_point-1]
-      lnumbers <- clones$data[[x]]@numbers[restart_point:length(clones$data[[x]]@numbers)]
-      hvalue <- substring(value, 1, length(hnumbers))
-      if(!is.null(v) & !is.null(j)){
-        mrca_junc <- substring(hvalue, nchar(v)+1, nchar(hvalue) - nchar(j))
-        hvalue <- paste0(v, mrca_junc, j)
-      }
-      lvalue <- substring(value, length(hnumbers)+1, nchar(value))
-      if(!is.null(v_light) & !is.null(j_light)){
-        mrca_junc <- substring(lvalue, nchar(v_light)+1, nchar(lvalue) - nchar(j_light))
-        lvalue <- paste0(v_light, mrca_junc, j_light)
-      }
-      seq_id <- c(paste0(clones$clone_id[x], "_heavy"), paste0(clones$clone_id[x], "_light"))
-      
-      og_germ <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
-                                                airr_data$locus == "IGH"][1]
-      gaps <- dplyr::setdiff(1:max(hnumbers), hnumbers)
-      og_germ <- paste0(strsplit(og_germ, "")[[1]][-gaps], collapse = "")
-      og_lgerm <- airr_data$germline_alignment[airr_data[[clone]] == clones$clone_id[x] &
-                                                 airr_data$locus != "IGH"][1]
-      gaps <- dplyr::setdiff(1:max(lnumbers), lnumbers)
-      og_lgerm <- paste0(strsplit(og_lgerm, "")[[1]][-gaps], collapse = "")
-      if(nchar(og_germ) > nchar(hvalue)){
-        diff <- nchar(og_germ) - nchar(hvalue)
-        pad_val <- substring(og_germ, nchar(og_germ) - diff + 1, nchar(og_germ))
-        hvalue <- paste0(hvalue, pad_val)
-      }
-      if(nchar(og_lgerm) > nchar(lvalue)){
-        diff <- nchar(og_lgerm) - nchar(hvalue)
-        pad_val <- substring(og_lgerm, nchar(og_lgerm) - diff + 1, nchar(og_lgerm))
-        lvalue <- paste0(lvalue, pad_val)
-      }
-      value <- c(hvalue, lvalue)
-    }
-    temp <- data.frame(seq_id = seq_id,
-                       sequence = value)
-    return(temp)
-  }, mc.cores = nproc))
-  
-  sink(path.expand(file.path(outdir, "mrca_seqs.fasta")))
-  for(i in 1:nrow(mrcas)){
-    cat(paste0(">", mrcas$seq_id[i]), "\n", mrcas$sequence[i], "\n", sep = "")
-  }
-  sink()
-  
-  ig_data <- assignGenes(file.path(outdir, "mrca_seqs.fasta"),
-                         igblast = igblast,
-                         refs = igblast_database,
-                         igdata = igdata, 
-                         outfile = file.path(outdir, "igblast.tsv"),
-                         nproc = nproc, ...)
-  ig_data <- addGaps(ig_data, gapdb=references, organism=organism, locus=locus, ...)
-  airr::write_rearrangement(ig_data, file.path(outdir, "igblast.tsv"))
-  ig_data[[clone]] <- substring(ig_data$sequence_id, 1, nchar(ig_data$sequence_id) - 6)
-  
-  # get the length values 
-  ig_data$v_germline_length <- as.numeric(ig_data$v_germline_end - ig_data$v_germline_start + 1)
-  ig_data$d_germline_length <- as.numeric(ig_data$d_germline_end - ig_data$d_germline_start + 1)
-  ig_data$j_germline_length <- as.numeric(ig_data$j_germline_end - ig_data$j_germline_start + 1)
-  
-  if(sum(is.na(ig_data$j_germline_length)) != 0){
-    bad_clones <- ig_data[[clone]][which(is.na(ig_data$j_germline_length))]
-    tmp <- airr_data[airr_data[[clone]] %in% bad_clones,]
-    ig_data <- ig_data[!ig_data[[clone]] %in% bad_clones,]
-    if(nrow(ig_data) == 0){
-      # return the the orignal data as the MRCA failed 
-      return(airr_data)
-    }
-  }
-  
-  # make the germline__mask column 
-  ig_data$germline_alignment_d_mask <- unlist(parallel::mclapply(1:nrow(ig_data), function(x){
-    vseq <- substring(ig_data$germline_alignment[x], 1, ig_data$v_germline_length[x])
-    jseq <- substring(ig_data$germline_alignment[x], nchar(ig_data$germline_alignment[x]) - ig_data$j_germline_length[x] + 1, 
-                      nchar(ig_data$germline_alignment[x]))
-    nseq <- paste0(rep("N", nchar(ig_data$germline_alignment[x]) - sum(nchar(vseq), nchar(jseq))),
-                   collapse = "")
-    gmask <- paste0(vseq, nseq, jseq)
-    return(gmask)
-  }, mc.cores = nproc))
-  airr::write_rearrangement(ig_data, file.path(outdir, "igblast.tsv"))
-  cols_to_update <- c("germline_alignment", "germline_alignment_d_mask", "v_germline_start", "v_germline_end",
-                      "d_germline_start", "d_germline_end", "j_germline_start", "j_germline_end",
-                      "np1_length", "np2_length", "v_germline_length", "d_germline_length", "j_germline_length",
-                      "v_call", "d_call", "j_call")
-  airr_data <- merge(airr_data, ig_data[, c(clone, "locus", cols_to_update)], 
-                     by = c(clone, "locus"), all.x = TRUE, suffixes = c("", ".ig"))
-  for (col in cols_to_update) {
-    ig_col <- paste0(col, ".ig")
-    if(ig_col %in% names(airr_data)){
-      tmp <- airr_data[[col]]
-      airr_data[[col]] <- airr_data[[ig_col]]
-      airr_data[[ig_col]] <- tmp
-    }
-  }
-  airr_data <- airr_data[!is.na(airr_data$v_call),]
-  airr::write_rearrangement(airr_data, file.path(outdir, "updated_airr_data.tsv"))
-  return(airr_data)
 }
 
 #' \code{readIMGT} read in IMGT database
@@ -2209,37 +1288,28 @@ checkGenesUCA <- function(sub, cons, v, cdr3, j, tree_df, subDir, clone_ids, reg
 }
 
 # gets the tree table from the tree building process
-# @param build    The tree building method used 
 # @param dir      The directory that the tree building method saved to 
 # @param subDir   The specific directory for the clone of interest 
 # @param clone_ids  The specific clone_id of interest 
 # @param repertoire_wide  A logical that indicates if tree building was done on 
 #                         a repertoire wide level or not 
-getTreeTable <- function(build, dir, subDir, clone_ids, repertoire_wide){
-  if(build == "igphyml"){
-    if(repertoire_wide){
-      tree_df <- suppressWarnings(read.table(file = file.path(dir, "sample", "sample_recon_sample",
-                                                              paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                                             header = F, sep = "\t"))
-      file.copy(file.path(dir, "sample", "sample_recon_sample",
-                          paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                overwrite = TRUE)
-    } else{
-      tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample", "sample_recon_sample",
-                                                              paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                                             header = F, sep = "\t"))
-      file.copy(file.path(subDir, "sample", "sample_recon_sample",
-                          paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                overwrite = TRUE)
-    }
-  } else if(build == "pml"){
-    tree_df <- suppressWarnings(read.table(file = file.path(subDir, "codon_table.txt"), 
+getTreeTable <- function(dir, subDir, clone_ids, repertoire_wide){
+  if(repertoire_wide){
+    tree_df <- suppressWarnings(read.table(file = file.path(dir, "sample", "sample_recon_sample",
+                                                            paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
                                            header = F, sep = "\t"))
-    file.rename(file.path(subDir, "codon_table.txt"), 
-                file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
-                overwrite = TRUE)
+    file.copy(file.path(dir, "sample", "sample_recon_sample",
+                        paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+              file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+              overwrite = TRUE)
+  } else{
+    tree_df <- suppressWarnings(read.table(file = file.path(subDir, "sample", "sample_recon_sample",
+                                                            paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+                                           header = F, sep = "\t"))
+    file.copy(file.path(subDir, "sample", "sample_recon_sample",
+                        paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+              file.path(subDir, paste0(clone_ids, ".fasta_igphyml_rootprobs_hlp.txt")), 
+              overwrite = TRUE)
   }
   
   colnames(tree_df) = c("site", "codon", "partial_likelihood", "log_likelihood_site",
@@ -2514,7 +1584,6 @@ pad_to_codon <- function(vec){
 # @param clones     A clones object from \link{formatClones}
 # @param data       The airr-table associated with the clones object
 # @param dir        The directory where data should be saved to 
-# @param build      What tree building method to use
 # @param id         The run id
 # @param resolve_germ Resolve the V and J genes within the clone?
 # @param all_germlines The germlines table needed for resolve_germ
@@ -2530,13 +1599,7 @@ pad_to_codon <- function(vec){
 # @param references IMGT references read in using \link{readIMGT}
 # @param repertoire_wide Were the trees made using repertoire_wide parameters or do they need to made still?
 # @param exec       The exec file path for the tree building method (igphyml)
-# @param igblast    Exec for igblast
-# @param igblast_database path to where the igblast database is 
-# @param ref_path   The path to the reference parent folder to use with igblast
-# @param igdata     The path to what internal data should be used for igblast
-# @param organism   The organism to use igblast with 
 # @param partition The partition to use when building the tree
-# @param trunklength  The specified trunk length
 # @param v_germ_start V germline start column 
 # @param v_germ_end   V germline end column 
 # @param j_germ_start J germline start column 
@@ -2546,17 +1609,15 @@ pad_to_codon <- function(vec){
 # @param search       method for the OLGA bit of the UCA process
 # @param cell         The cell id column name 
 # @param split_light  A logical to indicate if a clone shoule be split by light chain subgroup or not
-processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
+processCloneGermline <- function(clone_ids, clones, data, dir, id,
                                  resolve_germ = FALSE, all_germlines = NULL, 
                                  v_call = "v_call", j_call = "j_call", 
                                  locus = "locus", quiet = 0, clone = "clone_id",
                                  data_clone = "clone_id", seq_id = "sequence_id", 
                                  chain = "H", check_genes = FALSE, 
                                  repertoire_wide = FALSE, exec = NULL, 
-                                 igblast = NULL, igdata= NULL,
-                                 igblast_database = NULL, ref_path = NULL,
-                                 organism = 'human', partition = "single", 
-                                 trunklength = NULL, v_germ_start = "v_germline_start", 
+                                 partition = "single", 
+                                 v_germ_start = "v_germline_start", 
                                  v_germ_end = "v_germline_end", 
                                  j_germ_start = "j_germline_start", 
                                  j_germ_end = "j_germline_end", 
@@ -2576,48 +1637,25 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
   }
   
   if(!repertoire_wide){
-    if(build == "igphyml"){
-      sub <- tryCatch({
+    sub <- tryCatch({
+      withr::with_dir(subDir, {
+        getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+                 asrp = TRUE, nproc = 1, partition = partition, ...)
+      })
+    }, error = function(e){
+      message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                    "Error was:", conditionMessage(e)))
+      tryCatch({
         withr::with_dir(subDir, {
-          getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, nproc = 1, partition = partition,
-                   trunkl = trunklength, ...)
+          getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+                   asrp = TRUE, nproc = 1, partition = partition, ...)
         })
-      }, error = function(e){
-        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
-                      "Error was:", conditionMessage(e)))
-        tryCatch({
-          withr::with_dir(subDir, {
-            getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, nproc = 1, partition = partition,
-                     trunkl = trunklength, ...)
-          })
-        }, error = function(e2){
-          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
-                     "Final error was:", conditionMessage(e2)))
-          return(NULL)
-        })
+      }, error = function(e2){
+        message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                      "Final error was:", conditionMessage(e2)))
+        return(NULL)
       })
-    } else if(build == "pml"){
-      sub <- tryCatch({
-        getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                 nproc = 1, ...)
-      }, error = function(e){
-        message(paste("getTrees failed for clone", clone_ids, "--retrying,",
-                      "Error was:", conditionMessage(e)))
-        tryCatch({
-          getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                   nproc = 1, ...)
-        }, error = function(e2){
-          message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
-                        "Final error was:", conditionMessage(e2)))
-          return(NULL)
-        })
-      })
-    } else{
-      stop("the tree bulding method ", build, "is not supported")
-    }
-    
+    })
     if(is.null(sub)){
       return(NULL)
     }
@@ -2675,7 +1713,7 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
     cdr3_index <- (min(which(regions == "cdr3")) - 3):(max(which(regions == "cdr3")) + 3)
   }
   
-  tree_df <- getTreeTable(build, dir, subDir, clone_ids, repertoire_wide)
+  tree_df <- getTreeTable(dir, subDir, clone_ids, repertoire_wide)
   
   germline_values <- get_starting_junction(tree_df, sub, regions)
   v <- germline_values$v
@@ -2717,8 +1755,6 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
         has_multiple_light$ungapped <- pad_to_codon(has_multiple_light$ungapped)
         has_multiple_light$germline_d_mask <- pad_to_codon(has_multiple_light$germline_d_mask)
         saveRDS(has_multiple_light, file.path(subDir, "all_germlines_light.rds"))
-        
-        # check to see if it is worth doing 
         
         germlines_light <- compute_germlines(has_mult = has_multiple_light, 
                                              sub_data_ref = sub_data,
@@ -2769,194 +1805,116 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
       j <- germlines$j
       saveRDS(germlines, file.path(subDir, "most_likely_germlines.rds"))
       
-      if(!is.null(igblast)){
-        sub_data <- sub_data[sub_data[[clone]] == sub$clone_id,]
-        if(quiet > 0){
-          print("updating cuts based on MRCA")
-        }
-        sub_data <- tryCatch({
-          updateAIRRGerm(airr_data = sub_data, clones = sub, igblast = igblast, 
-                         igblast_database = igblast_database, references = ref_path, 
-                         igdata = igdata, organism = organism, locus = "Ig", 
-                         outdir = subDir, nproc = 1, clone = data_clone, v = v, 
-                         j = j, v_light = v_light, j_light = j_light, ...)
-        }, error = function(e) {
-          sub_data
-        })
-      } else{
-        if(sub$data[[1]]@phylo_seq == "sequence" || sub$data[[1]]@phylo_seq == "hlsequence"){
-          cons[[v_call]] <- germlines$v_call
-          cons[[j_call]] <- germlines$j_call
-          sub_data[[v_call]][sub_data[[locus]] == "IGH"] <- germlines$v_call
-          sub_data[[v_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$v_start
-          sub_data[[v_germ_end]][sub_data[[locus]] == "IGH" ] <- germlines$v_end
-          sub_data[[j_call]][sub_data[[locus]] == "IGH"] <- germlines$j_call
-          sub_data[[j_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$j_start
-          sub_data[[j_germ_end]][sub_data[[locus]] == "IGH"] <- germlines$j_end
-          indx <- which(has_multiple$v_call == germlines$v_call & 
-                          has_multiple$j_call == germlines$j_call)
-          sub_data[[germ_align]][sub_data[[locus]] == "IGH"] <- has_multiple$germline[indx]
-          sub_data[[germ_mask]][sub_data[[locus]] == "IGH"] <- has_multiple$germline_d_mask[indx]
-        } else if(sub$data[[1]]@phylo_seq == "lsequence"){
-          cons[[v_call]] <- germlines$v_call
-          cons[[j_call]] <- germlines$j_call
-          sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines$v_call
-          sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$v_start
-          sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$v_end
-          sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines$j_call
-          sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$j_start
-          sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$j_end
-          indx <- which(has_multiple$v_call == germlines$v_call & 
-                          has_multiple$j_call == germlines$j_call)
-          sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple$germline[indx]
-          sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple$germline_d_mask[indx]
-        }
-        if(sub$data[[1]]@phylo_seq == "hlsequence"){
-          cons_light[[v_call]] <- germlines_light$v_call
-          cons_light[[j_call]] <- germlines_light$j_call
-          sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines_light$v_call
-          sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$v_start
-          sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$v_end
-          sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines_light$j_call
-          sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$j_start
-          sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$j_end
-          indx <- which(has_multiple_light$v_call == germlines_light$v_call & 
-                          has_multiple_light$j_call == germlines_light$j_call)
-          sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline[indx]
-          sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline_d_mask[indx]
-        }
+      if(sub$data[[1]]@phylo_seq == "sequence" || sub$data[[1]]@phylo_seq == "hlsequence"){
+        cons[[v_call]] <- germlines$v_call
+        cons[[j_call]] <- germlines$j_call
+        sub_data[[v_call]][sub_data[[locus]] == "IGH"] <- germlines$v_call
+        sub_data[[v_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$v_start
+        sub_data[[v_germ_end]][sub_data[[locus]] == "IGH" ] <- germlines$v_end
+        sub_data[[j_call]][sub_data[[locus]] == "IGH"] <- germlines$j_call
+        sub_data[[j_germ_start]][sub_data[[locus]] == "IGH"] <- germlines$j_start
+        sub_data[[j_germ_end]][sub_data[[locus]] == "IGH"] <- germlines$j_end
+        indx <- which(has_multiple$v_call == germlines$v_call & 
+                        has_multiple$j_call == germlines$j_call)
+        sub_data[[germ_align]][sub_data[[locus]] == "IGH"] <- has_multiple$germline[indx]
+        sub_data[[germ_mask]][sub_data[[locus]] == "IGH"] <- has_multiple$germline_d_mask[indx]
+      } else if(sub$data[[1]]@phylo_seq == "lsequence"){
+        cons[[v_call]] <- germlines$v_call
+        cons[[j_call]] <- germlines$j_call
+        sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines$v_call
+        sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$v_start
+        sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$v_end
+        sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines$j_call
+        sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines$j_start
+        sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines$j_end
+        indx <- which(has_multiple$v_call == germlines$v_call & 
+                        has_multiple$j_call == germlines$j_call)
+        sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple$germline[indx]
+        sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple$germline_d_mask[indx]
       }
-      
-      # update the germline of the clone and rerun the tree building 
-      if(quiet > 0){
-        print("reconstructing trees")
-      }
-      
-      saveRDS(sub, file.path(subDir, "original_clone.rds"))
-      sub_ids <- sub$data[[1]]@data$sequence_id
-      sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
-      if(cell %in% colnames(sub_data)){
-        sub_data_clone <- sub_data[sub_data[[cell]] %in% sub_data_clone[[cell]],]
-      }
-      
-      sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
-                          dup_singles = TRUE, minseq = 1, 
-                          split_light = split_light, ...)
-      
-      # rename the old folder 
-      file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
-      
-      if(build == "igphyml"){
-        sub <- tryCatch({
-          withr::with_dir(subDir, {
-            getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                     asrp = TRUE, nproc = 1, partition = partition,
-                     trunkl = trunklength, ...)
-          })
-        }, error = function(e){
-          message(paste("getTrees failed for clone", clone_ids, "--retrying,",
-                        "Error was:", conditionMessage(e)))
-          tryCatch({
-            withr::with_dir({
-              getTrees(sub, build = build, exec = exec, rm_temp = FALSE, dir = subDir,
-                       asrp = TRUE, nproc = 1, partition = partition,
-                       trunkl = trunklength, ...)
-            })
-          }, error = function(e2){
-            message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
-                          "Final error was:", conditionMessage(e2)))
-            return(NULL)
-          })
-        })
-      } else if(build == "pml"){
-        sub <- tryCatch({
-          getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                   nproc = 1, ...)
-        }, error = function(e){
-          message(paste("getTrees failed for clone", clone_ids, "--retrying,",
-                        "Error was:", conditionMessage(e)))
-          tryCatch({
-            getTrees(sub, build = build, rm_temp = FALSE, dir = subDir, asrp = TRUE,
-                     nproc = 1, ...)
-          }, error = function(e2){
-            message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
-                          "Final error was:", conditionMessage(e2)))
-            return(NULL)
-          })
-        })
-      } else{
-        stop("the tree bulding method ", build, "is not supported")
-      }
-      
-      tree_df <- getTreeTable(build, dir, subDir, clone_ids, repertoire_wide)
-      regions <- sub$data[[1]]@region
       
       if(sub$data[[1]]@phylo_seq == "hlsequence"){
-        heavy_r <- regions[1:nchar(sub$data[[1]]@germline)]
-        light_r <- regions[(nchar(sub$data[[1]]@germline) + 1): length(regions)]
-        cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
+        cons_light[[v_call]] <- germlines_light$v_call
+        cons_light[[j_call]] <- germlines_light$j_call
+        sub_data[[v_call]][sub_data[[locus]] != "IGH"] <- germlines_light$v_call
+        sub_data[[v_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$v_start
+        sub_data[[v_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$v_end
+        sub_data[[j_call]][sub_data[[locus]] != "IGH"] <- germlines_light$j_call
+        sub_data[[j_germ_start]][sub_data[[locus]] != "IGH"] <- germlines_light$j_start
+        sub_data[[j_germ_end]][sub_data[[locus]] != "IGH"] <- germlines_light$j_end
+        indx <- which(has_multiple_light$v_call == germlines_light$v_call & 
+                        has_multiple_light$j_call == germlines_light$j_call)
+        sub_data[[germ_align]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline[indx]
+        sub_data[[germ_mask]][sub_data[[locus]] != "IGH"] <- has_multiple_light$germline_d_mask[indx]
       }
-      
-      germline_values <- get_starting_junction(tree_df, sub, regions)
-      v <- germline_values$v
-      j <- germline_values$j
-      cdr3 <- germline_values$cdr3
-      
-      if(sub$data[[1]]@phylo_seq == "hlsequence"){
-        v_light <- germline_values$v_light
-        j_light <- germline_values$j_light
-        light_cdr3 <- germline_values$light_cdr3
-        nsite_heavy <- nchar(sub$data[[1]]@germline)/3
-        tree_df_light <- tree_df[tree_df$site >= nsite_heavy,]
-        tree_df <- tree_df[tree_df$site < nsite_heavy,]
-        tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
-      } 
     }
-  } 
+
+    if(quiet > 0){
+      print("reconstructing trees")
+    }
+    
+    saveRDS(sub, file.path(subDir, "original_clone.rds"))
+    sub_ids <- sub$data[[1]]@data$sequence_id
+    sub_data_clone <- sub_data[sub_data[[seq_id]] %in% sub_ids,]
+    if(cell %in% colnames(sub_data)){
+      sub_data_clone <- sub_data[sub_data[[cell]] %in% sub_data_clone[[cell]],]
+    }
+    
+    sub <- formatClones(sub_data_clone, chain = chain, clone = clone, 
+                        dup_singles = TRUE, minseq = 1, 
+                        split_light = split_light, ...)
+    
+    # rename the old folder 
+    file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
+    
+    sub <- tryCatch({
+      withr::with_dir(subDir, {
+        getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+                 asrp = TRUE, nproc = 1, partition = partition,
+                 trunkl = trunklength, ...)
+      })
+    }, error = function(e){
+      message(paste("getTrees failed for clone", clone_ids, "--retrying,",
+                    "Error was:", conditionMessage(e)))
+      tryCatch({
+        withr::with_dir({
+          getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+                   asrp = TRUE, nproc = 1, partition = partition,
+                   trunkl = trunklength, ...)
+        })
+      }, error = function(e2){
+        message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
+                      "Final error was:", conditionMessage(e2)))
+        return(NULL)
+      })
+    })
+      
+    tree_df <- getTreeTable(dir, subDir, clone_ids, repertoire_wide)
+    regions <- sub$data[[1]]@region
+    
+    if(sub$data[[1]]@phylo_seq == "hlsequence"){
+      heavy_r <- regions[1:nchar(sub$data[[1]]@germline)]
+      light_r <- regions[(nchar(sub$data[[1]]@germline) + 1): length(regions)]
+      cdr3_index <- (min(which(heavy_r == "cdr3")) - 3):(max(which(heavy_r == "cdr3")) + 3)
+    }
+    
+    germline_values <- get_starting_junction(tree_df, sub, regions)
+    v <- germline_values$v
+    j <- germline_values$j
+    cdr3 <- germline_values$cdr3
+    
+    if(sub$data[[1]]@phylo_seq == "hlsequence"){
+      v_light <- germline_values$v_light
+      j_light <- germline_values$j_light
+      light_cdr3 <- germline_values$light_cdr3
+      nsite_heavy <- nchar(sub$data[[1]]@germline)/3
+      tree_df_light <- tree_df[tree_df$site >= nsite_heavy,]
+      tree_df <- tree_df[tree_df$site < nsite_heavy,]
+      tree_df_light$site <- tree_df_light$site - min(tree_df_light$site)
+    } 
+  }
   
   saveRDS(sub, file.path(subDir, "clone.rds"))
-  
-  if(search %in% c("codon_depth", "nt_depth")){
-    if(quiet > 0){
-      print(paste("getting depth values for", sub$clone_id))
-    }
-    if(sub$trees[[1]]$edge_type != "genetic_distance"){
-      sub <- scaleBranches(sub, edge_type = "genetic_distance")
-    }
-    germline_node <- ape::getMRCA(sub$trees[[1]], sub$trees[[1]]$tip.label)
-    mrca_node <- ape::getMRCA(sub$trees[[1]], setdiff(sub$trees[[1]]$tip.label, "Germline"))
-    co <- ape::dist.nodes(sub$trees[[1]])
-    dist <- data.frame(co[germline_node:nrow(co), germline_node])
-    colnames(dist) <- "node_dist_grm"
-    rownames(dist) <- germline_node:nrow(co)
-    indx <- which(rownames(dist) == mrca_node)
-    trunk_length <- dist$node_dist_grm[indx]
-    if(sub$data[[1]]@phylo_seq != "hlsequence"){
-      mrca <- getNodeSeq(sub, mrca_node, sub$trees[[1]])[[1]]
-      mrca <- gsub("\\.", "", mrca)
-      cdr3_sites <- length(cdr3_index)/3
-      center <- trunk_length*cdr3_sites
-    } else{
-      hmrca <- getNodeSeq(sub, mrca_node, sub$trees[[1]])[[1]]
-      lmrca <- getNodeSeq(sub, mrca_node, sub$trees[[1]])[[2]]
-      hmrca <- gsub("\\.", "", hmrca)
-      lmrca <- gsub("\\.", "", lmrca)
-      center <- trunk_length*((length(cdr3_index)-6)/length(heavy_r))
-      lcdr3_index <- length(which(light_r == "cdr3"))
-      lcdr3_sites <- length(lcdr3_index)/3
-      lcenter <- trunk_length*lcdr3_sites
-      cdr3_sites <- length(cdr3_index)/3
-      center <- trunk_length*cdr3_sites
-      file_path_lmrca <- file.path(subDir, paste("lmrca.txt"))
-      file_path_lcenter <- file.path(subDir, paste("lcenter.txt"))
-      writeLines(paste0(lmrca, collapse = ""), con = file_path_lmrca)
-      writeLines(paste(lcenter), con = file_path_lcenter)
-    }
-    file_path_mrca <- file.path(subDir, paste("mrca.txt"))
-    file_path_center <- file.path(subDir, paste("center.txt"))
-    writeLines(paste0(mrca, collapse = ""), con = file_path_mrca)
-    writeLines(paste(center), con = file_path_center)
-  }
   
   if(check_genes){
     if(quiet > 0){
@@ -3042,9 +2000,8 @@ processCloneGermline <- function(clone_ids, clones, data, dir, build, id,
 # @param model_folder_igl The file path to the model parameters for IGL provide by OLGA
 # @param quiet      Amount of noise to print out
 # @param search     Search the codon or nt space
-# @param sd         Currently being used to increase the weight of for the depth search options -- experimental
 callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, model_folder,
-                     model_folder_igk, model_folder_igl, quiet, search, sd, ...){
+                     model_folder_igk, model_folder_igl, quiet, search, ...){
   clone_ids <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- z
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -3052,6 +2009,7 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     }
     return(value)
   })), collapse = ",")
+  
   starting_germlines <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_testing_germline.txt"))
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -3059,6 +2017,7 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     }
     return(value)
   })), collapse = ",")
+  
   junction_location <- paste0(unlist(lapply(clones$clone_id, function(z){
     value <- path.expand(file.path(dir, paste0(id, "_", z), "olga_junction_positions.txt"))
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
@@ -3066,6 +2025,7 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     }
     return(value)
   })), collapse = ",")
+  
   tree_tables <- paste0(unlist(lapply(clones$clone_id, function(z){
     if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "sequence"){
       value <- path.expand(file.path(dir, paste0(id, "_", z), 
@@ -3081,38 +2041,10 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     }
     return(value)
   })), collapse = ",")
+  
   chains <- paste0(unlist(lapply(clones$clone_id, function(z){
     loci <- strsplit(clones$locus[which(clones$clone_id == z)], ",")[[1]]
   })), collapse = ",")
-  if(search %in% c("codon_depth", "nt_depth")){
-    mrcas <- paste0(unlist(lapply(clones$clone_id, function(z){
-      if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "sequence"){
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "mrca.txt"))
-      } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "mrca.txt"))
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "lmrca.txt"))
-      } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "lsequence"){
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "mrca.txt"))
-      }
-      return(value)
-    })), collapse = ",")
-    
-    centers <- paste0(unlist(lapply(clones$clone_id, function(z){
-      if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "sequence"){
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "center.txt"))
-      } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "hlsequence"){
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "center.txt"))
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "lcenter.txt"))
-      } else if(clones$data[[which(clones$clone_id == z)]]@phylo_seq == "lsequence"){
-        value <- path.expand(file.path(dir, paste0(id, "_", z), "center.txt"))
-      }
-      return(value)
-    })), collapse = ",")
-    
-  } else{
-    mrcas <- "NULL"
-    centers <- "NULL"
-  }
   
   args <- c(
     "--clone_ids", clone_ids, 
@@ -3128,28 +2060,24 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
     "--junction_locations", junction_location,
     "--tree_tables", tree_tables,
     "--chains", chains,
-    "--search", search, 
-    "--mrcas", mrcas, 
-    "--centers", centers, 
-    "--sd", sd
+    "--search", search
   )
+  
   args_keys <- args[seq(1, length(args), 2)]
   args_values <- args[seq(2, length(args), 2)]
   args_list <- stats::setNames(as.list(args_values), gsub("^--", "", args_keys))
-  json_str <- paste0(
-    "{\n",
-    paste(
-      sprintf('  "%s": "%s"', names(args_list), gsub('"', '\\"', args_list)),
-      collapse = ",\n"
-    ),
-    "\n}"
-  )
+  
+  json_str <- paste0("{\n", paste(sprintf(
+    '  "%s": "%s"', names(args_list), gsub('"', '\\"', args_list)), collapse = ",\n"),
+    "\n}")
+  
   writeLines(json_str, file.path(path.expand(dir), "olga_args.json"))
+  
   cmd <- paste(
     shQuote(python), 
     shQuote(path.expand(uca_script)), 
-    "--args_json", shQuote(file.path(path.expand(dir), "olga_args.json"))
-  )
+    "--args_json", shQuote(file.path(path.expand(dir), "olga_args.json")))
+  
   olga_check <- tryCatch(system(cmd), error=function(e)e)
   if("error" %in% class(olga_check)){
     stop("there was an error running the get_UCA script. This is likely due to 
@@ -3889,7 +2817,6 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param clones        AIRR-table containing sequences \link{formatClones}
 #' @param data          The AIRR-table that was used to make the clones object.
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
-#' @param build         Name of the tree building method. Currently only IgPhyML is supported.
 #' @param exec          File path to the tree building executable
 #' @param resolve_germ  Resolve the V and J gene annotations within each clone?
 #' @param repertoire_wide Build build trees using parameters inferred from the entire dataset?
@@ -3911,21 +2838,9 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param clone         The name of the clone id column used in \link{formatClones}. 
 #'                      If split_light was used in \link{formatClones}, use "clone_subgroup_id".
 #' @param cell          The name of the cell id in the AIRR table used to generate \link{formatClones}
-#' @param sampling_method How to subsample. Methods include 'random', 'lm' (least mutated),
-#'                      and 'ratio' (a weighted sampling with heavier weights
-#'                      towards the least mutated sequences). The later two methods
-#'                      require 'mu_freq' to be passed as a trait when running
-#'                      \link{formatClones}
 #' @param subsample_size The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample -- in testing
 #' @param search        Search codon or nt space
 #' @param check_genes   Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
-#' @param igblast       File path to igblast 
-#' @param igblast_database The file path to the database setup for igblast 
-#' @param ref_path      The file path to your references parent folder.
-#' @param igdata        The file path to the data used for igblast (NULL for internal data with igblast)
-#' @param organism      The type of organism to align to if using igblast. 
-#' @param trunklength   The specified trunklength
-#' @param sd            The standard deviation for the "depth" search methods
 #' @param fill_gaps     A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments
 #' @param genotyped     A logical that indicates that AIRR-table has been genotyped and will only use the found annotations to create various germlines
 #' @param split_light   A logical that indicates if different light chain groups should be used to further split a clone (recommended for paired data)
@@ -3938,20 +2853,16 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' }
 #' @seealso \link{getTrees} 
 #' @export
-getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml", 
-                            exec = NULL, resolve_germ = FALSE, 
-                            repertoire_wide = FALSE, partition = "single", 
-                            model_folder, model_folder_igk = NULL, 
-                            model_folder_igl = NULL, python = "python3", 
-                            id = "sample", max_iters = 100, nproc = 1, 
+getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL, 
+                            resolve_germ = FALSE, repertoire_wide = FALSE, 
+                            partition = "single", model_folder, 
+                            model_folder_igk = NULL, model_folder_igl = NULL, 
+                            python = "python3", id = "sample", 
+                            max_iters = 100, nproc = 1, 
                             rm_temp = TRUE, quiet = 0, chain = "H",
                             references = NULL, clone = "clone_id", 
-                            cell = "cell_id", sampling_method = 'random', 
-                            subsample_size = NA, search = "codon", 
-                            check_genes = TRUE, igblast = NULL, 
-                            igblast_database = NULL, ref_path = NULL, 
-                            igdata = NULL, organism = 'human', 
-                            trunklength = NULL, sd = 0.5, fill_gaps = TRUE, 
+                            cell = "cell_id", subsample_size = NA, 
+                            search = "codon", check_genes = TRUE, fill_gaps = TRUE, 
                             genotyped = FALSE, split_light = FALSE, ...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
@@ -3988,14 +2899,6 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   if(resolve_germ & is.null(data) | resolve_germ & is.null(references)){
     stop('resolve_germ requires the data object and references', 
          "References need to be read in using dowser::readIMGT()")
-  }
-  
-  if(!is.null(igblast) & any(sapply(list(igblast_database, ref_path), is.null))){
-    stop('if you are planning on updating the germline references using igblast, the following varaibles cannot be NULL:',
-         "\n",
-         'igblast: the file path to igblast', "\n",
-         'igblast_database: the file path to the databases set up for igblast',"\n",
-         'ref_path: the path to the imgt parent folder')
   }
   
   if(chain %in% c("L", "HL") & is.null(model_folder_igk) | chain %in% c("L", "HL") & is.null(model_folder_igl)){
@@ -4048,43 +2951,9 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     if(!is.numeric(subsample_size)){
       stop("subsample_size must be a numeric")
     }
-    if(sampling_method == "random"){
-      clones <- sampleClones(clones, size = subsample_size)
-    } else{
-      if(!"mu_freq" %in% colnames(clones$data[[1]]@data)){
-        stop('Mutation frequency calculations are required for this subsampling method.',
-             ' Please run your data through shazam::observedMutations() and then rerun',
-             ' formatClones and getTreesAndUCAs.')
-      }
-      if(sampling_method == "lm"){
-        clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
-          sub <- clones[x,]
-          if(!subsample_size > nrow(sub$data[[1]]@data)){
-            temp_subsample_size <- subsample_size
-          } else{
-            temp_subsample_size <- nrow(sub$data[[1]]@data)
-          }
-          sub$data[[1]]@data$weight <- NA
-          temp_df <- sub$data[[1]]@data[order(sub$data[[1]]@data$mu_freq, decreasing = FALSE),]
-          sample_names <- temp_df$sequence_id[1:temp_subsample_size]
-          sub$data[[1]]@data$weight[sub$data[[1]]@data$sequence_id %in% sample_names] <- 100
-          sub$data[[1]]@data$weight[!sub$data[[1]]@data$sequence_id %in% sample_names] <- 0
-          return(sub)
-        }, mc.cores = nproc))
-        clones <- sampleClones(clones, subsample_size, weight = "weight")
-      } else if(sampling_method == "ratio"){
-        clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
-          sub <- clones[x,]
-          sub$data[[1]]@data$weight <- 1/(sub$data[[1]]@data$mu_freq + 1e-10)
-          return(sub)
-        }, mc.cores = nproc))
-        clones <- sampleClones(clones, subsample_size, weight = "weight")
-      } else{
-        stop('sampling_method:', sampling_method, ' not recognized')
-      }
-    }
     
-    # if subsampling to 1 sequence
+    clones <- sampleClones(clones, size = subsample_size)
+    
     if(subsample_size == 1 & !is.na(subsample_size)){
       cells <- unlist(lapply(clones$data, function(x) x@data$sequence_id))
       
@@ -4099,7 +2968,6 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
                              filterstop = TRUE, chain = chain, minseq = 1, 
                              dup_singles = T, split_light = split_light, ...)
     }
-    
     saveRDS(clones, file = file.path(dir, "clones.rds"))
   }
   
@@ -4109,23 +2977,14 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     }
     
     clones <- tryCatch({
-      if(build == "igphyml"){
-        if(chain == "HL" & partition != "hl"){
-          warning("Paired analysis is being requested but the paired partition is not being requested.",
-                  " To build the best paired trees use partition = 'hl'")
-        } 
-        
-        getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-                 asrp = TRUE, nproc = nproc, partition = partition,
-                 trunkl = trunklength, ...)
-        
-      } else if(build == "pml"){
-        getTrees(clones, build = build, rm_temp = FALSE, dir = dir, asrp = TRUE,
-                 nproc = nproc, ...)
-        
-      } else{
-        stop("the tree bulding method ", build, "is not supported")
-      }
+      if(chain == "HL" & partition != "hl"){
+        warning("Paired analysis is being requested but the paired partition is not being requested.",
+                " To build the best paired trees use partition = 'hl'")
+      } 
+      
+      getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
+               asrp = TRUE, nproc = nproc, partition = partition,
+               trunkl = trunklength, ...)
     }, error = function(e){
       stop(paste0("Error during tree building:\n", 
                   e$message, "\n\n", 
@@ -4136,21 +2995,6 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
            call. = FALSE)
     })
     saveRDS(clones, file.path(dir, "clones.rds"))
-    
-    if(!is.null(igblast)){
-      if(quiet > 0){
-        print("updating cuts based on MRCA")
-      }
-      
-      if(is.null(igdata)){
-        igdata <- igblast
-      }
-      
-      data <- updateAIRRGerm(airr_data = data, clones = clones, igblast = igblast, 
-                             igblast_database = igblast_database, references = ref_path, 
-                             igdata = igdata, organism = organism, locus = 'Ig',
-                             outdir = dir, nproc = nproc, clone = data_clone_val, ...)
-    }
   }
   
   if(quiet > 0){
@@ -4161,15 +3005,13 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
     clones$clone_id, function(x){
     result <- tryCatch({
       processCloneGermline(clone_ids = x, clones = clones, data = data, dir = dir,
-                           build = build, id = id, resolve_germ = resolve_germ, 
+                           id = id, resolve_germ = resolve_germ, 
                            all_germlines = all_germlines, quiet = quiet, 
                            clone = clone, data_clone = data_clone_val, 
                            chain = chain, check_genes = check_genes, 
-                           exec = exec, repertoire_wide = repertoire_wide, igblast = igblast, 
-                           igblast_database = igblast_database, ref_path = ref_path, 
-                           organism = organism, partition = partition,
-                           trunklength = trunklength, search = search,
-                           cell = cell, split_light = split_light, ...)
+                           exec = exec, partition = partition,
+                           search = search, cell = cell, 
+                           split_light = split_light, ...)
     }, error = function(e){
       message(paste("Error in clone", x, ":", conditionMessage(e)))
       return(NULL)
@@ -4190,7 +3032,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, build = "igphyml",
   callOlga(clones = clones, dir = dir, model_folder = model_folder,
            model_folder_igk = model_folder_igk, model_folder_igl = model_folder_igl,
            uca_script = uca_script, python = python, max_iters = max_iters,
-           nproc = nproc, id = id, quiet = quiet, search = search, sd = sd, ...)
+           nproc = nproc, id = id, quiet = quiet, search = search, ...)
   
   if(quiet > 0){
     print("updating clones")
