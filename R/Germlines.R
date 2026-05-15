@@ -1638,18 +1638,14 @@ processCloneGermline <- function(clone_ids, clones, data, dir, id,
   
   if(!repertoire_wide){
     sub <- tryCatch({
-      withr::with_dir(subDir, {
-        getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
-                 asrp = TRUE, nproc = 1, partition = partition, ...)
-      })
+      getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+               asrp = TRUE, nproc = 1, partition = partition, ...)
     }, error = function(e){
       message(paste("getTrees failed for clone", clone_ids, "--retrying,",
                     "Error was:", conditionMessage(e)))
       tryCatch({
-        withr::with_dir(subDir, {
-          getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, nproc = 1, partition = partition, ...)
-        })
+        getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+                 asrp = TRUE, nproc = 1, partition = partition, ...)
       }, error = function(e2){
         message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
                       "Final error was:", conditionMessage(e2)))
@@ -1868,20 +1864,14 @@ processCloneGermline <- function(clone_ids, clones, data, dir, id,
     file.rename(file.path(subDir, "sample"), file.path(subDir, "masked_sample"))
     
     sub <- tryCatch({
-      withr::with_dir(subDir, {
-        getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
-                 asrp = TRUE, nproc = 1, partition = partition,
-                 trunkl = trunklength, ...)
-      })
+      getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+               asrp = TRUE, nproc = 1, partition = partition, ...)
     }, error = function(e){
       message(paste("getTrees failed for clone", clone_ids, "--retrying,",
                     "Error was:", conditionMessage(e)))
       tryCatch({
-        withr::with_dir({
-          getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
-                   asrp = TRUE, nproc = 1, partition = partition,
-                   trunkl = trunklength, ...)
-        })
+        getTrees(sub, build = "igphyml", exec = exec, rm_temp = FALSE, dir = subDir,
+                 asrp = TRUE, nproc = 1, partition = partition, ...)
       }, error = function(e2){
         message(paste("getTrees failed twice for clone", clone_ids, "--skipping.", 
                       "Final error was:", conditionMessage(e2)))
@@ -2819,7 +2809,7 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param dir           The file path of the directory of where data is saved. NULL is default.
 #' @param exec          File path to the tree building executable
 #' @param resolve_germ  Resolve the V and J gene annotations within each clone?
-#' @param repertoire_wide Build build trees using parameters inferred from the entire dataset?
+#' @param repertoire_wide Build trees using parameters inferred from the entire dataset?
 #' @param partition     The partition model to use with IgPhyML. "single" is the default.
 #' @param model_folder  The file path to the OLGA default model files for heavy chains
 #' @param model_folder_igk  The file path to the OLGA default model files for IGK
@@ -2982,9 +2972,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
                 " To build the best paired trees use partition = 'hl'")
       } 
       
-      getTrees(clones, build = build, exec = exec, rm_temp = FALSE, dir = dir,
-               asrp = TRUE, nproc = nproc, partition = partition,
-               trunkl = trunklength, ...)
+      getTrees(clones, build = "igphyml", exec = exec, rm_temp = FALSE, dir = dir,
+               asrp = TRUE, nproc = nproc, partition = partition, ...)
     }, error = function(e){
       stop(paste0("Error during tree building:\n", 
                   e$message, "\n\n", 

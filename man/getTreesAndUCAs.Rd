@@ -45,7 +45,7 @@ getTreesAndUCAs(
 
 \item{resolve_germ}{Resolve the V and J gene annotations within each clone?}
 
-\item{repertoire_wide}{Build build trees using parameters inferred from the entire dataset?}
+\item{repertoire_wide}{Build trees using parameters inferred from the entire dataset?}
 
 \item{partition}{The partition model to use with IgPhyML. "single" is the default.}
 

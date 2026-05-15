@@ -61,7 +61,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat,
-    pwalign
+    BiocManager
 RoxygenNote: 7.3.3
 Collate:
     'Data.R'
