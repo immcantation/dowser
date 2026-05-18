@@ -1738,13 +1738,49 @@ processCloneGermline <- function(clone_ids, clones, data, dir, id,
     needs_resolve <- switch(sub$data[[1]]@phylo_seq,
                             "hlsequence" = nrow(all_germ_clone[ heavy_indx, ]) > 1 ||
                               nrow(all_germ_clone[!heavy_indx, ]) > 1,
-                            "lsequence"  = nrow(all_germ_clone[!heavy_indx, ]) > 1,
-                            nrow(all_germ_clone[ heavy_indx, ]) > 1)
+                            "lsequence" = nrow(all_germ_clone[!heavy_indx, ]) > 1,
+                            nrow(all_germ_clone[heavy_indx, ]) > 1)
     
     if(!needs_resolve){
       if(quiet > 0){
         print(paste("only one germline option for", sub$clone_id, "-- skipping resolution"))
       }
+      if(sub$data[[1]]@phylo_seq == "hlsequence"){
+        has_multiple_light <- all_germ_clone[!heavy_indx,]
+        has_multiple_light$ungapped <- pad_to_codon(has_multiple_light$ungapped)
+        germlines_light <- compute_germlines(has_mult = has_multiple_light, 
+                                             sub_data_ref = sub_data,
+                                             v_len = nchar(v_light), 
+                                             j_len = nchar(j_light),
+                                             tree_df_ref = tree_df_light, 
+                                             heavy = FALSE, chain = chain, 
+                                             locus = locus, germ = germ_align,
+                                             split_light = split_light, ...)
+        has_multiple_light$germline_d_mask <- pad_to_codon(has_multiple_light$germline_d_mask)
+        saveRDS(germlines_light, file.path(subDir, "most_likely_germlines_light.rds"))
+      } 
+      
+      if(chain == "L"){
+        heavy_val = FALSE
+      } else{
+        heavy_val = TRUE
+      }
+      
+      has_multiple <- switch(sub$data[[1]]@phylo_seq,
+                             "hlsequence" = all_germ_clone[heavy_indx, ],
+                             "lsequence"  = all_germ_clone[!heavy_indx, ],
+                             all_germ_clone[heavy_indx, ])
+      
+      has_multiple$germline_d_mask <- pad_to_codon(has_multiple$germline_d_mask)
+      has_multiple$ungapped <- pad_to_codon(has_multiple$ungapped)
+      germlines <- compute_germlines(has_mult = has_multiple, 
+                                     sub_data_ref = sub_data,
+                                     v_len = nchar(v), j_len = nchar(j), 
+                                     tree_df_ref = tree_df, heavy = heavy_val, 
+                                     chain = chain, locus = locus, 
+                                     germ = germ_align, 
+                                     split_light = split_light, ...)
+      saveRDS(germlines, file.path(subDir, "most_likely_germlines.rds"))
     } else{
       if(sub$data[[1]]@phylo_seq == "hlsequence"){
         has_multiple_light <- all_germ_clone[!heavy_indx,]
