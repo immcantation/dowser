@@ -8,9 +8,11 @@ node with a different state, or the root}
 getDiffPoints(
   data,
   trait,
-  height = "CAheight_mean",
+  height = "height",
   verbose = FALSE,
-  tip_traits = NULL
+  tip_traits = NULL,
+  eo_adjust = FALSE,
+  eo_type = NULL
 )
 }
 \arguments{
@@ -24,6 +26,11 @@ getDiffPoints(
 
 \item{tip_traits}{vector of other traits to include for each tip.
 Must have been also specified as traits in formatClones.}
+
+\item{eo_adjust}{adjust heights using expectOccupancies. Recommended if EO model used,
+requires eo_type to specify the type whose occupancy is tracked)}
+
+\item{eo_type}{if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)}
 }
 \description{
 \code{getDiffPoints}
@@ -39,4 +46,10 @@ root = TRUE if at root node, FALSE otherwise
 node_type = type of diff_node, will be "root" if at root node
 node_height = height of diff_node 
 <other columns> copied over from airrClone object for each tip
+}
+\examples{
+
+\dontrun{dp = getDiffPoints(data, "location", verbose=TRUE, 
+ eo_adjust=TRUE, eo_type="germinal_center")}
+
 }

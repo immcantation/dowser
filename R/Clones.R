@@ -1403,7 +1403,7 @@ getSubclones <- function(heavy, light, nproc=1, minseq=1,
 #' 3. vj_cell which combines the vj_gene and vj_alt_cell columns by a ",".
 # TODO: add "fields" option consistent with other functions
 #' @export
-resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH",
+resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus", heavy="IGH",
                                id="sequence_id", seq="sequence_alignment",
                                clone="clone_id", cell="cell_id", v_call="v_call",
                                j_call="j_call", junc_len="junction_length",
@@ -1606,12 +1606,6 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
     if(nrow(hd_bulk) != 0){
       comb <- dplyr::bind_rows(comb, hd_bulk)
     }
-    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
-    comb$vj_cell <- ifelse(
-      !is.na(comb$vj_alt_cell),
-      paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
-      comb$vj_gene
-    )
     
     size <- as.integer(table(comb[[subgroup]]))
     if(!all(diff(size) <= 0)){
@@ -1619,11 +1613,20 @@ resolveLightChains <- function(data, nproc=1, minseq=1,locus="locus",heavy="IGH"
       colnames(order_check) <- c(subgroup, "size")
       order_check <- order_check[order(-order_check$size), ]
       order_check$proper_subgroup <- seq_len(nrow(order_check))
+      
       # Vectorized assignment using match
       comb$new_subgroup <- order_check$proper_subgroup[match(comb[[subgroup]], order_check[[subgroup]])]
       comb <- comb[, setdiff(names(comb), subgroup)]
       names(comb)[names(comb) == "new_subgroup"] <- subgroup
     }
+    
+    comb$clone_subgroup_id <- paste0(comb[[clone]],"_",comb[[subgroup]])
+    comb$vj_cell <- ifelse(
+      !is.na(comb$vj_alt_cell),
+      paste(comb$vj_gene, comb$vj_alt_cell, sep = ","),
+      comb$vj_gene
+    )
+    
     comb
   },mc.cores=nproc)
   paired <- dplyr::bind_rows(paired)

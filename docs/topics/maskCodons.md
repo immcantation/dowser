@@ -86,7 +86,6 @@ print(maskCodons(1,q,s,TRUE))
 s <- "ATCATCATC..."
 q <- "ATTTTCATCATC"
 print(maskCodons("test",q,s,keep_alignment=TRUE,keep_insertions=TRUE))
-
 ```
 
 **Error in loadNamespace(x)**: there is no package called ‘pwalign’
