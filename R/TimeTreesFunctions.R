@@ -11,6 +11,7 @@
 #' @param    ess_cutoff Minimum number of ESS for all parameters
 #' @param    ignore     Vector of parameters to ignore for ESS calculation
 #' @param    quiet      quiet notifications if > 0
+#' @param    continue   If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)
 #' @param    ...        Additional arguments for getTimeTrees
 #'
 #' @return   A tibble of \code{tidytree} and \code{airrClone} objects.
@@ -20,10 +21,24 @@
 #'
 #' @export
 getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
-  ignore = c("traitfrequencies"), quiet=0, ...){
+  ignore = c("traitfrequencies"), quiet=0, continue=FALSE, ...){
 
   resume <- NULL
   iter <- 0
+
+  # check for iteration folder if resuming
+  if(!is.null(continue) && continue){
+    info <- setUpIterateResume(clones, ...)
+    iter <- info$iteration
+    rds <- info$clones_path
+    if(!is.null(rds)){
+      clones <- readRDS(rds)
+    }
+    if(iter > 0) {
+      resume <- getClonesToResume(clones, ignore=ignore, ess_cutoff=ess_cutoff, quiet=quiet)
+    }
+  }
+
   while((length(resume) > 0 || iter == 0 ) && iter < iterations){
         
         if(quiet < 1){
@@ -32,31 +47,104 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
 
         clones <- getTimeTrees(clones, resume_clones=resume, ...)
 
-        params <- clones$parameters
-        for(regex in ignore){
-            params <- lapply(params, function(x){
-                dplyr::filter(x, !grepl(regex, !!rlang::sym("item")))
-                })
-        }
-        
-        clones$below_ESS <- sapply(params, 
-          function(x)sum(x$ESS[!x$item %in% ignore] < ess_cutoff, na.rm=TRUE))
-        if(quiet < 1){
-          print(clones$below_ESS)
-          ess_items <- unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
-          if(length(ess_items) > 0){
-            print(table(ess_items))
-          }
-        }
-    
-        resume <- dplyr::filter(clones, !!rlang::sym("below_ESS") > 0)$clone_id
+        resume <- getClonesToResume(clones, ignore=ignore, ess_cutoff=ess_cutoff)
+        saveIteration(clones, iter, ...)
         iter <- iter + 1
     }
     if(iter == iterations & length(resume) != 0){
       warning(paste(paste(resume, collapse=","), "failed to converge after",
         iterations, "iterations"))
     }
+    # cleanUpIterateResume(...)
     return(clones)
+}
+
+cleanUpIterateResume <- function(dir, id, ...){
+  iter_dir <- file.path(dir, paste0("iterations_", id))
+  if(dir.exists(iter_dir)){
+    unlink(iter_dir, recursive=TRUE)
+  }
+}
+
+getClonesToResume <- function(clones, ignore, ess_cutoff, quiet=0){
+    params <- clones$parameters
+    for(regex in ignore){
+        params <- lapply(params, function(x){
+            dplyr::filter(x, !grepl(regex, !!rlang::sym("item")))
+            })
+    }
+      
+    clones$below_ESS <- sapply(params, 
+      function(x)sum(x$ESS[!x$item %in% ignore] < ess_cutoff, na.rm=TRUE))
+    if(quiet < 1){
+      print(clones$below_ESS)
+      ess_items <- unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
+      if(length(ess_items) > 0){
+        print(table(ess_items))
+      }
+    }
+    resume <- dplyr::filter(clones, !!rlang::sym("below_ESS") > 0)$clone_id
+    return(resume)
+}
+
+saveIteration <- function(clones, iter, dir, id, ...){
+  iter_dir <- file.path(dir, paste0("iterations_", id))
+  if(!dir.exists(iter_dir)){
+    dir.create(iter_dir)
+  }
+  curr_iter_dir <- file.path(iter_dir, paste0("iteration_", iter))
+  if(!dir.exists(curr_iter_dir)){
+    dir.create(curr_iter_dir)
+  }
+  saveRDS(clones, file.path(iter_dir, paste0("rds_", iter, ".rds")))
+  iter_files <- list.files(dir)
+  iter_files <- iter_files[grepl(id, iter_files) & !grepl("iterations", iter_files)]
+  for (f in iter_files) {
+    file.copy(file.path(dir, f), file.path(curr_iter_dir, f))
+  }
+}
+
+setUpIterateResume <- function(clones, dir, id, ...){
+  # this should probably delete existing files in the main dir for clarity but
+  # i think that should be done in the main function
+  iter_dir <- file.path(dir, paste0("iterations_", id))
+  if(!dir.exists(iter_dir)){
+    dir.create(iter_dir)
+  }
+  iter_folder <- list.files(path = iter_dir)
+
+  if(length(iter_folder) > 0) {
+    # get the highest iteration number from the folder names, which should be in the format "iteration_X"
+    max_iter <- -1
+    for (iter in iter_folder) {
+      iter_num <- as.numeric(gsub("iteration_(.*)", "\\1", iter))
+      if(!is.na(iter_num)){
+        if (iter_num > max_iter) {
+          if (file.exists(file.path(iter_dir, paste0("rds_", iter_num, ".rds")))) {
+            max_iter <- iter_num
+          }
+        }
+      }
+    }
+    if (max_iter == -1){
+      return(list(iteration=0, clones_path=NULL))
+    }
+    # copy all the files from the max iteration folder to the main dir for resuming
+    last_iter_dir <- file.path(iter_dir, paste0("iteration_", max_iter))
+    iter_files <- list.files(path = last_iter_dir, full.names = TRUE)
+    iter_files <- iter_files[grepl(id, iter_files) & !grepl("iterations", iter_files)]
+    for(file in iter_files){
+      # delete existing file if we should overwrite it
+      unlink(file.path(dir, basename(file)))
+      file.copy(file, dir, overwrite = TRUE)
+    }
+    # re-read in the clones from the last iteration to get the resume clones
+    clones_path <- file.path(iter_dir, paste0("rds_", max_iter, ".rds"))
+    return(list(iteration=max_iter + 1, clones_path=clones_path))
+  }
+  else{
+    return(list(iteration=0, clones_path=NULL))
+  }
 }
 
 #' Estimate time trees by running BEAST on each clone
