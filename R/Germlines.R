@@ -822,8 +822,12 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
         np2_length=np2_length,
         ...)
     })
-    gline <- dplyr::bind_rows(glines)
-    gline
+    glined <- tryCatch(dplyr::bind_rows(glines),
+      error=function(e){
+        saveRDS(glines, "glines_error.rds")
+        stop("caught bind_rows(glines) error")
+      })
+    glined
   }, mc.cores=nproc)
   results <- dplyr::bind_rows(complete) %>%
     arrange(!!rlang::sym("tmp_row_id")) %>%
