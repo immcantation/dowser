@@ -822,6 +822,15 @@ createGermlines <- function(data, references, locus="locus", trim_lengths=FALSE,
         np2_length=np2_length,
         ...)
     })
+
+    # remove weird list error that sometimes comes up
+    glines <- lapply(glines, function(x){
+      lcols <- names(which(sapply(names(x), function(y)class(x[[y]])) == "list"))
+      for(lcol in lcols){
+        x[[lcol]] <- unlist(x[[lcol]])
+      }
+      x
+    })
     glined <- tryCatch(dplyr::bind_rows(glines),
       error=function(e){
         saveRDS(glines, "glines_error.rds")
