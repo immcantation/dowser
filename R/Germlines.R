@@ -585,16 +585,16 @@ buildClonalGermline <- function(receptors, references,
     
     # Update lengths padded to longest sequence in clone
     receptors[[seq]] <- unlist(lapply(1:nrow(receptors),
-                                      function(x){
-                                        l = max_len - nchar(receptors[[seq]][x])
-                                        if(amino_acid){
-                                          receptors[[j_germ_aa_length]][x] = receptors[[j_germ_aa_length]][x] + l
-                                        }else{
-                                          receptors[[j_germ_length]][[x]] = receptors[[j_germ_length]][[x]] + l
-                                        }
-                                        paste0(receptors[[seq]][x],
-                                               paste0(rep(pad_char,l),collapse=""))
-                                      }))
+                      function(x){
+                        l = max_len - nchar(receptors[[seq]][x])
+                        if(amino_acid){
+                          receptors[[j_germ_aa_length]][x] = receptors[[j_germ_aa_length]][x] + l
+                        }else{
+                          receptors[[j_germ_length]][[x]] = receptors[[j_germ_length]][[x]] + l
+                        }
+                        paste0(receptors[[seq]][x],
+                               paste0(rep(pad_char,l),collapse=""))
+                      }))
     
     sub_db <- references[[chain]]
     
