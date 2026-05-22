@@ -12,6 +12,7 @@ getTimeTreesIterate(
   ess_cutoff = 200,
   ignore = c("traitfrequencies"),
   quiet = 0,
+  continue = FALSE,
   ...
 )
 }
@@ -26,6 +27,8 @@ getTimeTreesIterate(
 \item{ignore}{Vector of parameters to ignore for ESS calculation}
 
 \item{quiet}{quiet notifications if > 0}
+
+\item{continue}{If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)}
 
 \item{...}{Additional arguments for getTimeTrees}
 }

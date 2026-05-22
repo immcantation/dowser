@@ -11,7 +11,8 @@ makeSkyline(
   bins = 100,
   youngest = 0,
   clone_id = NULL,
-  max_height = c("min", "median", "mean", "max")
+  max_height = c("min", "median", "mean", "max"),
+  exclude_germline = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ makeSkyline(
 \item{clone_id}{name of the clone being analyzed (if desired)}
 
 \item{max_height}{max height to use (min, median, mean, max)}
+
+\item{exclude_germline}{exclude germline from skyline plot? (For TyCHE GRTs)}
 }
 \value{
 Bayesian Skyline values for given clone

@@ -29,7 +29,7 @@ readBEAST(
 
 \item{burnin}{percent of initial tree samples to discard (default 10)}
 
-\item{trait}{Trait coolumn used}
+\item{trait}{Trait column used}
 
 \item{nproc}{Number of cores for parallelization. Uses at most 1 core per tree.}
 

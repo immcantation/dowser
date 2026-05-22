@@ -14,7 +14,8 @@ getSkylines(
   verbose = 0,
   forward = TRUE,
   nproc = 1,
-  max_height = c("min", "median", "mean", "max")
+  max_height = c("min", "median", "mean", "max"),
+  exclude_germline = TRUE
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ getSkylines(
 \item{nproc}{processors for parallelization (by clone)}
 
 \item{max_height}{max height to use (min, median, mean, max)}
+
+\item{exclude_germline}{exclude germline from skyline plot? (For TyCHE GRTs)}
 }
 \value{
 Bayesian Skyline values for given clone
