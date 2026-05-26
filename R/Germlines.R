@@ -2125,6 +2125,57 @@ callOlga <- function(clones, dir, uca_script, python, max_iters, nproc, id, mode
   }
 }
 
+# Helper: check whether a single locus of a clone has a partial V
+# @param data       The airr-table for the dataset
+# @param references The output of readIMGT() -- germline references
+# @param data_by_clone_locus  The data object split by clone and locus
+# @param seq_id_index  The index of the desired sequence_id
+# @param clone      The airr-table for a given clone object
+# @param lv         The locus value of the clone
+# @param phylo      The phylo_seq value for that clone
+# @param clone_id   The clone_id value
+# @param v_call     The v call 
+# @param v_start    Where the v germline starts
+# @param v_end      Where the v germline end
+make_locus_checker <- function(data, references, data_by_clone_locus, seq_id_index){
+  
+  function(clone, lv, phylo = "sequence", clone_id = "clone_id", v_call = "v_call", 
+           v_start = "v_germline_start", v_end = "v_germline_end") {
+    
+    key <- paste(clone[[clone_id]], lv, sep = ".")
+    clone_sub <- data_by_clone_locus[[key]]
+
+    if (is.null(clone_sub) || nrow(clone_sub) == 0L) return(FALSE)
+    
+    germ_values <- findConsensus(clone_sub)
+    
+    cell_df <- data[seq_id_index[[germ_values$cons_id]], , drop = FALSE]
+    
+    v_name <- strsplit(cell_df[[v_call]], ",")[[1]][1]
+    v_s <- cell_df[[v_start]]
+    v_e <- cell_df[[v_end]]
+    
+    v_ref_sub <- substring(references[[lv]]$V[[v_name]], v_s, v_e)
+    ref_v_gaps <- sum(strsplit(v_ref_sub, "")[[1]] == ".")
+    
+    all_numbers <- clone$data[[1]]@numbers
+    if(phylo == "hlsequence"){
+      heavy_len <- nchar(clone$data[[1]]@germline)
+      if(lv == "IGH"){
+        clone_numbers <- all_numbers[1:heavy_len]
+      } else{
+        clone_numbers <- all_numbers[(heavy_len + 1):length(all_numbers)]
+      }
+    } else{
+      clone_numbers <- all_numbers
+    }
+
+    clone_v_missing <- length(setdiff(1L:(v_e - v_s + 1L), clone_numbers))
+    
+    clone_v_missing != ref_v_gaps
+  }
+}
+
 # Adds the UCA to the clones object 
 #
 # \code{updateClone} Adds the UCA to the data frame within the clones object
@@ -2151,20 +2202,29 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
                         v_start = "v_germline_start", v_end = "v_germline_end",
                         j_start = "j_germline_start", j_end = "j_germline_end",
                         v_call = "v_call", j_call = "j_call"){
-  updated_clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+  
+  data_by_clone_locus <- split(data, list(data[[clone_id]], data[[locus]]), drop = TRUE)
+  seq_id_index <- split(seq_along(data[[seq_id]]), data[[seq_id]])
+  
+  locus_needs_update <- make_locus_checker(data = data, references = references,
+                                           data_by_clone_locus = data_by_clone_locus,
+                                           seq_id_index = seq_id_index)
+  
+  updated_clones <- do.call(rbind, parallel::mclapply(seq_len(nrow(clones)), function(x){
     clone <- clones[x,]
-    # get locus value from clone -- use as name for uca/uca_aa
     locus_val <- strsplit(clone$locus, ",")[[1]]
-    if(clone$data[[1]]@phylo_seq == "lsequence"){
-      uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id),
-                                  "UCA_light.txt"), sep = "\t")[[1]]
+    phylo <- clone$data[[1]]@phylo_seq
+    
+    # UCA file(s)
+    clone_dir <- file.path(dir, paste0(id, "_", clone$clone_id))
+    if(phylo == "lsequence"){
+      uca <- read.table(file.path(clone_dir, "UCA_light.txt"), sep = "\t")[[1]]
       names(uca) <- locus_val
     } else{
-      uca <- read.table(file.path(dir, paste0(id, "_", clone$clone_id), "UCA.txt"), sep = "\t")[[1]]
+      uca <- read.table(file.path(clone_dir, "UCA.txt"), sep = "\t")[[1]]
       names(uca) <- locus_val[1]
-      if(clone$data[[1]]@phylo_seq == "hlsequence"){
-        uca_light <- read.table(file.path(dir, paste0(id, "_", clone$clone_id),
-                                          "UCA_light.txt"), sep = "\t")[[1]]
+      if(phylo == "hlsequence"){
+        uca_light <- read.table(file.path(clone_dir, "UCA_light.txt"), sep = "\t")[[1]]
         names(uca_light) <- locus_val[2]
         uca <- append(uca, uca_light)
       }
@@ -2173,83 +2233,99 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
     uca_aa <- alakazam::translateDNA(uca)
     
     germline_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
-    if(clone$data[[1]]@phylo_seq != "hlsequence"){
-      clone$trees[[1]]$nodes[[germline_node]]$sequence <- uca
+    clone$trees[[1]]$nodes[[germline_node]]$sequence <- if(phylo != "hlsequence"){
+      uca 
     } else{
-      clone$trees[[1]]$nodes[[germline_node]]$sequence <- paste0(uca[1], uca[2])
+      paste0(uca[1], uca[2])
     }
     
-    if(clone$data[[1]]@phylo_seq == "hlsequence"){
-      UCA_heavy <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
-      UCA_light <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[2]
-      UCA_h_aa <- alakazam::translateDNA(UCA_heavy)
-      UCA_l_aa <- alakazam::translateDNA(UCA_light)
-      uca_gapped <- c(UCA_heavy, UCA_light)
-      uca_gapped_aa <- alakazam::translateDNA(uca_gapped)
-    } else if(clone$data[[1]]@phylo_seq %in% c("sequence", "lsequence")){
+    
+    if(phylo == "hlsequence"){
+      node_seqs <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])
+      uca_gapped <- node_seqs[1:2]
+    } else{
       uca_gapped <- getNodeSeq(clone, node = germline_node, tree = clone$trees[[1]])[1]
-      uca_gapped_aa <- alakazam::translateDNA(uca_gapped)
     } 
+    uca_gapped_aa <- alakazam::translateDNA(uca_gapped)
+    
+    needs_update <- setNames(vapply(locus_val, locus_needs_update, logical(1L),
+                                    clone = clone, phylo = phylo), locus_val)
     
     if(fill_gaps){
-      full_ucas <- c()
-      for(i in 1:length(uca_gapped)){
-        locus_val <- names(uca_gapped[i])
+      clone_numbers <- clone$data[[1]]@numbers
+      # clone_gaps <- dplyr::setdiff(1:max(clone_numbers), clone_numbers)
+      
+      full_ucas <- vector("list", length(uca_gapped))
+      
+      for(i in seq_along(uca_gapped)){
+        lv <- names(uca_gapped[i])
+        
+        if (!isTRUE(needs_update[[lv]])) {
+          full_ucas[[i]] <- setNames(uca_gapped[i], lv)
+          next
+        }
+        
         c_uca <- strsplit(uca_gapped[i], "")[[1]]
-        germ_values <- findConsensus(data[data[[clone_id]] == clone$clone_id &
-                                            data[[locus]] == locus_val, ])
-        cell_df <- data[data[[seq_id]] == germ_values$cons_id, ]
+        
+        key <- paste(clone$clone_id, lv, sep = ".")
+        clone_sub <- data_by_clone_locus[[key]]
+        germ_values <- findConsensus(clone_sub)
+
+        cell_df <- data[seq_id_index[[germ_values$cons_id]], , drop = FALSE]
+        
         if(resolve_germ){
-          if(locus_val == "IGH" | clone$data[[1]]@phylo_seq == "lsequence"){
+          if(lv == "IGH" || phylo_seq == "lsequence"){
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines.rds"))
           } else{
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines_light.rds"))
           }
-          v_indx <- which(names(references[[locus_val]]$V) == ml_germ$v_call)
-          j_indx <- which(names(references[[locus_val]]$J) == ml_germ$j_call)
-          v_ref <- references[[locus_val]]$V[v_indx]
-          j_ref <- references[[locus_val]]$J[j_indx]
-          v_ref <- substring(v_ref, ml_germ$v_start, ml_germ$v_end)
-          j_ref <- substring(j_ref, ml_germ$j_start, ml_germ$j_end)
-          v_gaps <- which(strsplit(v_ref, "")[[1]] == ".")
-          j_gaps <- which(strsplit(j_ref, "")[[1]] == ".")
-          gaps <- append(v_gaps, j_gaps)
+          
+          v_name <- strsplit(ml_germ$v_call, ",")[[1]][1]
+          j_name <- strsplit(ml_germ$j_call, ",")[[1]][1]
+          
+          v_ref <- substring(references[[lv]]$V[[v_name]], ml_germ$v_start,
+                             ml_germ$v_end)
+          j_ref <- substring(references[[lv]]$J[[j_name]], ml_germ$j_start,
+                             ml_germ$j_end)
           clone_germ <- ml_germ$germline
         } else{
-          v_indx <- which(names(references[[locus_val]]$V) == strsplit(cell_df[[v_call]], ",")[[1]][1])
-          j_indx <- which(names(references[[locus_val]]$J) == strsplit(cell_df[[j_call]], ",")[[1]][1])
-          v_ref <- references[[locus_val]]$V[v_indx]
-          j_ref <- references[[locus_val]]$J[j_indx]
-          v_ref <- substring(v_ref, cell_df[[v_start]], cell_df[[v_end]])
-          j_ref <- substring(j_ref, cell_df[[j_start]], cell_df[[j_end]])
-          v_gaps <- which(strsplit(v_ref, "")[[1]] == ".")
-          j_gaps <- which(strsplit(j_ref, "")[[1]] == ".")
-          gaps <- append(v_gaps, j_gaps)
+          v_name <- strsplit(cell_df[[v_call]], ",")[[1]][1]
+          j_name <- strsplit(cell_df[[j_call]], ",")[[1]][1]
+          
+          v_ref <- substring(references[[lv]]$V[[v_name]],
+                             cell_df[[v_start]], cell_df[[v_end]])
+          
+          j_ref <- substring(references[[lv]]$J[[j_name]],
+                             cell_df[[j_start]], cell_df[[j_end]])
+          
           clone_germ <- cell_df$germline_alignment
         }
-        clone_gaps <- dplyr::setdiff(1:max(clone$data[[1]]@numbers), 
-                                     clone$data[[1]]@numbers)
+        
+        v_chars <- strsplit(v_ref, "")[[1]]
+        j_chars <- strsplit(j_ref, "")[[1]]
+        gaps <- c(which(v_chars == "."), which(j_chars == "."))
+        clone_gaps <- setdiff(1L:max(clone_numbers), clone_numbers)
+        
         if(!identical(clone_gaps, gaps)){
-          # get the values that are not found in the current UCA
           missing_values <- dplyr::setdiff(clone_gaps, gaps)
           germ_gapped <- strsplit(clone_germ, "")[[1]]
           c_uca[missing_values] <- germ_gapped[missing_values]
-          c_uca <- paste0(c_uca, collapse = "")
-        } else{
-          c_uca <- paste0(c_uca, collapse = "")
-        }
-        names(c_uca) <- locus_val
-        full_ucas <- append(full_ucas, c_uca)
+        } 
+
+        full_ucas[[i]] <- setNames(paste0(c_uca, collapse = ""), lv)
       }
-      uca_gapped <- full_ucas
+      
+      uca_gapped <- unlist(full_ucas)
       uca_gapped_aa <- alakazam::translateDNA(uca_gapped)
     } 
+    
     clone$UCA <- list(list(
       ungapped = uca,
       ungapped_aa = uca_aa, 
       gapped = uca_gapped, 
       gapped_aa = uca_gapped_aa
     ))
+    
     return(clone)
   }, mc.cores = nproc))
   return(updated_clones)
@@ -2877,7 +2953,11 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param clone         The name of the clone id column used in \link{formatClones}. 
 #'                      If split_light was used in \link{formatClones}, use "clone_subgroup_id".
 #' @param cell          The name of the cell id in the AIRR table used to generate \link{formatClones}
-#' @param subsample_size The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample -- in testing
+#' @param subsample_size The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample
+#' @param subsampling_method  How to subsample. Methods include 'random', 'lm' (least mutated),
+#'                      and 'ratio' (a weighted sampling with heavier weights
+#'                      towards the least mutated sequences). The later two methods
+#'                      require 'mu_freq' to be passed as a trait when running
 #' @param search        Search codon or nt space
 #' @param check_genes   Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly. 
 #' @param fill_gaps     A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments
@@ -2901,7 +2981,8 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
                             rm_temp = TRUE, quiet = 0, chain = "H",
                             references = NULL, clone = "clone_id", 
                             cell = "cell_id", subsample_size = NA, 
-                            search = "codon", check_genes = TRUE, fill_gaps = TRUE, 
+                            subsampling_method = 'random', search = "codon", 
+                            check_genes = TRUE, fill_gaps = TRUE, 
                             genotyped = FALSE, split_light = FALSE, ...){
   if(!is.null(dir)){
     dir <- path.expand(dir)
@@ -2962,6 +3043,10 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
     stop(cell, " is not found in data. Please provide a cell id")
   }
   
+  if(fill_gaps & is.null(references)){
+    stop('Please provide germline reference files')
+  }
+  
   if(split_light){
     # check for clone_subgroup_id
     if(!"clone_subgroup_id" %in% colnames(data)){
@@ -2970,6 +3055,16 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
     data_clone_val <- 'clone_subgroup_id'
   } else{
     data_clone_val <- clone
+  }
+  
+  cols_to_check <- c("v_germline_length", "d_germline_length", "j_germline_length")
+  
+  for(col in cols_to_check){
+    if(col %in% names(data)){
+      if(!is.numeric(data[[col]])){
+        data[[col]] <- as.numeric(data[[col]])
+      }
+    }
   }
   
   if(resolve_germ){
@@ -2991,7 +3086,41 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
       stop("subsample_size must be a numeric")
     }
     
-    clones <- sampleClones(clones, size = subsample_size)
+    if(sampling_method == "random"){
+      clones <- sampleClones(clones, size = subsample_size)
+    } else{
+      if(!"mu_freq" %in% colnames(clones$data[[1]]@data)){
+        stop('Mutation frequency calculations are required for this subsampling method.',
+             ' Please run your data through shazam::observedMutations() and then rerun',
+             ' formatClones and getTreesAndUCAs.')
+      }
+      if(sampling_method == "lm"){
+        clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+          sub <- clones[x,]
+          if(!subsample_size > nrow(sub$data[[1]]@data)){
+            temp_subsample_size <- subsample_size
+          } else{
+            temp_subsample_size <- nrow(sub$data[[1]]@data)
+          }
+          sub$data[[1]]@data$weight <- NA
+          temp_df <- sub$data[[1]]@data[order(sub$data[[1]]@data$mu_freq, decreasing = FALSE),]
+          sample_names <- temp_df$sequence_id[1:temp_subsample_size]
+          sub$data[[1]]@data$weight[sub$data[[1]]@data$sequence_id %in% sample_names] <- 100
+          sub$data[[1]]@data$weight[!sub$data[[1]]@data$sequence_id %in% sample_names] <- 0
+          return(sub)
+        }, mc.cores = nproc))
+        clones <- sampleClones(clones, subsample_size, weight = "weight")
+      } else if(sampling_method == "ratio"){
+        clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
+          sub <- clones[x,]
+          sub$data[[1]]@data$weight <- 1/(sub$data[[1]]@data$mu_freq + 1e-10)
+          return(sub)
+        }, mc.cores = nproc))
+        clones <- sampleClones(clones, subsample_size, weight = "weight")
+      } else{
+        stop('sampling_method:', sampling_method, ' not recognized')
+      }
+    }
     
     if(subsample_size == 1 & !is.na(subsample_size)){
       cells <- unlist(lapply(clones$data, function(x) x@data$sequence_id))
