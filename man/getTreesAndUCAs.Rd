@@ -26,6 +26,7 @@ getTreesAndUCAs(
   clone = "clone_id",
   cell = "cell_id",
   subsample_size = NA,
+  subsampling_method = "random",
   search = "codon",
   check_genes = TRUE,
   fill_gaps = TRUE,
@@ -79,7 +80,12 @@ If split_light was used in \link{formatClones}, use "clone_subgroup_id".}
 
 \item{cell}{The name of the cell id in the AIRR table used to generate \link{formatClones}}
 
-\item{subsample_size}{The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample -- in testing}
+\item{subsample_size}{The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample}
+
+\item{subsampling_method}{How to subsample. Methods include 'random', 'lm' (least mutated),
+and 'ratio' (a weighted sampling with heavier weights
+towards the least mutated sequences). The later two methods
+require 'mu_freq' to be passed as a trait when running}
 
 \item{search}{Search codon or nt space}
 
