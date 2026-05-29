@@ -3086,7 +3086,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
       stop("subsample_size must be a numeric")
     }
     
-    if(sampling_method == "random"){
+    if(subsampling_method == "random"){
       clones <- sampleClones(clones, size = subsample_size)
     } else{
       if(!"mu_freq" %in% colnames(clones$data[[1]]@data)){
@@ -3094,7 +3094,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
              ' Please run your data through shazam::observedMutations() and then rerun',
              ' formatClones and getTreesAndUCAs.')
       }
-      if(sampling_method == "lm"){
+      if(subsampling_method == "lm"){
         clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
           sub <- clones[x,]
           if(!subsample_size > nrow(sub$data[[1]]@data)){
@@ -3110,7 +3110,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
           return(sub)
         }, mc.cores = nproc))
         clones <- sampleClones(clones, subsample_size, weight = "weight")
-      } else if(sampling_method == "ratio"){
+      } else if(subsampling_method == "ratio"){
         clones <- do.call(rbind, parallel::mclapply(1:nrow(clones), function(x){
           sub <- clones[x,]
           sub$data[[1]]@data$weight <- 1/(sub$data[[1]]@data$mu_freq + 1e-10)
@@ -3118,7 +3118,7 @@ getTreesAndUCAs <- function(clones, data, dir = NULL, exec = NULL,
         }, mc.cores = nproc))
         clones <- sampleClones(clones, subsample_size, weight = "weight")
       } else{
-        stop('sampling_method:', sampling_method, ' not recognized')
+        stop('subsampling_method:', subsampling_method, ' not recognized')
       }
     }
     
