@@ -2248,7 +2248,7 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
     } 
     uca_gapped_aa <- alakazam::translateDNA(uca_gapped)
     
-    needs_update <- setNames(vapply(locus_val, locus_needs_update, logical(1L),
+    needs_update <- stats::setNames(vapply(locus_val, locus_needs_update, logical(1L),
                                     clone = clone, phylo = phylo), locus_val)
     
     if(fill_gaps){
@@ -2274,7 +2274,7 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
         cell_df <- data[seq_id_index[[germ_values$cons_id]], , drop = FALSE]
         
         if(resolve_germ){
-          if(lv == "IGH" || phylo_seq == "lsequence"){
+          if(lv == "IGH" || phylo == "lsequence"){
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines.rds"))
           } else{
             ml_germ <- readRDS(file.path(dir, paste0(id, "_", clone$clone_id), "most_likely_germlines_light.rds"))
