@@ -2261,7 +2261,7 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
         lv <- names(uca_gapped[i])
         
         if (!isTRUE(needs_update[[lv]])) {
-          full_ucas[[i]] <- setNames(uca_gapped[i], lv)
+          full_ucas[[i]] <- stats::setNames(uca_gapped[i], lv)
           next
         }
         
@@ -2312,7 +2312,7 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
           c_uca[missing_values] <- germ_gapped[missing_values]
         } 
 
-        full_ucas[[i]] <- setNames(paste0(c_uca, collapse = ""), lv)
+        full_ucas[[i]] <- stats::setNames(paste0(c_uca, collapse = ""), lv)
       }
       
       uca_gapped <- unlist(full_ucas)
