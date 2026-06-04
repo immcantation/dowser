@@ -7,7 +7,6 @@
 buildAllClonalGermlines(
   receptors,
   references,
-  genotype_list = NULL,
   chain = "IGH",
   use_regions = FALSE,
   vonly = FALSE,
@@ -36,8 +35,6 @@ buildAllClonalGermlines(
 \item{receptors}{AIRR-table containing sequences from one clone}
 
 \item{references}{Full list of reference segments, see \link{readIMGT}}
-
-\item{genotype_list}{A list of different V and J calls based on genotyping results}
 
 \item{chain}{chain in \code{references} being analyzed}
 

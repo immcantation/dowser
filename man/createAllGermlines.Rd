@@ -32,7 +32,6 @@ createAllGermlines(
   na.rm = TRUE,
   fields = NULL,
   verbose = 0,
-  genotyped = FALSE,
   ...
 )
 }
@@ -92,9 +91,6 @@ Sequences with disjoint values in the specified fields
 will be considered as separate clones.}
 
 \item{verbose}{amount of rubbish to print}
-
-\item{genotyped}{A logical that indicates if the data has been genotyped. 
-Will restrict created germlines to be the genotypes found in entire repertoire.}
 
 \item{...}{Additional arguments passed to \link{buildGermline}}
 }

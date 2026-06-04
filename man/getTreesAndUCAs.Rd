@@ -7,14 +7,14 @@
 getTreesAndUCAs(
   clones,
   data,
-  dir = NULL,
-  exec = NULL,
-  resolve_germ = FALSE,
-  repertoire_wide = FALSE,
-  partition = "single",
+  exec,
   model_folder,
+  references,
+  dir = NULL,
   model_folder_igk = NULL,
   model_folder_igl = NULL,
+  partition = "single",
+  repertoire_wide = FALSE,
   python = "python3",
   id = "sample",
   max_iters = 100,
@@ -22,15 +22,14 @@ getTreesAndUCAs(
   rm_temp = TRUE,
   quiet = 0,
   chain = "H",
-  references = NULL,
   clone = "clone_id",
   cell = "cell_id",
   subsample_size = NA,
-  subsampling_method = "random",
-  search = "codon",
-  check_genes = TRUE,
-  fill_gaps = TRUE,
-  genotyped = FALSE,
+  subsampling_method = c("random", "weighted", "least_mutated"),
+  search = c("codon", "nt"),
+  resolve_vj = FALSE,
+  fix_vj_in_cdr3 = TRUE,
+  fill_partials = TRUE,
   split_light = FALSE,
   ...
 )
@@ -40,21 +39,21 @@ getTreesAndUCAs(
 
 \item{data}{The AIRR-table that was used to make the clones object.}
 
-\item{dir}{The file path of the directory of where data is saved. NULL is default.}
-
 \item{exec}{File path to the tree building executable}
 
-\item{resolve_germ}{Resolve the V and J gene annotations within each clone?}
-
-\item{repertoire_wide}{Build trees using parameters inferred from the entire dataset?}
-
-\item{partition}{The partition model to use with IgPhyML. "single" is the default.}
-
 \item{model_folder}{The file path to the OLGA default model files for heavy chains}
+
+\item{references}{Reference genes. See \link{readIMGT}}
+
+\item{dir}{The file path of the directory of where data is saved. NULL is default.}
 
 \item{model_folder_igk}{The file path to the OLGA default model files for IGK}
 
 \item{model_folder_igl}{The file path to the OLGA default model files for IGL}
+
+\item{partition}{The partition model to use with IgPhyML. "single" is the default.}
+
+\item{repertoire_wide}{Build trees using parameters inferred from the entire dataset?}
 
 \item{python}{Specify the python call for your system. This is the call
 on command line that issues the python you want to use. 
@@ -73,27 +72,24 @@ on command line that issues the python you want to use.
 
 \item{chain}{Set to HL to use both heavy and light chain sequences}
 
-\item{references}{Reference genes. See \link{readIMGT}}
-
-\item{clone}{The name of the clone id column used in \link{formatClones}. 
-If split_light was used in \link{formatClones}, use "clone_subgroup_id".}
+\item{clone}{The name of the clone id column used in \link{formatClones}.}
 
 \item{cell}{The name of the cell id in the AIRR table used to generate \link{formatClones}}
 
-\item{subsample_size}{The amount that the clone should be sampled down to. Default is NA. Use NA if you do not wish to subsample}
+\item{subsample_size}{The amount that the clone should be sampled down to. 
+By default this is NA to not induce subsampling.}
 
-\item{subsampling_method}{How to subsample. Methods include 'random', 'lm' (least mutated),
-and 'ratio' (a weighted sampling with heavier weights
-towards the least mutated sequences). The later two methods
+\item{subsampling_method}{How to subsample. Methods include 'random', 'weighted', 
+and 'least_mutated'. The later two methods
 require 'mu_freq' to be passed as a trait when running}
 
 \item{search}{Search codon or nt space}
 
-\item{check_genes}{Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly.}
+\item{resolve_vj}{Resolve the V and J gene annotations within each clone?}
 
-\item{fill_gaps}{A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments}
+\item{fix_vj_in_cdr3}{Check if the inferred V/J lengths go into the inferred cdr3 region and adjust accordingly.}
 
-\item{genotyped}{A logical that indicates that AIRR-table has been genotyped and will only use the found annotations to create various germlines}
+\item{fill_partials}{A logical that will fill in the V and J UCAs of clones that have partial V/J sequence alignments}
 
 \item{split_light}{A logical that indicates if different light chain groups should be used to further split a clone (recommended for paired data)}
 
