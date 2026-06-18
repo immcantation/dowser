@@ -1848,7 +1848,7 @@ writeTreesAirr = function(object, file, repertoire_id="sample", check=TRUE, verb
       # nonstandard but important for dowser
       clone$info <- list()
       clone$program_origin <- "dowser"
-      clone$info$locus <- object$data[[row]]@locus
+      #clone$info$locus <- object$data[[row]]@locus
       clone$info$region <- object$data[[row]]@region
       clone$info$numbers <- object$data[[row]]@numbers
       clone$info$phylo_seq <- object$data[[row]]@phylo_seq
@@ -2015,7 +2015,7 @@ writeTreesAirr = function(object, file, repertoire_id="sample", check=TRUE, verb
     if(verbose){
       print("Loading object to check consistency")
     }
-    nobject <- readTreesJSON(file)
+    nobject <- readTreesAirr(file)
     validate <- dowserObjectEquivalent(object, nobject, verbose, edge_tol, dowser_fields)
   }
 }
@@ -2026,7 +2026,7 @@ writeTreesAirr = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' @param    file   .json file
 #' @param    heavy    name of heavy chain locus
 #' @export
-readTreesJSON = function(file, heavy="IGH"){
+readTreesAirr = function(file, heavy="IGH"){
   rclones <- jsonlite::read_json(file)
   output <- dplyr::tibble()
   outtrees <- list()
