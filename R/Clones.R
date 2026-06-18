@@ -1817,7 +1817,7 @@ filterPartialSeqs = function(data, seq="sequence_alignment", cutoff=250, pattern
   return(data)
 }
 
-#'\code{writeTreesAirr}
+#'\code{writeTreesJSON}
 #' Experimental. Write trees in AIRR format
 #' @param    object   Dowser object from getTrees
 #' @param    file     name of .json file
@@ -1829,7 +1829,7 @@ filterPartialSeqs = function(data, seq="sequence_alignment", cutoff=250, pattern
 #' @param    heavy    name of heavy chain locus
 #' @param   dowser_fields include dowser-specific information? (recommended)
 #' @export
-writeTreesAirr = function(object, file, repertoire_id="sample", check=TRUE, verbose=TRUE, 
+writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verbose=TRUE, 
   edge_tol=1e-8, cell="cell_id", heavy="IGH", dowser_fields=TRUE){
   clones <- list()
   clones$Clone <- list()
@@ -2015,7 +2015,7 @@ writeTreesAirr = function(object, file, repertoire_id="sample", check=TRUE, verb
     if(verbose){
       print("Loading object to check consistency")
     }
-    nobject <- readTreesAirr(file)
+    nobject <- readTreesJSON(file)
     validate <- dowserObjectEquivalent(object, nobject, verbose, edge_tol, dowser_fields)
   }
 }
@@ -2026,7 +2026,7 @@ writeTreesAirr = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' @param    file   .json file
 #' @param    heavy    name of heavy chain locus
 #' @export
-readTreesAirr = function(file, heavy="IGH"){
+readTreesJSON = function(file, heavy="IGH"){
   rclones <- jsonlite::read_json(file)
   output <- dplyr::tibble()
   outtrees <- list()
@@ -2351,7 +2351,7 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
       }
       if("node.label" %in% c(names(treea),names(treeb))){
         if(nodewarn == 0){
-          warning("node.label not currently checked, or preserved by writeTreesAirr")
+          warning("node.label not currently checked, or preserved by writeTreesJSON")
         }
         nodewarn <- nodewarn + 1
       }
