@@ -27,7 +27,7 @@ Dowser has 6 primary functions:
 Documentation and tutorials
 -------------------------------------------------------------------------------
 
-Full documentation, including tutorials and vignettes: https://dowser.readthedocs.io
+Full documentation, including tutorials and vignettes: [https://dowser.readthedocs.io](https://dowser.readthedocs.io)
 
 
 Contact
