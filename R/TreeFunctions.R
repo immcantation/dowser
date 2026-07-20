@@ -779,6 +779,14 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
                              type="AA")
   }
   if(is.null(tree)){
+    tree <- base::withCallingHandlers(
+      phangorn::pratchet(data,trace=0), 
+      warning = function(w) invokeRestart("muffleWarning")
+    )
+    if(!inherits(tree, "phylo") && !inherits(tree, "multiPhylo")){
+      return(simpleError(paste("phangorn::pratchet() failed return a tree for clone",
+                               clone@clone)))
+    }
     tree <- tryCatch(phangorn::pratchet(data,trace=0),warning=function(w)w)
     tree <- phangorn::acctran(ape::multi2di(tree,random=resolve_random),data)
     tree <- ape::unroot(tree)
@@ -799,66 +807,65 @@ buildPratchet <- function(clone, seq="sequence", asr="seq", asr_thresh=0.05,
     seqs_pars <- phangorn::ancestral.pars(tree, data, 
                                           type=asr_type, cost=NULL, return="prob")
     
-    # CGJ 5/23/24 for the phangorn update (3.0.0) and so it passes win builder devel
-    if("prob" %in% names(seqs_pars)){
-      ASR <- list()
-      tip_data <- data.frame(seqs_pars$data)
-      for(i in 1:ncol(tip_data)){
-        if(asr == "seq"){
-          sub_seq <- paste0(toupper(tip_data[,i]))
-          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
-            site <- sub_seq[x]
-            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
-            if(length(site) == 0){
-              site <- "N"
-            }
-            site}))
-          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-        } else{
-          ASR[[as.character(i)]] <- paste0(toupper(tip_data[,i]), collapse = "")
-        }
-      }
-      nASR <- length(ASR)
-      internal_seqs <- seqs_pars$prob
-      for(i in 1:length(unique(internal_seqs$Node))){
-        sub <- internal_seqs[internal_seqs$Node == unique(internal_seqs$Node)[i],]
-        if(asr == "seq"){
-          sub_seq <- paste0(toupper(sub$State))
-          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
-            site <- sub_seq[x]
-            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
-            if(length(site) == 0){
-              site <- "N"
-            }
-            site}))
-          ASR[[as.character(nASR + i)]] <- paste(seq_ar,collapse="")
-        } else{
-          ASR[[as.character(nASR + i)]] <- paste0(toupper(sub$State), collapse = "")
-        }
-      }
-    } else{ # if they are using an older version of phangorn keep it the same
-      ASR <- list()
-      for(i in 1:max(tree$edge)){
-        patterns <- t(subset(seqs_pars, i)[[1]])
-        pat <- patterns[,attr(seqs_pars,"index")]
-        if(asr == "seq"){
-          thresh <- pat > asr_thresh
-          acgt <- c("A","C","G","T")
-          seq_ar <- unlist(lapply(1:ncol(pat),function(x){
-            site <- acgt[thresh[,x]]
-            site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
-            if(length(site) == 0){
-              site <- "N"
-            }
-            site}))
-          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-        }else{
-          ASR[[as.character(i)]] <- pat
-        }
+    # # CGJ 5/23/24 for the phangorn update (3.0.0) and so it passes win builder devel
+    # if("prob" %in% names(seqs_pars)){
+    #   ASR <- list()
+    #   tip_data <- data.frame(seqs_pars$data)
+    #   for(i in 1:ncol(tip_data)){
+    #     if(asr == "seq"){
+    #       sub_seq <- paste0(toupper(tip_data[,i]))
+    #       seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+    #         site <- sub_seq[x]
+    #         site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+    #         if(length(site) == 0){
+    #           site <- "N"
+    #         }
+    #         site}))
+    #       ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+    #     } else{
+    #       ASR[[as.character(i)]] <- paste0(toupper(tip_data[,i]), collapse = "")
+    #     }
+    #   }
+    #   nASR <- length(ASR)
+    #   internal_seqs <- seqs_pars$prob
+    #   for(i in 1:length(unique(internal_seqs$Node))){
+    #     sub <- internal_seqs[internal_seqs$Node == unique(internal_seqs$Node)[i],]
+    #     if(asr == "seq"){
+    #       sub_seq <- paste0(toupper(sub$State))
+    #       seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+    #         site <- sub_seq[x]
+    #         site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+    #         if(length(site) == 0){
+    #           site <- "N"
+    #         }
+    #         site}))
+    #       ASR[[as.character(nASR + i)]] <- paste(seq_ar,collapse="")
+    #     } else{
+    #       ASR[[as.character(nASR + i)]] <- paste0(toupper(sub$State), collapse = "")
+    #     }
+    #   }
+    # } else{ # if they are using an older version of phangorn keep it the same
+    ASR <- list()
+    for(i in 1:max(tree$edge)){
+      patterns <- t(subset(seqs_pars, i)[[1]])
+      pat <- patterns[,attr(seqs_pars,"index")]
+      if(asr == "seq"){
+        thresh <- pat > asr_thresh
+        acgt <- c("A","C","G","T")
+        seq_ar <- unlist(lapply(1:ncol(pat),function(x){
+          site <- acgt[thresh[,x]]
+          site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+          if(length(site) == 0){
+            site <- "N"
+          }
+          site}))
+        ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+      }else{
+        ASR[[as.character(i)]] <- pat
       }
     }
+    # }
     
-
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]
       tree$nodes[[x]]
@@ -936,10 +943,23 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     treeNJ  <- ape::multi2di(phangorn::NJ(dm), random=resolve_random)
     treeNJ$edge.length[treeNJ$edge.length < 0] <- 0 #change negative edge lengths to zero
     pml <- phangorn::pml(ape::unroot(treeNJ),data=data)
-    fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
-                                        optEdge=optEdge, optGamma=gamma, rearrangement="NNI",
-                                        control=phangorn::pml.control(epsilon=1e-08,
-                                        maxit=10, trace=0)), error=function(e)e)
+    # CGJ 7/20/26 based on the pratchet dev error we are getting from 
+    # the tryCatch getting a depreciated warning 
+    # the PML will be updated as well just in case
+    fit <- withCallingHandlers(
+      tryCatch(
+        phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
+                            optGamma=gamma, optEdge=optEdge, rearrangement="NNI",
+                            control=phangorn::pml.control(epsilon=1e-08,
+                                                          maxit=10, trace=0)),
+        error=function(e)e
+      ),
+      warning = function(w) invokeRestart("muffleWarning")
+    )
+    # fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
+    #                                     optEdge=optEdge, optGamma=gamma, rearrangement="NNI",
+    #                                     control=phangorn::pml.control(epsilon=1e-08,
+    #                                     maxit=10, trace=0)), error=function(e)e)
     if("error" %in% class(fit)){
       if(verbose){
         print(fit)
@@ -962,10 +982,20 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
   }else{
     pml <- phangorn::pml(ape::unroot(tree),data=data)
-    fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=FALSE, optQ=optQ,
-                                        optGamma=FALSE, optEdge=FALSE, rearrangement="none",
-                                        control=phangorn::pml.control(epsilon=1e-08,
-                                        maxit=10, trace=0)), error=function(e)e)
+    fit <- withCallingHandlers(
+      tryCatch(
+        phangorn::optim.pml(pml, model=sub_model, optNni=FALSE, optQ=optQ,
+                            optGamma=FALSE, optEdge=FALSE, rearrangement="none",
+                            control=phangorn::pml.control(epsilon=1e-08,
+                                                          maxit=10, trace=0)),
+        error=function(e)e
+      ),
+      warning = function(w) invokeRestart("muffleWarning")
+    )
+    # fit <- tryCatch(phangorn::optim.pml(pml, model=sub_model, optNni=FALSE, optQ=optQ,
+    #                                     optGamma=FALSE, optEdge=FALSE, rearrangement="none",
+    #                                     control=phangorn::pml.control(epsilon=1e-08,
+    #                                     maxit=10, trace=0)), error=function(e)e)
     if("error" %in% class(fit)){
       if(verbose){
         print(fit)
@@ -982,63 +1012,63 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     seqs_ml <- phangorn::ancestral.pml(fit,
                                        type="marginal",return="prob")
     # CGJ 5/23/24 for the phangorn update (3.0.0) and so it passes win builder devel
-    if("prob" %in% names(seqs_ml)){
-      ASR <- list()
-      tip_data <- data.frame(seqs_ml$data)
-      for(i in 1:ncol(tip_data)){
-        if(asr == "seq"){
-          sub_seq <- paste0(toupper(tip_data[,i]))
-          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
-            site <- sub_seq[x]
-            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
-            if(length(site) == 0){
-              site <- "N"
-            }
-            site}))
-          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-        } else{
-          ASR[[as.character(i)]] <- paste0(toupper(tip_data[,i]), collapse = "")
-        }
-      }
-      nASR <- length(ASR)
-      internal_seqs <- seqs_ml$prob
-      for(i in 1:length(unique(internal_seqs$Node))){
-        sub <- internal_seqs[internal_seqs$Node == unique(internal_seqs$Node)[i],]
-        if(asr == "seq"){
-          sub_seq <- paste0(toupper(sub$State))
-          seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
-            site <- sub_seq[x]
-            site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
-            if(length(site) == 0){
-              site <- "N"
-            }
-            site}))
-          ASR[[as.character(nASR + i)]] <- paste(seq_ar,collapse="")
-        } else{
-          ASR[[as.character(nASR + i)]] <- paste0(toupper(sub$State), collapse = "")
-        }
-      }
-    } else{ # if they are using an older version of phangorn keep it the same
-      ASR <- list()
-      for(i in 1:max(tree$edge)){
-        patterns <- t(subset(seqs_ml, i)[[1]])
-        pat <- patterns[,attr(seqs_ml,"index")]
-        if(asr == "seq"){
-          thresh <- pat > asr_thresh
-          acgt <- c("A","C","G","T")
-          seq_ar <- unlist(lapply(1:ncol(pat),function(x){
-            site <- acgt[thresh[,x]]
-            site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
-            if(length(site) == 0){
-              site <- "N"
-            }
-            site}))
-          ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
-        }else{
-          ASR[[as.character(i)]] <- pat
-        }
+    # if("prob" %in% names(seqs_ml)){
+    #   ASR <- list()
+    #   tip_data <- data.frame(seqs_ml$data)
+    #   for(i in 1:ncol(tip_data)){
+    #     if(asr == "seq"){
+    #       sub_seq <- paste0(toupper(tip_data[,i]))
+    #       seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+    #         site <- sub_seq[x]
+    #         site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+    #         if(length(site) == 0){
+    #           site <- "N"
+    #         }
+    #         site}))
+    #       ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+    #     } else{
+    #       ASR[[as.character(i)]] <- paste0(toupper(tip_data[,i]), collapse = "")
+    #     }
+    #   }
+    #   nASR <- length(ASR)
+    #   internal_seqs <- seqs_ml$prob
+    #   for(i in 1:length(unique(internal_seqs$Node))){
+    #     sub <- internal_seqs[internal_seqs$Node == unique(internal_seqs$Node)[i],]
+    #     if(asr == "seq"){
+    #       sub_seq <- paste0(toupper(sub$State))
+    #       seq_ar <- unlist(lapply(1:length(sub_seq), function(x){
+    #         site <- sub_seq[x]
+    #         site <- alakazam::DNA_IUPAC[[paste(sort(site), collapse = "")]]
+    #         if(length(site) == 0){
+    #           site <- "N"
+    #         }
+    #         site}))
+    #       ASR[[as.character(nASR + i)]] <- paste(seq_ar,collapse="")
+    #     } else{
+    #       ASR[[as.character(nASR + i)]] <- paste0(toupper(sub$State), collapse = "")
+    #     }
+    #   }
+    # } else{ # if they are using an older version of phangorn keep it the same
+    ASR <- list()
+    for(i in 1:max(tree$edge)){
+      patterns <- t(subset(seqs_ml, i)[[1]])
+      pat <- patterns[,attr(seqs_ml,"index")]
+      if(asr == "seq"){
+        thresh <- pat > asr_thresh
+        acgt <- c("A","C","G","T")
+        seq_ar <- unlist(lapply(1:ncol(pat),function(x){
+          site <- acgt[thresh[,x]]
+          site <- alakazam::DNA_IUPAC[[paste(sort(site),collapse="")]]
+          if(length(site) == 0){
+            site <- "N"
+          }
+          site}))
+        ASR[[as.character(i)]] <- paste(seq_ar,collapse="")
+      }else{
+        ASR[[as.character(i)]] <- pat
       }
     }
+    # }
     tree$nodes <- lapply(1:length(tree$nodes),function(x){
       tree$nodes[[x]]$sequence <- ASR[[x]]
       tree$nodes[[x]]
