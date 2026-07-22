@@ -2672,7 +2672,11 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
   germ_node <- ape::getMRCA(data$trees[[which(data$clone_id == clone@clone)]], 
                             data$trees[[which(data$clone_id == clone@clone)]]$tip.label)
   if(germ_node == node & "UCA" %in% colnames(data)){
-    seqs <- data$UCA[[which(data$clone_id == clone@clone)]]$gapped
+    if(gaps){
+      seqs <- data$UCA[[which(data$clone_id == clone@clone)]]$gapped
+    }else{
+      seqs <- data$UCA[[which(data$clone_id == clone@clone)]]$ungapped
+    }
   } else{
     seqs <- c()
     seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
@@ -2753,6 +2757,96 @@ getAllSeqs <- function(data, imgt_gaps=TRUE){
     }
   }
   results 
+}
+
+#' Return all sequences along the tree from the germline to a specified node
+#' 
+#' @param    data    a tibble of \code{airrClone} objects, the output of 
+#'                   \link{getTrees}
+#' @param    node    numeric node in tree (see details)
+#' @param    tree    a \code{phylo} tree object containing \code{node}
+#' @param    clone   if \code{tree} not specified, supply clone ID in \code{data}
+#' @param    gaps    add IMGT gaps to output sequences?
+#' @param    translate Tranlate into amino acids?
+#' @param    rm_x_aa Remove amino acids translated to X
+#' @param    dot_notation Represent sites with germline character as "." and ambiguous sites as "?"
+#' @param    verbose print out extra information?
+#' @return   A data table where each row shows a node/node id, with that node's sequence(s)
+#' in the remaining columns with respective locus labels.
+#'
+#'  
+#' @seealso \link{getNodeSeq} \link{getAllSeqs} \link{dfToFasta}
+#' @export
+getSeqPath = function(data, node, tree = NULL, clone = NULL, gaps = TRUE, translate=FALSE,
+  rm_x_aa=FALSE, dot_notation=FALSE, verbose=FALSE){
+  tree <- dplyr::filter(data, !!rlang::sym("clone_id") == clone)$trees[[1]]
+  edges <- tree$edge
+  if(inherits(node, "character")){
+    target_node <- which(tree$tip.label == node)
+  }else{
+    target_node <- node
+  }
+
+  # get the sequence for each node moving upward towards the root
+  seq <- getNodeSeq(data, target_node, tree, clone, gaps)
+  seq[["id"]] <- node
+  seq[["node"]] <- target_node
+  result <- dplyr::bind_rows(seq)
+  parent <- edges[edges[,2] == target_node,1]
+  while(length(parent) > 0){
+    if(verbose)print(parent)
+    seq <- getNodeSeq(data, parent, tree, clone, gaps)
+    seq[["id"]] <- parent
+    seq["node"] <- parent
+    result <- dplyr::bind_rows(seq,result)
+    parent <- edges[edges[,2] == parent,1]
+  }
+  loci <- names(result)[!names(result) %in% c("node","id")]
+  result <- result[,c("id", "node", names(result)[!names(result) %in% c("node","id")])]
+  # traslate to AA
+  if(translate){
+    for(locus in loci){
+      result[[locus]] <- sapply(result[[locus]],function(x)alakazam::translateDNA(x))
+    }
+  }
+  # remove germline sites with X
+  if(rm_x_aa && translate){
+    for(locus in loci){
+      temp <- strsplit(result[[locus]], split="")
+      names(temp) <- NULL
+      result[[locus]] <- sapply(temp, function(x){
+        paste(x[temp[[1]] != "X"], collapse="")
+      })
+    }
+  }
+  # convert to dot notation
+  if(dot_notation){
+    for(locus in loci){
+      temp <- strsplit(result[[locus]], split="")
+      names(temp) <- NULL
+      end <- length(temp[[1]])
+      result[[locus]] <- sapply(1:length(temp), function(x){
+        if(x==1){
+          return(paste0(paste0(temp[[x]], collapse="")))
+        }else{
+          seq <- sapply(1:length(temp[[1]]), function(y){
+            if(temp[[x]][y] == temp[[1]][y]){
+              return(".")
+            }else if(translate && temp[[x]][y] == "X"){
+              return("?")
+            }else if(!translate && !temp[[x]][y] 
+              %in% c("A","C","G","T")){
+              return("?")
+            }else{
+              return(temp[[x]][y])
+            }
+          })
+          return(paste0(seq, collapse=""))
+        }
+      })
+    }
+  }
+  return(result)
 }
 
 #' Write a fasta file of sequences

@@ -62,7 +62,6 @@ Suggests:
     rmarkdown,
     testthat,
     BiocManager
-RoxygenNote: 7.3.3
 Collate:
     'Data.R'
     'Dowser.R'
@@ -74,3 +73,4 @@ Collate:
     'TreeFunctions.R'
     'TimeTreesFunctions.R'
     'zzz.R'
+Config/roxygen2/version: 8.0.0

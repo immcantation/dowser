@@ -4,7 +4,7 @@
 \alias{calcRF}
 \title{Finds the Robinson-Fould's cluster distance between phylogenies.}
 \usage{
-calcRF(tree_1, tree_2, nproc = 1)
+calcRF(tree_1, tree_2, nproc = 1, normalize = FALSE, include_root = TRUE)
 }
 \arguments{
 \item{tree_1}{A \code{phylo} object}
@@ -12,6 +12,12 @@ calcRF(tree_1, tree_2, nproc = 1)
 \item{tree_2}{A \code{phylo} object}
 
 \item{nproc}{Number of cores to use for calculations.}
+
+\item{normalize}{Normalize RF by maximum RF distance}
+
+\item{include_root}{If TRUE include root split in denominator when
+normalize=TRUE. If FALSE root split won't be counted 
+as a possible split if trees are rooted at same tip.}
 }
 \value{
 The RF cluster value for the two input trees.

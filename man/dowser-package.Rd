@@ -20,6 +20,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Kenneth Hoehn \email{kenneth.b.hoehn@dartmouth.edu}
   \item Cole Jensen \email{cole.jensen@yale.edu}
   \item Jessie Fielding \email{jessie.jo.fielding@dartmouth.edu}
   \item Hunter Melton \email{hunter.j.melton@dartmouth.edu}

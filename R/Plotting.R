@@ -643,4 +643,108 @@ plotSkylines = function(clones, file=NULL, width=8.5, height=11, ...){
     }
 }
 
+#' Simple function for plotting multiple sequence alignments
+#' input can be either nucleotide or AA and contain ambiguous characters
+#' 
+#' @param  data Data table with sequences
+#' @param  id   column name of sequence IDs (order will be preserved)
+#' @param  seq  column name of sequence data to be plotted
+#' @param  seq_type sequence type in \code{seq} column, nucleotide (nt) or amino acid (aa)
+#' @param  text_size size of sequence alignment text
+#' @param  palette named vector of color for each character type in alignment, otherwise 
+#'                  default nt or aa palette will be used
+#'  
+#' @return   a ggplot2-formatted multiple sequence alignment plot
+#'  
+#' @seealso \link{getSeqPath}
+#' @export
+msaPlot = function(data, id, seq, seq_type=c("nt","aa"),text_size=1.5, 
+    palette=NULL){
+
+    seq_type <- seq_type[1]
+
+    # default palette for plotting
+    if(is.null(palette)){
+        if(seq_type == "nt"){
+            print("Using default NT palette")
+            palette <- c(
+            "T" = "#1f78b4",
+            "A" = "white",
+            "G" = "#fb9a99",
+            "C" = "#fdbf6f",
+            "R" = "grey",
+            "Y" = "grey",
+            "S" = "grey",
+            "W" = "grey",
+            "K" = "grey",
+            "M" = "grey",
+            "B" = "grey",
+            "D" = "grey",
+            "H" = "grey",
+            "V" = "grey",
+            "N" = "grey",
+            "-" = "lightgrey",
+            "." = "lightgrey",
+            "?" = "lightgrey"
+                )
+        }else{
+            print("Using default AA palette")
+            palette <- c(
+            "H" = "#a6cee3",
+            "K" = "#a6cee3",
+            "R" = "#a6cee3",
+            "D" = "#fb9a99",
+            "E" = "#fb9a99",
+            "S" = "#1f78b4",
+            "T" = "#1f78b4",
+            "N" = "#1f78b4",
+            "Q" = "#1f78b4",
+            "A" = "white",
+            "V" = "white",
+            "L" = "white",
+            "I" = "white",
+            "M" = "white",
+            "F" = "#cab2d6",
+            "Y" = "#cab2d6",
+            "W" = "#cab2d6",
+            "P" = "#fb9a99",
+            "G" = "#fb9a99",
+            "C" = "#fdbf6f",
+            "B" = "grey",
+            "Z" = "grey",
+            "X" = "grey",
+            "-" = "lightgrey",
+            "." = "lightgrey",
+            "?" = "lightgrey")
+        }
+    }
+
+    # melt data frame to individual positions
+    sites <- dplyr::tibble()
+    seqsplit <- strsplit(data[[seq]], split="")
+    for(i in 1:length(seqsplit)){
+        sites <- bind_rows(sites, bind_cols(position=1:length(seqsplit[[i]]), 
+            character=seqsplit[[i]], id=data[[id]][i]))
+    }
+    sites$id = factor(sites$id, 
+        levels=as.character(unique((sites$id))))
+
+    # plot
+    g <- ggplot2::ggplot(sites, aes(x=!!rlang::sym("position"), 
+        y=!!rlang::sym("id"), fill=!!rlang::sym("character"), 
+        label=!!rlang::sym("character"))) + 
+    ggplot2::geom_tile() + 
+    ggplot2::geom_text(size=text_size) + 
+    ggplot2::theme_bw() + 
+    ggplot2::theme(legend.position = "none") + 
+    ggplot2::xlab("") + 
+    ggplot2::ylab("") +
+    ggplot2::scale_fill_manual(values=palette) +
+    ggplot2::scale_y_discrete(limits=rev) +
+    ggplot2::scale_x_continuous(expand = c(0, 0))
+
+    return(g)
+}
+
+
 

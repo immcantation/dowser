@@ -976,11 +976,15 @@ correlationTest = function(clones, permutations=1000, minlength=0.001,
 #' @param tree_1         A \code{phylo} object
 #' @param tree_2         A \code{phylo} object
 #' @param nproc          Number of cores to use for calculations.
+#' @param normalize      Normalize RF by maximum RF distance
+#' @param include_root   If TRUE include root split in denominator when
+#'                       normalize=TRUE. If FALSE root split won't be counted 
+#'                       as a possible split if trees are rooted at same tip.
 #'
 #' @return   The RF cluster value for the two input trees.
 #'  
 #' @export
-calcRF <- function(tree_1, tree_2, nproc = 1){
+calcRF <- function(tree_1, tree_2, nproc = 1, normalize=FALSE, include_root=TRUE){
   tip_amount_check <- length(tree_1$tip.label) == length(tree_2$tip.label)
   if(!tip_amount_check){
     stop("trees do not have the same number of tips")
@@ -990,7 +994,7 @@ calcRF <- function(tree_1, tree_2, nproc = 1){
   if(!identical(tip_check, character(0))){
     stop("tree tip labels are not identical")
   }
-  tree_1_df <- splits_func(list(tree_1),1)
+  tree_1_df <- splits_func(list(tree_1), 1)
   tree_2_df <- splits_func(list(tree_2), 1)
   
   total_mismatches <- unlist(parallel::mclapply(1:nrow(tree_1_df), function(x){
@@ -998,7 +1002,8 @@ calcRF <- function(tree_1, tree_2, nproc = 1){
     mismatch_vector <- unlist(lapply(1:nrow(tree_2_df), function(y){
       mismatches_1 <- dplyr::setdiff(tree_2_df$found[[y]], tree_1_sub)
       mismatches_2 <- dplyr::setdiff(tree_1_sub, tree_2_df$found[[y]])
-      if(identical(mismatches_1, character(0)) & identical(mismatches_2, character(0))){
+      if(identical(mismatches_1, character(0)) & 
+          identical(mismatches_2, character(0))){
         value <- "match"      
       } else{
         value <- "mismatch"
@@ -1019,7 +1024,8 @@ calcRF <- function(tree_1, tree_2, nproc = 1){
     mismatch_vector <- unlist(lapply(1:nrow(tree_1_df), function(y){
       mismatches_1 <- setdiff(tree_1_df$found[[y]], tree_2_sub)
       mismatches_2 <- setdiff(tree_2_sub, tree_1_df$found[[y]])
-      if(identical(mismatches_1, character(0)) & identical(mismatches_2, character(0))){
+      if(identical(mismatches_1, character(0)) & 
+          identical(mismatches_2, character(0))){
         value <- "match"
       } else{
         value <- "mismatch"
@@ -1036,6 +1042,36 @@ calcRF <- function(tree_1, tree_2, nproc = 1){
   clone_mismatches <- sum(clone_mismatches)
   
   all_mismatches <- total_mismatches + clone_mismatches
+
+  if(normalize){
+    # KBH 7/22/26 calculate max RF and normalize
+    max_RF <- nrow(tree_1_df) + nrow(tree_2_df)
+
+    # remove trivial splits
+    max_RF <- max_RF - 
+      sum(sapply(tree_1_df$absent, function(x)identical(x, character(0)))) -
+      sum(sapply(tree_2_df$absent, function(x)identical(x, character(0))))
+
+    if(ape::is.rooted(tree_1) && ape::is.rooted(tree_2) && !include_root){
+      t1uca <- ape::getMRCA(tree_1, tip=tree_1$tip.label)
+      t2uca <- ape::getMRCA(tree_2, tip=tree_2$tip.label)
+
+      t1_roottips <- tree_1$edge[tree_1$edge[,1] == t1uca,2]
+      t1germline <- tree_1$tip.label[t1_roottips[t1_roottips <= 
+        length(tree_1$tip.label)]]
+
+      t2_roottips <- tree_2$edge[tree_2$edge[,1] == t2uca,2]
+      t2germline <- tree_2$tip.label[t2_roottips[t2_roottips <= 
+        length(tree_2$tip.label)]]
+
+      # if both trees rooted at the same germline, remove that split from each
+      if(t2germline == t1germline){
+        max_RF <- max_RF - 2
+      }
+    }
+
+    all_mismatches <- all_mismatches/max_RF
+  }
   
   return(all_mismatches)
 }
