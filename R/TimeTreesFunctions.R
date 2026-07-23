@@ -1289,7 +1289,11 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
     # add parameter summary
     beast@info$parameters <- log
     if(full_posterior){ 
-      treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".trees"))
+      if(is.null(trait)){
+        treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".trees"))
+      }else{
+        treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, "_tree_with_trait.trees"))
+      }
       l <- readLines(treesfile, warn=FALSE)
       if(!grepl("End;",l[length(l)])){
         l[length(l) + 1] <- "End;"
@@ -1298,11 +1302,12 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
         writeLines(l, con=treesfile)
       }
-      phylos <- ape::read.nexus(treesfile)
+      #phylos <- ape::read.nexus(treesfile)
+      phylos <- treeio::read.beast(treesfile)
       burn <- floor(length(phylos)*burnin/100)
       phylos <- phylos[(burn+1):length(phylos)]
       phylos <- lapply(phylos, function(y){
-        y$tip.label <- sapply(strsplit(y$tip.label,"_"), function(x)
+        y@phylo$tip.label <- sapply(strsplit(y@phylo$tip.label,"_"), function(x)
           paste0(x[1:(length(x)-1)], collapse="_"))
         y
       })
@@ -1579,6 +1584,28 @@ getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, f
     return(clones)
 }
 
+#' Add height and length columns to a tree@data data frame
+#' @param  tree    a treedata objects from read.beast
+# @export
+getHeightsAndLengths = function(tree){
+  phylo <- tree@phylo
+  uca <- ape::getMRCA(phylo, tip=phylo$tip.label)
+  dists <- ape::dist.nodes(phylo)
+  max_height <- max(dists[uca,])
+  tree@data$height <- NA
+  tree@data$length <- NA
+  for(i in 1:nrow(tree@data)){
+    node <- tree@data$node[i]
+    tree@data$height[i] <- max_height - dists[node,uca]
+    if(node == uca){
+      tree@data$length[i] <- 0
+    }else{
+      tree@data$length[i] <- phylo$edge.length[which(phylo$edge[,2] == node)]
+    }
+  }
+  return(tree)
+}
+
 
 #' Recurse up to tree to find most recent node with different state, or the root
 #' 
@@ -1600,7 +1627,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
     print(edge)
   }
   if(length(edge) == 0){
-    return(dplyr::tibble(diff_node=targetnode, root=TRUE, node_type=type, 
+    return(dplyr::tibble(diff_node=targetnode, root=1, node_type=type, 
       node_height=as.numeric(filter(tree@data, !!rlang::sym("node")==targetnode)[[height]])))
   }
   if(!is.null(nrow(edge))){
@@ -1623,7 +1650,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
       }
       parent_height <- as.numeric(parent_height) - adjust
     }
-    return(dplyr::tibble(diff_node=parent, root=FALSE, node_type=parent_type, 
+    return(dplyr::tibble(diff_node=parent, root=0, node_type=parent_type, 
       node_height=parent_height))
   }
 }
@@ -1648,7 +1675,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' tip_tip = trait value for that tip
 #' tip_height = height value for that tip
 #' diff_node = most recent ancestor node with different trait value, or root
-#' root = TRUE if at root node, FALSE otherwise
+#' root = 1 if at root node, 0 otherwise
 #' node_type = type of diff_node, will be "root" if at root node
 #' node_height = height of diff_node 
 #' <other columns> copied over from airrClone object for each tip
@@ -1660,43 +1687,74 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' 
 #' @export
 getDiffPoints = function(data, trait, height="height", verbose=FALSE,
-  tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL){
+  tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL, full_posterior=TRUE,
+  summarize=TRUE){
   diffpoints <- dplyr::tibble()
   for(row in 1:nrow(data)){
-    tree <- data$trees[[row]]
-    for(l in tree@phylo$tip.label){
-      if(verbose){
-        print(l)
+    trees <- data$trees[[row]]
+    if(full_posterior){
+      if(!"tree_posterior" %in% names(trees@info)){
+        stop(paste("Tree posterior distribution not found.\nEither first run readBEAST using",
+          "full_posterior=TRUE or set fullposterior=FALSE to use a single tree"))
       }
-      d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
-        which(tree@phylo$tip.label == l))
-      df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
-        trait=trait, height=height, verbose=verbose, eo_adjust=eo_adjust,
-        eo_type=eo_type)
-      temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
-        tip_type=d[[trait]], tip_height=d[[height]])
-      # copy over trait info for each tip
-      if(!is.null(tip_traits)){
-        for(tr in tip_traits){
-          if(!tr %in% names(data$data[[row]]@data)){
-            stop(paste(tr, "not found in airrClone object"))
-          }
-          m <- match(l, data$data[[row]]@data$sequence_id)
-          if(is.na(m)){
-            if(l == "Germline"){
-              temp[[tr]] <- NA
-              next
-            }
-            stop(paste(l,"not found in airrClone object"))
-          }
-          temp[[tr]] <- data$data[[row]]@data[[tr]][m]
+      trees <- trees@info$tree_posterior
+    }else{
+      trees <- list(trees)
+    }
+    treecounter <- 1
+    for(tree in trees){
+      if(!"height" %in% names(tree@data) || !"length" %in% names(tree@data)){
+        tree <- getHeightsAndLengths(tree)
+      }
+      for(l in tree@phylo$tip.label){
+        if(verbose){
+          print(l)
         }
+        d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
+          which(tree@phylo$tip.label == l))
+        df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
+          trait=trait, height=height, verbose=verbose, eo_adjust=eo_adjust,
+          eo_type=eo_type)
+        temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
+          tip_type=d[[trait]], tip_height=d[[height]], treecounter=counter)
+        # copy over trait info for each tip
+        if(!is.null(tip_traits)){
+          for(tr in tip_traits){
+            if(!tr %in% names(data$data[[row]]@data)){
+              stop(paste(tr, "not found in airrClone object"))
+            }
+            m <- match(l, data$data[[row]]@data$sequence_id)
+            if(is.na(m)){
+              if(l == "Germline"){
+                temp[[tr]] <- NA
+                next
+              }
+              stop(paste(l,"not found in airrClone object"))
+            }
+            temp[[tr]] <- data$data[[row]]@data[[tr]][m]
+          }
+        }
+        diffpoints <- dplyr::bind_rows(diffpoints, dplyr::bind_cols(temp, df))
+        treecounter <- treecounter + 1
       }
-      diffpoints <- dplyr::bind_rows(diffpoints, dplyr::bind_cols(temp, df))
+    }
+    diffpoints$node_height <- as.numeric(diffpoints$node_height)
+    diffpoints$tip_height <- as.numeric(diffpoints$tip_height)
+    
+    if(summarize & length(trees) > 1){
+      diffpoints <- diffpoints %>%
+        group_by(tip, tip_type, node_type) %>%
+        summarize(
+          trees = n(),
+          tip_tip = unique(tip_type),
+          tip_height = mean(tip_height),
+          node_height_mean = mean(node_height),
+          node_height_lower = HPDinterval(as.mcmc(node_height), prob = 0.95)[1],
+          node_height_upper = HPDinterval(as.mcmc(node_height), prob = 0.95)[2],
+          root_freq = mean(root)
+          )
     }
   }
-  diffpoints$node_height <- as.numeric(diffpoints$node_height)
-  diffpoints$tip_height <- as.numeric(diffpoints$tip_height)
   return(diffpoints)
 }
 
