@@ -1668,6 +1668,8 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' @param eo_adjust adjust heights using expectOccupancies. Recommended if EO model used,
 #'         requires eo_type to specify the type whose occupancy is tracked)
 #' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
+#' @param full_posterior Computer statistics using the full posterior distribution of trees?
+#' @param summarize if full_posterior=TRUE, summarize results or return the full table?
 #' @details 
 #' Returns a data frame where each row is a tip in each tree
 #' clone_id = clone id for that tree
@@ -1716,7 +1718,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
           trait=trait, height=height, verbose=verbose, eo_adjust=eo_adjust,
           eo_type=eo_type)
         temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
-          tip_type=d[[trait]], tip_height=d[[height]], treecounter=counter)
+          tip_type=d[[trait]], tip_height=d[[height]], treecounter=treecounter)
         # copy over trait info for each tip
         if(!is.null(tip_traits)){
           for(tr in tip_traits){
@@ -1743,15 +1745,15 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
     
     if(summarize & length(trees) > 1){
       diffpoints <- diffpoints %>%
-        group_by(tip, tip_type, node_type) %>%
+        group_by(!!rlang::sym("tip"), !!rlang::sym("tip_type"), !!rlang::sym("node_type")) %>%
         summarize(
           trees = n(),
-          tip_tip = unique(tip_type),
-          tip_height = mean(tip_height),
-          node_height_mean = mean(node_height),
-          node_height_lower = HPDinterval(as.mcmc(node_height), prob = 0.95)[1],
-          node_height_upper = HPDinterval(as.mcmc(node_height), prob = 0.95)[2],
-          root_freq = mean(root)
+          tip_tip = unique(!!rlang::sym("tip_type")),
+          tip_height = mean(!!rlang::sym("tip_height")),
+          node_height_mean = mean(!!rlang::sym("node_height")),
+          node_height_95HPDlo = coda::HPDinterval(coda::as.mcmc(!!rlang::sym("node_height")), prob = 0.95)[1],
+          node_height_95HPDup = coda::HPDinterval(coda::as.mcmc(!!rlang::sym("node_height")), prob = 0.95)[2],
+          root_freq = mean(!!rlang::sym("root"))
           )
     }
   }

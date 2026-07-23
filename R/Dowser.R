@@ -39,6 +39,7 @@
 #' @importFrom pwalign		pairwiseAlignment
 #' @importFrom treeio       read.beast
 #' @importFrom jsonlite     write_json read_json
+#' @importFrom coda         as.mcmc HPDinterval
 
 NULL
 

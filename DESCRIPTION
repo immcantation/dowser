@@ -38,6 +38,7 @@ Imports:
     airr,
     alakazam (>= 1.1.0),
     ape (>= 5.6),
+    coda, 
     dplyr (>= 1.0),
     ggtree,
     graphics,

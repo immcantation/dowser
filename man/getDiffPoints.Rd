@@ -12,7 +12,9 @@ getDiffPoints(
   verbose = FALSE,
   tip_traits = NULL,
   eo_adjust = FALSE,
-  eo_type = NULL
+  eo_type = NULL,
+  full_posterior = TRUE,
+  summarize = TRUE
 )
 }
 \arguments{
@@ -31,6 +33,10 @@ Must have been also specified as traits in formatClones.}
 requires eo_type to specify the type whose occupancy is tracked)}
 
 \item{eo_type}{if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)}
+
+\item{full_posterior}{Computer statistics using the full posterior distribution of trees?}
+
+\item{summarize}{if full_posterior=TRUE, summarize results or return the full table?}
 }
 \description{
 \code{getDiffPoints}
@@ -42,7 +48,7 @@ tip = tip name
 tip_tip = trait value for that tip
 tip_height = height value for that tip
 diff_node = most recent ancestor node with different trait value, or root
-root = TRUE if at root node, FALSE otherwise
+root = 1 if at root node, 0 otherwise
 node_type = type of diff_node, will be "root" if at root node
 node_height = height of diff_node 
 <other columns> copied over from airrClone object for each tip
