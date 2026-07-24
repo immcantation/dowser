@@ -658,7 +658,7 @@ plotSkylines = function(clones, file=NULL, width=8.5, height=11, ...){
 #'  
 #' @seealso \link{getSeqPath}
 #' @export
-msaPlot = function(data, id, seq, seq_type=c("nt","aa"),text_size=1.5, 
+plotMSA = function(data, id, seq, seq_type=c("nt","aa"),text_size=1.5, 
     palette=NULL){
 
     seq_type <- seq_type[1]
