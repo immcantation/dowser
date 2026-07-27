@@ -1768,6 +1768,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
         }
       }
     }
+    diffpoints$clone_id <- data$clone_id[x]
     diffpoints
   }, mc.cores=nproc)
   results <- tryCatch(dplyr::bind_rows(results_list), 
