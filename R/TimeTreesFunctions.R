@@ -1165,8 +1165,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #'  
 #' @export
 readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
-  quiet=0, full_posterior=FALSE, asr=FALSE, low_ram=TRUE, trim_ids=FALSE,
-  full_posterior=TRUE) {
+  quiet=0, full_posterior=TRUE, asr=FALSE, low_ram=TRUE, trim_ids=FALSE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data

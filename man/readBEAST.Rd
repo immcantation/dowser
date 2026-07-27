@@ -13,7 +13,7 @@ readBEAST(
   trait = NULL,
   nproc = 1,
   quiet = 0,
-  full_posterior = FALSE,
+  full_posterior = TRUE,
   asr = FALSE,
   low_ram = TRUE,
   trim_ids = FALSE
@@ -36,7 +36,7 @@ readBEAST(
 
 \item{quiet}{amount of rubbish to print to console}
 
-\item{full_posterior}{Read un full distribution of parameters and trees?}
+\item{full_posterior}{Read in full distribution of parameters and trees?}
 
 \item{asr}{Log ancestral sequences?}
 

@@ -15,7 +15,7 @@ buildBeast(
   resume_clones = NULL,
   trait = NULL,
   asr = FALSE,
-  full_posterior = FALSE,
+  full_posterior = TRUE,
   log_every = "auto",
   include_germline = TRUE,
   nproc = 1,
