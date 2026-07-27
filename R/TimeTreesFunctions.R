@@ -381,11 +381,12 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @seealso \link{getTimeTrees}
 #' @export
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
-                   resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=FALSE,
+                   resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=TRUE,
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
-                   start_edge_length=100, start_date=NULL, max_start_date=NULL,germline_trait_value='?',...) {
+                   start_edge_length=100, start_date=NULL, max_start_date=NULL,
+                   germline_trait_value='?',...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -1149,7 +1150,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #' @param id         unique identifer for this analysis
 #' @param trait      Trait column used         
 #' @param asr        Log ancestral sequences?
-#' @param full_posterior  Read un full distribution of parameters and trees?
+#' @param full_posterior  Read in full distribution of parameters and trees?
 #' @param nproc      Number of cores for parallelization. Uses at most 1 core per tree.
 #' @param quiet      amount of rubbish to print to console
 #' @param burnin         percent of initial tree samples to discard (default 10)
@@ -1164,7 +1165,8 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #'  
 #' @export
 readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
-  quiet=0, full_posterior=FALSE, asr=FALSE, low_ram=TRUE, trim_ids=FALSE) {
+  quiet=0, full_posterior=FALSE, asr=FALSE, low_ram=TRUE, trim_ids=FALSE,
+  full_posterior=TRUE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
@@ -1697,7 +1699,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
   #results <- dplyr::tibble()
   #for(row in 1:nrow(data)){
   results_list <- parallel::mclapply(1:nrow(data),function(x){
-    if(verbose)print(trees$clone_id[x])
+    if(verbose)print(data$clone_id[x])
     trees <- data$trees[[x]]
     if(full_posterior){
       if(!"tree_posterior" %in% names(trees@info)){
