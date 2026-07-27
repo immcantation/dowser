@@ -1153,7 +1153,8 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #' @param nproc      Number of cores for parallelization. Uses at most 1 core per tree.
 #' @param quiet      amount of rubbish to print to console
 #' @param burnin         percent of initial tree samples to discard (default 10)
-#' @param low_ram        run with less memory (slightly slower)       
+#' @param low_ram        run with less memory (slightly slower)
+#' @param trim_ids    remove last _ group from tips?       
 #'
 #' @return   
 #' If data is a tibble, then the input clones tibble with additional columns for 
@@ -1163,7 +1164,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #'  
 #' @export
 readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
-  quiet=0, full_posterior=FALSE, asr=FALSE, low_ram=TRUE) {
+  quiet=0, full_posterior=FALSE, asr=FALSE, low_ram=TRUE, trim_ids=FALSE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
@@ -1306,11 +1307,12 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
       phylos <- treeio::read.beast(treesfile)
       burn <- floor(length(phylos)*burnin/100)
       phylos <- phylos[(burn+1):length(phylos)]
-      phylos <- lapply(phylos, function(y){
+      if(trim_ids){
+        phylos <- lapply(phylos, function(y){
         y@phylo$tip.label <- sapply(strsplit(y@phylo$tip.label,"_"), function(x)
           paste0(x[1:(length(x)-1)], collapse="_"))
         y
-      })
+      })}
       
       beast@info$tree_posterior <- phylos
 
@@ -1670,6 +1672,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
 #' @param full_posterior Computer statistics using the full posterior distribution of trees?
 #' @param summarize if full_posterior=TRUE, summarize results or return the full table?
+#' @param nproc Number of cores to use (parallelizes by row of input data object)
 #' @details 
 #' Returns a data frame where each row is a tip in each tree
 #' clone_id = clone id for that tree
@@ -1690,10 +1693,12 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' @export
 getDiffPoints = function(data, trait, height="height", verbose=FALSE,
   tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL, full_posterior=TRUE,
-  summarize=TRUE){
-  diffpoints <- dplyr::tibble()
-  for(row in 1:nrow(data)){
-    trees <- data$trees[[row]]
+  summarize=TRUE, nproc=1){
+  #results <- dplyr::tibble()
+  #for(row in 1:nrow(data)){
+  results_list <- parallel::mclapply(1:nrow(data),function(x){
+    if(verbose)print(trees$clone_id[x])
+    trees <- data$trees[[x]]
     if(full_posterior){
       if(!"tree_posterior" %in% names(trees@info)){
         stop(paste("Tree posterior distribution not found.\nEither first run readBEAST using",
@@ -1703,39 +1708,23 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
     }else{
       trees <- list(trees)
     }
+    diffpoints <- dplyr::tibble()
     treecounter <- 1
     for(tree in trees){
       if(!"height" %in% names(tree@data) || !"length" %in% names(tree@data)){
         tree <- getHeightsAndLengths(tree)
       }
       for(l in tree@phylo$tip.label){
-        if(verbose){
-          print(l)
-        }
+        #if(verbose){
+        #  print(paste(treecounter,l))
+        #}
         d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
           which(tree@phylo$tip.label == l))
         df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
-          trait=trait, height=height, verbose=verbose, eo_adjust=eo_adjust,
+          trait=trait, height=height, verbose=FALSE, eo_adjust=eo_adjust,
           eo_type=eo_type)
-        temp <- dplyr::tibble(clone_id=data$clone_id[row], tip=l, 
+        temp <- dplyr::tibble(clone_id=data$clone_id[x], tip=l, 
           tip_type=d[[trait]], tip_height=d[[height]], treecounter=treecounter)
-        # copy over trait info for each tip
-        if(!is.null(tip_traits)){
-          for(tr in tip_traits){
-            if(!tr %in% names(data$data[[row]]@data)){
-              stop(paste(tr, "not found in airrClone object"))
-            }
-            m <- match(l, data$data[[row]]@data$sequence_id)
-            if(is.na(m)){
-              if(l == "Germline"){
-                temp[[tr]] <- NA
-                next
-              }
-              stop(paste(l,"not found in airrClone object"))
-            }
-            temp[[tr]] <- data$data[[row]]@data[[tr]][m]
-          }
-        }
         diffpoints <- dplyr::bind_rows(diffpoints, dplyr::bind_cols(temp, df))
         treecounter <- treecounter + 1
       }
@@ -1753,11 +1742,39 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
           node_height_mean = mean(!!rlang::sym("node_height")),
           node_height_95HPDlo = coda::HPDinterval(coda::as.mcmc(!!rlang::sym("node_height")), prob = 0.95)[1],
           node_height_95HPDup = coda::HPDinterval(coda::as.mcmc(!!rlang::sym("node_height")), prob = 0.95)[2],
-          root_freq = mean(!!rlang::sym("root"))
+          root_freq = mean(!!rlang::sym("root")),
+          .groups = "drop_last"
           )
     }
-  }
-  return(diffpoints)
+
+    # copy over trait info for each tip
+    if(!is.null(tip_traits)){
+      for(tr in tip_traits){
+        if(!tr %in% names(data$data[[x]]@data)){
+          stop(paste(tr, "not found in airrClone object"))
+        }
+        diffpoints[[tr]] = NA
+        for(tindex in 1:nrow(diffpoints)){
+          m <- match(diffpoints$tip[tindex], data$data[[x]]@data$sequence_id)
+          if(is.na(m)){
+            if(diffpoints$tip[tindex] == "Germline"){
+              diffpoints[[tr]][tindex] <- NA
+              next
+            }
+            stop(paste(diffpoints$tip[tindex],"not found in airrClone object"))
+          }
+          diffpoints[[tr]][tindex] <- data$data[[x]]@data[[tr]][m]
+        }
+      }
+    }
+    diffpoints
+  }, mc.cores=nproc)
+  results <- tryCatch(dplyr::bind_rows(results_list), 
+    error=function(e){
+      saveRDS(results_list, "getDiffPoints_error.rds")
+      stop("Error caught in getDiffPoints, see getDiffPoints_error.rds")
+    })
+  return(results)
 }
 
 

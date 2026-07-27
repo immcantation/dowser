@@ -15,7 +15,8 @@ readBEAST(
   quiet = 0,
   full_posterior = FALSE,
   asr = FALSE,
-  low_ram = TRUE
+  low_ram = TRUE,
+  trim_ids = FALSE
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ readBEAST(
 \item{asr}{Log ancestral sequences?}
 
 \item{low_ram}{run with less memory (slightly slower)}
+
+\item{trim_ids}{remove last _ group from tips?}
 }
 \value{
 If data is a tibble, then the input clones tibble with additional columns for 

@@ -14,7 +14,8 @@ getDiffPoints(
   eo_adjust = FALSE,
   eo_type = NULL,
   full_posterior = TRUE,
-  summarize = TRUE
+  summarize = TRUE,
+  nproc = 1
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ requires eo_type to specify the type whose occupancy is tracked)}
 \item{full_posterior}{Computer statistics using the full posterior distribution of trees?}
 
 \item{summarize}{if full_posterior=TRUE, summarize results or return the full table?}
+
+\item{nproc}{Number of cores to use (parallelizes by row of input data object)}
 }
 \description{
 \code{getDiffPoints}
