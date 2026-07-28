@@ -2429,3 +2429,71 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
   return(0)
 }
 
+
+#'\code{filterCombs}
+#' Experimental. Remove sequences likely resulting from oversequencing and PCR error
+#' This removes "comb" structures in trees which are flat polytomies with low duplicate counts
+#' radiating out from a single node with a much higher duplicate count.
+#' Adapted from https://bitbucket.org/kleinstein/projects/src/master/Hoehn2022/isotype_analysis/treesAndSwitches_dowser.R
+#' 
+#' @param    data  AIRR-formatted data table (not a Dowser object from formatClones)
+#' @param    dup_count_thresh  Minimum duplicate count to be considered a 'comb'
+#' @param    exponent determines whether a child sequence is to be cut. Based on duplicate_count
+#'            ratio of child node to parent exponent=1 -> cutting 1/100 (child/parent) at 1 Hamming dist,
+#'        1/1000 at 2 dist, while exponent=2 -> cutting 1/1000 (child/parent) at distance 1.
+#' @param    data data.frame containing the AIRR or Change-O data for a clone. See Details
+#'                for the list of required columns and their default values.
+#' @param    id   name of the column containing sequence identifiers.
+#' @param    seq  name of the column containing observed DNA sequences. All 
+#'                sequences in this column must be multiple aligned.
+#' @param    clone   name of the column containing the identifier for clones.
+#' @param    duplicate name of the column containing the number of duplicates for this sequence.
+#' @param    gap  gap penalty for Hamming distance. gap=0 means gaps ignored.
+#' @details
+#' Formula for cutting a child sequence is:
+#'  child[[duplicate]]/parent[[duplicate]] < 10^(-(exponent + Hamming distance[child, parent]))
+#' @export
+filterCombs = function(data, dup_count_thresh=100, exponent=1, 
+  id="sequence_id", seq="sequence_alignment", clone="clone_id", 
+  duplicate="duplicate_count", gap=0){
+
+  check <- alakazam::checkColumns(data, unique(c(id, seq, clone, duplicate)))
+  if (check != TRUE) { stop(check) }
+
+  ccount <- table(data[[clone]])
+  allbc <- dplyr::tibble()
+  bseqs <- data[data[[duplicate]] >= dup_count_thresh,][[id]]
+  rmseqs <- c()
+  for(sequence in bseqs){
+    temp <- dplyr::filter(data, !!rlang::sym("sequence_id")==sequence)
+    if(nrow(temp) == 0){ #if sequence has already been filtered
+      next;
+    }
+    maxs <- temp[[seq]]
+    # other seqs in clone
+    bc <- dplyr::filter(data, !!rlang::sym("clone_id") == temp[[clone]] & 
+      !!rlang::sym("sequence_id") != seq)
+    if(nrow(bc) == 0){
+      next;
+    }
+    # Get sequences within the same clone that are the same length
+    # as target sequence
+    ls <- unlist(lapply(bc[[seq]], function(x)nchar(x)))
+    bc <- bc[ls==nchar(maxs),]
+    # compare all sequences in clone to target sequence
+    # keep those that are either sufficiently difference
+    # or at a sufficiently high relative duplicate_count
+    bc$maxDist <- unlist(lapply(bc[[seq]], function(x)
+      alakazam::seqDist(x, maxs, dist_mat=alakazam::getDNAMatrix(gap=0))))
+    bc$maxRatio <- bc[[duplicate]]/temp[[duplicate]]
+    bc$cutoff <- 10^(-(exponent + bc$maxDist))
+    cut <- dplyr::filter(bc, !!rlang::sym("maxRatio") < !!rlang::sym("cutoff"))[[id]]
+    rmseqs <- c(rmseqs, cut)
+  }
+  fdata <- data[!data[[id]] %in% rmseqs,]
+  print(paste("Removed",nrow(data) - nrow(fdata),"sequences from data."))
+  return(fdata)
+}
+
+
+
