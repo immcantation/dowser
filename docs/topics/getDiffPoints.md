@@ -1,0 +1,99 @@
+**getDiffPoints** - *For each tree, recurse up to tree to find most recent 
+node with a different state, or the root*
+
+Description
+--------------------
+
+`getDiffPoints`
+
+
+Usage
+--------------------
+```
+getDiffPoints(
+data,
+trait,
+height = "height",
+verbose = FALSE,
+tip_traits = NULL,
+eo_adjust = FALSE,
+eo_type = NULL,
+full_posterior = TRUE,
+summarize = TRUE,
+nproc = 1
+)
+```
+
+Arguments
+-------------------
+
+data
+:   a tibble containing trees column from getTimeTrees
+
+trait
+:   column name of the trait of interest
+
+height
+:   which height value to return
+
+verbose
+:   print out info during run
+
+tip_traits
+:   vector of other traits to include for each tip.
+Must have been also specified as traits in formatClones.
+
+eo_adjust
+:   adjust heights using expectOccupancies. Recommended if EO model used,
+requires eo_type to specify the type whose occupancy is tracked)
+
+eo_type
+:   if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
+
+full_posterior
+:   Computer statistics using the full posterior distribution of trees?
+
+summarize
+:   if full_posterior=TRUE, summarize results or return the full table?
+
+nproc
+:   Number of cores to use (parallelizes by row of input data object)
+
+
+
+
+Details
+-------------------
+
+Returns a data frame where each row is a tip in each tree
+clone_id = clone id for that tree
+tip = tip name
+tip_tip = trait value for that tip
+tip_height = height value for that tip
+diff_node = most recent ancestor node with different trait value, or root
+root = 1 if at root node, 0 otherwise
+node_type = type of diff_node, will be "root" if at root node
+node_height = height of diff_node 
+<other columns> copied over from airrClone object for each tip
+
+
+
+Examples
+-------------------
+
+```R
+### Not run:
+dp = getDiffPoints(data, "location", verbose=TRUE, 
+#  eo_adjust=TRUE, eo_type="germinal_center")
+```
+
+**Error in parse(text = input)**: <text>:4:0: unexpected end of input
+2: dp = getDiffPoints(data, "location", verbose=TRUE, 
+3: #  eo_adjust=TRUE, eo_type="germinal_center")
+  ^
+
+
+
+
+
+

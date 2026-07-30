@@ -19,7 +19,8 @@ bins = 100,
 verbose = 0,
 forward = TRUE,
 nproc = 1,
-max_height = c("min", "median", "mean", "max")
+max_height = c("min", "median", "mean", "max"),
+exclude_germline = TRUE
 )
 ```
 
@@ -55,6 +56,9 @@ nproc
 
 max_height
 :   max height to use (min, median, mean, max)
+
+exclude_germline
+:   exclude germline from skyline plot? (For TyCHE GRTs)
 
 
 

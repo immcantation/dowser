@@ -17,6 +17,7 @@ iterations = 10,
 ess_cutoff = 200,
 ignore = c("traitfrequencies"),
 quiet = 0,
+continue = FALSE,
 ...
 )
 ```
@@ -39,6 +40,9 @@ ignore
 
 quiet
 :   quiet notifications if > 0
+
+continue
+:   If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)
 
 ...
 :   Additional arguments for getTimeTrees

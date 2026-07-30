@@ -29,8 +29,6 @@ rates = NULL,
 asrc = 0.95,
 splitfreqs = FALSE,
 asrp = FALSE,
-trunkl = NULL,
-make_gyrep = TRUE,
 ...
 )
 ```
@@ -95,12 +93,6 @@ splitfreqs
 
 asrp
 :   Run ASRp?
-
-trunkl
-:   Set trunk length to specified number
-
-make_gyrep
-:   Create the grep file?
 
 ...
 :   Additional arguments (not currently used)

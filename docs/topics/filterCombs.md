@@ -1,0 +1,79 @@
+**filterCombs** - *`filterCombs`
+Remove sequences likely resulting from oversequencing and PCR error
+This removes "comb" structures in trees which are flat polytomies with low duplicate counts
+radiating out from a single node with a much higher duplicate count.
+Adapted from https://bitbucket.org/kleinstein/projects/src/master/Hoehn2022/isotype_analysis/treesAndSwitches_dowser.R*
+
+Description
+--------------------
+
+`filterCombs`
+Remove sequences likely resulting from oversequencing and PCR error
+This removes "comb" structures in trees which are flat polytomies with low duplicate counts
+radiating out from a single node with a much higher duplicate count.
+Adapted from https://bitbucket.org/kleinstein/projects/src/master/Hoehn2022/isotype_analysis/treesAndSwitches_dowser.R
+
+
+Usage
+--------------------
+```
+filterCombs(
+data,
+dup_count_thresh = 100,
+exponent = 1,
+id = "sequence_id",
+seq = "sequence_alignment",
+clone = "clone_id",
+duplicate = "duplicate_count",
+gap = 0
+)
+```
+
+Arguments
+-------------------
+
+data
+:   data.frame containing the AIRR or Change-O data for a clone. See Details
+for the list of required columns and their default values.
+
+dup_count_thresh
+:   Minimum duplicate count to be considered a 'comb'
+
+exponent
+:   determines whether a child sequence is to be cut. Based on duplicate_count
+ratio of child node to parent exponent=1 -> cutting 1/100 (child/parent) at 1 Hamming dist,
+1/1000 at 2 dist, while exponent=2 -> cutting 1/1000 (child/parent) at distance 1.
+
+id
+:   name of the column containing sequence identifiers.
+
+seq
+:   name of the column containing observed DNA sequences. All 
+sequences in this column must be multiple aligned.
+
+clone
+:   name of the column containing the identifier for clones.
+
+duplicate
+:   name of the column containing the number of duplicates for this sequence.
+
+gap
+:   gap penalty for Hamming distance. gap=0 means gaps ignored.
+
+
+
+
+Details
+-------------------
+
+Formula for cutting a child sequence is:
+ child[[duplicate]]/parent[[duplicate]] < 10^(-(exponent + Hamming distance[child, parent]))
+
+
+
+
+
+
+
+
+

@@ -16,7 +16,8 @@ burnin,
 bins = 100,
 youngest = 0,
 clone_id = NULL,
-max_height = c("min", "median", "mean", "max")
+max_height = c("min", "median", "mean", "max"),
+exclude_germline = TRUE
 )
 ```
 
@@ -43,6 +44,9 @@ clone_id
 
 max_height
 :   max height to use (min, median, mean, max)
+
+exclude_germline
+:   exclude germline from skyline plot? (For TyCHE GRTs)
 
 
 

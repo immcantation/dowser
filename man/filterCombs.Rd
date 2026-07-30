@@ -3,7 +3,7 @@
 \name{filterCombs}
 \alias{filterCombs}
 \title{\code{filterCombs}
-Experimental. Remove sequences likely resulting from oversequencing and PCR error
+Remove sequences likely resulting from oversequencing and PCR error
 This removes "comb" structures in trees which are flat polytomies with low duplicate counts
 radiating out from a single node with a much higher duplicate count.
 Adapted from https://bitbucket.org/kleinstein/projects/src/master/Hoehn2022/isotype_analysis/treesAndSwitches_dowser.R}
@@ -42,7 +42,7 @@ sequences in this column must be multiple aligned.}
 }
 \description{
 \code{filterCombs}
-Experimental. Remove sequences likely resulting from oversequencing and PCR error
+Remove sequences likely resulting from oversequencing and PCR error
 This removes "comb" structures in trees which are flat polytomies with low duplicate counts
 radiating out from a single node with a much higher duplicate count.
 Adapted from https://bitbucket.org/kleinstein/projects/src/master/Hoehn2022/isotype_analysis/treesAndSwitches_dowser.R

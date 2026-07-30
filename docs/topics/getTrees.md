@@ -130,7 +130,7 @@ plotTrees(trees)[[1]]
 
 ```
 
-![2](getTrees-2.png)
+*Warning*:Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.![3](getTrees-3.png)
 
 ```R
 
@@ -140,6 +140,7 @@ data(ExampleClones)
 # trees <- getTrees(ExampleClones[10,],igphyml="/path/to/igphyml",
 # id="temp",dir="temp", trait="sample_id")
 # plotTrees(trees)[[1]]
+
 ```
 
 

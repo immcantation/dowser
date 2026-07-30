@@ -3,7 +3,7 @@
 Dowser
 -------------------------------------------------------------------------------
 
-Dowser is part of the [Immcantation](http://immcantation.readthedocs.io) 
+Dowser is part of the [Immcantation](https://immcantation.readthedocs.io) 
 analysis framework for Adaptive Immune Receptor Repertoire sequencing 
 (AIRR-seq). Dowser provides a set of tools for performing phylogenetic analysis
 on B cell receptor repertoires. It supports building and visualizing trees using 
@@ -44,7 +44,7 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 ## Dependencies
 
 **Depends:** ggplot2  
-**Imports:** airr, alakazam, ape, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils, pwalign, treeio  
+**Imports:** airr, alakazam, ape, coda, dplyr, ggtree, graphics, gridExtra, markdown, methods, phangorn, phylotate, RColorBrewer, rlang, shazam, stats, stringr, tidyselect, tidyr, utils, pwalign, treeio, jsonlite  
 **Suggests:** knitr, rmarkdown, testthat, BiocManager
 
 
@@ -56,6 +56,7 @@ To receive alerts about Immcantation releases, news, events, and tutorials, join
 [Hunter Melton](mailto:hunter.j.melton@dartmouth.edu) (aut)  
 [Susanna Marquez](mailto:susanna.marquez@yale.edu) (ctb)  
 [Jason Vander Heiden](mailto:jason.vanderheiden@gmail.com) (ctb)  
+Erick Matsen (ctb)  
 [Steven Kleinstein](mailto:steven.kleinstein@yale.edu) (aut, cph)
 
 

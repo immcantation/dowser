@@ -18,9 +18,10 @@ burnin = 10,
 trait = NULL,
 nproc = 1,
 quiet = 0,
-full_posterior = FALSE,
+full_posterior = TRUE,
 asr = FALSE,
-low_ram = TRUE
+low_ram = TRUE,
+trim_ids = FALSE
 )
 ```
 
@@ -43,7 +44,7 @@ burnin
 :   percent of initial tree samples to discard (default 10)
 
 trait
-:   Trait coolumn used
+:   Trait column used
 
 nproc
 :   Number of cores for parallelization. Uses at most 1 core per tree.
@@ -52,13 +53,16 @@ quiet
 :   amount of rubbish to print to console
 
 full_posterior
-:   Read un full distribution of parameters and trees?
+:   Read in full distribution of parameters and trees?
 
 asr
 :   Log ancestral sequences?
 
 low_ram
 :   run with less memory (slightly slower)
+
+trim_ids
+:   remove last _ group from tips?
 
 
 
