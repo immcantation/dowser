@@ -5,7 +5,7 @@ edit_uri: src/master/docs/
 theme:
   name: readthedocs
   navigation_depth: 2
-  collapse_navigation: False
+  collapse_navigation: True
   sticky_navigation: False
   locale: en
   titles_only: False

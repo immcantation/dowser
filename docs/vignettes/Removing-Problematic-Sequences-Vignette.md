@@ -1,12 +1,14 @@
 # Removing problematic sequences
 
-Repertoire sequencing data often contains sequences that can skew phylogenetic analysis such as partial reads and reads resulting from oversequencing and/or PCR error. While most preprocessing is better done using pRESTO, Dowser provides two functions for removing these sequences: `filterPartialSeqs` and `filterCombs`.
+Repertoire sequencing data often contains sequences that shouldn't go into a lineage tree analysis: partial or poorly-covered reads, and low-count sequences that are really just oversequencing or PCR error rather than genuine clonal members. Dowser provides two functions for cleaning these out of an AIRR/Change-O data set before clones are formatted and trees are built: `filterPartialSeqs` and `filterCombs`.
 
 ## Removing partial sequences
 
-Partial or truncated sequences can cause spurious clonal groupings, often with unrelated V and J genes. This is because partial reads often mathc to many ambiguous V genes, which causes some clonal clustering algorithms to consider all sequences with any of the matching V/J groups as potentially part of the same clone. Even a small number of these sequences can lead to problems with clonal clustering. `filterPartialSeqs` removes any sequence whose alignment doesn't contain enough real nucleotides, and is **highly recommended before clonal clustering**, not just before tree building.
+Partial or truncated sequences (e.g. reads only covering part of the V region) can distort alignments and clonal clustering. `filterPartialSeqs` removes any sequence whose alignment doesn't contain enough real nucleotide calls, and is **highly recommended before clonal clustering**, not just before tree building.
 
 For each sequence, it counts characters matching `pattern` (default `[ATCG]`, i.e. unambiguous nucleotides) and drops any sequence with fewer matches than `cutoff` (default 250).
+
+The example data has no partial sequences, so we'll simulate one by masking the second half of a sequence's alignment with `N`s, as if only the first half had been sequenced.
 
 
 ``` r
@@ -19,9 +21,15 @@ data(ExampleAirr)
 # Simulate a partial/truncated sequence
 row <- which(ExampleAirr$sequence_id == "GN5SHBT04BIIPE")
 orig <- ExampleAirr$sequence_alignment[row]
-half <- floor(nchar(orig)/2)
-ExampleAirr$sequence_alignment[row] <- paste0(substr(orig, 1, half),
-  paste(rep("N", nchar(orig) - half), collapse=""))
+ExampleAirr$sequence_alignment[row] <- paste0(
+  paste(rep(".", 150), collapse=""), substr(orig, 150, nchar(orig)))
+
+# example partial/truncated sequence that could mess up clonal clustering
+print(ExampleAirr$sequence_alignment[row])
+```
+
+```
+## [1] "......................................................................................................................................................GGAGTGGGTAGGCTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGACTACGCCGCGTCAGTGGAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAGAGCACCGCCTATCTGCAAATGGATAGCCTGAAGACCGAGGACACAGGCTTTTATTATTGTAGTAGAGATCTCCGGGTTAGTTCCACAGCAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAG"
 ```
 
 
@@ -48,21 +56,19 @@ For non-standard alignment columns or a different cutoff, adjust `seq`, `cutoff`
 
 ## Removing "comb" artifacts
 
-Sequencing can also generate near-identical sequences that differ from a much more abundant sequence by only one or two nucleotides — usually oversequencing or PCR error, not real somatic hypermutation. In a lineage tree this shows up as a "comb": a flat polytomy of low-`duplicate_count` tips radiating from a single node with a much higher `duplicate_count`. Left uncorrected, it can look like a burst of diversification and inflate downstream measures of tree shape.
+Bulk BCR sequencing, especially without UMIs, often generates near-identical sequences that differ from a much more abundant sequence by only one or two nucleotides. This is often thought to result from oversequencing or PCR error, not real somatic hypermutation. In a lineage tree this shows up as a "comb": a flat polytomy of low-`duplicate_count` tips radiating from a single node with a much higher `duplicate_count`. `filterCombs` detects and removes these likely comb artifacts. 
 
-`filterCombs` detects and removes likely comb artifacts. Unlike `filterPartialSeqs`, it needs `clone_id` already assigned, so it should run after clonal clustering but still before `formatClones`.
+To work, the `clone_id` must already be already assigned, so `filterCombs` should run after clonal clustering but still before `formatClones`.
 
 For each sequence with a `duplicate_count` at or above `dup_count_thresh`, it compares against every other sequence in the same clone, cutting a candidate if its duplicate count is low relative to the higher-count sequence, scaled by their Hamming distance:
 
 ```
-child[[duplicate]]/parent[[duplicate]] < 10^(-(exponent + Hamming distance[child, parent]))
+child[[`duplicate`]]/parent[[`duplicate`]] < 10^(-(`exponent` + Hamming distance[child, parent]))
 ```
 
-More distant sequences are allowed a higher relative duplicate count before being cut; near-identical ones are held to a much stricter ratio.
+More distant sequences are allowed a higher relative duplicate count before being cut. Near-identical ones are held to a much stricter ratio. This ratio decreases by 10-fold with each additional sequence difference from the parent sequence.
 
 ### Simulating a comb artifact
-
-The example data has no obvious comb either, so we'll simulate one by inflating the `duplicate_count` of two sequences in clone `3128`: `GN5SHBT07H5AOD` as the highly-sequenced "hub", and `GN5SHBT08H9MGK` as a smaller secondary artifact.
 
 
 ``` r
@@ -82,14 +88,14 @@ clones <- formatClones(clone, trait="biopsy", num_fields="duplicate_count")
 trees <- scaleBranches(getTrees(clones))
 
 plotTrees(trees, tipsize="duplicate_count", tips="biopsy", scale=1)[[1]] +
-  geom_tiplab(size=3) + xlim(0, 55)
+  geom_tiplab(size=3) + xlim(0, 75)
 ```
 
 ![plot of chunk Removing-Problematic-Sequences-Vignette-5](figure/Removing-Problematic-Sequences-Vignette-5-1.png)
 
-Notice the flat radiation of `duplicate_count` ~1 tips branching directly from `GN5SHBT07H5AOD` (`duplicate_count` 1000) — many near-identical, low-count sequences attaching to one much higher-count sequence is the signature of a comb, not genuine diversification.
+Notice the flat radiation of `duplicate_count` ~1 tips branching directly from `GN5SHBT07H5AOD` (`duplicate_count` 1000). These many near-identical, low-count sequences radiating from one much higher-count sequence is the signature of a comb, which is often suspected to be from PCR or sequencing error.
 
-### Filtering the comb
+### Removing comb artifacts
 
 Run `filterCombs` on the full, unfiltered data set, using the defaults `dup_count_thresh=100` and `exponent=1`.
 
@@ -111,25 +117,23 @@ fclones <- formatClones(fclone, trait="biopsy", num_fields="duplicate_count")
 ftrees <- scaleBranches(getTrees(fclones))
 
 plotTrees(ftrees, tipsize="duplicate_count", tips="biopsy", scale=1)[[1]] +
-  geom_tiplab(size=3) + xlim(0, 55)
+  geom_tiplab(size=3) + xlim(0, 75)
 ```
 
 ![plot of chunk Removing-Problematic-Sequences-Vignette-7](figure/Removing-Problematic-Sequences-Vignette-7-1.png)
 
-Most of the comb tips around `GN5SHBT07H5AOD` are gone, along with the secondary artifact at `GN5SHBT08H9MGK`, leaving a tree that better reflects genuine diversification.
+Most of the comb tips around `GN5SHBT07H5AOD` and `GN5SHBT08H9MGK` are gone.
 
 ### Choosing parameters
 
 * `dup_count_thresh`: minimum `duplicate_count` for a sequence to be treated as a potential comb source. Raising it makes filtering more conservative.
-* `exponent`: how aggressively nearby sequences are cut. At `exponent=1`, a child needs a duplicate count ratio below 1/100 of its neighbor's to be cut at Hamming distance 1 (1/1000 at distance 2). `exponent=2` is stricter still (1/1000 at distance 1), removing fewer sequences.
+* `exponent`: how aggressively nearby sequences are cut. At `exponent=1`, a child needs a duplicate count ratio below 1/100 of its neighbor's to be cut at Hamming distance 1 (1/1000 at distance 2). `exponent=2` is less strict, requiring 1/1000 at distance 1, removing fewer sequences.
 * `gap`: gap penalty for the Hamming distance calculation. `gap=0` (default) ignores gaps.
-* `id`, `seq`, `clone`, `duplicate`: column names, for data not in standard AIRR format.
-
-This function is experimental — visually compare trees before and after filtering, as above, to confirm it's removing artifacts rather than genuine clonal members.
+* `id`, `seq`, `clone`, `duplicate`: column names, and by default are set to the standard AIRR format.
 
 ## Recommended order
 
-Putting this all together, a typical cleaning pipeline looks like:
+Putting this all together, a typical pipeline might look like:
 
 1. `filterPartialSeqs` on the raw AIRR/Change-O data, before clonal clustering.
 2. Clonal clustering (for example with [SCOPer](https://scoper.readthedocs.io)), which assigns `clone_id`.
