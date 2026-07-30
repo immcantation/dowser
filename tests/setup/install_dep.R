@@ -58,11 +58,15 @@ installDep <- function(pkg, devel_mode, immcantation=immcantation_packages,
             version_spec <- if (is.null(pkg_version)) NULL else paste(pkg_logic, pkg_version)
             tryCatch({ devtools::install_version(pkg_name, version_spec, repos="http://lib.stat.cmu.edu/R/CRAN/") },
                      error=function(e) {
-                         # This is needed if there is an Immcantation release package that is not
-                         # available from CRAN
                          cat(as.character(e), "\n")
-                         message("Installing ",pkg," from GitHub\n ")
-                         install_github(paste0("immcantation/", pkg_name, "@",pkg_version))
+                         if (is_immcantation) {
+                             # This is needed if there is an Immcantation release package that is not
+                             # available from CRAN
+                             message("Installing ",pkg," from GitHub\n ")
+                             install_github(paste0("immcantation/", pkg_name, "@",pkg_version))
+                         } else {
+                             stop("Failed to install CRAN package ", pkg_name, ".")
+                         }
                      })
         }
     } else {
