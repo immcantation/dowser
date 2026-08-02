@@ -14,6 +14,7 @@ writeTreesJSON(
   edge_tol = 1e-08,
   cell = "cell_id",
   heavy = "IGH",
+  light = c("IGK", "IGL"),
   dowser_fields = TRUE
 )
 }
@@ -33,6 +34,8 @@ writeTreesJSON(
 \item{cell}{cell id column name in Dowser object}
 
 \item{heavy}{name of heavy chain locus}
+
+\item{light}{names of light chain loci}
 
 \item{dowser_fields}{include dowser-specific information? (recommended)}
 }

@@ -147,6 +147,7 @@ listToPmlParams <- function(lst, tree, seqs){
 #' @param    edge_tol tolerance for branch length checks (if check=TRUE)
 #' @param    cell     cell id column name in Dowser object
 #' @param    heavy    name of heavy chain locus
+#' @param    light    names of light chain loci
 #' @param   dowser_fields include dowser-specific information? (recommended)
 #' @details
 #' Works with trees built by any of \code{getTrees}'s \code{build} options
@@ -159,7 +160,7 @@ listToPmlParams <- function(lst, tree, seqs){
 #' documentation for what is kept and why.
 #' @export
 writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verbose=TRUE,
-  edge_tol=1e-8, cell="cell_id", heavy="IGH", dowser_fields=TRUE){
+  edge_tol=1e-8, cell="cell_id", heavy="IGH", light=c("IGK","IGL"), dowser_fields=TRUE){
   clones <- list()
   clones$Clone <- list()
   clones$Rearrangement <- list()
@@ -184,6 +185,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       clone$v_call <- object$data[[row]]@v_gene
       clone$j_call <- object$data[[row]]@j_gene
       clone$junction_length <- object$data[[row]]@junc_len
+      clone$column_names <- names(object)
     }
     node_class <- "Cell"
     node_index <- "cell_id"
@@ -351,7 +353,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
     if(verbose){
       print("Loading object to check consistency")
     }
-    nobject <- readTreesJSON(file)
+    nobject <- readTreesJSON(file, heavy=heavy, light=light, verbose=verbose)
     # dowserObjectEquivalent understands pml fits directly (reducing them via
     # pmlParamsToList itself), so no pre-normalization is needed here.
     validate <- dowserObjectEquivalent(object, nobject, verbose, edge_tol, dowser_fields)
@@ -364,11 +366,12 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' @param    file   .json file
 #' @param    heavy    name of heavy chain locus
 #' @param    light    names of light chain loci
+#' @param    verbose  how much info to print
 #' @details
 #' Reads files written by \code{\link{writeTreesJSON}}, including trees built
 #' with any \code{getTrees} \code{build} option.
 #' @export
-readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL")){
+readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
   rclones <- jsonlite::read_json(file)
   output <- dplyr::tibble()
   outtrees <- list()
@@ -380,7 +383,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL")){
     dowser <- TRUE
   }else{
     dowser <- FALSE
-    warning("Some features limited by using non-Dowser JSON")
+    if(verbose)warning("Some features limited by using non-Dowser JSON")
   }
 
   node_class <- rclones$Clone[[1]]$clone_class
@@ -398,6 +401,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL")){
 
     loci <- c()
     numbers <- c()
+    column_names <- c()
     ancestor_node_id <- clone$inferred_ancestor
 
     rnodes <- list()
@@ -451,6 +455,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL")){
           # Dowser-written files record the true phylo_seq; use it
           # directly instead of re-deriving it from the locus tag
           phylo_seq <- clone$info$phylo_seq[[1]]
+          column_names <- unlist(clone$column_names)
         }else if(heavy %in% loci && length(intersect(light,unique_loci)) > 0){
           phylo_seq <- "hlsequence"
         }else if(unique_loci[1] == heavy && length(unique_loci) == 1){
@@ -577,7 +582,8 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL")){
       locus=paste0(sort(unique(loci)),collapse=","))
     for(n in names(clone$info)){
       if(!n %in% c("region", "numbers", "phylo_seq", "germline", "lgermline",
-        "hlgermline", "trees", "data", "clone_id", "seqs", "locus", "program_origin", "treeinfo")){
+        "hlgermline", "trees", "data", "clone_id", "seqs", "locus", "program_origin", "treeinfo",
+        "column_names")){
         ni <- clone$info[[n]]
         if(length(ni) > 1){
           ni <- lapply(ni, function(x)unlist(x))
@@ -593,10 +599,19 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL")){
   output$data <- outdata
   output$trees <- outtrees
   onames <- names(output)
-  standard <- c("clone_id", "data", "seqs", "locus", "trees")
-  nonstandard <- setdiff(onames, standard)
-
-  output <- dplyr::select(output, dplyr::any_of(standard), dplyr::any_of(nonstandard))
+  
+  if(dowser){
+    if(length(setdiff(onames, column_names)) > 0){
+        print(paste(onames))
+        print(paste(column_names))
+        stop("mismatch in object column names")
+      }
+      output <- output[,column_names]
+  }else{
+    standard <- c("clone_id", "data", "seqs", "locus", "trees")
+    nonstandard <- setdiff(onames, standard)
+    output <- dplyr::select(output, dplyr::any_of(standard), dplyr::any_of(nonstandard))
+  }
   output
 }
 
@@ -824,7 +839,7 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
       if(n %in% c("edge","tip.label","Nnode","edge.length","nodes","node.label")){
         next
       }
-      if(n == "parameters"){
+      if(n == "parameters" && dowser_fields){
         if(is.null(treea[[n]]) && is.null(treeb[[n]])){
           treecheck <- treecheck + 1
         }else if(is.null(treea[[n]]) || is.null(treeb[[n]])){

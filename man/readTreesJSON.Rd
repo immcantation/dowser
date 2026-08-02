@@ -5,7 +5,7 @@
 \title{\code{readTreesJSON}
 Experimental. Read trees from JSON/AIRR format from Dowser}
 \usage{
-readTreesJSON(file, heavy = "IGH", light = c("IGK", "IGL"))
+readTreesJSON(file, heavy = "IGH", light = c("IGK", "IGL"), verbose = TRUE)
 }
 \arguments{
 \item{file}{.json file}
@@ -13,6 +13,8 @@ readTreesJSON(file, heavy = "IGH", light = c("IGK", "IGL"))
 \item{heavy}{name of heavy chain locus}
 
 \item{light}{names of light chain loci}
+
+\item{verbose}{how much info to print}
 }
 \description{
 \code{readTreesJSON}
