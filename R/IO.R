@@ -664,7 +664,7 @@ pmlParamsEqual <- function(pa, pb, tol=1e-3, edge_tol=1e-8){
       return(FALSE)
     }
     if(is.numeric(va) && is.numeric(vb)){
-      if(!all.equal(va, vb, tolerance=tol)){
+      if(!isTRUE(all.equal(va, vb, tolerance=tol))){
         return(FALSE)
       }
     }else if(any(as.character(va) != as.character(vb))){
@@ -703,7 +703,7 @@ pmlParamsEqual <- function(pa, pb, tol=1e-3, edge_tol=1e-8){
     }
     ca <- ape::cophenetic.phylo(tree_a)
     cb <- ape::cophenetic.phylo(tree_b)[rownames(ca), rownames(ca)]
-    if(!all.equal(ca, cb, tolerance=edge_tol, check.attributes=FALSE)){
+    if(!isTRUE(all.equal(ca, cb, tolerance=edge_tol, check.attributes=FALSE))){
       return(FALSE)
     }
   }
