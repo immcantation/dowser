@@ -3,23 +3,6 @@
 # Download IMGT GENE-DB databases
 # 
 # Loads all reference germlines from an Immcantation-formatted IMGT database.
-# 
-#' \code{writeFasta} Write a fasta file of sequences given a 
-#' named list of sequences
-#' @param    seqs      named list of sequences (output from \code{readFasta})
-#' @param    file      FASTA file for output
-#'
-#' @return   File of FASTA formatted sequences
-#' @export
-writeFasta <- function(seqs, file){
-  if(!is.null(seqs)){
-    out <- paste0(">", names(seqs), "\n", seqs)
-    writeLines(out, con=file)
-  }else{
-    file.create(file)
-  }
-}
-
 #' \code{readIMGT} read in IMGT database
 #' 
 #' Loads all reference germlines from an Immcantation-formatted IMGT database.
