@@ -15,7 +15,7 @@ buildBeast(
   resume_clones = NULL,
   trait = NULL,
   asr = FALSE,
-  full_posterior = TRUE,
+  posterior = c("none", "all", "parameters", "trees_with_traits", "trees"),
   log_every = "auto",
   include_germline = TRUE,
   nproc = 1,
@@ -56,7 +56,9 @@ buildBeast(
 
 \item{asr}{Log ancestral sequences?}
 
-\item{full_posterior}{Read un full distribution of parameters and trees?}
+\item{posterior}{Read un full distribution of parameters and trees? Can be "none" to just have
+summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+combination of "parameters", "trees_with_traits", and "trees".}
 
 \item{log_every}{Frequency of states logged. \code{auto} will divide mcmc_length by log_target}
 

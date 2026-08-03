@@ -56,6 +56,8 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
         iterations, "iterations"))
     }
     # cleanUpIterateResume(...)
+
+    # add in final readBEAST with full posterior options if specified
     return(clones)
 }
 
@@ -358,7 +360,9 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    burnin       Burnin percent (default 10)                 
 #' @param    trait        Trait column used         
 #' @param    asr          Log ancestral sequences?
-#' @param    full_posterior  Read un full distribution of parameters and trees?
+#' @param    posterior    Read un full distribution of parameters and trees? Can be "none" to just have
+#'  summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+#'  combination of "parameters", "trees_with_traits", and "trees".
 #' @param    resume_clones  Clones to resume for \code{mcmc_length} more steps            
 #' @param    include_germline Include germline in analysis?     
 #' @param    start_date       Starting date of time tree if desired
@@ -381,7 +385,8 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @seealso \link{getTimeTrees}
 #' @export
 buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 1000000, 
-                   resume_clones=NULL, trait=NULL, asr=FALSE,full_posterior=TRUE,
+                   resume_clones=NULL, trait=NULL, asr=FALSE,
+                   posterior=c("none","all","parameters","trees_with_traits","trees"),
                    log_every="auto",include_germline = TRUE, nproc = 1, quiet=0, 
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
@@ -519,7 +524,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
   }
 
  trees <- readBEAST(clones=data, dir=dir, id=id, beast=beast, burnin=burnin, 
-  trait=trait, quiet=quiet, nproc=nproc, full_posterior=full_posterior, asr=asr, 
+  trait=trait, quiet=quiet, nproc=nproc, posterior=posterior, asr=asr, 
   low_ram=low_ram)
 
   return(trees)
@@ -1150,7 +1155,9 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #' @param id         unique identifer for this analysis
 #' @param trait      Trait column used         
 #' @param asr        Log ancestral sequences?
-#' @param full_posterior  Read in full distribution of parameters and trees?
+#' @param posterior    Read un full distribution of parameters and trees? Can be "none" to just have
+#'  summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+#'  combination of "parameters", "trees_with_traits", and "trees".
 #' @param nproc      Number of cores for parallelization. Uses at most 1 core per tree.
 #' @param quiet      amount of rubbish to print to console
 #' @param burnin         percent of initial tree samples to discard (default 10)
@@ -1165,7 +1172,8 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
 #'  
 #' @export
 readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1, 
-  quiet=0, full_posterior=TRUE, asr=FALSE, low_ram=TRUE, trim_ids=FALSE) {
+  quiet=0, posterior=c("none","all","parameters","trees_with_traits","trees"), 
+  asr=FALSE, low_ram=TRUE, trim_ids=FALSE) {
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){
     data <- clones$data
@@ -1173,6 +1181,15 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
     data <- clones
   }else{
     stop("Input data type not supported")
+  }
+
+  if(setequal(posterior, c("all","none","parameters","trees_with_traits","trees"))){
+    # default
+    posterior = c("parameters","trees_with_traits","trees")
+  }else if("all" %in% posterior){
+    posterior = c("parameters","trees_with_traits","trees")
+  }else if("none" %in% posterior){
+    posterior = "none"
   }
 
   beast <- path.expand(beast)
@@ -1290,9 +1307,31 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
 
     # add parameter summary
     beast@info$parameters <- log
-    if(full_posterior){ 
+    if("trees" %in% posterior){ 
+      treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".trees"))      
+      l <- readLines(treesfile, warn=FALSE)
+      if(!grepl("End;",l[length(l)])){
+        l[length(l) + 1] <- "End;"
+        warning("Adding End; to ",treesfile)
+        #make new file to avoid overwriting
+        treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
+        writeLines(l, con=treesfile)
+      }
+      phylos <- treeio::read.beast(treesfile)
+      burn <- floor(length(phylos)*burnin/100)
+      phylos <- phylos[(burn+1):length(phylos)]
+      if(trim_ids){
+        phylos <- lapply(phylos, function(y){
+        y@phylo$tip.label <- sapply(strsplit(y@phylo$tip.label,"_"), function(x)
+          paste0(x[1:(length(x)-1)], collapse="_"))
+        y
+      })}
+      
+      beast@info$trees_posterior <- phylos
+    }
+    if("trees_with_traits" %in% posterior){ 
       if(is.null(trait)){
-        treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".trees"))
+        stop("trait column must be specified when trees_with_traits %in% posterior")
       }else{
         treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, "_tree_with_trait.trees"))
       }
@@ -1304,7 +1343,6 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
         writeLines(l, con=treesfile)
       }
-      #phylos <- ape::read.nexus(treesfile)
       phylos <- treeio::read.beast(treesfile)
       burn <- floor(length(phylos)*burnin/100)
       phylos <- phylos[(burn+1):length(phylos)]
@@ -1315,8 +1353,9 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         y
       })}
       
-      beast@info$tree_posterior <- phylos
-
+      beast@info$trees_with_traits_posterior <- phylos
+    }
+    if("parameters" %in% posterior){
       l <- read.table(logfile, header=TRUE)
       beast@info$parameters_posterior <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
     }
@@ -1701,11 +1740,11 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
     if(verbose)print(data$clone_id[x])
     trees <- data$trees[[x]]
     if(full_posterior){
-      if(!"tree_posterior" %in% names(trees@info)){
+      if(!"trees_with_traits_posterior" %in% names(trees@info)){
         stop(paste("Tree posterior distribution not found.\nEither first run readBEAST using",
-          "full_posterior=TRUE or set fullposterior=FALSE to use a single tree"))
+          "posterior='trees_with_traits' (or posterior='all') or set full_posterior=FALSE to use a single tree"))
       }
-      trees <- trees@info$tree_posterior
+      trees <- trees@info$trees_with_traits_posterior
     }else{
       trees <- list(trees)
     }
