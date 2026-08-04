@@ -573,6 +573,8 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' @param    heavy    name of heavy chain locus
 #' @param    light    names of light chain loci
 #' @param    verbose  how much info to print
+#' @param    edge_tol tolerance for branch length checks (if check=TRUE)
+#' @param    nproc    number of cores to use (parallelizes by clone)
 #' @details
 #' Reads files written by \code{\link{writeTreesJSON}}, including trees built
 #' with any \code{getTrees} \code{build} option.
@@ -831,7 +833,6 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
           tr@phylo[[n]] <- rphy[[n]]
         }
       }
-
       #tr@phylo$root.edge <- if(is.null(clone$info$root_edge)) 0 else clone$info$root_edge[[1]]
 
       # read in beast parameter estimates
@@ -913,14 +914,17 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
         "trees_with_traits_posterior", "trees_with_traits_posterior_tip_labels",
         "trees_with_traits_posterior_tip_labels_shared",
         "parameters_posterior", "parameters_posterior_columns")){
+        #print(n)
         ni <- clone$info[[n]]
-        if(length(ni) > 1){
+        if(timetree && n %in% c("parameters","skyline")){
+          ni <- as.data.frame(dplyr::bind_rows(ni))
+          temp[[n]] <- list(ni)
+        }else if(length(ni) > 1){
           ni <- lapply(ni, function(x)unlist(x))
           temp[[n]] <- list(ni)
         }else{
           temp[[n]] <- ni[[1]]
         }
-
       }
     }
     output <- dplyr::bind_rows(output, temp)
@@ -1124,12 +1128,12 @@ mapSubtrees = function(treea, treeb){
 #' Check whether two tree objects are equivalent
 #' @param    obja  First phylo or treedata object
 #' @param    objb  Second phylo or treedata object
-#' @param    verbose  print out more info
 #' @param    edge_tol tolerance for branch length checks (if check=TRUE)
 #' @param    numbering_match require internal node numbers to match?
 #' @param    clonesa  Dowser clones object associated with obja (if check_extended=TRUE)
 #' @param    clonesb  Dowser clones object associated with objb (if check_extended=TRUE)
 #' @param    check_extended Also check node sequences and state vector? Requires clonesa/b to be supplied
+#' @param    gaps  check sequences wth IMGT gaps with check_extended?
 #' @details For treedata objects, check both @phylo and @data
 #' @export
 treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
@@ -1183,7 +1187,7 @@ treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
       }
       if(!is.null(treea$state) || !is.null(treeb$state)){
         if(treea$state[nodea] != treeb$state[nodeb]){
-          warning(paste(a$clone_id[r], "node states not equal",treea$state[nodea],
+          warning(paste("node states not equal",treea$state[nodea],
             treea$state[nodeb], nodea, nodeb))
         }
       }
@@ -1266,10 +1270,31 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
   if(sum(a$locus != b$locus) != 0){
     stop("different locus columns")
   }
+  if(dowser_fields && sum(names(a) != names(b)) > 0){
+    stop("different column names")
+  }
 
   for(r in 1:nrow(a)){
   #checks <- lapply(1:nrow(a),function(r)tryCatch({
     treecheck <- 0
+
+    # check non-tree columns
+    if(dowser_fields){
+      for(n in names(a)){
+        if(n %in% c("data", "trees")){
+          next
+        }
+        vala <- a[[n]][[r]]
+        valb <- b[[n]][[r]]
+        if(inherits(vala,"data.frame")){
+          check <- isTRUE(all.equal(vala, valb))
+          if(!check){
+            stop(paste(n, r, "columns not equal"))
+          }
+        }
+      }
+    }
+
     # check trees
     if(timetree){
       treea <- a$trees[[r]]@phylo

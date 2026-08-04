@@ -22,6 +22,10 @@ readTreesJSON(
 \item{light}{names of light chain loci}
 
 \item{verbose}{how much info to print}
+
+\item{edge_tol}{tolerance for branch length checks (if check=TRUE)}
+
+\item{nproc}{number of cores to use (parallelizes by clone)}
 }
 \description{
 \code{readTreesJSON}

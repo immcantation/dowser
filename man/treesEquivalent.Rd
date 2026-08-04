@@ -9,7 +9,10 @@ treesEquivalent(
   objb,
   edge_tol = 1e-08,
   numbering_match = FALSE,
-  dowser_fields = TRUE
+  clonesa = NULL,
+  clonesb = NULL,
+  check_extended = FALSE,
+  gaps = TRUE
 )
 }
 \arguments{
@@ -21,7 +24,13 @@ treesEquivalent(
 
 \item{numbering_match}{require internal node numbers to match?}
 
-\item{verbose}{print out more info}
+\item{clonesa}{Dowser clones object associated with obja (if check_extended=TRUE)}
+
+\item{clonesb}{Dowser clones object associated with objb (if check_extended=TRUE)}
+
+\item{check_extended}{Also check node sequences and state vector? Requires clonesa/b to be supplied}
+
+\item{gaps}{check sequences wth IMGT gaps with check_extended?}
 }
 \description{
 Check whether two tree objects are equivalent

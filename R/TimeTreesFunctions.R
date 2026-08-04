@@ -1377,12 +1377,14 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
           paste0(x[1:(length(x)-1)], collapse="_"))
         y
       })}
-      
       beastobj@info$trees_with_traits_posterior <- phylos
     }
     if("parameters" %in% posterior){
       l <- read.table(logfile, header=TRUE)
-      beastobj@info$parameters_posterior <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
+      burn <- floor(nrow(l)*burnin/100)
+      l <- l[(burn+1):nrow(l),]
+      beastobj@info$parameters_posterior <- tidyr::gather(l,
+       "parameter", "value", -(!!rlang::sym("Sample")))
     }
     beastobj@info$name <- data[[i]]@clone
     trees[[i]] <- beastobj
@@ -1404,42 +1406,36 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
 #' get values for Bayesian Skyline plot
 #' 
 #' \code{makeSkyline} 
-#' @param  logfile   Beast log file
-#' @param  treesfile BEAST trees file 
-#' @param  burnin    Burnin percentage (1-100) 
+#' @param  object    treedata object with parameters_posterior and trees_posterior
 #' @param  bins      number of bins for plotting
 #' @param  youngest  timepoint of the most recently tip sampled (if 0, backward time used)
 #' @param  clone_id  name of the clone being analyzed (if desired)
 #' @param  max_height max height to use (min, median, mean, max)
-#' @param  exclude_germline exclude germline from skyline plot? (For TyCHE GRTs)
+#' @param  exclude_germline exclude germline from skyline plot? (For TyCHE germline-rooted trees)
 #' @return   Bayesian Skyline values for given clone
 #'
 #' @export
-makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0, 
+makeSkyline <- function(object, bins=100, youngest=0, 
     clone_id=NULL, max_height=c("min","median","mean","max"), exclude_germline=TRUE){
     
-    l <- tryCatch(read.csv(logfile, header=TRUE, sep="\t", comment.char="#"),error=function(e)e)
-    if("error" %in% class(l)){
-        stop(paste("couldn't open",logfile))
+    if(length(max_height) > 1){
+      max_height <- max_height[1]
     }
-    phylos <- tryCatch(ape::read.nexus(treesfile), error=function(e)e)
-    if("error" %in% class(phylos)){
-        stop(paste("couldn't open", treesfile))
+    #params <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
+    params <- object@info$parameters_posterior
+    phylos <- object@info$trees_posterior
+    if(is.null(params) || is.null(phylos)){
+      stop(paste("Parameters and trees posterior not found.\n",
+        "Try reading in object with readBEAST(posterior='all')"))
     }
-    params <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
+    phylos <- lapply(phylos, function(x)x@phylo)
 
     if(!"bPopSizes.1" %in% unique(params$parameter)){
         stop(paste("log file doesn't have pop sizes.",
             "Was it run with skyline tree_prior='coalescent_skyline'?"))
     }
 
-    burn <- floor(length(phylos)*burnin/100)
-    samples <- unique(params$Sample)
-    if(burn > 0){
-      phylos <- phylos[(burn+1):length(phylos)]
-      samples <- samples[(burn+1):length(samples)]
-      params <- dplyr::filter(params, !!rlang::sym("Sample") %in% samples)
-    }
+    samples <- sort(unique(params$Sample))
     if(dplyr::n_distinct(params$Sample) != length(phylos)){
       warning("Parameter and tree posteriors not same length, subsetting")
       treestates <- as.numeric(gsub("STATE_","",names(phylos)))
@@ -1453,10 +1449,10 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
     pops <- dplyr::filter(params, grepl("PopSizes", !!rlang::sym("parameter")))
 
     if(sum(pops$value < 0) > 0){
-        stop(paste(logfile, "found popsizes < 0, can't continue"))
+        stop(paste(object@phylo$name, "found popsizes < 0, can't continue"))
     }
     if(sum(groups$value < 0) > 0){
-        stop(paste(logfile, "found groupsizes < 0, can't continue"))
+        stop(paste(object@phylo$name, "found groupsizes < 0, can't continue"))
     }
 
     pops$index <- as.numeric(gsub("bPopSizes\\.","",pops$parameter))
@@ -1493,7 +1489,8 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
           ifelse("germline" %in% tr$tip.label, "germline", 
             ifelse("GL" %in% tr$tip.label, "GL", NA)))
         if(is.na(germline_name)) {
-          warning(paste(logfile, "Couldn't find germline tip in tree, proceeding without dropping germline"))
+          warning(paste( 
+            "Couldn't find germline tip in tree, proceeding without dropping germline"))
         } else {
           tr <- ape::drop.tip(tr, germline_name)
         }
@@ -1533,7 +1530,7 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
         pull(sample)
 
     if(length(indistinct) > 0){
-        warning(paste(logfile, "Removing",length(indistinct),
+        warning(paste(object@phylo$name, "Removing",length(indistinct),
             "samples with indistinct intervals. This shouldn't happen."))
         all_intervals <- dplyr::filter(all_intervals, !(!!rlang::sym("sample") %in% indistinct))
         if(nrow(all_intervals) == 0){
@@ -1593,35 +1590,32 @@ makeSkyline <- function(logfile, treesfile, burnin, bins=100, youngest=0,
         skyplot$bin <- youngest - skyplot$bin
     }
 
-    return(skyplot)
+    return(as.data.frame(skyplot))
 }
 
 #' Make data frames for Bayesian skyline plots
 #' 
 #' \code{makeSkylines} 
 #' @param  clones    clone tibble
-#' @param  dir       directory of BEAST trees file 
-#' @param  id        unique identifer for this analysis
 #' @param  time      name of time column
 #' @param  bins      number of bins for plotting
-#' @param  burnin    Burnin percent (default 10) 
 #' @param  verbose   if 1, print name of clones
 #' @param  forward   plot in forward or (FALSE) backward time?
 #' @param  nproc     processors for parallelization (by clone)
 #' @param  max_height max height to use (min, median, mean, max)
 #' @param  exclude_germline exclude germline from skyline plot? (For TyCHE GRTs)
 #' @return   Bayesian Skyline values for given clone
-#' @details Burnin set from readBEAST or getTrees
+#' @details Clones must contain treedata objects with parameters_posterior and
+#' trees_posterior. See \code{readBEAST} or \code{getTimeTrees} with posterior="all"
 #' @export
-getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, forward=TRUE,
+getSkylines <- function(clones, time, bins=100, verbose=0, forward=TRUE,
     nproc=1, max_height=c("min","median","mean","max"), exclude_germline=TRUE){
 
-    treesfiles <- sapply(clones$data, function(x)
-        file.path(dir, paste0(id, "_", x@clone, ".trees")))
-
-    logfiles <- sapply(clones$data, function(x)
-        file.path(dir, paste0(id, "_", x@clone, ".log")))
-
+    if(is.null(clones$trees[[1]]@info$parameters_posterior) || 
+      is.null(clones$trees[[1]]@info$trees_posterior)){
+      stop(paste("Parameters and trees posterior not found.\n",
+        "Try reading in object with readBEAST(posterior='all')"))
+    }
     if(forward){
         youngest <- sapply(clones$data, function(x)
             max(as.numeric(x@data[[time]])))
@@ -1631,12 +1625,12 @@ getSkylines <- function(clones, dir, id, time, burnin=10, bins=100, verbose=0, f
 
     skylines <- parallel::mclapply(1:nrow(clones), function(x){
         if(verbose != 0){
-            print(paste(clones$clone_id[x], logfiles[x], 
-                treesfiles[x], youngest[x]))
+            print(paste(clones$clone_id[x], youngest[x]))
         }
-        tryCatch(makeSkyline(logfile=logfiles[x], treesfile=treesfiles[x],
-            youngest=youngest[x], burnin=burnin, bins=bins, 
-            clone_id=clones$clone_id[x], max_height=max_height, exclude_germline=exclude_germline),
+        tryCatch(makeSkyline(clones$trees[[x]],
+            youngest=youngest[x], bins=bins, 
+            clone_id=clones$clone_id[x], max_height=max_height, 
+            exclude_germline=exclude_germline),
             error=function(e)e)
     }, mc.cores=nproc)
 
