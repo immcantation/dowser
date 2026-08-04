@@ -311,6 +311,8 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       }
     }
     clone$clone_class <- node_class
+    germline_name <- "Germline"
+    germline_qualified <- paste0(germline_name, "-", clone$clone_id)
 
     if(timetree){
       tr <- object$trees[[row]]
@@ -321,7 +323,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
     nodes <- length(phy$tip.label) + phy$Nnode
     phy$node.label <- paste0("Node",(length(phy$tip.label)+1):nodes,"-",clone$clone_id)
 
-    phy$tip.label[phy$tip.label == "Germline"] = paste0("Germline-",clone$clone_id)
+    phy$tip.label[phy$tip.label == germline_name] = germline_qualified
 
     airrc <- object$data[[row]]
     germ_seq <- switch(airrc@phylo_seq,
@@ -375,7 +377,13 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       }
     }
     ucanode <- ape::getMRCA(phy, tip=phy$tip.label)
-    germline_node <- which(phy$tip.label == paste0("Germline-",clone$clone_id))
+    if(sum(phy$tip.label == germline_qualified) > 0){
+      germline_node <- which(phy$tip.label == germline_qualified)
+    }else{
+      germline_node <- NA
+      clone$inferred_ancestor <- NA
+    }
+    
 
     # metadata columns for tips
     nodes <- list()
@@ -387,7 +395,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       node$node_class <- node_class
       node$repertoire_id <- repertoire_id
       receptors <- list()
-      if(i <= length(phy$tip.label) && i != germline_node){
+      if(i <= length(phy$tip.label) && (is.na(germline_node) | i != germline_node)){
         node$node_type <- "observed"
         if(dowser_fields){
           node$info$tipdata <- tipdata[[phy$tip.label[i]]]
@@ -402,7 +410,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
         }
       }else{
         node$node_type <- "inferred"
-        if(i == germline_node){
+        if(!is.na(germline_node) && i == germline_node){
           node[[node_index]] <- phy$tip.label[i]
         }else{
           node[[node_index]] <- paste0(phy$node.label[i-length(phy$tip.label)])
@@ -422,17 +430,20 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       node$parent <- phy$edge[phy$edge[,2] == i,1]
       node$children <- phy$edge[phy$edge[,1] == i,2]
 
+      # need to update this by getting getNodeSeq to work on time trees
+      # add name field to treedata@info
+      # return null if no nodes list unless requesting tip sequence
       if(!timetree){
         seqa <- getNodeSeq(object, node=i, tree=phy, gaps=TRUE)
         seq <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
         ga <- getNodeSeq(object, node=germline_node, tree=phy, gaps=TRUE)
         # currently time trees don't have reconstructed sequences
-      }else if(i <= length(phy$tip.label) && i != germline_node){
+      }else if(i <= length(phy$tip.label) && (is.na(germline_node) | i != germline_node)){
         seqa <- dplyr::filter(object$data[[row]]@data, 
           !!rlang::sym("sequence_id") == phy$tip.label[i])[[clone$info$phylo_seq]]
         seq <- seqa
         ga <- germ_seq
-      }else if(i == germline_node){
+      }else if(!is.na(germline_node) && i == germline_node){
         seqa <- germ_seq
         seq <- germ_seq
         ga <- germ_seq
@@ -442,11 +453,14 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
         ga <- germ_seq
       }
       if(timetree){
-        if(node_class == "Cell"){
-          names(seq) <- "IGH"
-        }else{
-          names(seq) <- "N"
-        }
+        #if(node_class == "Cell"){
+        #  names(seq) <- "IGH"
+        #}else{
+        #  names(seq) <- "N"
+        #}
+        loci_from_data <- object$data[[row]]@locus
+        unique_loci <- unique(loci_from_data)
+        names(seq) <- unique_loci
       }
       for(loci_i in 1:length(seq)){
         receptor <- list()
@@ -482,7 +496,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       #node$node_id <- node[[node_index]]
       nodes[[i]] <- node
 
-      if(node$number == germline_node){
+      if(!is.na(germline_node) && node$number == germline_node){
         clone$inferred_ancestor <- node$node_id
       }
     }
@@ -490,14 +504,11 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 
     if(timetree){
       #assume germline node for now
-      has_germline <- TRUE
-      ancestor_id <- "Germline"
-      ancestor_id_qualified <- paste0("Germline-",clone$clone_id)
-
+      
       clone$info$treetext <- tr@treetext
       main_tip_labels <- phy$tip.label
-      if(has_germline){
-        main_tip_labels[main_tip_labels == ancestor_id] <- ancestor_id_qualified
+      if(!is.na(germline_node)){
+        main_tip_labels[main_tip_labels == germline_name] <- germline_qualified
       }
       clone$info$tip_labels <- main_tip_labels
       clone$info$root_edge <- tr@phylo$root.edge
@@ -513,7 +524,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
         posterior_trees <- tr@info[[prefix]]
         if(!is.null(posterior_trees)){
           clone$info <- writePosteriorTreeList(clone$info, posterior_trees,
-            prefix, ancestor_id, ancestor_id_qualified, has_germline)
+            prefix, germline_name, germline_qualified, !is.na(germline_node))
         }
       }
       if(!is.null(tr@info$parameters_posterior)){
@@ -561,7 +572,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' with any \code{getTrees} \code{build} option.
 #' @export
 readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), 
-  verbose=TRUE, edge_tol=1e-8, nproc=4){
+  verbose=TRUE, edge_tol=1e-8, nproc=1){
 
   rclones <- jsonlite::read_json(file)
   program_origin <- rclones$Clone[[1]]$program_origin
@@ -601,7 +612,8 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
     loci <- c()
     numbers <- c()
     column_names <- c()
-    ancestor_node_id <- clone$inferred_ancestor
+    ancestor_node_id <- ifelse(is.null(clone$inferred_ancestor),
+      NA,clone$inferred_ancestor)
 
     rnodes <- list()
     tips <- list()
@@ -694,7 +706,8 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
             sapply(tips, function(tp) tp$sequence),
             sapply(tips, function(tp) tp$node_id))
           tree_for_pml <- rphy
-          if(dowser){ #only mess with the germline name if coming from Dowser
+          #only mess with the germline name if coming from Dowser
+          if(dowser && !is.na(ancestor_node_id)){
             names(tip_seqs)[names(tip_seqs) == ancestor_node_id] <- "Germline"
             tree_for_pml$tip.label[tree_for_pml$tip.label == ancestor_node_id] <- "Germline"
           }
@@ -708,6 +721,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
 
     #extract data from the tips
     data <- list()
+    germline <- NA
     for(i in 1:length(tips)){
       tip <- tips[[i]]
       if(dowser){
@@ -718,38 +732,47 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
       }
       row[[phylo_seq]]<- tip$sequence
 
-      if(tip$node_id != ancestor_node_id){
+      if(is.na(ancestor_node_id) || tip$node_id != ancestor_node_id){
         data[[i]] <- row
       }else{
         germline <- row[[phylo_seq]]
       }
     }
     bdata <- dplyr::bind_rows(data)
+    alignment_width <- unique(nchar(bdata[[phylo_seq]]))
+    if(length(alignment_width) > 1){
+      stop(paste(rclones$Clone[[ci]]$clone_id, "data sequences different length"))
+    }
+    if(is.na(germline)){
+      germline <- paste(rep("N",times=alignment_width), collapse="")
+    }
 
     if(dowser){
       bdata <- bdata[order(bdata$tip_order),]
       bdata <- dplyr::select(bdata, -"tip_order")
-      rphy$tip.label[rphy$tip.label == ancestor_node_id] <- "Germline"
+      if(!is.na(ancestor_node_id)){
+        rphy$tip.label[rphy$tip.label == ancestor_node_id] <- "Germline"
+      }
     }
 
     lgermline <- ""
     hlgermline <- ""
     if(!dowser){
-      region <- rep("N",times=nchar(germline))
+      region <- rep("N",times=alignment_width)
     }
     if(phylo_seq == "hlsequence"){
       hlgermline <- germline
       lgermline <- ""
       germline <- ""
       if(!dowser){
-        region <- rep("N",times=nchar(hlgermline))
+        region <- rep("N",times=alignment_width)
       }
     }else if(phylo_seq == "lsequence"){
       lgermline <- germline
       germline <- ""
       hlgermline <- ""
       if(!dowser){
-        region <- rep("N",times=nchar(lgermline))
+        region <- rep("N",times=alignment_width)
       }
     }
 
@@ -781,7 +804,9 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
       tr <- treeio::read.beast.newick(textConnection(clone$info$treetext[[1]]))
       tr@phylo$tip.label <- unname(sapply(tr@phylo$tip.label, 
         function(x)clone$info$tip_label[[as.numeric(x)]]))
-      tr@phylo$tip.label[tr@phylo$tip.label == ancestor_node_id] <- "Germline"
+      if(!is.na(ancestor_node_id)){
+        tr@phylo$tip.label[tr@phylo$tip.label == ancestor_node_id] <- "Germline"
+      }
 
       # check that treedata object is constient with the tree object read in
       dist <- phangorn::RF.dist(tr@phylo, rphy)
@@ -790,7 +815,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
       if(!isTRUE(all.equal(cpa, cpb, tolerance=edge_tol, check.attributes=FALSE)) || dist != 0){
         stop(paste(clone$clone_id, "tree and treetext trees not the same"))
       }
-      tr@phylo$root.edge <- if(is.null(clone$info$root_edge)) 0 else clone$info$root_edge[[1]]
+      #tr@phylo$root.edge <- if(is.null(clone$info$root_edge)) 0 else clone$info$root_edge[[1]]
 
       # read in beast parameter estimates
       beast_params <- clone$info$beast_parameters
@@ -822,7 +847,9 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
             pt <- treeio::read.beast.newick(textConnection(raw[[k]]))
             pt@phylo$tip.label <- unname(sapply(pt@phylo$tip.label, 
               function(x)tip_labels_k[[as.numeric(x)]]))
-            pt@phylo$tip.label[pt@phylo$tip.label == ancestor_node_id] <- "Germline"
+            if(!is.na(ancestor_node_id)){
+              pt@phylo$tip.label[pt@phylo$tip.label == ancestor_node_id] <- "Germline"
+            }
             pt
           }, mc.cores=nproc)
         }
@@ -1371,10 +1398,12 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
      # trees_with_traits_posterior are independent, optional fields, compared
      # the same way via comparePosteriorTreeLists(). ---
      for(prefix in c("trees_posterior", "trees_with_traits_posterior")){
+       if(!prefix %in% names(dtreea@info) && !prefix %in% names(dtreeb@info)){
+        next
+       }
        if(length(dtreea@info[[prefix]]) != length(dtreeb@info[[prefix]])){
          stop(paste(a$clone_id[r], prefix, "not the same length"))
        }
-  
        posterior_comp <- sapply(1:length(dtreea@info[[prefix]]), function(x)
          treesEquivalent(
            dtreea@info[[prefix]][[x]], 

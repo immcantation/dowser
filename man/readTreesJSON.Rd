@@ -11,7 +11,7 @@ readTreesJSON(
   light = c("IGK", "IGL"),
   verbose = TRUE,
   edge_tol = 1e-08,
-  nproc = 4
+  nproc = 1
 )
 }
 \arguments{
