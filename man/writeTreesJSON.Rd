@@ -15,7 +15,8 @@ writeTreesJSON(
   cell = "cell_id",
   heavy = "IGH",
   light = c("IGK", "IGL"),
-  dowser_fields = TRUE
+  dowser_fields = TRUE,
+  nproc = 1
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ writeTreesJSON(
 \item{light}{names of light chain loci}
 
 \item{dowser_fields}{include dowser-specific information? (recommended)}
+
+\item{nproc}{number of cores to use (parallelizes by clone)}
 }
 \description{
 \code{writeTreesJSON}

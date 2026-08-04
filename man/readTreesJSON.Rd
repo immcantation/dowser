@@ -5,7 +5,14 @@
 \title{\code{readTreesJSON}
 Experimental. Read trees from JSON/AIRR format from Dowser}
 \usage{
-readTreesJSON(file, heavy = "IGH", light = c("IGK", "IGL"), verbose = TRUE)
+readTreesJSON(
+  file,
+  heavy = "IGH",
+  light = c("IGK", "IGL"),
+  verbose = TRUE,
+  edge_tol = 1e-08,
+  nproc = 4
+)
 }
 \arguments{
 \item{file}{.json file}

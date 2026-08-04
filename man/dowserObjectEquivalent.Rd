@@ -10,7 +10,8 @@ dowserObjectEquivalent(
   obj2,
   verbose = TRUE,
   edge_tol = 1e-08,
-  dowser_fields = TRUE
+  dowser_fields = TRUE,
+  nproc = 1
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ dowserObjectEquivalent(
 \item{edge_tol}{tolerance for branch length checks (if check=TRUE)}
 
 \item{dowser_fields}{check dowser-specific fields and gapped sequences?}
+
+\item{nproc}{number of cores to use}
 }
 \description{
 \code{dowserObjectEquivalent}

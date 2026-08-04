@@ -137,6 +137,107 @@ listToPmlParams <- function(lst, tree, seqs){
   fit
 }
 
+#'\code{dataFrameToRecords}
+#' Convert a data.frame to a list of row-records (one named list per row)
+#' for JSON serialization, converting any non-finite numeric value
+#' (\code{NaN}, \code{Inf}, \code{-Inf}) to its string form first.
+#'
+#' \code{jsonlite::write_json(..., auto_unbox=TRUE)} silently drops the key
+#' entirely for a data.frame cell holding \code{NaN} when the data.frame is
+#' passed to it directly (not rendered as \code{null} -- the field is simply
+#' absent from that row's JSON object). BEAST parameter logs routinely
+#' contain genuine \code{NaN} values (e.g. \code{geometric.mean} for
+#' non-log-scale parameters), so this must be handled explicitly rather than
+#' relying on \code{write_json}'s default data.frame conversion.
+#' Pre-converting non-finite values to their string form (each field stays a
+#' length-1 scalar, so \code{auto_unbox} still unboxes it normally) avoids
+#' this; \code{as.numeric()} on read correctly restores
+#' \code{NaN}/\code{Inf}/\code{-Inf} from their string forms.
+#' @param    df  a data.frame
+#' @noRd
+dataFrameToRecords <- function(df){
+  lapply(seq_len(nrow(df)), function(i){
+    row <- as.list(df[i, , drop=FALSE])
+    lapply(row, function(v) if(is.numeric(v) && !is.finite(v)) as.character(v) else v)
+  })
+}
+
+
+#'\code{writePosteriorTreeList}
+#' Store one posterior tree list (\code{tr@info$trees_posterior} or
+#' \code{tr@info$trees_with_traits_posterior}) into \code{clone$info}, under
+#' field names built from \code{prefix} -- the same raw-treetext + tip-label
+#' mechanism \code{\link{writeTimeTreesJSON}} uses for the single summary
+#' tree, applied once per posterior sample. Used identically for both
+#' posterior tree fields, since they're structurally the same kind of object
+#' (a list of \code{treedata} samples) and may be present independently of
+#' each other.
+#' @param    clone_info  the in-progress \code{clone$info} list to add to
+#' @param    posterior_trees  a list of \code{treedata} objects (one
+#'                            \code{tr@info$trees_posterior} or
+#'                            \code{tr@info$trees_with_traits_posterior})
+#' @param    prefix      field name prefix, e.g. \code{"trees_posterior"} --
+#'                       produces \code{clone_info[[prefix]]} (treetext list)
+#'                       plus either \code{clone_info[[paste0(prefix,
+#'                       "_tip_labels_shared")]]} or \code{[[paste0(prefix,
+#'                       "_tip_labels")]]}
+#' @param    ancestor_id           \code{"Germline"}
+#' @param    ancestor_id_qualified the clone-qualified germline tip name
+#' @param    has_germline          does the tree have a germline tip?
+#' @noRd
+writePosteriorTreeList <- function(clone_info, posterior_trees, prefix,
+  ancestor_id, ancestor_id_qualified, has_germline){
+  clone_info[[prefix]] <- lapply(posterior_trees, function(t) t@treetext)
+  tip_label_list <- lapply(posterior_trees, function(t){
+    labs <- t@phylo$tip.label
+    if(has_germline){
+      labs[labs == ancestor_id] <- ancestor_id_qualified
+    }
+    labs
+  })
+  # One shared tip-label array for all samples when they share one order
+  # (the norm -- confirmed on real objects), else one per sample.
+  shared <- length(tip_label_list) <= 1 ||
+    all(vapply(tip_label_list[-1], identical, logical(1), tip_label_list[[1]]))
+  if(shared){
+    clone_info[[paste0(prefix, "_tip_labels_shared")]] <- tip_label_list[[1]]
+  }else{
+    clone_info[[paste0(prefix, "_tip_labels")]] <- tip_label_list
+  }
+  clone_info
+}
+
+#'\code{dataFrameToValueRows}
+#' Like \code{\link{dataFrameToRecords}}, but drops each row's field names,
+#' producing a plain JSON array of values per row instead of a JSON object
+#' -- for use alongside a column-name vector stored once, separately (the
+#' same space-saving idea \code{\link{nexusTreeWithTranslate}} applies to
+#' tip names: store the shared "header" once, not repeated per row/tree).
+#'
+#' Each row is returned as a plain atomic vector when every value in it is
+#' numeric and finite: \code{jsonlite::write_json(..., pretty=TRUE)} prints
+#' atomic vectors compactly on one line, but a \code{list} of scalars (even
+#' all-numeric, unnamed) still gets one element per line. Rows that need
+#' string conversion (\code{NaN}/\code{Inf}/\code{-Inf}) -- or, defensively,
+#' any row that isn't purely numeric to begin with -- fall back to a
+#' \code{list}, so mixed element types are never silently coerced (an atomic
+#' vector with any non-numeric value would force every element in that row
+#' to character).
+#' @param    df  a data.frame, in the fixed column order the row values
+#'               should be emitted in
+#' @noRd
+dataFrameToValueRows <- function(df){
+  lapply(seq_len(nrow(df)), function(i){
+    row <- unname(as.list(df[i, , drop=FALSE]))
+    if(all(vapply(row, is.numeric, logical(1))) &&
+      all(vapply(row, is.finite, logical(1)))){
+      unlist(row)
+    }else{
+      lapply(row, function(v) if(is.numeric(v) && !is.finite(v)) as.character(v) else v)
+    }
+  })
+}
+
 #'\code{writeTreesJSON}
 #' Experimental. Write trees in AIRR format
 #' @param    object   Dowser object from getTrees
@@ -149,6 +250,7 @@ listToPmlParams <- function(lst, tree, seqs){
 #' @param    heavy    name of heavy chain locus
 #' @param    light    names of light chain loci
 #' @param   dowser_fields include dowser-specific information? (recommended)
+#' @param    nproc    number of cores to use (parallelizes by clone)
 #' @details
 #' Works with trees built by any of \code{getTrees}'s \code{build} options
 #' (\code{"pratchet"}, \code{"pml"}, \code{"igphyml"}, \code{"raxml"}).
@@ -159,8 +261,16 @@ listToPmlParams <- function(lst, tree, seqs){
 #' \code{pmlParamsToList} before being written out. See that function's
 #' documentation for what is kept and why.
 #' @export
+
 writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verbose=TRUE,
-  edge_tol=1e-8, cell="cell_id", heavy="IGH", light=c("IGK","IGL"), dowser_fields=TRUE){
+  edge_tol=1e-8, cell="cell_id", heavy="IGH", light=c("IGK","IGL"), dowser_fields=TRUE,
+  nproc=1){
+
+  if(inherits(object$trees[[1]], "treedata")){
+    timetree <- TRUE
+  }else{
+    timetree <- FALSE
+  }
   clones <- list()
   clones$Clone <- list()
   clones$Rearrangement <- list()
@@ -177,7 +287,11 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
     if(dowser_fields){
       # nonstandard but important for dowser
       clone$info <- list()
-      clone$program_origin <- "dowser"
+      if(timetree){
+        clone$program_origin <- "dowser-timetree"
+      }else{
+        clone$program_origin <- "dowser-phylo"
+      }
       #clone$info$locus <- object$data[[row]]@locus
       clone$info$region <- object$data[[row]]@region
       clone$info$numbers <- object$data[[row]]@numbers
@@ -198,10 +312,22 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
     }
     clone$clone_class <- node_class
 
-    phy <- object$trees[[row]]
-    phy$node.label <- paste0("Node",(length(phy$tip.label)+1):length(phy$nodes),"-",clone$clone_id)
+    if(timetree){
+      tr <- object$trees[[row]]
+      phy <- tr@phylo
+    }else{
+      phy <- object$trees[[row]]
+    }
+    nodes <- length(phy$tip.label) + phy$Nnode
+    phy$node.label <- paste0("Node",(length(phy$tip.label)+1):nodes,"-",clone$clone_id)
 
     phy$tip.label[phy$tip.label == "Germline"] = paste0("Germline-",clone$clone_id)
+
+    airrc <- object$data[[row]]
+    germ_seq <- switch(airrc@phylo_seq,
+      "sequence" = airrc@germline,
+      "lsequence" = airrc@lgermline,
+      "hlsequence" = airrc@hlgermline)
 
     # add info from other columns
     forbidden <- c("region", "numbers", "phylo_seq", "germline",
@@ -253,7 +379,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 
     # metadata columns for tips
     nodes <- list()
-    for(i in 1:length(phy$nodes)){
+    for(i in 1:(length(phy$tip.label) + phy$Nnode)){
       node <- list()
       if(dowser_fields){
         node$info <- list()
@@ -296,9 +422,32 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       node$parent <- phy$edge[phy$edge[,2] == i,1]
       node$children <- phy$edge[phy$edge[,1] == i,2]
 
-      seqa <- getNodeSeq(object, node=i, tree=phy, gaps=TRUE)
-      seq <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
-      ga <- getNodeSeq(object, node=germline_node, tree=phy, gaps=TRUE)
+      if(!timetree){
+        seqa <- getNodeSeq(object, node=i, tree=phy, gaps=TRUE)
+        seq <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
+        ga <- getNodeSeq(object, node=germline_node, tree=phy, gaps=TRUE)
+        # currently time trees don't have reconstructed sequences
+      }else if(i <= length(phy$tip.label) && i != germline_node){
+        seqa <- dplyr::filter(object$data[[row]]@data, 
+          !!rlang::sym("sequence_id") == phy$tip.label[i])[[clone$info$phylo_seq]]
+        seq <- seqa
+        ga <- germ_seq
+      }else if(i == germline_node){
+        seqa <- germ_seq
+        seq <- germ_seq
+        ga <- germ_seq
+      }else{
+        seqa <- NA
+        seq <- NA
+        ga <- germ_seq
+      }
+      if(timetree){
+        if(node_class == "Cell"){
+          names(seq) <- "IGH"
+        }else{
+          names(seq) <- "N"
+        }
+      }
       for(loci_i in 1:length(seq)){
         receptor <- list()
         loci <- names(seq)[loci_i]
@@ -339,7 +488,44 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
     }
     clone$nodes <- nodes
 
+    if(timetree){
+      #assume germline node for now
+      has_germline <- TRUE
+      ancestor_id <- "Germline"
+      ancestor_id_qualified <- paste0("Germline-",clone$clone_id)
+
+      clone$info$treetext <- tr@treetext
+      main_tip_labels <- phy$tip.label
+      if(has_germline){
+        main_tip_labels[main_tip_labels == ancestor_id] <- ancestor_id_qualified
+      }
+      clone$info$tip_labels <- main_tip_labels
+      clone$info$root_edge <- tr@phylo$root.edge
+      clone$info$beast_parameters <- dataFrameToRecords(tr@info$parameters)
+      # Full posterior (full_posterior=TRUE), when present -- see this
+      # function's @details. tr@info$trees_posterior (the raw sampled trees)
+      # and tr@info$trees_with_traits_posterior (a separate, typically
+      # thinned, set of posterior trees carrying ancestral trait
+      # reconstruction in @data) are two independent, optional fields --
+      # any combination of them (and parameters_posterior) may be present.
+      # Each is stored the same way, via writePosteriorTreeList().
+      for(prefix in c("trees_posterior", "trees_with_traits_posterior")){
+        posterior_trees <- tr@info[[prefix]]
+        if(!is.null(posterior_trees)){
+          clone$info <- writePosteriorTreeList(clone$info, posterior_trees,
+            prefix, ancestor_id, ancestor_id_qualified, has_germline)
+        }
+      }
+      if(!is.null(tr@info$parameters_posterior)){
+        wide_pp <- tidyr::pivot_wider(tr@info$parameters_posterior,
+          names_from="parameter", values_from="value")
+        clone$info$parameters_posterior_columns <- names(wide_pp)
+        clone$info$parameters_posterior <- dataFrameToValueRows(wide_pp)
+      }
+    }
+
     clones$Clone[[row]] <- clone
+
   }
   if(grepl(".json$",file)){
     # digits=NA keeps small floating points from getting truncated
@@ -353,12 +539,15 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
     if(verbose){
       print("Loading object to check consistency")
     }
-    nobject <- readTreesJSON(file, heavy=heavy, light=light, verbose=verbose)
+    nobject <- readTreesJSON(file, heavy=heavy, light=light, verbose=verbose, nproc=nproc)
     # dowserObjectEquivalent understands pml fits directly (reducing them via
     # pmlParamsToList itself), so no pre-normalization is needed here.
-    validate <- dowserObjectEquivalent(object, nobject, verbose, edge_tol, dowser_fields)
+    validate <- dowserObjectEquivalent(object, nobject, verbose=verbose, 
+      edge_tol=edge_tol, dowser_fields=dowser_fields, nproc=nproc)
   }
 }
+
+
 
 
 #' \code{readTreesJSON}
@@ -371,19 +560,29 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' Reads files written by \code{\link{writeTreesJSON}}, including trees built
 #' with any \code{getTrees} \code{build} option.
 #' @export
-readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
+readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), 
+  verbose=TRUE, edge_tol=1e-8, nproc=4){
+
   rclones <- jsonlite::read_json(file)
+  program_origin <- rclones$Clone[[1]]$program_origin
+
   output <- dplyr::tibble()
   outtrees <- list()
   outdata <- list()
   rearrangements <- rclones$Rearrangement
 
   if("program_origin" %in% names(rclones$Clone[[1]]) &&
-    rclones$Clone[[1]]$program_origin == "dowser"){
+    rclones$Clone[[1]]$program_origin == "dowser-phylo"){
     dowser <- TRUE
+    timetree <- FALSE
+  }else if("program_origin" %in% names(rclones$Clone[[1]]) &&
+    rclones$Clone[[1]]$program_origin == "dowser-timetree"){
+    dowser <- TRUE
+    timetree <- TRUE
   }else{
-    dowser <- FALSE
     if(verbose)warning("Some features limited by using non-Dowser JSON")
+    dowser <- FALSE
+    timetree <- FALSE
   }
 
   node_class <- rclones$Clone[[1]]$clone_class
@@ -468,7 +667,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
         }
       }
       if(nchar(seq) != length(loci)){
-        stop("seq and loci vector not the same length!")
+        if(!timetree)stop("seq and loci vector not the same length!")
       }
       new_node$sequence <- seq
       node$sequence <- seq
@@ -573,9 +772,90 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
           numbers=numbers,
           phylo_seq=phylo_seq)
 
-
     outdata[[ci]] <- outclone
-    outtrees[[ci]] <- rphy
+    
+    if(!timetree){
+      outtrees[[ci]] <- rphy
+    }else{
+      # specialized functions for reading in treedata objects
+      tr <- treeio::read.beast.newick(textConnection(clone$info$treetext[[1]]))
+      tr@phylo$tip.label <- unname(sapply(tr@phylo$tip.label, 
+        function(x)clone$info$tip_label[[as.numeric(x)]]))
+      tr@phylo$tip.label[tr@phylo$tip.label == ancestor_node_id] <- "Germline"
+
+      # check that treedata object is constient with the tree object read in
+      dist <- phangorn::RF.dist(tr@phylo, rphy)
+      cpa <- ape::cophenetic.phylo(tr@phylo)
+      cpb <- ape::cophenetic.phylo(rphy)[rownames(cpa), rownames(cpa)]
+      if(!isTRUE(all.equal(cpa, cpb, tolerance=edge_tol, check.attributes=FALSE)) || dist != 0){
+        stop(paste(clone$clone_id, "tree and treetext trees not the same"))
+      }
+      tr@phylo$root.edge <- if(is.null(clone$info$root_edge)) 0 else clone$info$root_edge[[1]]
+
+      # read in beast parameter estimates
+      beast_params <- clone$info$beast_parameters
+      if(!is.null(beast_params)){
+        params_df <- dplyr::bind_rows(lapply(beast_params, function(row){
+          as.data.frame(lapply(row, function(x) as.character(x[[1]])), stringsAsFactors=FALSE)
+        }))
+        # coerce every column but "item" back to numeric
+        for(col in names(params_df)){
+          if(col != "item"){
+            params_df[[col]] <- suppressWarnings(as.numeric(params_df[[col]]))
+          }
+        }
+        tr@info$parameters <- params_df
+      }
+
+      # read in tree posterior fields
+      for(prefix in c("trees_posterior", "trees_with_traits_posterior")){
+        if(prefix %in% names(clone$info)){
+          tips_shared <- clone$info[[paste0(prefix, "_tip_labels_shared")]]
+          tips_raw <- clone$info[[paste0(prefix, "_tip_labels")]]
+          raw <- clone$info[[prefix]]
+          tr@info[[prefix]] <- parallel::mclapply(seq_along(raw), function(k){
+            tip_labels_k <- if(!is.null(tips_shared)){
+              unlist(tips_shared)
+            }else{
+              unlist(tips_raw[[k]])
+            }
+            pt <- treeio::read.beast.newick(textConnection(raw[[k]]))
+            pt@phylo$tip.label <- unname(sapply(pt@phylo$tip.label, 
+              function(x)tip_labels_k[[as.numeric(x)]]))
+            pt@phylo$tip.label[pt@phylo$tip.label == ancestor_node_id] <- "Germline"
+            pt
+          }, mc.cores=nproc)
+        }
+      }
+
+      # read in parameters posterior
+      # [[ ]], not $: consistent with the posterior-tree fields above.
+      params_post_cols <- clone$info[["parameters_posterior_columns"]]
+      params_post_raw <- clone$info[["parameters_posterior"]]
+      if(!is.null(params_post_raw)){
+        # Stored wide, as column names (once) + one unnamed value array per
+        # Sample -- reattach the column names to each row first (same
+        # all-character-first fix as beast_params above; every column is
+        # numeric here, no "item"/"parameter" name column to exclude, since
+        # parameter names are now the column headers), then pivot back to the
+        # long Sample/parameter/value shape tr@info$parameters_posterior
+        # actually has (matching tidyr::gather()'s output in
+        # R/TimeTreesFunctions.R), so the reconstructed object is a faithful
+        # round-trip, not just equivalent data in a different shape.
+        cols <- unlist(params_post_cols)
+        params_post_wide <- dplyr::bind_rows(lapply(params_post_raw, function(row){
+          vals <- vapply(row, as.character, character(1))
+          as.data.frame(as.list(stats::setNames(vals, cols)), stringsAsFactors=FALSE)
+        }))
+        for(col in names(params_post_wide)){
+          params_post_wide[[col]] <- suppressWarnings(as.numeric(params_post_wide[[col]]))
+        }
+        #TODO: change readBEAST and functions to keep these as wide-format to save space
+        tr@info$parameters_posterior <- tidyr::pivot_longer(params_post_wide,
+          cols=-"Sample", names_to="parameter", values_to="value")
+      }
+      outtrees[[ci]] <- tr
+    }
 
     # store info in other columns
     temp <- dplyr::tibble(clone_id=clone$clone_id[[1]], seqs=nrow(outclone@data),
@@ -583,7 +863,12 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
     for(n in names(clone$info)){
       if(!n %in% c("region", "numbers", "phylo_seq", "germline", "lgermline",
         "hlgermline", "trees", "data", "clone_id", "seqs", "locus", "program_origin", "treeinfo",
-        "column_names")){
+        "column_names", 
+        "treetext", "tip_labels", "root_edge", "beast_parameters",
+        "trees_posterior", "trees_posterior_tip_labels", "trees_posterior_tip_labels_shared",
+        "trees_with_traits_posterior", "trees_with_traits_posterior_tip_labels",
+        "trees_with_traits_posterior_tip_labels_shared",
+        "parameters_posterior", "parameters_posterior_columns")){
         ni <- clone$info[[n]]
         if(length(ni) > 1){
           ni <- lapply(ni, function(x)unlist(x))
@@ -599,7 +884,7 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
   output$data <- outdata
   output$trees <- outtrees
   onames <- names(output)
-  
+
   if(dowser){
     if(length(setdiff(onames, column_names)) > 0){
         print(paste(onames))
@@ -614,7 +899,6 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"), verbose=TRUE){
   }
   output
 }
-
 
 #'\code{pmlParamsEqual}
 #' Compare two sets of \code{phangorn::pml} fit parameters for equality,
@@ -711,6 +995,144 @@ pmlParamsEqual <- function(pa, pb, tol=1e-3, edge_tol=1e-8){
   return(TRUE)
 }
 
+#'\code{dataColumnEqual}
+#' Compare one \code{@data} column between two BEAST-annotated trees,
+#' tolerant of a floating-point string-formatting artifact: BEAST numeric
+#' annotations are stored as \emph{character} strings (not \code{numeric}),
+#' and \code{treeio::read.beast()} is not idempotent on them -- re-parsing a
+#' tree's own \code{@treetext} a second time can shift the last
+#' significant digit of a numeric annotation's string representation (e.g.
+#' \code{"0.51802396741998"} vs \code{"0.518023967419979"} for the exact
+#' same underlying value), confirmed by re-parsing a real object's own
+#' \code{@treetext} independently of any write/read round trip. Columns
+#' that parse fully as numeric are compared with tolerance; anything else
+#' (e.g. categorical trait columns like \code{location}) is compared
+#' exactly, as before.
+#' @param    va, vb     the two columns to compare
+#' @param    tolerance  numeric tolerance for columns that parse as numeric
+#' @noRd
+dataColumnEqual <- function(va, vb, tolerance){
+  if(is.character(va) && is.character(vb)){
+    na_num <- suppressWarnings(as.numeric(va))
+    nb_num <- suppressWarnings(as.numeric(vb))
+    if(!anyNA(na_num) && !anyNA(nb_num)){
+      return(isTRUE(all.equal(na_num, nb_num, tolerance=tolerance, check.attributes=FALSE)))
+    }else{
+      # KBH
+      # if same indexes are NA, compare values that aren't
+      if(sum(is.na(na_num) != is.na(nb_num)) == 0){
+        na_index <- !is.na(na_num)
+        return(isTRUE(all.equal(na_num[na_index], nb_num[na_index], 
+          tolerance=tolerance, check.attributes=FALSE)))
+      }else{
+        return(FALSE)
+      }
+    }
+  }
+  isTRUE(all.equal(va, vb))
+}
+
+#' Check whether two tree objects are equivalent
+#' @param    obja  First phylo or treedata object
+#' @param    objb  Second phylo or treedata object
+#' @param    verbose  print out more info
+#' @param    edge_tol tolerance for branch length checks (if check=TRUE)
+#' @param    numbering_match require internal node numbers to match?
+#' @details For treedata objects, check both @phylo and @data
+#' @export
+treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
+  dowser_fields=TRUE){
+  treecheck = TRUE
+  a_is_timetree <- inherits(obja, "treedata")
+  b_is_timetree <- inherits(objb, "treedata")
+  if(a_is_timetree != b_is_timetree){
+    stop("Cannot compare a time-tree object against a non-time-tree object")
+  }
+  if(a_is_timetree){
+    timetree <- TRUE
+    treea <- obja@phylo
+    treeb <- objb@phylo
+  }else{
+    timetree <- FALSE
+    treea <- obja
+    treeb <- objb
+  }
+  tipsa <- treea$tip.label
+  tipsb <- treeb$tip.label
+  nodesb <- c() #map of nodes from a to b
+  if(!setequal(tipsa, tipsb)){
+    diffs <- c(setdiff(tipsb, tipsa), setdiff(tipsa, tipsb))
+    fdiffs <- diffs[!grepl("Germline", diffs)]
+    if(length(fdiffs) == 0){
+      treea$tip.label[treea$tip.label %in% diffs] = "Germline"
+      treeb$tip.label[treeb$tip.label %in% diffs] = "Germline"
+    }else{
+      warning(paste("tips not the same"))
+      treecheck = FALSE
+    }
+  }
+  all_subtrees_a <- lapply(1:(length(treea$tip.label) + treea$Nnode), function(x)getSubTaxa(x, treea))
+  all_subtrees_b <- lapply(1:(length(treeb$tip.label) + treeb$Nnode), function(x)getSubTaxa(x, treeb))
+  if(length(all_subtrees_a) != length(all_subtrees_b)){
+    warning(paste("trees don't have the same subtree numbers"))
+    treecheck = FALSE
+  }
+  # check if trees have the same subtrees with corresponding edge lengths and sequences
+  for(sta in 1:length(all_subtrees_a)){
+    sa <- all_subtrees_a[[sta]]
+    match <- -1
+    for(stb in 1:length(all_subtrees_b)){
+      if(setequal(sa, all_subtrees_b[[stb]])){
+        match <- stb
+      }
+    }
+    if(match < 0){
+      warning(paste("Subtrees don't match"))
+      treecheck = FALSE
+    }
+    ea <- round(treea$edge.length[treea$edge[,2] == sta], digits=11)
+    eb <- round(treeb$edge.length[treeb$edge[,2] == match], digits=11)
+    if(length(ea) > 0 || length(eb) > 0){
+      if(abs(ea - eb) > edge_tol){
+        warning(paste( "Edges not within edge_tol", ea, eb, sta, match))
+        treecheck = FALSE
+      }
+    }
+    nodesb[sta] <- match
+  }
+
+  if(timetree){
+     da <- obja@data
+     db <- objb@data
+     # node numbers aren't necessarily the same, so map one to the other
+     da$nodeb <- as.character(nodesb[as.numeric(da$node)])
+     da <- da[order(da$nodeb),]
+     db <- db[order(db$node),]
+     if(!identical(da$node, db$node) && numbering_match){
+       warning(paste("@data node numbering not the same"))
+       treecheck <- FALSE
+     }
+     da <- select(da, -nodeb)
+     if(!setequal(names(da), names(db))){
+       warning(paste("@data columns not the same"))
+       treecheck <- FALSE
+     }
+     for(col in names(da)){
+       if(col == "node"){
+        next
+       }
+       if(!dataColumnEqual(da[[col]], db[[col]], edge_tol)){
+         warning(paste("@data column", col, "not the same"))
+         treecheck <- FALSE
+       }
+     }
+  }
+
+  treecheck
+}
+
+
+
 #'\code{dowserObjectEquivalent}
 #' Experimental. Check if two Dowser objects are equivalent
 #' @param    obj1  First Dowser object
@@ -718,13 +1140,25 @@ pmlParamsEqual <- function(pa, pb, tol=1e-3, edge_tol=1e-8){
 #' @param    verbose  print out more info
 #' @param    edge_tol tolerance for branch length checks (if check=TRUE)
 #' @param   dowser_fields check dowser-specific fields and gapped sequences?
+#' @param    nproc number of cores to use
 #' @details
 #' In addition to the existing tree topology, edge length, sequence, and
 #' data slot checks, this also verifies \code{tree$parameters} when present
 #' -- including \code{build="pml"} trees.
 #' @export
 dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
-  dowser_fields=TRUE){
+  dowser_fields=TRUE, nproc=1){
+
+  a_is_timetree <- inherits(obj1$trees[[1]], "treedata")
+  b_is_timetree <- inherits(obj2$trees[[1]], "treedata")
+  if(a_is_timetree != b_is_timetree){
+    stop("Cannot compare a time-tree object against a non-time-tree object")
+  }
+  timetree <- FALSE
+  if(a_is_timetree){
+    timetree <- TRUE
+  }
+
   a <- obj1
   b <- obj2
   a <- a[order(a$clone_id),]
@@ -743,79 +1177,73 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
     stop("different locus columns")
   }
 
-  treecheck <- 0
-  datacheck <- 0
-  nodewarn <- 0
-  for(row in 1:nrow(a)){
+  for(r in 1:nrow(a)){
+  #checks <- lapply(1:nrow(a),function(r)tryCatch({
+    treecheck <- 0
     # check trees
-    treea <- a$trees[[row]]
-    treeb <- b$trees[[row]]
+    if(timetree){
+      treea <- a$trees[[r]]@phylo
+      treeb <- b$trees[[r]]@phylo
+      treecheckfunc <- treesEquivalent(a$trees[[r]], b$trees[[r]], edge_tol, 
+        dowser_fields=dowser_fields)
+    }else{
+      treea <- a$trees[[r]]
+      treeb <- b$trees[[r]]
+      treecheckfunc <- treesEquivalent(treea, treeb, edge_tol, 
+        dowser_fields=dowser_fields)
+    }
 
-    tipsa <- treea$tip.label
-    tipsb <- treeb$tip.label
-    if(!setequal(tipsa, tipsb)){
-      diffs <- c(setdiff(tipsb, tipsa), setdiff(tipsa, tipsb))
-      fdiffs <- diffs[!diffs %in% c("Germline",paste0("Germline-",a$clone_id))]
-      if(!dowser_fields && length(fdiffs) == 0){
-        treea$tip.label[treea$tip.label %in% diffs] = "Germline"
-        treeb$tip.label[treeb$tip.label %in% diffs] = "Germline"
-      }else{
-        stop(paste(a$clone_id[row],"tips not the same"))
-      }
+    if(!treecheckfunc){
+      stop(paste(r, "trees not equivalent (see warnings)"))
     }else{
       treecheck <- treecheck + 1
     }
+    # check common ancestor sequences and states
+    treea$tip.label[grepl("Germline",treea$tip.label)] <- "Germline"
+    treeb$tip.label[grepl("Germline",treeb$tip.label)] <- "Germline"
     all_subtrees_a <- lapply(1:length(treea$nodes), function(x)getSubTaxa(x, treea))
     all_subtrees_b <- lapply(1:length(treeb$nodes), function(x)getSubTaxa(x, treeb))
     if(length(all_subtrees_a) != length(all_subtrees_b)){
-      stop(paste(a$clone_id[row],"trees don't have the same subtree numbers"))
+      stop(paste(a$clone_id[r],"trees don't have the same subtree numbers"))
       treecheck <- treecheck + 1
     }
-    # check if trees have the same subtrees with corresponding edge lengths and sequences
-    for(sta in 1:length(all_subtrees_a)){
-      sa <- all_subtrees_a[[sta]]
-      match <- -1
-      for(stb in 1:length(all_subtrees_b)){
-        if(setequal(sa, all_subtrees_b[[stb]])){
-          match <- stb
-        }
-      }
-      if(match < 0){
-        stop(paste(a$clone_id[row],"Subtrees don't match"))
-      }else{
-        treecheck <- treecheck + 1
-      }
-      seqa <- getNodeSeq(a, clone=a$clone_id[row], node=sta, gaps=dowser_fields)
-      seqb <- getNodeSeq(b, clone=b$clone_id[row], node=match, gaps=dowser_fields)
-      if(!is.null(seqa)){
-        if(is.null(seqb)){
-          stop(paste(a$clone_id[row], "One seq is NULL", sta, match))
-        }
-        if(length(seqa) != length(seqb)){
-          stop(paste(a$clone_id[row], "different seq numbers", sta, match))
-        }
-        for(seqindex in 1:length(seqa)){
-          if(!seqa[seqindex] == seqb[seqindex]){
-            stop(paste(a$clone_id[row], "Seqs don't match", sta, match))
-          }else{
-            treecheck <- treecheck + 1
+    # time trees don't yet have sequences or states vector
+    if(!timetree){
+      for(sta in 1:length(all_subtrees_a)){
+        sa <- all_subtrees_a[[sta]]
+        match <- -1
+        for(stb in 1:length(all_subtrees_b)){
+          if(setequal(sa, all_subtrees_b[[stb]])){
+            match <- stb
           }
         }
-      }
-      ea <- round(treea$edge.length[treea$edge[,2] == sta], digits=11)
-      eb <- round(treeb$edge.length[treeb$edge[,2] == match], digits=11)
-      if(length(ea) > 0 || length(eb) > 0){
-        if(abs(ea - eb) > edge_tol){
-          stop(paste(a$clone_id[row], "Edges not within edge_tol",ea, eb, sta, match))
-        }else{
-          treecheck <- treecheck + 1
+        if(match < 0){
+          warning(paste(a$clone_id[r],"Subtrees don't match"))
+          treecheck = FALSE
         }
-      }
-      #to do: add check for node names
-      if(!is.null(treea$state) || !is.null(treeb$state)){
-        if(treea$state[sta] != treeb$state[match]){
-          stop(paste(a$clone_id[row], "node states not equal",treea$state[sta],
-            treea$state[match], sta, match))
+        seqa <- getNodeSeq(a, clone=a$clone_id[r], node=sta, gaps=dowser_fields)
+        seqb <- getNodeSeq(b, clone=b$clone_id[r], node=match, gaps=dowser_fields)
+        if(!is.null(seqa)){
+          if(is.null(seqb)){
+            stop(paste(a$clone_id[r], "One seq is NULL", sta, match))
+          }
+          if(length(seqa) != length(seqb)){
+            stop(paste(a$clone_id[r], "different seq numbers", sta, match))
+          }
+          for(seqindex in 1:length(seqa)){
+            if(!seqa[seqindex] == seqb[seqindex]){
+              stop(paste(a$clone_id[r], "Seqs don't match", sta, match))
+            }else{
+              treecheck <- treecheck + 1
+            }
+          }
+        }
+        #to do: add check for node names
+        if(!is.null(treea$state) || !is.null(treeb$state)){
+          if(treea$state[sta] != treeb$state[match]){
+            stop(paste(a$clone_id[r], "node states not equal",treea$state[sta],
+              treea$state[match], sta, match))
+          }
         }
       }
     }
@@ -824,13 +1252,12 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
       namediff <- setdiff(names(treea), names(treeb))
       if(length(namediff) > 1 || namediff != "node.label"){
         print(namediff)
-        stop(paste(a$clone_id[row], "Tree names not equal"))
+        stop(paste(a$clone_id[r], "Tree names not equal"))
       }
       if("node.label" %in% c(names(treea),names(treeb))){
-        if(nodewarn == 0){
+        if(r == 0){
           warning("node.label not currently checked, or preserved by writeTreesJSON")
         }
-        nodewarn <- nodewarn + 1
       }
     }else{
       treecheck <- treecheck + 1
@@ -843,9 +1270,9 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
         if(is.null(treea[[n]]) && is.null(treeb[[n]])){
           treecheck <- treecheck + 1
         }else if(is.null(treea[[n]]) || is.null(treeb[[n]])){
-          stop(paste(a$clone_id[row], n, "not the same"))
+          stop(paste(a$clone_id[r], n, "not the same"))
         }else if(!pmlParamsEqual(treea[[n]], treeb[[n]], edge_tol=edge_tol)){
-          stop(paste(a$clone_id[row], n, "not the same"))
+          stop(paste(a$clone_id[r], n, "not the same"))
         }else{
           treecheck <- treecheck + 1
         }
@@ -858,15 +1285,15 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
         }
       }
       if(!null && sum(treea[[n]] != treeb[[n]]) != 0){
-        stop(paste(a$clone_id[row], n, "not the same"))
+        stop(paste(a$clone_id[r], n, "not the same"))
       }else{
         treecheck <- treecheck + 1
       }
     }
 
     # check data
-    da <- a$data[[row]]
-    db <- b$data[[row]]
+    da <- a$data[[r]]
+    db <- b$data[[r]]
     da@data <- da@data[order(da@data$sequence_id),]
     db@data <- db@data[order(db@data$sequence_id),]
     for(n in slotNames(da)){
@@ -893,7 +1320,7 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
         }
         for(name in namechecks){
           if(sum(dataa[[name]] != datab[[name]]) != 0){
-            stop(paste(a$clone_id[row], "data", name, "not the same"))
+            stop(paste(a$clone_id[r], "data", name, "not the same"))
           }
         }
       }else if(n == "germline" & da@phylo_seq != "sequence"){
@@ -906,14 +1333,99 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
         "numbers", "region")){
         next
       }else if(sum(slot(da,n) != slot(db, n)) != 0){
-        stop(paste(a$clone_id[row], n, "slot is not equal"))
+        stop(paste(a$clone_id[r], n, "slot is not equal"))
       }else{
-        datacheck <- datacheck + length(slot(da,n))
+        treecheck <- treecheck + length(slot(da,n))
       }
     }
+
+    #time tree object checks
+    if(timetree){
+     dtreea <- a$trees[[r]]
+     dtreeb <- b$trees[[r]]
+     
+     # BEAST parameter log 
+     pa <- dtreea@info$parameters
+     pb <- dtreeb@info$parameters
+     if(is.null(pa) != is.null(pb)){
+       stop(paste(a$clone_id[r], "beast parameters presence not the same"))
+     }
+     if(!is.null(pa)){
+       if(!setequal(pa$item, pb$item)){
+         stop(paste(a$clone_id[r], "beast parameter items not the same"))
+       }
+       pb <- pb[match(pa$item, pb$item),]
+       for(col in setdiff(names(pa), "item")){
+         va <- pa[[col]]; vb <- pb[[col]]
+         ok <- isTRUE(all.equal(va, vb)) ||
+           all(is.na(va) == is.na(vb) & (is.na(va) | va == vb))
+         if(!ok){
+           stop(paste(a$clone_id[r], "beast parameter", col, "not the same"))
+         }
+       }
+     }
+     treecheck <- treecheck + 1
+  
+      # --- full posterior (@info$trees_posterior/trees_with_traits_posterior/
+     # parameters_posterior), when present. trees_posterior and
+     # trees_with_traits_posterior are independent, optional fields, compared
+     # the same way via comparePosteriorTreeLists(). ---
+     for(prefix in c("trees_posterior", "trees_with_traits_posterior")){
+       if(length(dtreea@info[[prefix]]) != length(dtreeb@info[[prefix]])){
+         stop(paste(a$clone_id[r], prefix, "not the same length"))
+       }
+  
+       posterior_comp <- sapply(1:length(dtreea@info[[prefix]]), function(x)
+         treesEquivalent(
+           dtreea@info[[prefix]][[x]], 
+           dtreeb@info[[prefix]][[x]],
+           edge_tol))
+       if(sum(!posterior_comp) > 0){
+         stop(paste(a$clone_id[r], prefix, "not equivalent"))
+       }
+       treecheck <- treecheck + length(posterior_comp)
+     }
+  
+     ppa <- dtreea@info$parameters_posterior
+     ppb <- dtreeb@info$parameters_posterior
+     if(is.null(ppa) != is.null(ppb)){
+       stop(paste(a$clone_id[r], "parameters_posterior presence not the same"))
+     }
+     if(!is.null(ppa)){
+       if(nrow(ppa) != nrow(ppb)){
+         stop(paste(a$clone_id[r], "parameters_posterior row count not the same"))
+       }
+  
+       # Sample can round-trip as "integer" on one side but "double" on the other
+       key_a <- paste(sprintf("%.0f", ppa$Sample), ppa$parameter)
+       key_b <- paste(sprintf("%.0f", ppb$Sample), ppb$parameter)
+       if(!setequal(key_a, key_b)){
+         stop(paste(a$clone_id[r], "parameters_posterior Sample/parameter keys not the same"))
+       }
+       ppb <- ppb[match(key_a, key_b),]
+       ok <- isTRUE(all.equal(ppa$value, ppb$value)) #||
+         #all(is.na(ppa$value) == is.na(ppb$value) &
+         #  (is.na(ppa$value) | ppa$value == ppb$value))
+       if(!ok){
+         stop(paste(a$clone_id[r], "parameters_posterior values not the same"))
+       }else{
+         treecheck <- treecheck + nrow(ppa)
+       }
+     }
+    }
+    treecheck
   }
+  #},error=function(e)e))
+
+  #errors <- sapply(checks, function(x) inherits(x, "error"))
+  #if(sum(errors) == 0){
+  #  treecheck <- sum(unlist(checks))
+  #}else{
+  #  print(paste(checks[errors]))
+  #  stop("Objects not equivalent")
+  #}
   if(verbose){
-    print(paste("Objects equivalent:",treecheck,"tree checks,",datacheck,"data checks, 0 failures"))
+    print(paste("Objects equivalent:",treecheck,"tree checks, 0 failures"))
   }
   return(0)
 }
