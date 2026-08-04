@@ -1281,7 +1281,6 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
   }
   
   # read in tree and parameter log
-  # TODO add nodes and sequences to tree
   trees <- list()
   for(i in 1:length(data)){
     if(is.null(trait)){
@@ -1292,10 +1291,34 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
     logfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".log"))
     logoutfile <- file.path(dir, paste0(id, "_", data[[i]]@clone,"_log.tsv"))
 
-    beast <- treeio::read.beast(treefile)
-    if("error" %in% class(beast)){
+    beastobj <- treeio::read.beast(treefile)
+    if("error" %in% class(beastobj)){
       stop(paste("Couldn't read in ",treefile))
     }
+
+    # add the usual bells and whistles for Dowser tree objects
+    beastobj@phylo$name <- data[[i]]@clone
+    beastobj@phylo$tree_method <- paste("beast")
+    beastobj@phylo$edge_type <- "time"
+    nnodes <- length(unique(c(beastobj@phylo$edge[,1],beastobj@phylo$edge[,2])))
+    beastobj@phylo$nodes <- lapply(1:nnodes, function(x)list(sequence=NA))
+
+    # add in node sequences. Currently only adds tips.
+    for(j in 1:length(beastobj@phylo$nodes)){
+      if(j <= length(beastobj@phylo$tip.label)){
+        label <- beastobj@phylo$tip.label[j]
+        if(label != "Germline"){
+          beastobj@phylo$nodes[[j]]$sequence <- dplyr::filter(data[[i]]@data, 
+            !!rlang::sym("sequence_id") == label)[[data[[i]]@phylo_seq]]
+        }else{
+          beastobj@phylo$nodes[[j]]$sequence <- switch(data[[i]]@phylo_seq,
+            "sequence" = data[[i]]@germline,
+            "lsequence" = data[[i]]@lgermline,
+            "hlsequence" = data[[i]]@hlgermline)
+        }
+      }
+    }
+
     l <- readLines(logoutfile)
     # just in case there are extra lines at the top of the log file, find the line where the parameter table starts
     item_lines <- grep("item", l)
@@ -1306,7 +1329,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
     }
 
     # add parameter summary
-    beast@info$parameters <- log
+    beastobj@info$parameters <- log
     if("trees" %in% posterior){ 
       treesfile <- file.path(dir, paste0(id,"_",data[[i]]@clone, ".trees"))      
       l <- readLines(treesfile, warn=FALSE)
@@ -1317,7 +1340,9 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
         writeLines(l, con=treesfile)
       }
-      phylos <- treeio::read.beast(treesfile)
+      # always gives an incomplete final line warning, but not 
+      # an issue if we end on End;
+      phylos <- suppressWarnings(treeio::read.beast(treesfile))
       burn <- floor(length(phylos)*burnin/100)
       phylos <- phylos[(burn+1):length(phylos)]
       if(trim_ids){
@@ -1327,7 +1352,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         y
       })}
       
-      beast@info$trees_posterior <- phylos
+      beastobj@info$trees_posterior <- phylos
     }
     if("trees_with_traits" %in% posterior){ 
       if(is.null(trait)){
@@ -1343,7 +1368,7 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         treesfile <- file.path(dir, paste0(data[[i]]@clone, "_end.trees"))
         writeLines(l, con=treesfile)
       }
-      phylos <- treeio::read.beast(treesfile)
+      phylos <- suppressWarnings(treeio::read.beast(treesfile))
       burn <- floor(length(phylos)*burnin/100)
       phylos <- phylos[(burn+1):length(phylos)]
       if(trim_ids){
@@ -1353,14 +1378,14 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
         y
       })}
       
-      beast@info$trees_with_traits_posterior <- phylos
+      beastobj@info$trees_with_traits_posterior <- phylos
     }
     if("parameters" %in% posterior){
       l <- read.table(logfile, header=TRUE)
-      beast@info$parameters_posterior <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
+      beastobj@info$parameters_posterior <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
     }
-    beast@info$name <- data[[i]]@clone
-    trees[[i]] <- beast
+    beastobj@info$name <- data[[i]]@clone
+    trees[[i]] <- beastobj
   }
 
   if(quiet < 1)print("Ran readBEAST")

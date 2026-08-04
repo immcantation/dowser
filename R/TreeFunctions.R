@@ -2667,36 +2667,44 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     }
     tree <- dplyr::filter(data,!!rlang::sym("clone_id")==clone)$trees[[1]]
   }
+  if(inherits(tree, "treedata")){
+    tree <- tree@phylo
+  }
   clone <- dplyr::filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
   # CGJ 3/11/26
-  germ_node <- ape::getMRCA(data$trees[[which(data$clone_id == clone@clone)]], 
-                            data$trees[[which(data$clone_id == clone@clone)]]$tip.label)
+  # KBH: should change getTreesAndUCAs such that the germline node is updated
+  # and it can be retreived like any other sequence
+  germ_node <- ape::getMRCA(tree, tree$tip.label)
   if(germ_node == node & "UCA" %in% colnames(data)){
     if(gaps){
       seqs <- data$UCA[[which(data$clone_id == clone@clone)]]$gapped
     }else{
       seqs <- data$UCA[[which(data$clone_id == clone@clone)]]$ungapped
     }
-  } else{
+  }else{
     seqs <- c()
-    seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
     loci <- unique(clone@locus)
-    for(locus in loci){
-      if(length(seq) < length(clone@locus)){
-        warning("Sequences are shorter than chain vector. Exiting")
+    if(!is.na(tree$nodes[[node]]$sequence)){
+      seq <- strsplit(tree$nodes[[node]]$sequence,split="")[[1]]
+      for(locus in loci){
+        if(length(seq) < length(clone@locus)){
+          warning("Sequences are shorter than chain vector. Exiting")
+        }
+        if(length(seq) > length(clone@locus)){
+          stop("Sequences are longer than chain vector. Exiting")
+        }
+        lseq <- seq[clone@locus == locus]
+        lseq[is.na(lseq)] <- "N"
+        if(gaps){
+          nums <- clone@numbers[clone@locus == locus]
+          nseq <- rep(".",max(nums))
+          nseq[nums] <- lseq
+          lseq <- nseq
+        }
+        seqs <- c(seqs,paste(lseq,collapse=""))
       }
-      if(length(seq) > length(clone@locus)){
-        stop("Sequences are longer than chain vector. Exiting")
-      }
-      lseq <- seq[clone@locus == locus]
-      lseq[is.na(lseq)] <- "N"
-      if(gaps){
-        nums <- clone@numbers[clone@locus == locus]
-        nseq <- rep(".",max(nums))
-        nseq[nums] <- lseq
-        lseq <- nseq
-      }
-      seqs <- c(seqs,paste(lseq,collapse=""))
+    }else{
+      seqs <- NA
     }
     names(seqs) <- loci
   }
