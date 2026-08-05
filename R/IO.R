@@ -361,8 +361,6 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       }
       tipdata[[tip$sequence_id]] <- tip
     }
-    #clone$info$data <- tipdata
-
     clone$tree <- ape::write.tree(phy)
     if(dowser_fields){
       clone$info$treeinfo <- list()
@@ -387,8 +385,6 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       germline_node <- NA
       clone$inferred_ancestor <- NA
     }
-    
-
     # metadata columns for tips
     nodes <- list()
     for(i in 1:(length(phy$tip.label) + phy$Nnode)){
@@ -437,39 +433,13 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       # need to update this by getting getNodeSeq to work on time trees
       # add name field to treedata@info
       # return null if no nodes list unless requesting tip sequence
-      #if(!timetree){
-        seqa <- getNodeSeq(object, node=i, tree=phy, gaps=TRUE)
-        seq <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
-        if(!is.na(germline_node)){
-          ga <- getNodeSeq(object, node=germline_node, tree=phy, gaps=TRUE)
-        }else{
-          ga <- NA
-        }
-        # currently time trees don't have reconstructed sequences
-      #}else if(i <= length(phy$tip.label) && (is.na(germline_node) | i != germline_node)){
-      #  seqa <- dplyr::filter(object$data[[row]]@data, 
-      #    !!rlang::sym("sequence_id") == phy$tip.label[i])[[clone$info$phylo_seq]]
-      #  seq <- seqa
-      #  ga <- germ_seq
-      #}else if(!is.na(germline_node) && i == germline_node){
-      #  seqa <- germ_seq
-      #  seq <- germ_seq
-      #  ga <- germ_seq
-      #}else{
-      #  seqa <- NA
-      #  seq <- NA
-      #  ga <- germ_seq
-      #}
-      #if(timetree){
-      #  #if(node_class == "Cell"){
-      #  #  names(seq) <- "IGH"
-      #  #}else{
-      #  #  names(seq) <- "N"
-      #  #}
-      #  loci_from_data <- object$data[[row]]@locus
-      #  unique_loci <- unique(loci_from_data)
-      #  names(seq) <- unique_loci
-      #}
+      seqa <- getNodeSeq(object, node=i, tree=phy, gaps=TRUE)
+      seq <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
+      if(!is.na(germline_node)){
+        ga <- getNodeSeq(object, node=germline_node, tree=phy, gaps=TRUE)
+      }else{
+        ga <- NA
+      }
       for(loci_i in 1:length(seq)){
         receptor <- list()
         loci <- names(seq)[loci_i]
@@ -534,8 +504,9 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
         }
       }
       if(!is.null(tr@info$parameters_posterior)){
-        wide_pp <- tidyr::pivot_wider(tr@info$parameters_posterior,
-          names_from="parameter", values_from="value")
+        #wide_pp <- tidyr::pivot_wider(tr@info$parameters_posterior,
+        #  names_from="parameter", values_from="value")
+        wide_pp <- tr@info$parameters_posterior
         clone$info$parameters_posterior_columns <- names(wide_pp)
         clone$info$parameters_posterior <- dataFrameToValueRows(wide_pp)
       }
@@ -895,9 +866,10 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
         for(col in names(params_post_wide)){
           params_post_wide[[col]] <- suppressWarnings(as.numeric(params_post_wide[[col]]))
         }
+        tr@info$parameters_posterior <- params_post_wide
         #TODO: change readBEAST and functions to keep these as wide-format to save space
-        tr@info$parameters_posterior <- tidyr::pivot_longer(params_post_wide,
-          cols=-"Sample", names_to="parameter", values_to="value")
+        #tr@info$parameters_posterior <- tidyr::pivot_longer(params_post_wide,
+        #  cols=-"Sample", names_to="parameter", values_to="value")
       }
       outtrees[[ci]] <- tr
     }

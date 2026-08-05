@@ -1383,8 +1383,9 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
       l <- read.table(logfile, header=TRUE)
       burn <- floor(nrow(l)*burnin/100)
       l <- l[(burn+1):nrow(l),]
-      beastobj@info$parameters_posterior <- tidyr::gather(l,
-       "parameter", "value", -(!!rlang::sym("Sample")))
+      beastobj@info$parameters_posterior <- l
+    #  beastobj@info$parameters_posterior <- tidyr::gather(l,
+    #   "parameter", "value", -(!!rlang::sym("Sample")))
     }
     beastobj@info$name <- data[[i]]@clone
     trees[[i]] <- beastobj
@@ -1421,7 +1422,6 @@ makeSkyline <- function(object, bins=100, youngest=0,
     if(length(max_height) > 1){
       max_height <- max_height[1]
     }
-    #params <- tidyr::gather(l, "parameter", "value", -(!!rlang::sym("Sample")))
     params <- object@info$parameters_posterior
     phylos <- object@info$trees_posterior
     if(is.null(params) || is.null(phylos)){
@@ -1429,6 +1429,7 @@ makeSkyline <- function(object, bins=100, youngest=0,
         "Try reading in object with readBEAST(posterior='all')"))
     }
     phylos <- lapply(phylos, function(x)x@phylo)
+    params <- tidyr::gather(params, "parameter", "value", -(!!rlang::sym("Sample")))
 
     if(!"bPopSizes.1" %in% unique(params$parameter)){
         stop(paste("log file doesn't have pop sizes.",
