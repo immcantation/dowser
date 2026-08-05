@@ -8,11 +8,23 @@ greater than or equal to the specified ess_cutoff}
 \usage{
 getTimeTreesIterate(
   clones,
+  template,
+  beast,
+  dir,
+  id,
+  time,
   iterations = 10,
   ess_cutoff = 200,
+  burnin = 10,
   ignore = c("traitfrequencies"),
-  quiet = 0,
   continue = FALSE,
+  posterior = c("none", "all", "parameters", "trees_with_traits", "trees"),
+  trait = NULL,
+  nproc = 1,
+  quiet = 0,
+  asr = FALSE,
+  low_ram = TRUE,
+  trim_ids = FALSE,
   ...
 )
 }
@@ -20,15 +32,31 @@ getTimeTreesIterate(
 \item{clones}{a tibble of \code{airrClone} objects, the output of
 \link{formatClones}}
 
+\item{template}{XML template}
+
+\item{beast}{location of beast binary directory (beast/bin)}
+
+\item{dir}{directory where temporary files will be placed.}
+
+\item{id}{unique identifer for this analysis}
+
+\item{time}{Name of sample time column}
+
 \item{iterations}{Maximum number of times to resume MCMC chain}
 
 \item{ess_cutoff}{Minimum number of ESS for all parameters}
 
+\item{burnin}{Burnin percent (default 10)}
+
 \item{ignore}{Vector of parameters to ignore for ESS calculation}
 
-\item{quiet}{quiet notifications if > 0}
-
 \item{continue}{If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)}
+
+\item{trait}{Trait column to be used}
+
+\item{nproc}{Number of cores for parallelization. At most 1 core/tree can be used.}
+
+\item{quiet}{quiet notifications if > 0}
 
 \item{...}{Additional arguments for getTimeTrees}
 }

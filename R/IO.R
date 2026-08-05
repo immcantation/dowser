@@ -1246,8 +1246,8 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
     stop("different column names")
   }
 
-  for(r in 1:nrow(a)){
-  #checks <- lapply(1:nrow(a),function(r)tryCatch({
+  #for(r in 1:nrow(a)){
+  checks <- lapply(1:nrow(a),function(r)tryCatch({
     treecheck <- 0
 
     # check non-tree columns
@@ -1453,16 +1453,16 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
      }
     }
     treecheck
-  }
-  #},error=function(e)e))
-
-  #errors <- sapply(checks, function(x) inherits(x, "error"))
-  #if(sum(errors) == 0){
-  #  treecheck <- sum(unlist(checks))
-  #}else{
-  #  print(paste(checks[errors]))
-  #  stop("Objects not equivalent")
   #}
+  },error=function(e)e))
+
+  errors <- sapply(checks, function(x) inherits(x, "error"))
+  if(sum(errors) == 0){
+    treecheck <- sum(unlist(checks))
+  }else{
+    print(paste(checks[errors]))
+    stop("Objects not equivalent")
+  }
   if(verbose){
     print(paste("Objects equivalent:",treecheck,"tree checks, 0 failures"))
   }

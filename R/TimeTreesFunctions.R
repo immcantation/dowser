@@ -7,6 +7,15 @@
 #' \code{getTimeTreesIterate} Iteratively resume getTimeTrees til convergence.
 #' @param    clones     a tibble of \code{airrClone} objects, the output of
 #'                      \link{formatClones}
+#' @param    template   XML template
+#' @param    beast      location of beast binary directory (beast/bin)
+#' @param    dir        directory where temporary files will be placed.
+#' @param    id         unique identifer for this analysis
+#' @param    time         Name of sample time column        
+#' @param    burnin       Burnin percent (default 10)                 
+#' @param    trait        Trait column to be used         
+#' @param    nproc      Number of cores for parallelization. At most 1 core/tree can be used.
+#' @param    quiet      amount of rubbish to print to console
 #' @param    iterations Maximum number of times to resume MCMC chain
 #' @param    ess_cutoff Minimum number of ESS for all parameters
 #' @param    ignore     Vector of parameters to ignore for ESS calculation
@@ -14,21 +23,28 @@
 #' @param    continue   If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)
 #' @param    ...        Additional arguments for getTimeTrees
 #'
+#' @details
+#' 
+#' For a full list of options (of which there are many more), see \code{getTimeTrees}
+#' 
 #' @return   A tibble of \code{tidytree} and \code{airrClone} objects.
 #'
 #' @details
 #' For examples and vignettes, see https://dowser.readthedocs.io
 #'
 #' @export
-getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
-  ignore = c("traitfrequencies"), quiet=0, continue=FALSE, ...){
+getTimeTreesIterate <- function(clones, template, beast, dir, id, time,
+  iterations=10, ess_cutoff=200, burnin=10,
+  ignore = c("traitfrequencies"), continue=FALSE, 
+  posterior=c("none","all","parameters","trees_with_traits","trees"), 
+  trait=NULL, nproc=1, quiet=0, asr=FALSE, low_ram=TRUE, trim_ids=FALSE,...){
 
   resume <- NULL
   iter <- 0
 
   # check for iteration folder if resuming
   if(!is.null(continue) && continue){
-    info <- setUpIterateResume(clones, ...)
+    info <- setUpIterateResume(clones, dir=dir, id=id, ...)
     iter <- info$iteration
     rds <- info$clones_path
     if(!is.null(rds)){
@@ -45,10 +61,13 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
           print(paste("Starting iteration", iter))
         }
 
-        clones <- getTimeTrees(clones, resume_clones=resume, ...)
+        clones <- getTimeTrees(clones, resume_clones=resume, posterior="none", template=template,
+            dir=dir, id=id, beast=beast, burnin=burnin, time=time, 
+          trait=trait, quiet=quiet, nproc=nproc, asr=asr, trim_ids=trim_ids,
+          low_ram=low_ram, ...)
 
         resume <- getClonesToResume(clones, ignore=ignore, ess_cutoff=ess_cutoff)
-        saveIteration(clones, iter, ...)
+        saveIteration(clones, iter, dir=dir, id=id, ...)
         iter <- iter + 1
     }
     if(iter == iterations & length(resume) != 0){
@@ -58,6 +77,11 @@ getTimeTreesIterate <- function(clones, iterations=10, ess_cutoff=200,
     # cleanUpIterateResume(...)
 
     # add in final readBEAST with full posterior options if specified
+    if(!"none" %in% posterior){
+      clones <- readBEAST(clones=clones, dir=dir, id=id, beast=beast, burnin=burnin, 
+        trait=trait, quiet=quiet, nproc=nproc, posterior=posterior, asr=asr, 
+        low_ram=low_ram)
+    }
     return(clones)
 }
 
