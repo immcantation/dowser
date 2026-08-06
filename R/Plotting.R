@@ -227,6 +227,9 @@ colorTrees <- function(trees, palette, ambig="blend"){
 #' @param    tip_palette        deprecated, use palette
 #' @param    guide_title        Title of color guide. Defaults to tips variable if specified.
 #' @param    branch_lengths     Use branch lenghts? Use "none" if not.
+#' @param    densitree          Use densitree visualization? Requires trees_with_traits/trees posterior
+#'                              to be loaded in (see posterior options in \code{readBEAST}).
+#' @param    alpha              Alpha value for ggtree. Lower makes the tree more transparent.
 #'
 #' @return   a grob containing a tree plotted by \code{ggtree}.
 #'
@@ -247,7 +250,8 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
     scale=0.01, palette="Dark2", base=FALSE, show_occupancy=FALSE,
     layout="rectangular", node_nums=FALSE, tip_nums=FALSE, title=TRUE,
     labelsize=NULL, common_scale=FALSE, ambig="grey", bootstrap_scores=FALSE,
-    tip_palette=NULL, node_palette=NULL, guide_title=NULL, branch_lengths=NULL, pch=16){
+    tip_palette=NULL, node_palette=NULL, guide_title=NULL, branch_lengths=NULL, pch=16,
+    densitree=FALSE, alpha=1){
 
     tiptype = "character"
     # CGJ 12/12/23 add check to see if the color palettes are unnamed vectors 
@@ -283,7 +287,6 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             breaks = c(0, 0.25, 0.5, 0.75, 1),
             limits = c(0, 1))
     }
-
     if(!base){
         cols <- c()
         # set up global tip and node palette
@@ -386,7 +389,8 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             nodes=nodes,tips=tips,tipsize=tipsize,scale=scale,palette=palette, node_palette=node_palette,
             tip_palette=tip_palette,base=TRUE,layout=layout,node_nums=node_nums,show_occupancy=show_occupancy,
             tip_nums=tip_nums,title=title,labelsize=labelsize, ambig=ambig, pch=pch,
-            bootstrap_scores=bootstrap_scores, guide_title=guide_title, branch_lengths=branch_lengths))
+            bootstrap_scores=bootstrap_scores, guide_title=guide_title, branch_lengths=branch_lengths,
+            densitree=densitree, alpha=alpha))
         if(!is.null(tips) || nodes || show_occupancy){
             if(!is.null(guide_title)){
                 gt <- guide_title
@@ -432,19 +436,42 @@ plotTrees <- function(trees, nodes=FALSE, tips=NULL, tipsize=NULL,
             })
         }
         return(ps)
-    }
+    } #if !base
 
     tree <- trees$trees[[1]]
     data <- trees$data[[1]]
 
+    if(densitree){
+        if("trees_with_traits_posterior" %in% names(tree@info)){
+            trees <- tree@info$trees_with_traits_posterior
+        }else if("trees_posterior" %in% names(tree@info)){
+            trees <- tree@info$trees_posterior
+        }else{
+            stop("trees_with_trait_posterior and trees_posterior not found")
+        }
+    }
+
     if(!is.null(branch_lengths)){
-        p <- ggtree::ggtree(tree, layout=layout, branch.length=branch_lengths)
+        if(!densitree){
+            p <- ggtree::ggtree(tree, layout=layout, branch.length=branch_lengths, alpha=alpha)
+        }else{
+            p <- ggtree::ggdensitree(trees, layout=layout, branch.length=branch_lengths, alpha=alpha)
+        }
     }else{
         if(show_occupancy){
-            p <- ggtree::ggtree(tree, layout=layout, 
-                aes(color=as.numeric(!!rlang::sym("expectedOccupancies"))))
+            if(!densitree){
+                p <- ggtree::ggtree(tree, layout=layout, 
+                    aes(color=as.numeric(!!rlang::sym("expectedOccupancies"))), alpha=alpha)
+            }else{
+                p <- ggtree::ggdensitree(trees, layout=layout, 
+                    aes(color=as.numeric(!!rlang::sym("expectedOccupancies"))), alpha=alpha)
+            }
         }else{
-            p <- ggtree::ggtree(tree, layout=layout)
+            if(!densitree){
+                p <- ggtree::ggtree(tree, layout=layout, alpha=alpha)
+            }else{
+                p <- ggtree::ggdensitree(trees, layout=layout, alpha=alpha)
+            }
         }
     }
     #add bootstrap scores to ggplot object

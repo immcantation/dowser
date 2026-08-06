@@ -52,11 +52,21 @@ getTimeTreesIterate(
 
 \item{continue}{If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)}
 
+\item{posterior}{Read un full distribution of parameters and trees? Can be "none" to just have
+summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+combination of "parameters", "trees_with_traits", and "trees".}
+
 \item{trait}{Trait column to be used}
 
 \item{nproc}{Number of cores for parallelization. At most 1 core/tree can be used.}
 
 \item{quiet}{quiet notifications if > 0}
+
+\item{asr}{Log ancestral sequences?}
+
+\item{low_ram}{run with less memory (slightly slower)}
+
+\item{trim_ids}{remove last _ group from tips?}
 
 \item{...}{Additional arguments for getTimeTrees}
 }
@@ -67,5 +77,7 @@ A tibble of \code{tidytree} and \code{airrClone} objects.
 \code{getTimeTreesIterate} Iteratively resume getTimeTrees til convergence.
 }
 \details{
+For a full list of options (of which there are many more), see \code{getTimeTrees}
+
 For examples and vignettes, see https://dowser.readthedocs.io
 }

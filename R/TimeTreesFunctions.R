@@ -11,16 +11,22 @@
 #' @param    beast      location of beast binary directory (beast/bin)
 #' @param    dir        directory where temporary files will be placed.
 #' @param    id         unique identifer for this analysis
-#' @param    time         Name of sample time column        
-#' @param    burnin       Burnin percent (default 10)                 
-#' @param    trait        Trait column to be used         
+#' @param    time       Name of sample time column        
+#' @param    burnin     Burnin percent (default 10)                 
+#' @param    trait      Trait column to be used         
 #' @param    nproc      Number of cores for parallelization. At most 1 core/tree can be used.
+#' @param    posterior  Read un full distribution of parameters and trees? Can be "none" to just have
+#'                      summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+#'                      combination of "parameters", "trees_with_traits", and "trees".
 #' @param    quiet      amount of rubbish to print to console
 #' @param    iterations Maximum number of times to resume MCMC chain
 #' @param    ess_cutoff Minimum number of ESS for all parameters
 #' @param    ignore     Vector of parameters to ignore for ESS calculation
 #' @param    quiet      quiet notifications if > 0
 #' @param    continue   If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)
+#' @param    asr          Log ancestral sequences?
+#' @param    low_ram    run with less memory (slightly slower)  
+#' @param    trim_ids    remove last _ group from tips?      
 #' @param    ...        Additional arguments for getTimeTrees
 #'
 #' @details
@@ -80,7 +86,7 @@ getTimeTreesIterate <- function(clones, template, beast, dir, id, time,
     if(!"none" %in% posterior){
       clones <- readBEAST(clones=clones, dir=dir, id=id, beast=beast, burnin=burnin, 
         trait=trait, quiet=quiet, nproc=nproc, posterior=posterior, asr=asr, 
-        low_ram=low_ram)
+        low_ram=low_ram, trim_ids=trim_ids)
     }
     return(clones)
 }

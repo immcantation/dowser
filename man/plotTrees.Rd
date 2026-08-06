@@ -25,7 +25,9 @@ plotTrees(
   node_palette = NULL,
   guide_title = NULL,
   branch_lengths = NULL,
-  pch = 16
+  pch = 16,
+  densitree = FALSE,
+  alpha = 1
 )
 }
 \arguments{
@@ -78,6 +80,11 @@ determined by sequence with highest divergence}
 \item{branch_lengths}{Use branch lenghts? Use "none" if not.}
 
 \item{pch}{Numeric tip/node shape. If >20 will use "fill" instead of "color"}
+
+\item{densitree}{Use densitree visualization? Requires trees_with_traits/trees posterior
+to be loaded in (see posterior options in \code{readBEAST}).}
+
+\item{alpha}{Alpha value for ggtree. Lower makes the tree more transparent.}
 }
 \value{
 a grob containing a tree plotted by \code{ggtree}.
