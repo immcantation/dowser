@@ -16,6 +16,131 @@ writeFasta <- function(seqs, file){
   }
 }
 
+
+# Write a clone's sequence alignment to a fasta file
+# 
+# \code{cloneToFasta} write clone sequences as a fasta file
+# @param    c            airrClone object
+# @param    fastafile    file to be exported
+# @param    germid       sequence id of germline
+# @param    trait        trait to include in sequence ids
+# @param    empty        don't include real sequence information
+#
+# @return   Name of exported fasta file.
+cloneToFasta <- function(c, fastafile, germid, trait=NULL, empty=FALSE){
+  text <- ""
+  if(!is.null(trait)){
+    c@data$sequence_id <- paste(c@data$sequence_id,c@data[,trait],sep="_")
+  }
+  for(i in 1:nrow(c@data)){
+    text <- paste0(text,">",c@data[i,]$sequence_id,"\n")
+    if(!empty){
+      if(c@phylo_seq == "sequence"){
+        text <- paste0(text,c@data[i,]$sequence,"\n")
+      }else if(c@phylo_seq == "lsequence"){
+        text <- paste0(text,c@data[i,]$lsequence,"\n")
+      }else if(c@phylo_seq == "hlsequence"){
+        text <- paste0(text,c@data[i,]$hlsequence,"\n")
+      }else{
+        stop(paste("phylo_seq not recognized",c@clone))
+      }
+    }else{
+      text <- paste0(text,"ATG\n")
+    }
+  }
+  text <- paste0(text,">",germid,"\n")
+  if(!empty){
+    if(c@phylo_seq == "sequence"){
+      text <- paste0(text,c@germline,"\n")
+    }else if(c@phylo_seq == "lsequence"){
+      text <- paste0(text,c@lgermline,"\n")
+    }else if(c@phylo_seq == "hlsequence"){
+      text <- paste0(text,c@hlgermline,"\n")
+    }else{
+      stop(paste("phylo_seq not recognized",c@clone))
+    }
+  }else{
+    text <- paste0(text,"ATG\n")
+  }
+  write(text,file=fastafile,append=FALSE)
+  return(fastafile)
+}
+
+
+#' Write a fasta file of sequences
+#' \code{readFasta} reads a fasta file
+#' @param    df        dataframe of sequences
+#' @param    id        Column name of sequence ids
+#' @param    seq       Column name of sequences
+#' @param    file      FASTA file for output
+#' @param    imgt_gaps Keep IMGT gaps if present?
+#' @param    columns   vector of column names to append to sequence id
+#'
+#' @return   File of FASTA formatted sequences
+#' @export
+dfToFasta <- function(df, file, id="sequence_id", seq="sequence",
+  imgt_gaps=FALSE, columns=NULL){
+  if(!"data.frame" %in% class(df)){
+    stop("df must be a data.frame or tibble")
+  }
+  if(!id %in% names(df)){
+    stop(id, " column not found in df")
+  }
+  if(!seq %in% names(df)){
+    stop(seq, " column not found in df")
+  }
+
+  if(!imgt_gaps){
+    seqs <- gsub("\\.","",df[[seq]])
+  }else{
+    seqs <- df[[seq]]
+  }
+
+  if(is.null(columns)){
+    ids <- df[[id]]
+  }else{
+    if(sum(!columns %in% names(df)) > 0){
+      nf <- columns[!columns %in% names(df)]
+      stop(paste(nf, collapse=","), " not found in df")
+    }
+    ids <- df[[id]]
+    for(column in columns){
+      values <- paste0("|", column, "=", df[[column]])
+      ids <- paste0(ids, values)
+    }
+  }
+  lines <- paste0(">", ids, "\n", seqs)
+  writeLines(lines, con=file)
+}
+
+
+#' Read a fasta file into a list of sequences
+#' \code{readFasta} reads a fasta file
+#' @param    file      FASTA file
+#'
+#' @return   List of sequences
+#' @export
+readFasta <- function(file){
+  f <- readLines(file)
+  if(length(f) == 1){
+    return(NULL)
+  }
+  seqs <- list()
+  id <- NA
+  for(line in f){
+    if(grepl("^>",line)){
+      id <- gsub(">","",line)
+      seqs[[id]] <- ""
+    }else{
+      if(is.na(id)){
+        stop(paste("Error reading",file))
+      }
+      seqs[[id]] <- paste0(seqs[[id]],line)
+    }
+  }
+  seqs
+}
+
 #' Exports the phylogenetic trees from the airrClone object
 #' 
 #' \code{exportTrees}   Exports phylogenetic trees
