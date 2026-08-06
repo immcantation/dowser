@@ -653,8 +653,9 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
         }else if(length(intersect(light,unique_loci)) > 0){
           phylo_seq <- "lsequence"
         }else{
-          stop(paste("Could not assign phylo_seq based on locus column:",
+          warning(paste("Could assign phylo_seq based on locus column, using 'sequence'",
             paste(unique_loci, collapse=",")))
+          phylo_seq <- "sequence"
         }
       }
       if(nchar(seq) != length(loci)){
@@ -1015,43 +1016,6 @@ pmlParamsEqual <- function(pa, pb, tol=1e-3, edge_tol=1e-8){
   return(TRUE)
 }
 
-#'\code{dataColumnEqual}
-#' Compare one \code{@data} column between two BEAST-annotated trees,
-#' tolerant of a floating-point string-formatting artifact: BEAST numeric
-#' annotations are stored as \emph{character} strings (not \code{numeric}),
-#' and \code{treeio::read.beast()} is not idempotent on them -- re-parsing a
-#' tree's own \code{@treetext} a second time can shift the last
-#' significant digit of a numeric annotation's string representation (e.g.
-#' \code{"0.51802396741998"} vs \code{"0.518023967419979"} for the exact
-#' same underlying value), confirmed by re-parsing a real object's own
-#' \code{@treetext} independently of any write/read round trip. Columns
-#' that parse fully as numeric are compared with tolerance; anything else
-#' (e.g. categorical trait columns like \code{location}) is compared
-#' exactly, as before.
-#' @param    va, vb     the two columns to compare
-#' @param    tolerance  numeric tolerance for columns that parse as numeric
-#' @noRd
-dataColumnEqual <- function(va, vb, tolerance){
-  if(is.character(va) && is.character(vb)){
-    na_num <- suppressWarnings(as.numeric(va))
-    nb_num <- suppressWarnings(as.numeric(vb))
-    if(!anyNA(na_num) && !anyNA(nb_num)){
-      return(isTRUE(all.equal(na_num, nb_num, tolerance=tolerance, check.attributes=FALSE)))
-    }else{
-      # KBH
-      # if same indexes are NA, compare values that aren't
-      if(sum(is.na(na_num) != is.na(nb_num)) == 0){
-        na_index <- !is.na(na_num)
-        return(isTRUE(all.equal(na_num[na_index], nb_num[na_index], 
-          tolerance=tolerance, check.attributes=FALSE)))
-      }else{
-        return(FALSE)
-      }
-    }
-  }
-  isTRUE(all.equal(va, vb))
-}
-
 #' Get a map of nodes from one 
 #' @param    treea  First phylo object
 #' @param    treeb  Second phylo object
@@ -1095,6 +1059,44 @@ mapSubtrees = function(treea, treeb){
     nodesb[sta] <- match
   }
   nodesb
+}
+
+
+#'\code{dataColumnEqual}
+#' Compare one \code{@data} column between two BEAST-annotated trees,
+#' tolerant of a floating-point string-formatting artifact: BEAST numeric
+#' annotations are stored as \emph{character} strings (not \code{numeric}),
+#' and \code{treeio::read.beast()} is not idempotent on them -- re-parsing a
+#' tree's own \code{@treetext} a second time can shift the last
+#' significant digit of a numeric annotation's string representation (e.g.
+#' \code{"0.51802396741998"} vs \code{"0.518023967419979"} for the exact
+#' same underlying value), confirmed by re-parsing a real object's own
+#' \code{@treetext} independently of any write/read round trip. Columns
+#' that parse fully as numeric are compared with tolerance; anything else
+#' (e.g. categorical trait columns like \code{location}) is compared
+#' exactly, as before.
+#' @param    va, vb     the two columns to compare
+#' @param    tolerance  numeric tolerance for columns that parse as numeric
+#' @noRd
+dataColumnEqual <- function(va, vb){
+  if(is.character(va) && is.character(vb)){
+    na_num <- suppressWarnings(as.numeric(va))
+    nb_num <- suppressWarnings(as.numeric(vb))
+    if(!anyNA(na_num) && !anyNA(nb_num)){
+      return(isTRUE(all.equal(na_num, nb_num, check.attributes=FALSE)))
+    }else{
+      # KBH
+      # if same indexes are NA, compare values that aren't
+      if(sum(is.na(na_num) != is.na(nb_num)) == 0){
+        na_index <- !is.na(na_num)
+        return(isTRUE(all.equal(na_num[na_index], nb_num[na_index], 
+          tolerance=tolerance, check.attributes=FALSE)))
+      }else{
+        return(FALSE)
+      }
+    }
+  }
+  isTRUE(all.equal(va, vb))
 }
 
 #' Check whether two tree objects are equivalent
@@ -1187,7 +1189,7 @@ treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
        if(col == "node"){
         next
        }
-       if(!dataColumnEqual(da[[col]], db[[col]], edge_tol)){
+       if(!dataColumnEqual(da[[col]], db[[col]])){
          warning(paste("@data column", col, "not the same"))
          treecheck <- FALSE
        }
@@ -1356,7 +1358,8 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
           namechecks <- c(namechecks, "sequence_id", da@phylo_seq)
         }
         for(name in namechecks){
-          if(sum(dataa[[name]] != datab[[name]]) != 0){
+          #if(sum(dataa[[name]] != datab[[name]]) != 0){
+          if(!isTRUE(all.equal(dataa[[name]], datab[[name]]))){
             stop(paste(a$clone_id[r], "data", name, "not the same"))
           }
         }
