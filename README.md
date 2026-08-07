@@ -32,6 +32,22 @@ Documentation and tutorials
 
 Full documentation, including tutorials and vignettes: [https://dowser.readthedocs.io](https://dowser.readthedocs.io)
 
+For AI assistants/LLMs and other automated agents: [llms.txt](llms.txt) is a
+short curated index of Dowser's documentation, and [llms-full.txt](llms-full.txt)
+concatenates the entire documentation corpus (every vignette and function
+reference page) into one file.
+
+Citation
+-------------------------------------------------------------------------------
+
+If you use Dowser in published research, please cite:
+
+> Hoehn K, Pybus O, Kleinstein S (2022). Phylogenetic analysis of migration, differentiation, and class switching in B cells. PLoS Computational Biology. https://doi.org/10.1371/journal.pcbi.1009885
+
+Please also run `citation("dowser")` in R for the complete, feature-specific list —
+additional citations apply if you used the `correlationTest` measurable
+evolution test, built paired heavy/light chain trees, or used IgPhyML for
+tree building.
 
 Contact
 -------------------------------------------------------------------------------

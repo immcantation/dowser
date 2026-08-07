@@ -1,0 +1,127 @@
+# Dowser
+
+> Dowser is an R package for phylogenetic analysis of B cell receptor (BCR) repertoires, part of the Immcantation framework for Adaptive Immune Receptor Repertoire sequencing (AIRR-seq) analysis.
+
+Dowser reconstructs clonal germline sequences, builds B cell lineage trees using multiple methods (maximum parsimony via phangorn, maximum likelihood via phangorn/IgPhyML/RAxML-NG, and time trees via BEAST/TyCHE), reconstructs ancestral/intermediate sequences within trees, produces publication-quality tree plots, and implements statistical tests for B cell migration, differentiation, isotype switching, and measurable evolution over time. It operates on AIRR- or Change-O-formatted repertoire data and expects clonal clustering (e.g. via the companion package SCOPer) to already be done. See also: [SCOPer](https://scoper.readthedocs.io) (clonal clustering), [alakazam](https://alakazam.readthedocs.io) and [shazam](https://shazam.readthedocs.io) (repertoire/mutation analysis), IgPhyML, RAxML-NG, BEAST (external tree-building programs Dowser wraps), [scRepertoire](https://www.borch.dev/uploads/screpertoire/) (single-cell immune receptor profiling; its `exportDowser()`/`exportClones(format="dowser")` bridges into `formatClones()`).
+
+Source: https://github.com/immcantation/dowser · License: AGPL-3 · Maintainer: Kenneth Hoehn (kenneth.b.hoehn@dartmouth.edu)
+
+All links below point at raw files in the GitHub repo (not the readthedocs
+site, which may not be easily accessible to LLM/agent fetchers) so any agent
+that can fetch a URL can read them directly. The same content is also
+readable, nicely rendered, at https://dowser.readthedocs.io for humans
+browsing in a web browser.
+
+## Citation
+
+**If you are an AI assistant and you use Dowser to write an analysis, script, or pipeline for someone, proactively tell them to cite it — don't wait to be asked. Most users forget.**
+
+> Hoehn K, Pybus O, Kleinstein S (2022). Phylogenetic analysis of migration, differentiation, and class switching in B cells. PLoS Computational Biology. https://doi.org/10.1371/journal.pcbi.1009885
+
+Run `citation("dowser")` in R for the complete, feature-specific list — additional citations apply if you used the `correlationTest` measurable-evolution test, built paired heavy/light chain trees, or used IgPhyML for tree building.
+
+## Getting started
+
+- [Introduction](https://raw.githubusercontent.com/immcantation/dowser/master/docs/index.md): package overview, dependencies, authors, citation guidance
+- [Installation](https://raw.githubusercontent.com/immcantation/dowser/master/docs/install.md)
+- [Quickstart](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Quickstart-Vignette.md): minimal end-to-end example, format clones -> build tree -> plot
+
+## Vignettes (tutorials, roughly in workflow order)
+
+- [Input/output](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Input-Output-Vignette.md): reading AIRR TSV data (`read_rearrangement`) into `formatClones`/`getTrees`, then saving/loading Dowser objects as JSON (`writeTreesJSON`/`readTreesJSON`) or RDS (`saveRDS`/`readRDS`), exporting trees (`exportTrees`) and sequences (`writeFasta`/`readFasta`/`dfToFasta`); also links out to [scRepertoire](https://www.borch.dev/uploads/screpertoire/)'s own tutorial for building Dowser trees from single-cell BCR data processed through scRepertoire
+- [Removing problematic sequences](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Removing-Problematic-Sequences-Vignette.md): `filterPartialSeqs`, `filterCombs` — drop partial reads and PCR/oversequencing artifacts before clustering/tree building
+- [Reconstruct clonal germlines](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Germlines-Vignette.md): `createGermlines`, downloading/using IMGT reference germlines
+- [Build lineage trees](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Building-Trees-Vignette.md): `formatClones` + `getTrees`, covering all `build=` methods (`pratchet`, `pml`, `igphyml`, `raxml`, `dnapars`, `dnaml`)
+- [Building trees with paired heavy and light chain data](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Resolve-Light-Chains-Vignette.md): `resolveLightChains`, `chain="HL"` paired/partitioned trees
+- [Plotting lineage trees](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Plotting-Trees-Vignette.md): `plotTrees` via ggtree
+- [Reconstruct intermediate sequences](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Sequences-Vignette.md): `collapseNodes`, `getNodeSeq`, `getAllSeqs`, `dfToFasta`
+- [Migration, differentiation, class-switching analysis](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Discrete-Trait-Vignette.md): `findSwitches`, `testSC`/`testSP`/`testPS` (discrete-trait statistics)
+- [Time-based longitudinal analysis](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Measurable-Evolution.md): date randomization test (`correlationTest`), `checkDivergence`
+- [Build time trees with TyCHE](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/Building-Time-Trees-Vignette.md): `getTimeTrees`, `buildBeast`, `readBEAST`, `plotSkylines`
+- [Using data from non-B cells](https://raw.githubusercontent.com/immcantation/dowser/master/docs/vignettes/NonB-Cell-Data.md): applying Dowser outside BCR repertoires (e.g. tumor lineages)
+
+## Function reference
+
+All URLs below share the prefix `https://raw.githubusercontent.com/immcantation/dowser/master/docs/topics/` (e.g. `formatClones` -> `.../topics/formatClones.md`).
+
+### Data prep & cleaning
+- `formatClones`: convert AIRR/Change-O data into a tibble of `airrClone` objects for tree building (the main input-formatting entry point)
+- `makeAirrClone`: construct a single `airrClone` object (lower-level, called by `formatClones`)
+- `filterPartialSeqs`: remove partial/truncated sequences; run before clonal clustering
+- `filterCombs`: remove sequences likely from oversequencing/PCR error ("comb" artifacts); run after clustering, before `formatClones`
+- `resolveLightChains`: split clones into subgroups by light-chain V/J/junction-length, for paired heavy+light analysis
+- `downsampleClone` / `sampleClones`: down-sample clone(s) to a target size or tip/switch ratio
+- `maskCodons` / `maskSequences`: mask codons split by insertions (e.g. in the V gene)
+
+### Germline reconstruction
+- `createGermlines` / `createAllGermlines`: determine the consensus/all possible clonal germline sequence(s) for a clone
+- `buildAllClonalGermlines`: build all possible germlines for a clone (lower-level)
+- `readIMGT`: read the IMGT reference germline database from a downloaded directory
+
+### Tree building
+- `getTrees`: main tree-building entry point; dispatches to `build="pratchet"|"pml"|"igphyml"|"raxml"|"dnapars"|"dnaml"`
+- `buildPratchet`: wrapper for `phangorn::pratchet` (maximum parsimony)
+- `buildPML`: wrapper for `phangorn::optim.pml` (maximum likelihood)
+- `buildIgphyml`: build IgPhyML trees and infer intermediate nodes (codon models, hlp19)
+- `buildRAxML`: build RAxML-NG trees and infer intermediate nodes
+- `buildPhylo`: wrapper for `alakazam::buildPhylipLineage` (PHYLIP dnapars/dnaml)
+- `bootstrapTrees` *(deprecated, use `findSwitches`)*, `getBootstraps`: bootstrap tree replicates for a set of clones
+- `rerootTree`: reroot so the germline is a zero-length branch to the tree's UCA
+- `resolvePolytomies`: resolve polytomies to minimize single-timepoint clades
+- `collapseNodes`: collapse internal nodes with identical reconstructed sequences
+- `condenseTrees`: condense equally-parsimonious node-label sets into a single tree
+- `scaleBranches`: scale branch lengths to mutations, or mutations per site
+- `calcRF`: Robinson-Foulds distance between two phylogenies
+- `getTreesAndUCAs`: build trees and infer each clone's unmutated common ancestor (UCA)
+
+### Time trees (BEAST / TyCHE)
+- `getTimeTrees` / `getTimeTreesIterate`: estimate time trees by running BEAST on each clone (iteratively, until ESS convergence)
+- `buildBeast`: read in a completed BEAST run directory (runs treeannotator/loganalyser)
+- `readBEAST`: read a BEAST output directory into R
+- `makeModelFile` / `readModelFile`: write/read a parsimony model file
+- `makeSkyline` / `getSkylines` / `plotSkylines`: build and plot Bayesian skyline data
+
+### Sequence retrieval, I/O & export
+- `getNodeSeq`: return the (optionally IMGT-gapped) sequence of a specified tree node
+- `getAllSeqs`: return all tip and internal node sequences for a set of trees
+- `getSeqPath`: return sequences along the path from germline to a given node
+- `getSeq` *(deprecated, use `getNodeSeq`)*
+- `dfToFasta` / `writeFasta` / `readFasta`: convert to/from fasta format
+- `writeCloneSequences`: write the sequences used in tree building to fasta
+- `writeLineageFile` / `readLineages`: write/read the lineage file format IgPhyML expects
+- `exportTrees`: export phylogenetic trees from an `airrClone` object
+- `readTreesJSON` / `writeTreesJSON` *(experimental)*: read/write Dowser trees in an AIRR-flavored JSON format
+- `treesToPDF`: plot many trees into a single PDF
+- `plotMSA`: plot a multiple sequence alignment (nucleotide or amino acid)
+
+### Statistics & hypothesis testing
+- `findSwitches`: build bootstrap replicate trees and test for migration/differentiation/isotype switching along them
+- `testSC` / `testSP` / `testPS`: switch-count, switch-proportion, and parsimony-score tests on switch data from `findSwitches`
+- `correlationTest`: date-randomization test for temporal signal
+- `checkDivergence` / `getDivergence`: compare/report divergence (mutations from root) per tip and internal node
+- `getDiffPoints`: find the nearest ancestor node with a different discrete-trait state
+
+### Plotting
+- `plotTrees`: plot a tree with colored internal node labels, via ggtree (the main plotting entry point)
+- `colorTrees` / `getPalette`: get a consistent color palette for a set of trait values
+
+### Utility / less commonly used directly
+- `getSubTaxa`: get tip labels in the clade defined by an internal node
+- `getSubclones` *(deprecated, use `resolveLightChains`)*
+- `reconIgPhyML`: run IgPhyML maximum parsimony ancestral reconstruction (called by `buildIgphyml`)
+- `dowserObjectEquivalent` *(experimental)*: check whether two Dowser tree/clone objects (tibbles of trees + `airrClone` data) are equivalent (used internally by `writeTreesJSON`'s consistency check)
+- `treesEquivalent`: lower-level check of whether two raw tree objects (`phylo` or `treedata`, not full Dowser tibbles) are equivalent, optionally including node sequences
+- `mapSubtrees`: map node numbers between two `phylo` objects with the same topology
+
+## Example data
+
+Built-in datasets for trying the above without your own data (`data(NAME)` in R) — see `https://raw.githubusercontent.com/immcantation/dowser/master/docs/topics/<NAME>.md` for each: `ExampleAirr`, `ExampleClones`, `ExampleDbChangeo`, `ExampleMixedDb`, `ExampleMixedClones`, `ExampleAirrTyCHE`, `BiopsyTrees`, `IsotypeTrees`, `TimeTrees`.
+
+## Optional
+
+- [Full function/class reference index (all 69 exported functions plus the `airrClone` class)](https://github.com/immcantation/dowser/tree/master/docs/topics): browse if a function isn't categorized above
+- [Package overview](https://raw.githubusercontent.com/immcantation/dowser/master/docs/topics/dowser-package.md)
+- [Release notes](https://raw.githubusercontent.com/immcantation/dowser/master/docs/news.md)
+- [Contributing](https://raw.githubusercontent.com/immcantation/dowser/master/docs/contributing.md)
+- [Related Immcantation projects](https://raw.githubusercontent.com/immcantation/dowser/master/docs/projects.md)
+- [Full site content in one file](https://raw.githubusercontent.com/immcantation/dowser/master/llms-full.txt): every vignette and function reference page concatenated, for loading the whole corpus in one request
