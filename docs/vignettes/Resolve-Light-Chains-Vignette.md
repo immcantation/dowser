@@ -2,7 +2,9 @@
 
 With the advances in sequencing, single cell datasets can now pair heavy and light chain sequences from the same B cell. However, B cells clones defined by heavy chains can have cells with distinct light chain rearrangements that don't descend from the same light chain VJ rearrangement. This can cause issues with multiple sequence alignments that include light chains. Dowser can identify these different light chain VJ rearrangements within a clone, assigning each distinct light chain VJ rearrangement subgroup a numerical value called a clone_subgroup. More specifically, subgroups are defined by light chain V gene, J gene, and junction length. This step must be done before formatting clones and building trees. 
 
-[Full published details on these methods is available here](https://doi.org/10.4049/jimmunol.2300851)
+**If you use this method in published research, please cite the paper below.**
+
+> [Jensen C, Sumner J, Kleinstein S, Hoehn K (2024). Inferring B Cell Phylogenies from Paired H and L Chain BCR Sequences with Dowser. The Journal of Immunology, Volume 212, Issue 10, May 2024, Pages 1579–1588, https://doi.org/10.4049/jimmunol.2300851](https://doi.org/10.4049/jimmunol.2300851)
 
 ## Resolve light chains 
 
@@ -70,16 +72,7 @@ plotTrees(clones)[[1]]+geom_tiplab()+xlim(0,0.35)
 ```
 
 
-
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
-```
-
-```
-## Error in `nrow()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
-```
+![plot of chunk Resolve-Light-Chains-Vignette-6](figure/Resolve-Light-Chains-Vignette-6-1.png)
 
 Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to `partition = "hl"` in IgPhyML. 
 
@@ -95,13 +88,4 @@ clones = getTrees(clones, build="raxml",
 plotTrees(clones)[[1]]+geom_tiplab()+xlim(0, 0.12)
 ```
 
-
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
-```
-
-```
-## Error in `nrow()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
-```
+![plot of chunk Resolve-Light-Chains-Vignette-9](figure/Resolve-Light-Chains-Vignette-9-1.png)

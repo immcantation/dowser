@@ -18,24 +18,10 @@ data(ExampleClones)
 
 # Collapse nodes with identical sequences. This will 
 trees = collapseNodes(ExampleClones[1:2,])
-```
 
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 # Plot trees with node ID numbers
 plots = plotTrees(trees, tips="c_call", tipsize=2, node_nums=TRUE, labelsize=7)
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 plots[[1]]
 ```
 
@@ -43,41 +29,32 @@ plots[[1]]
 
 ``` r
 sequence = getNodeSeq(trees, node=50, clone=3128)
-```
 
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 print(sequence)
 ```
 
 ```
-## function (nvec, ...) 
-## UseMethod("sequence")
-## <bytecode: 0x15d98acc0>
-## <environment: namespace:base>
+##                                                                                                                                                                                                                                                                                                                                                                                                                    N 
+## "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTVCAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTC............AGTGAYTATGCCATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGKCTGGAGTGGGTGGGTTTCATTAGAAGCAGACGTTTTGGTGGGACGCCGGACTACGCCGCGTCAGTGAGA...GACAGATTCACCATTTCAAGAGACGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTTTTGTAGTAGAGATCTCGCGGTTATATCCACAATAGCTGGTACTAACTGGTTCGACCCCAGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAGNN"
 ```
 
 ``` r
 # Get all sequences as a data frame
 all_sequences = getAllSeqs(trees)
-```
 
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 head(all_sequences)
 ```
 
 ```
-## Error:
-## ! object 'all_sequences' not found
+## # A tibble: 6 × 6
+##   clone_id node_id         node locus sequence                sequence_alignment
+##      <dbl> <chr>          <int> <chr> <chr>                   <chr>             
+## 1     3128 GN5SHBT02CBV0C     1 N     GAGGTGCAGCTGGTGGAGTCCG… GAGGTGCAGCTGGTGGA…
+## 2     3128 GN5SHBT01B64R3     2 N     GAGGTGCAGCTGGTGGAGTCCG… GAGGTGCAGCTGGTGGA…
+## 3     3128 GN5SHBT02EXTV5     3 N     GAGGTGCAGCTGGTGGAGTCCG… GAGGTGCAGCTGGTGGA…
+## 4     3128 GN5SHBT08H9MGK     4 N     GAGGTGCAGCTGGTGGAGTCGG… GAGGTGCAGCTGGTGGA…
+## 5     3128 GN5SHBT06FXJ8P     5 N     GAGGTGCAGCTGGTGGAGTCTG… GAGGTGCAGCTGGTGGA…
+## 6     3128 GN5SHBT03CT6HZ     6 N     GAGGTGCAGCTGGTGGAGTCCG… GAGGTGCAGCTGGTGGA…
 ```
 
 ## Saving sequences to a file

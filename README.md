@@ -30,7 +30,7 @@ Dowser has 6 primary functions:
 Documentation and tutorials
 -------------------------------------------------------------------------------
 
-Full documentation, including tutorials and vignettes: [https://dowser.readthedocs.io](https://dowser.readthedocs.io)
+Full documentation, including tutorials and vignettes: [Dowser ReadTheDocs site](https://dowser.readthedocs.io)
 
 For AI assistants/LLMs and other automated agents: [llms.txt](llms.txt) is a
 short curated index of Dowser's documentation, and [llms-full.txt](llms-full.txt)

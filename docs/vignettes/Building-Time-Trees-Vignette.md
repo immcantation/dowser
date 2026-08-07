@@ -37,6 +37,10 @@ vignette: >
       <br><br>
 </div>
 
+**If you use this method in published research, please cite the paper below.**
+> [Fielding J, Wu S, Melton H, Wang C, Fisk N, du Plessis L, Hoehn K (2026). TyCHE enables time-resolved lineage tracing of heterogeneously-evolving populations. bioRxiv https://www.biorxiv.org/content/10.1101/2025.10.21.683591v2](https://www.biorxiv.org/content/10.1101/2025.10.21.683591v2)
+
+
 There are many options for building time trees using BEAST2. Here we demonstrate
 how to use TyCHE to fit a type-linked clock for heterogeneous evolution to
 B-cell data. 
@@ -202,8 +206,9 @@ print(table(ExampleAirrTyCHE[[trait]]))
 
 
 ```
-## Error in `table()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+## 
+## germinal_center           other 
+##             100             100
 ```
 ---
 

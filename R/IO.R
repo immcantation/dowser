@@ -1219,7 +1219,7 @@ dataColumnEqual <- function(va, vb){
       if(sum(is.na(na_num) != is.na(nb_num)) == 0){
         na_index <- !is.na(na_num)
         return(isTRUE(all.equal(na_num[na_index], nb_num[na_index], 
-          tolerance=tolerance, check.attributes=FALSE)))
+          check.attributes=FALSE)))
       }else{
         return(FALSE)
       }

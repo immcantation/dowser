@@ -19,8 +19,7 @@ clones <- formatClones(ExampleAirr, germ="germline_alignment")
 ```
 
 ```
-## Error in `stopCodonCheck()`:
-## ! No sequences provided
+## [1] "v_call, j_call, and junc_len not found in data. Using non B cell mode\n. Setting use_regions to FALSE."
 ```
 
 ``` r

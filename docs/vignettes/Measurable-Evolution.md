@@ -6,7 +6,8 @@ Dowser implements recently developed phylogenetic tests to detect measurable B c
 
 The goal of this test is to determine if a B cell lineage has a detectable relationship between mutation and time. If a lineage is accumulating new mutations over a sample interval, we expect a positive correlation between the divergence (sum of branch length to the most recent common ancestor, MRCA) and time elapsed. 
 
-[Full published details on these methods is available here](https://elifesciences.org/articles/70873)
+**If you use this method in published research, please cite the paper below.**
+> [Hoehn K, Turner J, Miller F, Jiang R, Pybus O, Ellebedy A, Kleinstein S (2021). Human B cell lineages associated with germinal centers following influenza vaccination are measurably evolving. eLife. https://doi.org/10.7554/eLife.70873](https://doi.org/10.7554/eLife.70873)
 
 ## Set up data structures and trees
 
@@ -96,13 +97,4 @@ plotTrees(test)[[1]] +
     scale_fill_distiller(palette="RdYlBu")
 ```
 
-
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
-```
-
-```
-## Error in `nrow()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
-```
+![plot of chunk Measurable-Evolution-4](figure/Measurable-Evolution-4-1.png)

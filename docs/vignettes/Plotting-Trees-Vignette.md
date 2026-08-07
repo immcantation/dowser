@@ -51,14 +51,7 @@ Metadata associated with each tip in the tree can be plotted by specifying the `
 ``` r
 # Plot tree with sequence isotype at the tips.
 plots = plotTrees(ExampleClones, tips="c_call")
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 #Plot the largest tree
 plots[[1]]
 ```
@@ -71,14 +64,7 @@ Tip sizes can be manually set to a constant value e.g. `tipsize=2` or set to a d
 ``` r
 # Plot tree with sequence isotype at the tips, with sizes set to number of duplicates
 plots = plotTrees(ExampleClones, tips="c_call", tipsize="duplicate_count")
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 #Plot the largest tree
 plots[[1]]
 ```
@@ -94,14 +80,7 @@ The `palette` is constant among all trees plotted at once, and can be specified 
 # Plot tree with sequence isotype at the tips, with palette "Set1"
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     palette="Paired")
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 # or, specify a named palette vector
 custom_palette=c(
     "IGHM"    ="#a6cee3",
@@ -117,35 +96,14 @@ custom_palette=c(
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
       palette=custom_palette)
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 # or, use the getPalette function to create a named palette vector
 custom_palette = getPalette(c("IGHM","IGHD","IGHG3","IGHG1","IGHA1",
     "IGHG2","IGHG4","IGHE","IGHA2"), "Paired")
-```
 
-```
-## Error:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2,
     palette=custom_palette)
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 #Plot the largest tree
 plots[[1]]
 ```
@@ -161,14 +119,7 @@ The objects returned by `plotTrees` are`ggtree` and `ggplot` objects, and can be
 library(ggtree)
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 #Plot the largest tree
 treeplot = plots[[1]] + geom_tiplab() + 
     geom_vline(xintercept=c(0.05,0.1,0.15,0.2,0.25),
@@ -186,14 +137,7 @@ To change what is displayed on the tips with the `geom_tiplab` function, change 
 library(ggtree)
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 #Plot the largest tree
 treeplot = plots[[1]] + geom_tiplab(aes(label=c_call), offset = 0.02) + 
     geom_vline(xintercept=c(0.05,0.1,0.15,0.2,0.25),
@@ -213,14 +157,7 @@ To make changes to all trees at once, use lapply
 library(ggtree)
 
 plots = plotTrees(ExampleClones, tips="c_call", tipsize=2)
-```
 
-```
-## Error in `plotTrees()`:
-## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
-```
-
-``` r
 #Manually adjust all trees
 treeplots = lapply(plots, function(x)
   x + geom_tiplab(aes(label=c_call), offset = 0.02) + 
