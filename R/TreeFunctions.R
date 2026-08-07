@@ -2392,6 +2392,10 @@ scaleBranches <- function(clones, edge_type="mutations"){
   if(!"trees" %in% names(clones)){
     stop("clones must have trees column!")
   }
+  timetree <- FALSE
+  if(inherits(clones$trees[[1]], "treedata")){
+    timetree <- TRUE
+  }
   lengths <- unlist(lapply(1:length(clones$trees),
                            function(x){
                              if(clones$data[[x]]@phylo_seq == "hlsequence"){
@@ -2401,32 +2405,65 @@ scaleBranches <- function(clones, edge_type="mutations"){
                              }else{
                                return(nchar(clones$data[[x]]@germline))
                              }}))
-  
-  trees <- lapply(1:length(clones$trees),function(x){
-    if(clones$trees[[x]]$edge_type == "mutations" && 
-       edge_type == "genetic_distance"){
-      clones$trees[[x]]$edge.length <- 
-        clones$trees[[x]]$edge.length/lengths[x]
-      clones$trees[[x]]$edge_type <- "genetic_distance"
-      clones$trees[[x]]
-    }else if(clones$trees[[x]]$edge_type == "genetic_distance" &&
-             edge_type == "mutations"){
-      clones$trees[[x]]$edge.length <- 
-        clones$trees[[x]]$edge.length*lengths[x]
-      clones$trees[[x]]$edge_type <- "mutations"
-      clones$trees[[x]]
-    }else if(clones$trees[[x]]$edge_type == "genetic_distance_codon" &&
-             edge_type == "mutations"){
-      clones$trees[[x]]$edge.length <-
-        clones$trees[[x]]$edge.length*lengths[x]/3
-      clones$trees[[x]]$edge_type <- "mutations"
-      clones$trees[[x]]
+  if(!timetree){
+    trees <- lapply(1:length(clones$trees),function(x){
+      if(clones$trees[[x]]$edge_type == "mutations" && 
+         edge_type == "genetic_distance"){
+        clones$trees[[x]]$edge.length <- 
+          clones$trees[[x]]$edge.length/lengths[x]
+        clones$trees[[x]]$edge_type <- "genetic_distance"
+        clones$trees[[x]]
+      }else if(clones$trees[[x]]$edge_type == "genetic_distance" &&
+               edge_type == "mutations"){
+        clones$trees[[x]]$edge.length <- 
+          clones$trees[[x]]$edge.length*lengths[x]
+        clones$trees[[x]]$edge_type <- "mutations"
+        clones$trees[[x]]
+      }else if(clones$trees[[x]]$edge_type == "genetic_distance_codon" &&
+               edge_type == "mutations"){
+        clones$trees[[x]]$edge.length <-
+          clones$trees[[x]]$edge.length*lengths[x]/3
+        clones$trees[[x]]$edge_type <- "mutations"
+        clones$trees[[x]]
+      }else{
+        warning("edge conversion type not yet supported")
+        clones$trees[[x]]
+      }})
+    clones$trees <- trees
     }else{
-      warning("edge conversion type not yet supported")
-      clones$trees[[x]]
-    }})
-  
-  clones$trees <- trees
+      warning(paste0("Attempting to scale time tree branches to ",edge_type,".\n",
+        "Experimental and currently only for 2 state TyCHE models. Also not scaling any posterior trees."))
+      for(row in 1:nrow(clones)){
+        phylo <- clones$trees[[row]]@phylo
+        data <- clones$trees[[row]]@data
+        params <- clones$parameters[[row]]
+        clock1 <- dplyr::filter(params, !!rlang::sym("item") == "typeLinkedRates.1")$mean
+        clock2 <- dplyr::filter(params, !!rlang::sym("item") == "typeLinkedRates.2")$mean
+
+        if(is.null(clock2) || is.na(clock2) || is.null(clock1) || is.na(clock1)){
+          stop("typeLinkedRates.1 and/or typeLinkedRates.2 not found")
+        }
+        if(edge_type == "mutations"){
+          phylo$edge_type <- "mutations"
+        }else{
+          phylo$edge_type <- "genetic_distance"
+        }
+
+        for(i in 1:length(phylo$edge.length)){
+          time <- phylo$edge.length[i]
+          nodes <- phylo$edge[i,]
+          eo <- as.numeric(dplyr::filter(data, 
+            !!rlang::sym("node") == nodes[2])$expectedOccupancies)
+          gd <- eo*clock1*time + (1-eo)*clock2*time
+          if(edge_type == "mutations"){
+            phylo$edge.length[i] <- gd * lengths[row]
+          }else{
+            phylo$edge.length[i] <- gd
+          }
+        }
+        clones$trees[[row]]@phylo <- phylo
+      }
+    }
   clones
 }
 
