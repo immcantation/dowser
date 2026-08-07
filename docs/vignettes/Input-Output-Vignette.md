@@ -41,7 +41,15 @@ ExampleAirr <- ExampleAirr[ExampleAirr$clone_id %in% c("3170", "3184"),]
 From here, `formatClones` groups sequences into clones and reconstructs
 germlines, and `getTrees` builds a lineage tree for each clone (see the
 [Build Lineage Trees vignette](Building-Trees-Vignette.html) for details on
-both steps).
+both steps). 
+
+Before this step, it's important that the BCR sequences are already grouped into
+clones beforehand (they will have a `clone_id` column). This can be accomplished 
+using [SCOPer](https://scoper.readthedocs.io). Further, it is imporant that each 
+clonal germline V/J has has been reconstructed, which can be accomplished using 
+(createGermlines)[https://dowser.readthedocs.io/en/stable/vignettes/Germlines-Vignette/].
+This will generate a `germline_alignment_d_mask` column. To see all of these steps 
+together, check out one of the full [Immcantation tutorials](https://immcantation.readthedocs.io/en/stable/getting_started/getting-started.html).
 
 
 ``` r
@@ -176,10 +184,10 @@ print(names(seqs_read))
 ```
 
 ```
-##  [1] "GN5SHBT03CD0X0" "GN5SHBT08H09N9" "GN5SHBT02D1O6O" "GN5SHBT06HRA91"
-##  [5] "GN5SHBT05JBJ6C" "GN5SHBT01CYOTL" "GN5SHBT08JDD2A" "GN5SHBT01C1K1O"
-##  [9] "GN5SHBT03D53SO" "GN5SHBT04BVB8W" "GN5SHBT06IQR02" "GN5SHBT05JRVYI"
-## [13] "GN5SHBT07H3PB9"
+##  [1] "GN5SHBT03CD0X0" "GN5SHBT01CYOTL" "GN5SHBT01C1K1O" "GN5SHBT08JDD2A"
+##  [5] "GN5SHBT04BVB8W" "GN5SHBT05JBJ6C" "GN5SHBT03D53SO" "GN5SHBT06IQR02"
+##  [9] "GN5SHBT07H3PB9" "GN5SHBT06HRA91" "GN5SHBT02D1O6O" "GN5SHBT05JRVYI"
+## [13] "GN5SHBT08H09N9"
 ```
 
 Alternatively, `dfToFasta` writes sequences straight from a data frame or tibble to a

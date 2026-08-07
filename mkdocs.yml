@@ -29,7 +29,7 @@ nav:
     - 'Release Notes': news.md
   - 'Vignettes':
     - 'Quickstart': vignettes/Quickstart-Vignette.md
-    - 'Input/output': vignettes/Input-Output-Vignette.md
+    - 'Input/Output': vignettes/Input-Output-Vignette.md
     - 'Remove Problematic Sequences': vignettes/Removing-Problematic-Sequences-Vignette.md
     - 'Reconstruct Clonal Germlines': vignettes/Germlines-Vignette.md
     - 'Build Lineage Trees': vignettes/Building-Trees-Vignette.md

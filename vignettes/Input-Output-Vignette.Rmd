@@ -68,7 +68,15 @@ ExampleAirr <- ExampleAirr[ExampleAirr$clone_id %in% c("3170", "3184"),]
 From here, `formatClones` groups sequences into clones and reconstructs
 germlines, and `getTrees` builds a lineage tree for each clone (see the
 [Build Lineage Trees vignette](Building-Trees-Vignette.html) for details on
-both steps).
+both steps). 
+
+Before this step, it's important that the BCR sequences are already grouped into
+clones beforehand (they will have a `clone_id` column). This can be accomplished 
+using [SCOPer](https://scoper.readthedocs.io). Further, it is imporant that each 
+clonal germline V/J has has been reconstructed, which can be accomplished using 
+(createGermlines)[https://dowser.readthedocs.io/en/stable/vignettes/Germlines-Vignette/].
+This will generate a `germline_alignment_d_mask` column. To see all of these steps 
+together, check out one of the full [Immcantation tutorials](https://immcantation.readthedocs.io/en/stable/getting_started/getting-started.html).
 
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
 # Process example data into proper format, store isotype (optional)
