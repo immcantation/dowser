@@ -70,7 +70,16 @@ plotTrees(clones)[[1]]+geom_tiplab()+xlim(0,0.35)
 ```
 
 
-![plot of chunk Resolve-Light-Chains-Vignette-6](figure/Resolve-Light-Chains-Vignette-6-1.png)
+
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```
+
+```
+## Error in `nrow()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```
 
 Building maximum likelihood trees with multiple partitions using *RAxML* instead, which is similar to `partition = "hl"` in IgPhyML. 
 
@@ -86,4 +95,13 @@ clones = getTrees(clones, build="raxml",
 plotTrees(clones)[[1]]+geom_tiplab()+xlim(0, 0.12)
 ```
 
-![plot of chunk Resolve-Light-Chains-Vignette-9](figure/Resolve-Light-Chains-Vignette-9-1.png)
+
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```
+
+```
+## Error in `nrow()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```

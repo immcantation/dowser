@@ -17,7 +17,7 @@ Arguments
 
 clones
 :   tibble `airrClone` objects, the output of 
-[formatClones](formatClones.md)
+[getTrees](getTrees.md) or `getTimeTrees`
 
 filepath
 :   The file path for where the trees will be saved

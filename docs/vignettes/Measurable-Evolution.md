@@ -96,4 +96,13 @@ plotTrees(test)[[1]] +
     scale_fill_distiller(palette="RdYlBu")
 ```
 
-![plot of chunk Measurable-Evolution-4](figure/Measurable-Evolution-4-1.png)
+
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```
+
+```
+## Error in `nrow()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```

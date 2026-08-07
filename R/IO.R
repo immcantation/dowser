@@ -562,9 +562,6 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
       node$parent <- phy$edge[phy$edge[,2] == i,1]
       node$children <- phy$edge[phy$edge[,1] == i,2]
 
-      # need to update this by getting getNodeSeq to work on time trees
-      # add name field to treedata@info
-      # return null if no nodes list unless requesting tip sequence
       seqa <- getNodeSeq(object, node=i, tree=phy, gaps=TRUE)
       seq <- getNodeSeq(object, node=i, tree=phy, gaps=FALSE)
       if(!is.na(germline_node)){

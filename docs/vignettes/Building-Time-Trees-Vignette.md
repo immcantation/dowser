@@ -2,7 +2,7 @@
 ---
 title: 'Build Time Trees Using TyCHE and BEAST'
 author: "Jessie Fielding"
-date: '2026-08-06'
+date: '2026-08-07'
 output:
   pdf_document:
     dev: pdf
@@ -202,9 +202,8 @@ print(table(ExampleAirrTyCHE[[trait]]))
 
 
 ```
-## 
-## germinal_center           other 
-##             100             100
+## Error in `table()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
 ```
 ---
 

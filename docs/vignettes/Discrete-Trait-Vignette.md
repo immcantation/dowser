@@ -87,7 +87,11 @@ trees = getTrees(clones, build="pml", trait=trait, igphyml=igphyml_location)
 plotTrees(trees, tips=trait, nodes=TRUE, palette="Set1")[[1]]
 ```
 
-![plot of chunk Discrete-Trait-Vignette-3](figure/Discrete-Trait-Vignette-3-1.png)
+
+```
+## Error in `plotTrees()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
+```
 
 ## Discrete trait analysis with fixed trees
 
@@ -242,7 +246,11 @@ trees = getTrees(clones[isotype_counts > 1,], trait=trait, igphyml=igphyml_locat
 plotTrees(trees, tips=trait, nodes=TRUE, palette="Paired", ambig="grey")[[1]]
 ```
 
-![plot of chunk Discrete-Trait-Vignette-9](figure/Discrete-Trait-Vignette-9-1.png)
+
+```
+## Error in `lapply()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/data/Rdata.rdb': No such file or directory
+```
 
 Performing the SP test is the same as before, just specify the model file created earlier using the `modelfile` option. Note that no switches occur in directions that are forbidden by our model. If you try this without specifying the model file, you'll likely get many biologically impossible switches!
 

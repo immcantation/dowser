@@ -8,7 +8,7 @@ exportTrees(clones, filepath, tree_column = "trees", ...)
 }
 \arguments{
 \item{clones}{tibble \code{airrClone} objects, the output of 
-\link{formatClones}}
+\link{getTrees} or \code{getTimeTrees}}
 
 \item{filepath}{The file path for where the trees will be saved}
 

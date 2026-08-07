@@ -75,6 +75,14 @@ print(trees)
 `treeio::treedata` for time trees) in the `trees` column. The rest of this
 vignette covers ways to save and reload this object.
 
+## Importing data from scRepertoire
+
+While Dowser was designed to work downstream of [Immcantation](https://immcantation.org)
+packages, it is also possible to use Dowser and other Immcantation packages in combination
+with [scRepertoire](https://www.borch.dev/uploads/screpertoire/).
+
+For information on how to do this, check out this excellent tutorial on [integrating Dowser and other Immcantation packages with scRepertoire](https://www.borch.dev/uploads/screpertoire/articles/immcantation)
+
 ## Saving and loading Dowser objects in AIRR Clone JSON format
 
 To save an entire Dowser object, including trees, use `writeTreesJSON` to write 
@@ -91,24 +99,27 @@ writeTreesJSON(trees, "trees.json")
 ```
 
 ```
-## [1] "Note: internal node numbers/labels not currently preserved."
-## [1] "Loading object to check consistency"
-## [1] "Objects equivalent: 2328 tree checks, 0 failures"
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
 ```
 
 ``` r
 # Read it back in
 trees_json <- readTreesJSON("trees.json")
+```
 
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
+```
+
+``` r
 print(trees_json)
 ```
 
 ```
-## # A tibble: 2 × 5
-##   clone_id data       locus  seqs trees  
-##      <int> <list>     <chr> <int> <list> 
-## 1     3170 <airrClon> N        13 <phylo>
-## 2     3184 <airrClon> N        12 <phylo>
+## Error:
+## ! object 'trees_json' not found
 ```
 
 Because it's plain JSON with a documented schema, this format is useful for
@@ -157,7 +168,14 @@ many other output functions, for example `ape::write.tree`.
 ``` r
 # Export trees to a Newick file
 exportTrees(trees, "trees.newick")
+```
 
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
+```
+
+``` r
 # write a single tree
 ape::write.tree(trees$trees[[1]], "clone1.tree")
 ```
@@ -176,7 +194,14 @@ names(seqs) <- clones$data[[1]]@data$sequence_id
 
 # Write them to a FASTA file
 writeFasta(seqs, "clone_3170.fasta")
+```
 
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
+```
+
+``` r
 # Read them back in
 seqs_read <- readFasta("clone_3170.fasta")
 
@@ -184,10 +209,10 @@ print(names(seqs_read))
 ```
 
 ```
-##  [1] "GN5SHBT03CD0X0" "GN5SHBT01CYOTL" "GN5SHBT01C1K1O" "GN5SHBT08JDD2A"
-##  [5] "GN5SHBT04BVB8W" "GN5SHBT05JBJ6C" "GN5SHBT03D53SO" "GN5SHBT06IQR02"
-##  [9] "GN5SHBT07H3PB9" "GN5SHBT06HRA91" "GN5SHBT02D1O6O" "GN5SHBT05JRVYI"
-## [13] "GN5SHBT08H09N9"
+##  [1] "GN5SHBT01C1K1O" "GN5SHBT08JDD2A" "GN5SHBT06HRA91" "GN5SHBT05JRVYI"
+##  [5] "GN5SHBT07H3PB9" "GN5SHBT01CYOTL" "GN5SHBT06IQR02" "GN5SHBT04BVB8W"
+##  [9] "GN5SHBT05JBJ6C" "GN5SHBT03D53SO" "GN5SHBT08H09N9" "GN5SHBT02D1O6O"
+## [13] "GN5SHBT03CD0X0"
 ```
 
 Alternatively, `dfToFasta` writes sequences straight from a data frame or tibble to a
@@ -203,13 +228,20 @@ df <- clones$data[[1]]@data
 
 # Write to FASTA, tagging each header with its isotype
 dfToFasta(df, "clone_3170_df.fasta", columns="c_call")
+```
 
+```
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
+```
+
+``` r
 cat(readLines("clone_3170_df.fasta")[1:2], sep="\n")
 ```
 
 ```
-## >GN5SHBT03CD0X0|c_call=IGHG1
-## GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGTCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN
+## >GN5SHBT01C1K1O|c_call=IGHA2
+## GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGAAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN
 ```
 
 Use `id`/`seq` to point at differently-named columns, and `imgt_gaps=TRUE`

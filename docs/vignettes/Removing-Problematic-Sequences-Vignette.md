@@ -29,7 +29,7 @@ print(ExampleAirr$sequence_alignment[row])
 ```
 
 ```
-## [1] "......................................................................................................................................................GGAGTGGGTAGGCTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGACTACGCCGCGTCAGTGGAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAGAGCACCGCCTATCTGCAAATGGATAGCCTGAAGACCGAGGACACAGGCTTTTATTATTGTAGTAGAGATCTCCGGGTTAGTTCCACAGCAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCACCGTCTCCTCAG"
+## character(0)
 ```
 
 
@@ -38,7 +38,8 @@ filtered <- filterPartialSeqs(ExampleAirr)
 ```
 
 ```
-## [1] "1 partial sequences removed"
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
 ```
 
 `GN5SHBT04BIIPE` is removed, since it no longer passes the default `cutoff=250`.
@@ -49,7 +50,8 @@ filtered <- filterPartialSeqs(ExampleAirr)
 ```
 
 ```
-## [1] FALSE
+## Error:
+## ! object 'filtered' not found
 ```
 
 For non-standard alignment columns or a different cutoff, adjust `seq`, `cutoff`, and `pattern`.
@@ -84,14 +86,35 @@ Build a tree for clone 3128 as usual, scaling tip size by `duplicate_count`.
 
 ``` r
 clone <- filter(ExampleAirr, clone_id == 3128)
+```
+
+```
+## Error in `filter()`:
+## ℹ In argument: `clone_id == 3128`.
+## Caused by error:
+## ! object 'clone_id' not found
+```
+
+``` r
 clones <- formatClones(clone, trait="biopsy", num_fields="duplicate_count")
+```
+
+```
+## Error:
+## ! object 'clone' not found
+```
+
+``` r
 trees <- scaleBranches(getTrees(clones))
 
 plotTrees(trees, tipsize="duplicate_count", tips="biopsy", scale=1)[[1]] +
   geom_tiplab(size=3) + xlim(0, 75)
 ```
 
-![plot of chunk Removing-Problematic-Sequences-Vignette-5](figure/Removing-Problematic-Sequences-Vignette-5-1.png)
+```
+## Error in `plotTrees()`:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
+```
 
 Notice the flat radiation of `duplicate_count` ~1 tips branching directly from `GN5SHBT07H5AOD` (`duplicate_count` 1000). These many near-identical, low-count sequences radiating from one much higher-count sequence is the signature of a comb, which is often suspected to be from PCR or sequencing error.
 
@@ -105,7 +128,8 @@ filtered <- filterCombs(ExampleAirr, dup_count_thresh=100, exponent=1)
 ```
 
 ```
-## [1] "Removed 25 sequences from data."
+## Error:
+## ! cannot open file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/R/dowser.rdb': No such file or directory
 ```
 
 Rebuild the tree for clone 3128 from the filtered data.
@@ -113,14 +137,40 @@ Rebuild the tree for clone 3128 from the filtered data.
 
 ``` r
 fclone <- filter(filtered, clone_id == 3128)
-fclones <- formatClones(fclone, trait="biopsy", num_fields="duplicate_count")
-ftrees <- scaleBranches(getTrees(fclones))
+```
 
+```
+## Error:
+## ! object 'filtered' not found
+```
+
+``` r
+fclones <- formatClones(fclone, trait="biopsy", num_fields="duplicate_count")
+```
+
+```
+## Error:
+## ! object 'fclone' not found
+```
+
+``` r
+ftrees <- scaleBranches(getTrees(fclones))
+```
+
+```
+## Error:
+## ! object 'fclones' not found
+```
+
+``` r
 plotTrees(ftrees, tipsize="duplicate_count", tips="biopsy", scale=1)[[1]] +
   geom_tiplab(size=3) + xlim(0, 75)
 ```
 
-![plot of chunk Removing-Problematic-Sequences-Vignette-7](figure/Removing-Problematic-Sequences-Vignette-7-1.png)
+```
+## Error:
+## ! object 'ftrees' not found
+```
 
 Most of the comb tips around `GN5SHBT07H5AOD` and `GN5SHBT08H9MGK` are gone.
 
