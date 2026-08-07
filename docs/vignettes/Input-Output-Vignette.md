@@ -1,15 +1,15 @@
 # Input and Output
 
 This vignette covers how data gets into Dowser and the different ways Dowser
-objects and trees can be saved. Specifically this will cover AIRR TSV input, 
-as well as JSON format
+objects and trees can be saved. These formats primarily follow the [Adaptive Immune Receptor Repertoire (AIRR) Community standard formats](https://docs.airr-community.org).
+Specifically this will cover AIRR TSV input, as well as AIRR Trees and Clones JSON format
 (`writeTreesJSON`/`readTreesJSON`), plain R serialization (`saveRDS`/`readRDS`),
 Newick tree export (`exportTrees`), and FASTA sequence export/import
 (`writeFasta`/`readFasta`).
 
-## Reading AIRR sequencing data
+## Reading AIRR Rearrangement sequencing data files
 
-Dowser expects input data in [AIRR Rearrangement](https://docs.airr-community.org/en/latest/datarep/rearrangements.html)
+The best input format for Dowser is the [AIRR Rearrangement](https://docs.airr-community.org/en/latest/datarep/rearrangements.html)
 TSV format. The `airr` package's `read_rearrangement` function reads such a
 file into a data frame:
 
@@ -62,16 +62,16 @@ print(trees)
 ## 2     3184 <airrClon> N        12 <phylo>
 ```
 
-`trees` is a standard Dowser object: a tibble with one row per clone, an
-`airrClone` object in the `data` column, and a tree (`ape::phylo`, or
+`trees` is a standard Dowser object: a tibble with one row per clone with an
+`airrClone` object in the `data` column and a tree (`ape::phylo`, or
 `treeio::treedata` for time trees) in the `trees` column. The rest of this
 vignette covers ways to save and reload this object.
 
-## Saving and loading Dowser objects as JSON
+## Saving and loading Dowser objects in AIRR Clone JSON format
 
-`writeTreesJSON` writes a Dowser object to an
-[AIRR Clone/Rearrangement](https://docs.airr-community.org/en/latest/datarep/clone.html)
-JSON file, and `readTreesJSON` reads it back. This works for trees built with
+To save an entire Dowser object, including trees, use `writeTreesJSON` to write 
+a Dowser object to an [AIRR Clone](https://docs.airr-community.org/en/latest/datarep/clone.html)
+JSON file. Conversely, `readTreesJSON` reads it back. This works for trees built with
 any `getTrees` `build` option, as well as time trees from `getTimeTrees`/
 `getTimeTreesIterate`. By default, `writeTreesJSON` reloads the file it just
 wrote and checks that it matches the original object before returning.
@@ -109,7 +109,8 @@ R, or loading them into other tools.
 
 **Note** that internal node labels are not preserved when inputting/outputting in this
 schema, but this is only relevant if you're manually selecting particular nodes,
-such as [reconstructing internal node sequences](https://dowser.readthedocs.io/en/stable/vignettes/Sequences-Vignette/)
+such as [reconstructing internal node sequences](https://dowser.readthedocs.io/en/stable/vignettes/Sequences-Vignette/).
+All other aspects of the Dowser object are preserved and checked on output.
 
 ## Saving and loading Dowser objects as RDS
 
@@ -136,23 +137,28 @@ print(trees_rds)
 ## 2     3184 <airrClon> N        12 <phylo>
 ```
 
-## Exporting trees to Newick format
+## Exporting trees in Newick format
 
-`exportTrees` writes the trees in a Dowser object to a single Newick file,
+`exportTrees` writes the trees in a Dowser object in order to a single Newick file,
 one tree per line, using `ape::write.tree`.
+
+Alternatively, the list of tree objects in the `trees` column can be exported using
+many other output functions, for example `ape::write.tree`.
 
 
 ``` r
 # Export trees to a Newick file
 exportTrees(trees, "trees.newick")
+
+# write a single tree
+ape::write.tree(trees$trees[[1]], "clone1.tree")
 ```
 
 ## Exporting and reading sequences as FASTA
 
 `writeFasta` writes a named list of sequences to a FASTA file, and
 `readFasta` reads a FASTA file back into a named list. These are generic
-sequence I/O functions useful, for example, to export a clone's
-sequences for use in another program.
+sequence I/O functions and provided for convenience.
 
 
 ``` r
@@ -170,15 +176,13 @@ print(names(seqs_read))
 ```
 
 ```
-##  [1] "GN5SHBT06IQR02" "GN5SHBT08JDD2A" "GN5SHBT02D1O6O" "GN5SHBT07H3PB9"
-##  [5] "GN5SHBT03D53SO" "GN5SHBT08H09N9" "GN5SHBT01CYOTL" "GN5SHBT05JRVYI"
-##  [9] "GN5SHBT06HRA91" "GN5SHBT05JBJ6C" "GN5SHBT01C1K1O" "GN5SHBT04BVB8W"
-## [13] "GN5SHBT03CD0X0"
+##  [1] "GN5SHBT03CD0X0" "GN5SHBT08H09N9" "GN5SHBT02D1O6O" "GN5SHBT06HRA91"
+##  [5] "GN5SHBT05JBJ6C" "GN5SHBT01CYOTL" "GN5SHBT08JDD2A" "GN5SHBT01C1K1O"
+##  [9] "GN5SHBT03D53SO" "GN5SHBT04BVB8W" "GN5SHBT06IQR02" "GN5SHBT05JRVYI"
+## [13] "GN5SHBT07H3PB9"
 ```
 
-## Writing a data frame of sequences to FASTA
-
-`dfToFasta` writes sequences straight from a data frame or tibble to a
+Alternatively, `dfToFasta` writes sequences straight from a data frame or tibble to a
 FASTA file, without needing to build a named list first. By default it
 reads sequence IDs and sequences from the `sequence_id`/`sequence`
 columns, strips IMGT gap characters (`.`), and can append extra columns
@@ -196,8 +200,8 @@ cat(readLines("clone_3170_df.fasta")[1:2], sep="\n")
 ```
 
 ```
-## >GN5SHBT06IQR02|c_call=IGHG3
-## GAGGAGCAACTGGTGGAGTCTGGGGGAGACTTGGTACAGGCAGGGCGGTCCCTGAGACTCTCCTGTACAGCCTCTGGATTCACCTTTGGGGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGCATGGGGCTCCAATGGGTAGGATTCATTAGAAGCATTCCTTATGGTGGGACAGCAGACTACGCCGCGTCTGTGAAAGGCAGATTCACCATCTCAAGAGATGTATCCAAAAGCATCGTCTATCTGCAAATGAACAACCTGAAAATCGAGGACACAGCCGTATATTTTTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN
+## >GN5SHBT03CD0X0|c_call=IGHG1
+## GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGTCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN
 ```
 
 Use `id`/`seq` to point at differently-named columns, and `imgt_gaps=TRUE`

@@ -145,7 +145,7 @@ readFasta <- function(file){
 #' 
 #' \code{exportTrees}   Exports phylogenetic trees
 #' @param clones         tibble \code{airrClone} objects, the output of 
-#'                      \link{formatClones}
+#'                      \link{getTrees} or \code{getTimeTrees}
 #' @param filepath      The file path for where the trees will be saved
 #' @param tree_column   The name of the column that contains the trees
 #' @param ...           additional arguments to be passed
@@ -154,9 +154,16 @@ readFasta <- function(file){
 exportTrees <- function(clones, filepath, tree_column = "trees", ...){
   # check to see if the trees column is there 
   if(alakazam::checkColumns(clones, tree_column)){
-    ape::write.tree(phy = clones$trees, file = filepath, ...)
+    if(inherits(clones[[tree_column]][[1]], "phylo")){
+      ape::write.tree(phy = clones[[tree_column]], file = filepath, ...)
+    }else if(inherits(clones[[tree_column]][[1]], "treedata")){
+      ape::write.tree(phy = lapply(clones[[tree_column]], function(x)x@phylo),
+       file = filepath, ...)
+    }else{
+      stop(paste(tree_column, "format not recognized."))
+    }
   } else{
-    stop(paste(tree_column, "not found in the input airrClone object. Please",
+    stop(paste(tree_column, "not found in the input Dowser object. Please",
                "specify what column contains the phylogenetic trees."))
   }
   
