@@ -75,13 +75,13 @@ print(trees)
 `treeio::treedata` for time trees) in the `trees` column. The rest of this
 vignette covers ways to save and reload this object.
 
-## Importing data from scRepertoire
+## scRepertoire and Dowser compatability
 
 While Dowser was designed to work downstream of [Immcantation](https://immcantation.org)
-packages, it is also possible to use Dowser and other Immcantation packages in combination
+packages, it is possible to use Dowser and other Immcantation packages in combination
 with [scRepertoire](https://www.borch.dev/uploads/screpertoire/).
 
-For information on how to do this, check out this excellent tutorial on [integrating Dowser and other Immcantation packages with scRepertoire](https://www.borch.dev/uploads/screpertoire/articles/immcantation)
+To learn how to do this, check out the scRepertoire team's excellent tutorial about [Combining Immcantation and scRepertoire](https://www.borch.dev/uploads/screpertoire/articles/immcantation).
 
 ## Saving and loading Dowser objects in AIRR Clone JSON format
 
@@ -209,10 +209,10 @@ print(names(seqs_read))
 ```
 
 ```
-##  [1] "GN5SHBT01C1K1O" "GN5SHBT08JDD2A" "GN5SHBT06HRA91" "GN5SHBT05JRVYI"
-##  [5] "GN5SHBT07H3PB9" "GN5SHBT01CYOTL" "GN5SHBT06IQR02" "GN5SHBT04BVB8W"
-##  [9] "GN5SHBT05JBJ6C" "GN5SHBT03D53SO" "GN5SHBT08H09N9" "GN5SHBT02D1O6O"
-## [13] "GN5SHBT03CD0X0"
+##  [1] "GN5SHBT01C1K1O" "GN5SHBT08JDD2A" "GN5SHBT05JBJ6C" "GN5SHBT01CYOTL"
+##  [5] "GN5SHBT05JRVYI" "GN5SHBT02D1O6O" "GN5SHBT03CD0X0" "GN5SHBT04BVB8W"
+##  [9] "GN5SHBT03D53SO" "GN5SHBT06HRA91" "GN5SHBT07H3PB9" "GN5SHBT06IQR02"
+## [13] "GN5SHBT08H09N9"
 ```
 
 Alternatively, `dfToFasta` writes sequences straight from a data frame or tibble to a

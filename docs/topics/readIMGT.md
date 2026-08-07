@@ -50,16 +50,17 @@ Examples
 # (IGHV3-11*05, IGHD3-10*01 and IGHJ5*02)
 # which are the gene assignments for ExampleDb[1,]
 vdj_dir <- system.file("extdata", "germlines", "imgt", "human", "vdj", package="dowser")
-
-```
-
-*Warning*:cannot open compressed file '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/dowser/DESCRIPTION', probable reason 'No such file or directory'
-```R
 imgt <- readIMGT(vdj_dir)
 
 ```
 
-**Error in readIMGT(vdj_dir)**: No fasta files found in directory
+
+```
+[1] "Read in 3 from 3 fasta files"
+
+```
+
+
 
 
 

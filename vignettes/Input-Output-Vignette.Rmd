@@ -93,13 +93,13 @@ print(trees)
 `treeio::treedata` for time trees) in the `trees` column. The rest of this
 vignette covers ways to save and reload this object.
 
-## Importing data from scRepertoire
+## scRepertoire and Dowser compatability
 
 While Dowser was designed to work downstream of [Immcantation](https://immcantation.org)
-packages, it is also possible to use Dowser and other Immcantation packages in combination
+packages, it is possible to use Dowser and other Immcantation packages in combination
 with [scRepertoire](https://www.borch.dev/uploads/screpertoire/).
 
-For information on how to do this, check out this excellent tutorial on [integrating Dowser and other Immcantation packages with scRepertoire](https://www.borch.dev/uploads/screpertoire/articles/immcantation)
+To learn how to do this, check out the scRepertoire team's excellent tutorial about [Combining Immcantation and scRepertoire](https://www.borch.dev/uploads/screpertoire/articles/immcantation).
 
 ## Saving and loading Dowser objects in AIRR Clone JSON format
 
