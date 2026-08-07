@@ -10,9 +10,7 @@ Usage
 --------------------
 ```
 makeSkyline(
-logfile,
-treesfile,
-burnin,
+object,
 bins = 100,
 youngest = 0,
 clone_id = NULL,
@@ -24,14 +22,8 @@ exclude_germline = TRUE
 Arguments
 -------------------
 
-logfile
-:   Beast log file
-
-treesfile
-:   BEAST trees file
-
-burnin
-:   Burnin percentage (1-100)
+object
+:   treedata object with parameters_posterior and trees_posterior
 
 bins
 :   number of bins for plotting
@@ -46,7 +38,7 @@ max_height
 :   max height to use (min, median, mean, max)
 
 exclude_germline
-:   exclude germline from skyline plot? (For TyCHE GRTs)
+:   exclude germline from skyline plot? (For TyCHE germline-rooted trees)
 
 
 

@@ -20,7 +20,9 @@ verbose = TRUE,
 edge_tol = 1e-08,
 cell = "cell_id",
 heavy = "IGH",
-dowser_fields = TRUE
+light = c("IGK", "IGL"),
+dowser_fields = TRUE,
+nproc = 1
 )
 ```
 
@@ -51,10 +53,29 @@ cell
 heavy
 :   name of heavy chain locus
 
+light
+:   names of light chain loci
+
 dowser_fields
 :   include dowser-specific information? (recommended)
 
+nproc
+:   number of cores to use (parallelizes by clone)
 
+
+
+
+Details
+-------------------
+
+Works with trees built by any of `getTrees`'s `build` options
+(`"pratchet"`, `"pml"`, `"igphyml"`, `"raxml"`).
+`getTrees(..., build="pml")` trees store the full
+`phangorn::optim.pml` fit in `tree$parameters`; since that object
+isn't JSON-serializable (and isn't meaningful to reconstruct from a file),
+it's reduced to a flat list of fitted model parameters via
+`pmlParamsToList` before being written out. See that function's
+documentation for what is kept and why.
 
 
 

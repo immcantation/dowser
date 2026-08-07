@@ -18,7 +18,7 @@ burnin = 10,
 trait = NULL,
 nproc = 1,
 quiet = 0,
-full_posterior = TRUE,
+posterior = c("none", "all", "parameters", "trees_with_traits", "trees"),
 asr = FALSE,
 low_ram = TRUE,
 trim_ids = FALSE
@@ -52,8 +52,10 @@ nproc
 quiet
 :   amount of rubbish to print to console
 
-full_posterior
-:   Read in full distribution of parameters and trees?
+posterior
+:   Read un full distribution of parameters and trees? Can be "none" to just have
+summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+combination of "parameters", "trees_with_traits", and "trees".
 
 asr
 :   Log ancestral sequences?

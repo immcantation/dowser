@@ -11,10 +11,7 @@ Usage
 ```
 getSkylines(
 clones,
-dir,
-id,
 time,
-burnin = 10,
 bins = 100,
 verbose = 0,
 forward = TRUE,
@@ -30,17 +27,8 @@ Arguments
 clones
 :   clone tibble
 
-dir
-:   directory of BEAST trees file
-
-id
-:   unique identifer for this analysis
-
 time
 :   name of time column
-
-burnin
-:   Burnin percent (default 10)
 
 bins
 :   number of bins for plotting
@@ -72,7 +60,8 @@ Bayesian Skyline values for given clone
 Details
 -------------------
 
-Burnin set from readBEAST or getTrees
+Clones must contain treedata objects with parameters_posterior and
+trees_posterior. See `readBEAST` or `getTimeTrees` with posterior="all"
 
 
 

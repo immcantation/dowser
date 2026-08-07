@@ -20,7 +20,7 @@ mcmc_length = 1e+06,
 resume_clones = NULL,
 trait = NULL,
 asr = FALSE,
-full_posterior = TRUE,
+posterior = c("none", "all", "parameters", "trees_with_traits", "trees"),
 log_every = "auto",
 include_germline = TRUE,
 nproc = 1,
@@ -74,8 +74,10 @@ trait
 asr
 :   Log ancestral sequences?
 
-full_posterior
-:   Read un full distribution of parameters and trees?
+posterior
+:   Read un full distribution of parameters and trees? Can be "none" to just have
+summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
+combination of "parameters", "trees_with_traits", and "trees".
 
 log_every
 :   Frequency of states logged. `auto` will divide mcmc_length by log_target

@@ -30,7 +30,9 @@ tip_palette = NULL,
 node_palette = NULL,
 guide_title = NULL,
 branch_lengths = NULL,
-pch = 16
+pch = 16,
+densitree = FALSE,
+alpha = 1
 )
 ```
 
@@ -108,6 +110,13 @@ branch_lengths
 pch
 :   Numeric tip/node shape. If >20 will use "fill" instead of "color"
 
+densitree
+:   Use densitree visualization? Requires trees_with_traits/trees posterior
+to be loaded in (see posterior options in `readBEAST`).
+
+alpha
+:   Alpha value for ggtree. Lower makes the tree more transparent.
+
 
 
 
@@ -138,7 +147,13 @@ plotTrees(trees)[[1]]
 
 ```
 
-![2](plotTrees-2.png)
+*Warning*:Arguments in `...` must be used.
+✖ Problematic arguments:
+• as.Date = as.Date
+• yscale_mapping = yscale_mapping
+• hang = hang
+• alpha = alpha
+ℹ Did you misspell an argument name?![3](plotTrees-3.png)
 
 
 See also

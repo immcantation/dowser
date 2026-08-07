@@ -16,7 +16,8 @@ obj1,
 obj2,
 verbose = TRUE,
 edge_tol = 1e-08,
-dowser_fields = TRUE
+dowser_fields = TRUE,
+nproc = 1
 )
 ```
 
@@ -38,7 +39,18 @@ edge_tol
 dowser_fields
 :   check dowser-specific fields and gapped sequences?
 
+nproc
+:   number of cores to use
 
+
+
+
+Details
+-------------------
+
+In addition to the existing tree topology, edge length, sequence, and
+data slot checks, this also verifies `tree$parameters` when present
+-- including `build="pml"` trees.
 
 
 
