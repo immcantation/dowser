@@ -237,6 +237,10 @@ trees = getTrees(clones[isotype_counts > 1,], trait=trait, igphyml=igphyml_locat
 
 IsotypeTrees = trees
 
+#data(IsotypeTrees)
+#data(BiopsyTrees)
+#BiopsyTrees$trees <- lapply(BiopsyTrees$trees, function(x)setNodeDivergences(x))
+#IsotypeTrees$trees <- lapply(IsotypeTrees$trees, function(x)setNodeDivergences(x))
 # Save
 usethis::use_data(IsotypeTrees, overwrite=TRUE)
 usethis::use_data(BiopsyTrees, overwrite=TRUE)
@@ -262,5 +266,19 @@ trees = getTrees(clones, build="pml")
 test = correlationTest(trees, permutations=10000, time="timepoint")
 
 TimeTrees = test
+
+#data(TimeTrees)
+#TimeTrees$trees <- lapply(TimeTrees$trees, function(x)setNodeDivergences(x))
 usethis::use_data(TimeTrees, overwrite=TRUE)
+
+
+data(ExampleMixedClones)
+ExampleMixedClones$igphyml_partitioned_trees <- lapply(ExampleMixedClones$igphyml_partitioned_trees, function(x)setNodeDivergences(x))
+ExampleMixedClones$raxml_partitioned_trees <- lapply(ExampleMixedClones$raxml_partitioned_trees, function(x)setNodeDivergences(x))
+usethis::use_data(ExampleMixedClones, overwrite=TRUE)
+#TimeTrees$trees <- lapply(TimeTrees$trees, function(x)setNodeDivergences(x))
+
+
+
+
 

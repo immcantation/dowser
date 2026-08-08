@@ -1940,6 +1940,59 @@ rerootTree <- function(tree, germline, min=0.001, verbose=1){
 }
 
 
+#' For each node in nodes list, store the divergence from the UCA
+#'
+#' @param   tree A \code{phylo} object with nodes list
+#' @return  \code{phylo} with node list and divergences set
+#' @export
+setNodeDivergences = function(tree){
+  if(is.null(tree$nodes)){
+    warning("tree$nodes not found, adding")
+    tree$nodes <- lapply(1:(length(tree$tip.label) + tree$Nnode), 
+      function(x)list(sequence=NA))
+  }
+  uca <- ape::getMRCA(tree, tip=tree$tip.label)
+  dists <- ape::dist.nodes(tree)
+  divs <- dists[uca,]
+  for(i in 1:length(divs)){
+    tree$nodes[[i]]$divergence <- unname(divs[i])
+  }
+  tree
+}
+
+#' For each node in nodes list, check that the current divergence
+#' is the same as previously reported
+#'
+#' @param   tree A \code{phylo} object with nodes list
+#' @param   stop Throw an error if divergences not equal
+#' @param   catch_null Should null divergence values count as mismatches?
+#' @return  TRUE or FALSE depening on whether node divergences are consistent
+#' if stop=TRUE, a FALSE value will cause an error
+#' @export
+checkNodeDivergences = function(tree, stop=TRUE, catch_null=TRUE){
+  uca <- ape::getMRCA(tree, tip=tree$tip.label)
+  dists <- ape::dist.nodes(tree)
+  divs <- dists[uca,]
+  match <- TRUE
+  for(i in 1:length(divs)){
+    if(is.null(tree$nodes[[i]]$divergence)){
+      if(catch_null){
+        match <- FALSE
+      }else{
+        next
+      }
+    }
+    if(!isTRUE(all.equal(tree$nodes[[i]]$divergence, unname(divs[i])))){
+      match <- FALSE
+    }
+  }
+  if(!match && stop){
+    stop(paste0("Node divergences not consistent, tree ",tree$name," may have been corrupted."))
+  }
+  return(match)
+}
+
+
 #' Compare divergence along a tree in terms of mutations (sum of branches)
 #' for each tip and reconstructed internal node 
 #' to its Hamming distance from the germline. Divergence should never be less than Hamming distance. 
@@ -2345,6 +2398,9 @@ getTrees <- function(clones, trait=NULL, id=NULL, dir=NULL,
   }
   clones$trees <- mtrees
 
+  # set divergence of each node to check later
+  clones$trees <- lapply(clones$trees, function(x)setNodeDivergences(x))
+
   # check hamming distance vs divergence
   if(check_divergence){
     div_v_divergence <- checkDivergence(clones, verbose=FALSE, threshold=-1)
@@ -2392,6 +2448,7 @@ scaleBranches <- function(clones, edge_type="mutations"){
   if(!"trees" %in% names(clones)){
     stop("clones must have trees column!")
   }
+
   timetree <- FALSE
   if(inherits(clones$trees[[1]], "treedata")){
     timetree <- TRUE
@@ -2405,6 +2462,20 @@ scaleBranches <- function(clones, edge_type="mutations"){
                              }else{
                                return(nchar(clones$data[[x]]@germline))
                              }}))
+
+  #check divergences
+  for(i in 1:nrow(clones)){
+    if(timetree){
+      check <- checkNodeDivergences(clones$trees[[i]]@phylo, stop=FALSE)
+    }else{
+      check <- checkNodeDivergences(clones$trees[[i]], stop=FALSE)
+    }
+    if(!check){
+      warning(paste("Node divergences inconsistent",clones$clone_id[i],
+        "may have been corrupted (or it was made by Dowser <= 2.5.0)"))
+    }
+  }
+
   if(!timetree){
     trees <- lapply(1:length(clones$trees),function(x){
       if(clones$trees[[x]]$edge_type == "mutations" && 
@@ -2464,6 +2535,14 @@ scaleBranches <- function(clones, edge_type="mutations"){
         clones$trees[[row]]@phylo <- phylo
       }
     }
+
+  for(i in 1:nrow(clones)){
+    if(timetree){
+      clones$trees[[i]]@phylo <- setNodeDivergences(clones$trees[[i]]@phylo)
+    }else{
+      clones$trees[[i]] <- setNodeDivergences(clones$trees[[i]])
+    }
+  }
   clones
 }
 
@@ -2610,6 +2689,7 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 #' @param    node    numeric node in tree (see details)
 #' @param    tree    a \code{phylo} tree object containing \code{node}
 #' @param    clone   if \code{tree} not specified, supply clone ID in \code{data}
+#' @param    check   check node divergences beforehand (see \code{checkNodeDivergences})
 #' @param    gaps    add IMGT gaps to output sequences?
 #' @return   A vector with sequence for each locus at a specified \code{node}
 #'           in \code{tree}.
@@ -2620,10 +2700,13 @@ collapseNodes <- function(trees, tips=FALSE, check=TRUE){
 #'  
 #' @seealso \link{getTrees}
 #' @export
-getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
+getNodeSeq <- function(data, node, tree=NULL, clone=NULL, check=TRUE, gaps=TRUE){
   if(is.null(tree)){
     if(is.null(clone)){
       stop("must provide either tree object or clone ID")
+    }
+    if(!clone %in% data$clone_id){
+      stop(paste("Clone", clone, "not found in Dowser object"))
     }
     tree <- dplyr::filter(data,!!rlang::sym("clone_id")==clone)$trees[[1]]
   }
@@ -2631,6 +2714,15 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, gaps=TRUE){
     tree <- tree@phylo
   }
   clone <- dplyr::filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
+
+  if(check){
+    match <- checkNodeDivergences(tree, stop=FALSE)
+    if(!match){
+      warning(paste("Node divergences inconsistent, tree",tree$name
+        ,"may have been corrupted (or it was made by Dowser <= 2.5.0)"))
+    }
+  }
+
   # CGJ 3/11/26
   # KBH: should change getTreesAndUCAs such that the germline node is updated
   # and it can be retreived like any other sequence

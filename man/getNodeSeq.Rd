@@ -4,7 +4,7 @@
 \alias{getNodeSeq}
 \title{Return IMGT gapped sequence of specified tree node}
 \usage{
-getNodeSeq(data, node, tree = NULL, clone = NULL, gaps = TRUE)
+getNodeSeq(data, node, tree = NULL, clone = NULL, check = TRUE, gaps = TRUE)
 }
 \arguments{
 \item{data}{a tibble of \code{airrClone} objects, the output of 
@@ -15,6 +15,8 @@ getNodeSeq(data, node, tree = NULL, clone = NULL, gaps = TRUE)
 \item{tree}{a \code{phylo} tree object containing \code{node}}
 
 \item{clone}{if \code{tree} not specified, supply clone ID in \code{data}}
+
+\item{check}{check node divergences beforehand (see \code{checkNodeDivergences})}
 
 \item{gaps}{add IMGT gaps to output sequences?}
 }

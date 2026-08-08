@@ -1421,6 +1421,11 @@ readBEAST <- function(clones, dir, id, beast, burnin=10, trait=NULL, nproc = 1,
     trees[[i]] <- beastobj
   }
 
+  # set divergence of each node
+  for(i in 1:length(trees)){
+    trees[[i]]@phylo <- setNodeDivergences(trees[[i]]@phylo)
+  }
+
   if(quiet < 1)print("Ran readBEAST")
 
   if(!"list" %in% class(clones) && "data" %in% names(clones)){

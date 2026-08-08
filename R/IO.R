@@ -685,7 +685,7 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 #' \code{@data} exactly as \code{getTimeTrees()}/\code{readBEAST()} do.
 #'
 #' \code{treeio::read.beast.newick()} on the bare \code{treetext} (no
-#' translate block) is not a safe substitute: it assigns tip numbers by
+#' translate block) is NOT a safe substitute: it assigns tip numbers by
 #' first-occurrence order in its own parse of the tree string, a completely
 #' different and unrelated convention to the translate table's listed
 #' order. The two conventions can agree by coincidence for one tree shape
@@ -846,6 +846,9 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
     rphy$nodes <- rnodes
     rphy$node.label <- NULL
     rphy$name <- clone$clone_id
+    if(!dowser){
+      rphy <- setNodeDivergences(rphy)
+    }
 
     for(n in names(clone$info$treeinfo)){
       if(n == "state"){
