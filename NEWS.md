@@ -1,3 +1,14 @@
+Version 2.5.0 August 10, 2026
+-------------------------------------------------------------------------------
+
++ Fix due to phangorn changes
++ Added writeTreesJSON, readTreesJSON, and dowserObjectEquivalent
++ Added densitree option to plotTrees
++ Changed readBEAST/getTimeTrees/getTimeTreesIterate to read in posterior file
++ Added filterPartialSeqs and filterCombs
++ Added Input/Output and Removing problematic sequences vignettes
+
+
 Version 2.4.1 March 26, 2026
 -------------------------------------------------------------------------------
 

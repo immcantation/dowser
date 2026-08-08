@@ -667,6 +667,50 @@ writeTreesJSON = function(object, file, repertoire_id="sample", check=TRUE, verb
 
 
 
+#' \code{nexusTreeWithTranslate}
+#' Wrap a raw, numeric-tip-coded BEAST/NEXUS treetext string in a minimal
+#' NEXUS \code{Translate} block, so it can be parsed with
+#' \code{treeio::read.beast()}.
+#' @details
+#' \code{treetext} (\code{tr@treetext} for a \code{treeio::treedata} object)
+#' is the raw annotated tree string with numeric tip codes (e.g. \code{"1"},
+#' \code{"2"}, ...), not real tip names -- resolving those codes to real
+#' names requires the NEXUS \code{Translate} block that originally
+#' accompanied it, which maps code \code{i} to the i-th listed taxon. That
+#' mapping is exactly \code{tr@phylo$tip.label} in \code{phylo}'s own tip
+#' order (tip number \code{i} in a NEXUS-translate-parsed tree is always the
+#' \code{i}-th translate-table entry, by construction), so re-wrapping
+#' \code{treetext} with a translate block built from that same array and
+#' parsing with \code{treeio::read.beast()} reconstructs \code{@phylo}/
+#' \code{@data} exactly as \code{getTimeTrees()}/\code{readBEAST()} do.
+#'
+#' \code{treeio::read.beast.newick()} on the bare \code{treetext} (no
+#' translate block) is not a safe substitute: it assigns tip numbers by
+#' first-occurrence order in its own parse of the tree string, a completely
+#' different and unrelated convention to the translate table's listed
+#' order. The two conventions can agree by coincidence for one tree shape
+#' and silently diverge for another (or after a Newick string gets
+#' re-serialized with a different node rotation, e.g. across repeated
+#' write/read cycles) -- producing tip labels silently attached to the
+#' wrong node rather than an error.
+#' @param    treetext    raw NEXUS-numeric-coded tree string (\code{tr@treetext})
+#' @param    tip_labels  real tip names, in numeric-code order (i.e.
+#'                        \code{tip_labels[i]} is the name for code \code{i})
+#' @noRd
+nexusTreeWithTranslate <- function(treetext, tip_labels){
+  translate_lines <- paste0(seq_along(tip_labels), " ", tip_labels)
+  translate_lines[-length(translate_lines)] <- paste0(translate_lines[-length(translate_lines)], ",")
+  paste(c(
+    "#NEXUS",
+    "Begin trees;",
+    "Translate",
+    translate_lines,
+    ";",
+    paste0("tree TREE1 = ", treetext),
+    "End;"
+  ), collapse="\n")
+}
+
 #' \code{readTreesJSON}
 #' Experimental. Read trees from JSON/AIRR format from Dowser
 #' @param    file   .json file
@@ -911,9 +955,13 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
       outtrees[[ci]] <- rphy
     }else{
       # specialized functions for reading in treedata objects
-      tr <- treeio::read.beast.newick(textConnection(clone$info$treetext[[1]]))
-      tr@phylo$tip.label <- unname(sapply(tr@phylo$tip.label, 
-        function(x)clone$info$tip_label[[as.numeric(x)]]))
+      # See nexusTreeWithTranslate, required for tip identity to
+      # come out correctly
+      tmpfile <- tempfile(fileext=".tree")
+      writeLines(nexusTreeWithTranslate(clone$info$treetext[[1]],
+        unlist(clone$info[["tip_labels"]])), tmpfile)
+      tr <- treeio::read.beast(tmpfile)
+      unlink(tmpfile)
       if(!is.na(ancestor_node_id)){
         tr@phylo$tip.label[tr@phylo$tip.label == ancestor_node_id] <- "Germline"
       }
@@ -963,9 +1011,10 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
             }else{
               unlist(tips_raw[[k]])
             }
-            pt <- treeio::read.beast.newick(textConnection(raw[[k]]))
-            pt@phylo$tip.label <- unname(sapply(pt@phylo$tip.label, 
-              function(x)tip_labels_k[[as.numeric(x)]]))
+            tmpfile_k <- tempfile(fileext=".tree")
+            writeLines(nexusTreeWithTranslate(raw[[k]], tip_labels_k), tmpfile_k)
+            pt <- treeio::read.beast(tmpfile_k)
+            unlink(tmpfile_k)
             if(!is.na(ancestor_node_id)){
               pt@phylo$tip.label[pt@phylo$tip.label == ancestor_node_id] <- "Germline"
             }
@@ -979,15 +1028,6 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
       params_post_cols <- clone$info[["parameters_posterior_columns"]]
       params_post_raw <- clone$info[["parameters_posterior"]]
       if(!is.null(params_post_raw)){
-        # Stored wide, as column names (once) + one unnamed value array per
-        # Sample -- reattach the column names to each row first (same
-        # all-character-first fix as beast_params above; every column is
-        # numeric here, no "item"/"parameter" name column to exclude, since
-        # parameter names are now the column headers), then pivot back to the
-        # long Sample/parameter/value shape tr@info$parameters_posterior
-        # actually has (matching tidyr::gather()'s output in
-        # R/TimeTreesFunctions.R), so the reconstructed object is a faithful
-        # round-trip, not just equivalent data in a different shape.
         cols <- unlist(params_post_cols)
         params_post_wide <- dplyr::bind_rows(lapply(params_post_raw, function(row){
           vals <- vapply(row, as.character, character(1))
@@ -997,9 +1037,6 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
           params_post_wide[[col]] <- suppressWarnings(as.numeric(params_post_wide[[col]]))
         }
         tr@info$parameters_posterior <- params_post_wide
-        #TODO: change readBEAST and functions to keep these as wide-format to save space
-        #tr@info$parameters_posterior <- tidyr::pivot_longer(params_post_wide,
-        #  cols=-"Sample", names_to="parameter", values_to="value")
       }
       outtrees[[ci]] <- tr
     }
