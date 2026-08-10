@@ -869,7 +869,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     # CGJ 7/20/26 based on the pratchet dev error we are getting from 
     # the tryCatch getting a depreciated warning 
     # the PML will be updated as well just in case
-    fit <- withCallingHandlers(
+    fit <- base::withCallingHandlers(
       tryCatch(
         phangorn::optim.pml(pml, model=sub_model, optNni=optNni, optQ=optQ,
                             optGamma=gamma, optEdge=optEdge, rearrangement="NNI",
@@ -905,7 +905,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
     tree$nodes <- rep(list(sequence=NULL),times=nnodes)
   }else{
     pml <- phangorn::pml(ape::unroot(tree),data=data)
-    fit <- withCallingHandlers(
+    fit <- base::withCallingHandlers(
       tryCatch(
         phangorn::optim.pml(pml, model=sub_model, optNni=FALSE, optQ=optQ,
                             optGamma=FALSE, optEdge=FALSE, rearrangement="none",

@@ -2239,12 +2239,19 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
     clone_dir <- file.path(dir, paste0(id, "_", clone$clone_id))
     if(phylo == "lsequence"){
       uca <- read.table(file.path(clone_dir, "UCA_light.txt"), sep = "\t")[[1]]
+      # update lgerm slot
+      clone$data[[1]]@lgermline <- uca
       names(uca) <- locus_val
     } else{
       uca <- read.table(file.path(clone_dir, "UCA.txt"), sep = "\t")[[1]]
+      # update germ slot 
+      clone$data[[1]]@germline <- uca
       names(uca) <- locus_val[1]
       if(phylo == "hlsequence"){
         uca_light <- read.table(file.path(clone_dir, "UCA_light.txt"), sep = "\t")[[1]]
+        # update lgerm and hlgerm 
+        clone$data[[1]]@lgermline <- uca_light
+        clone$data[[1]]@hlgermline <- paste0(uca[[1]], uca_light)
         names(uca_light) <- locus_val[2]
         uca <- append(uca, uca_light)
       }
@@ -3222,4 +3229,58 @@ getTreesAndUCAs <- function(clones, data, exec, model_folder, references,
 
   unlink(rm_dir,recursive=TRUE)
   return(clones)
+}
+
+
+#' \link{installPythonDependencies} Checks for and installs the Python dependencies
+#'                                  for UCA estimation
+#' @param python        Specify the python call for your system. This is the call
+#'                      on command line that issues the python you want to use.
+#'                      "python3" by default.
+
+installPythonDependencies <- function(python = "python3"){
+  python_path <- Sys.which(python)
+  if(python_path == "" || file.access(path.expand(python_path), mode = 1) == -1){
+    stop("The python executable provided, ", python, " cannot be executed. ",
+         "Run Sys.which(\"python3\") (or the equivalent for your system) in R ",
+         "to locate a usable python executable.")
+  }
+  
+  pkg_map <- c(
+    Bio = "biopython",
+    logomaker = "logomaker",
+    matplotlib = "matplotlib",
+    numpy = "numpy",
+    olga = "olga",
+    pandas = "pandas"
+  )
+  
+  check_script <- tempfile(fileext = ".py")
+  writeLines(c(
+    "import importlib.util, sys",
+    sprintf("mods = [%s]", paste(sprintf('"%s"', names(pkg_map)), collapse = ", ")),
+    "missing = [m for m in mods if importlib.util.find_spec(m) is None]",
+    "print(','.join(missing))"
+  ), check_script)
+  on.exit(unlink(check_script), add = TRUE)
+  
+  missing_modules <- system2(python, args = shQuote(check_script), stdout = TRUE)
+  missing_modules <- missing_modules[nzchar(missing_modules)]
+  missing_modules <- if(length(missing_modules)) strsplit(missing_modules, ",")[[1]] else character(0)
+  
+  if(length(missing_modules) == 0){
+    message("All required Python packages are already installed.")
+    return(invisible(TRUE))
+  }
+  
+  missing_pkgs <- unname(pkg_map[missing_modules])
+  message("Installing missing Python packages: ", paste(missing_pkgs, collapse = ", "))
+  
+  status <- system2(python, args = c("-m", "pip", "install", missing_pkgs))
+  if(status != 0){
+    stop("pip install failed (exit status ", status, ") for: ", paste(missing_pkgs, collapse = ", "))
+  }
+  
+  message("Successfully installed: ", paste(missing_pkgs, collapse = ", "))
+  invisible(TRUE)
 }

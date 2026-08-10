@@ -10,8 +10,6 @@ import olga.generation_probability as pgen
 import os
 import pandas as pd 
 import random
-from scipy.stats import norm
-from scipy.stats import poisson
 import sys
 
 def read_starting_and_ending_points(file_path):
