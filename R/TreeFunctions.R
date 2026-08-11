@@ -2716,7 +2716,7 @@ getNodeSeq <- function(data, node, tree=NULL, clone=NULL, check=TRUE, gaps=TRUE)
   clone <- dplyr::filter(data,!!rlang::sym("clone_id")==tree$name)$data[[1]]
 
   if(check){
-    match <- checkNodeDivergences(tree, stop=FALSE)
+    match <- checkNodeDivergences(tree, stop=FALSE, catch_null=FALSE)
     if(!match){
       warning(paste("Node divergences inconsistent, tree",tree$name
         ,"may have been corrupted (or it was made by Dowser <= 2.5.0)"))

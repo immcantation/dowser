@@ -67,7 +67,7 @@ ExampleAirr <- ExampleAirr[ExampleAirr$clone_id %in% c("3170", "3184"),]
 
 From here, `formatClones` groups sequences into clones and reconstructs
 germlines, and `getTrees` builds a lineage tree for each clone (see the
-[Build Lineage Trees vignette](Building-Trees-Vignette.html) for details on
+[Build Lineage Trees vignette](https://dowser.readthedocs.io/en/stable/vignettes/Building-Trees-Vignette/) for details on
 both steps). 
 
 Before this step, it's important that the BCR sequences are already grouped into

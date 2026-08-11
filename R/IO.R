@@ -863,6 +863,10 @@ readTreesJSON = function(file, heavy="IGH", light=c("IGK","IGL"),
             sapply(tips, function(tp) tp$sequence),
             sapply(tips, function(tp) tp$node_id))
           tree_for_pml <- rphy
+          # if this was a scaled tree, convert back to genetic distance for PML object
+          if(dowser && clone$info$treeinfo$edge_type == "mutations"){
+            tree_for_pml$edge.length <- tree_for_pml$edge.length/length(loci)
+          }
           #only mess with the germline name if coming from Dowser
           if(dowser && !is.na(ancestor_node_id)){
             names(tip_seqs)[names(tip_seqs) == ancestor_node_id] <- "Germline"
