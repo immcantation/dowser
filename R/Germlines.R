@@ -2282,6 +2282,7 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
     }
     parameters[names(lhoods)] <- as.list(lhoods)
     clone$trees[[1]]$parameters <- parameters
+    clone$parameters[[1]] <- parameters
 
     uca_aa <- alakazam::translateDNA(uca)
     
