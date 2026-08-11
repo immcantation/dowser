@@ -1787,7 +1787,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' 
 #' @export
 getDiffPoints = function(data, trait, height="height", verbose=FALSE,
-  tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL, full_posterior=TRUE,
+  tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL, full_posterior=FALSE,
   summarize=TRUE, nproc=1){
   #results <- dplyr::tibble()
   #for(row in 1:nrow(data)){

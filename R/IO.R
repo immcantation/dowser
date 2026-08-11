@@ -1422,7 +1422,7 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
   }
 
   #for(r in 1:nrow(a)){
-  checks <- lapply(1:nrow(a),function(r)tryCatch({
+  checks <- parallel::mclapply(1:nrow(a),function(r)tryCatch({
     treecheck <- 0
 
     # check non-tree columns
@@ -1630,7 +1630,7 @@ dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
     }
     treecheck
   #}
-  },error=function(e)e))
+  },error=function(e)e), mc.cores=nproc)
 
   errors <- sapply(checks, function(x) inherits(x, "error"))
   if(sum(errors) == 0){
