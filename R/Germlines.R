@@ -2196,7 +2196,15 @@ make_locus_checker <- function(data, references, data_by_clone_locus, seq_id_ind
   }
 }
 
-# Adds the UCA to the clones object 
+# Helper: parse a UCA_lhoods*.txt file and return the joint UCA log-likelihood
+# @param path  File path to the UCA_lhoods text file
+readUcaLhood <- function(path){
+  line <- readLines(path, n = 1L, warn = FALSE)
+  values <- as.numeric(strsplit(gsub("\\[|\\]", "", line), ",")[[1]])
+  values[3]
+}
+
+# Adds the UCA to the clones object
 #
 # \code{updateClone} Adds the UCA to the data frame within the clones object
 # @param clones     The clones object
@@ -2256,7 +2264,25 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
         uca <- append(uca, uca_light)
       }
     }
-    
+
+    # UCA log-likelihood(s), added to the tree's parameters
+    lhoods <- stats::setNames(
+      readUcaLhood(file.path(clone_dir,
+                             if(phylo == "lsequence") "UCA_lhoods_light.txt" else "UCA_lhoods.txt")),
+      "uca_log_likelihood")
+    if(phylo == "hlsequence"){
+      lhoods <- c(lhoods, stats::setNames(
+        readUcaLhood(file.path(clone_dir, "UCA_lhoods_light.txt")),
+        "uca_light_log_likelihood"))
+    }
+
+    parameters <- clone$trees[[1]]$parameters
+    if(is.null(parameters)){
+      parameters <- list()
+    }
+    parameters[names(lhoods)] <- as.list(lhoods)
+    clone$trees[[1]]$parameters <- parameters
+
     uca_aa <- alakazam::translateDNA(uca)
     
     germline_node <- ape::getMRCA(clone$trees[[1]], clone$trees[[1]]$tip.label)
