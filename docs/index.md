@@ -29,9 +29,7 @@ Documentation and tutorials
 
 Full documentation, including tutorials and vignettes: [Dowser ReadTheDocs site](https://dowser.readthedocs.io)
 
-For AI assistants/LLMs and other automated agents: [llms.txt](llms.txt) is a
-short curated index of Dowser's documentation, and [llms-full.txt](llms-full.txt)
-concatenates the entire documentation corpus (every vignette and function
+For AI assistants/LLMs and other automated agents: [llms.txt](https://github.com/immcantation/dowser/blob/master/llms.txt) is a short curated index of Dowser's documentation, and [llms-full.txt](https://github.com/immcantation/dowser/blob/master/llms-full.txt) concatenates the entire documentation corpus (every vignette and function
 reference page) into one file.
 
 Citation

@@ -9,7 +9,7 @@ Description
 Usage
 --------------------
 ```
-getNodeSeq(data, node, tree = NULL, clone = NULL, gaps = TRUE)
+getNodeSeq(data, node, tree = NULL, clone = NULL, check = TRUE, gaps = TRUE)
 ```
 
 Arguments
@@ -27,6 +27,9 @@ tree
 
 clone
 :   if `tree` not specified, supply clone ID in `data`
+
+check
+:   check node divergences beforehand (see `checkNodeDivergences`)
 
 gaps
 :   add IMGT gaps to output sequences?

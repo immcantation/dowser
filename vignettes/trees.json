@@ -6,7 +6,7 @@
       "repertoire_group_id": null,
       "data_processing_id": null,
       "clone_count": 13,
-      "sequences": ["GN5SHBT03CD0X0", "GN5SHBT05JRVYI", "GN5SHBT01CYOTL", "GN5SHBT05JBJ6C", "GN5SHBT06HRA91", "GN5SHBT03D53SO", "GN5SHBT07H3PB9", "GN5SHBT04BVB8W", "GN5SHBT06IQR02", "GN5SHBT08JDD2A", "GN5SHBT02D1O6O", "GN5SHBT08H09N9", "GN5SHBT01C1K1O"],
+      "sequences": ["GN5SHBT05JRVYI", "GN5SHBT03CD0X0", "GN5SHBT01CYOTL", "GN5SHBT08H09N9", "GN5SHBT05JBJ6C", "GN5SHBT07H3PB9", "GN5SHBT02D1O6O", "GN5SHBT06IQR02", "GN5SHBT08JDD2A", "GN5SHBT01C1K1O", "GN5SHBT03D53SO", "GN5SHBT06HRA91", "GN5SHBT04BVB8W"],
       "info": {
         "region": ["fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4"],
         "numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402],
@@ -19,49 +19,51 @@
         }
       },
       "program_origin": "dowser-phylo",
-      "program_version": "2.4.2.999",
+      "program_version": "2.5.0",
       "v_call": "IGHV3-49",
       "j_call": "IGHJ5",
       "junction_length": 60,
       "column_names": ["clone_id", "data", "locus", "seqs", "trees"],
       "clone_class": "Rearrangement",
-      "tree": "(Germline-3170:0,(GN5SHBT06IQR02:0.05729166667,(GN5SHBT07H3PB9:0.002604166667,(GN5SHBT02D1O6O:0.02083333333,((GN5SHBT08JDD2A:0,GN5SHBT05JRVYI:0.0078125)Node26-3170:0,(GN5SHBT05JBJ6C:0,(GN5SHBT01C1K1O:0,(GN5SHBT03CD0X0:0.002604166667,(GN5SHBT04BVB8W:0.01041666667,(GN5SHBT06HRA91:0.005208333333,(GN5SHBT01CYOTL:0.002604166667,(GN5SHBT03D53SO:0.002604166667,GN5SHBT08H09N9:0)Node25-3170:0)Node24-3170:0)Node23-3170:0)Node22-3170:0.002604166667)Node21-3170:0.002604166667)Node20-3170:0.005208333333)Node19-3170:0.005208333333)Node18-3170:0.005208333333)Node17-3170:0.01041666667)Node16-3170:0.046875)Node27-3170:0.0234375)Node15-3170;",
+      "tree": "(Germline-3170:0,(GN5SHBT06IQR02:0.05208333333,(GN5SHBT07H3PB9:0.005208333333,(GN5SHBT02D1O6O:0.02083333333,((GN5SHBT08JDD2A:0,GN5SHBT05JRVYI:0.0078125)Node26-3170:0,(GN5SHBT05JBJ6C:0,(GN5SHBT01C1K1O:0,(GN5SHBT03CD0X0:0.002604166667,(GN5SHBT04BVB8W:0.01041666667,(GN5SHBT06HRA91:0.005208333333,(GN5SHBT01CYOTL:0.002604166667,(GN5SHBT08H09N9:0,GN5SHBT03D53SO:0.002604166667)Node25-3170:0)Node24-3170:0)Node23-3170:0)Node22-3170:0.002604166667)Node21-3170:0.002604166667)Node20-3170:0.005208333333)Node19-3170:0.005208333333)Node18-3170:0.005208333333)Node17-3170:0.0078125)Node16-3170:0.04947916667)Node27-3170:0.02604166667)Node15-3170;",
       "inferred_ancestor": "Germline-3170",
       "nodes": [
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT03CD0X0",
-              "c_call": "IGHG1",
-              "collapse_count": 1,
-              "tip_order": 1
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT03CD0X0",
-          "sequence_id": "GN5SHBT03CD0X0",
-          "number": 1,
-          "parent": 21,
-          "children": []
-        },
         {
           "info": {
             "tipdata": {
               "sequence_id": "GN5SHBT05JRVYI",
               "c_call": "IGHG4",
               "collapse_count": 1,
-              "tip_order": 2
-            }
+              "tip_order": 1
+            },
+            "divergence": 0.0963541666666667
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT05JRVYI",
           "sequence_id": "GN5SHBT05JRVYI",
-          "number": 2,
+          "number": 1,
           "parent": 26,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT03CD0X0",
+              "c_call": "IGHG1",
+              "collapse_count": 1,
+              "tip_order": 2
+            },
+            "divergence": 0.104166666666667
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT03CD0X0",
+          "sequence_id": "GN5SHBT03CD0X0",
+          "number": 2,
+          "parent": 21,
           "children": []
         },
         {
@@ -71,7 +73,8 @@
               "c_call": "IGHG4",
               "collapse_count": 1,
               "tip_order": 3
-            }
+            },
+            "divergence": 0.106770833333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
@@ -85,55 +88,39 @@
         {
           "info": {
             "tipdata": {
+              "sequence_id": "GN5SHBT08H09N9",
+              "c_call": "IGHG2",
+              "collapse_count": 1,
+              "tip_order": 4
+            },
+            "divergence": 0.104166666666667
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT08H09N9",
+          "sequence_id": "GN5SHBT08H09N9",
+          "number": 4,
+          "parent": 25,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
               "sequence_id": "GN5SHBT05JBJ6C",
               "c_call": "IGHG1",
               "collapse_count": 1,
-              "tip_order": 4
-            }
+              "tip_order": 5
+            },
+            "divergence": 0.09375
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT05JBJ6C",
           "sequence_id": "GN5SHBT05JBJ6C",
-          "number": 4,
-          "parent": 19,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT06HRA91",
-              "c_call": "IGHG3",
-              "collapse_count": 1,
-              "tip_order": 5
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT06HRA91",
-          "sequence_id": "GN5SHBT06HRA91",
           "number": 5,
-          "parent": 23,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT03D53SO",
-              "c_call": "IGHG1",
-              "collapse_count": 1,
-              "tip_order": 6
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT03D53SO",
-          "sequence_id": "GN5SHBT03D53SO",
-          "number": 6,
-          "parent": 25,
+          "parent": 19,
           "children": []
         },
         {
@@ -142,34 +129,36 @@
               "sequence_id": "GN5SHBT07H3PB9",
               "c_call": "IGHA2",
               "collapse_count": 1,
-              "tip_order": 7
-            }
+              "tip_order": 6
+            },
+            "divergence": 0.0807291666666667
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT07H3PB9",
           "sequence_id": "GN5SHBT07H3PB9",
-          "number": 7,
+          "number": 6,
           "parent": 16,
           "children": []
         },
         {
           "info": {
             "tipdata": {
-              "sequence_id": "GN5SHBT04BVB8W",
-              "c_call": "IGHG4",
+              "sequence_id": "GN5SHBT02D1O6O",
+              "c_call": "IGHG3",
               "collapse_count": 1,
-              "tip_order": 8
-            }
+              "tip_order": 7
+            },
+            "divergence": 0.104166666666667
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
-          "node_id": "GN5SHBT04BVB8W",
-          "sequence_id": "GN5SHBT04BVB8W",
-          "number": 8,
-          "parent": 22,
+          "node_id": "GN5SHBT02D1O6O",
+          "sequence_id": "GN5SHBT02D1O6O",
+          "number": 7,
+          "parent": 17,
           "children": []
         },
         {
@@ -178,15 +167,16 @@
               "sequence_id": "GN5SHBT06IQR02",
               "c_call": "IGHG3",
               "collapse_count": 1,
-              "tip_order": 9
-            }
+              "tip_order": 8
+            },
+            "divergence": 0.078125
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT06IQR02",
           "sequence_id": "GN5SHBT06IQR02",
-          "number": 9,
+          "number": 8,
           "parent": 27,
           "children": []
         },
@@ -196,52 +186,17 @@
               "sequence_id": "GN5SHBT08JDD2A",
               "c_call": "IGHA2",
               "collapse_count": 1,
-              "tip_order": 10
-            }
+              "tip_order": 9
+            },
+            "divergence": 0.0885416666666667
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT08JDD2A",
           "sequence_id": "GN5SHBT08JDD2A",
-          "number": 10,
+          "number": 9,
           "parent": 26,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT02D1O6O",
-              "c_call": "IGHG3",
-              "collapse_count": 1,
-              "tip_order": 11
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT02D1O6O",
-          "sequence_id": "GN5SHBT02D1O6O",
-          "number": 11,
-          "parent": 17,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT08H09N9",
-              "c_call": "IGHG2",
-              "collapse_count": 1,
-              "tip_order": 12
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT08H09N9",
-          "sequence_id": "GN5SHBT08H09N9",
-          "number": 12,
-          "parent": 25,
           "children": []
         },
         {
@@ -250,20 +205,80 @@
               "sequence_id": "GN5SHBT01C1K1O",
               "c_call": "IGHA2",
               "collapse_count": 1,
-              "tip_order": 13
-            }
+              "tip_order": 10
+            },
+            "divergence": 0.0989583333333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT01C1K1O",
           "sequence_id": "GN5SHBT01C1K1O",
-          "number": 13,
+          "number": 10,
           "parent": 20,
           "children": []
         },
         {
-          "info": [],
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT03D53SO",
+              "c_call": "IGHG1",
+              "collapse_count": 1,
+              "tip_order": 11
+            },
+            "divergence": 0.106770833333333
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT03D53SO",
+          "sequence_id": "GN5SHBT03D53SO",
+          "number": 11,
+          "parent": 25,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT06HRA91",
+              "c_call": "IGHG3",
+              "collapse_count": 1,
+              "tip_order": 12
+            },
+            "divergence": 0.109375
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT06HRA91",
+          "sequence_id": "GN5SHBT06HRA91",
+          "number": 12,
+          "parent": 23,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT04BVB8W",
+              "c_call": "IGHG4",
+              "collapse_count": 1,
+              "tip_order": 13
+            },
+            "divergence": 0.114583333333333
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT04BVB8W",
+          "sequence_id": "GN5SHBT04BVB8W",
+          "number": 13,
+          "parent": 22,
+          "children": []
+        },
+        {
+          "info": {
+            "divergence": 0
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -274,7 +289,9 @@
           "children": []
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -285,7 +302,9 @@
           "children": [14, 27]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0755208333333333
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -293,10 +312,12 @@
           "node_id": "Node16-3170",
           "number": 16,
           "parent": 27,
-          "children": [7, 17]
+          "children": [6, 17]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0833333333333333
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -304,10 +325,12 @@
           "node_id": "Node17-3170",
           "number": 17,
           "parent": 16,
-          "children": [11, 18]
+          "children": [7, 18]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0885416666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -318,7 +341,9 @@
           "children": [26, 19]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.09375
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -326,10 +351,12 @@
           "node_id": "Node19-3170",
           "number": 19,
           "parent": 18,
-          "children": [4, 20]
+          "children": [5, 20]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0989583333333333
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -337,10 +364,12 @@
           "node_id": "Node20-3170",
           "number": 20,
           "parent": 19,
-          "children": [13, 21]
+          "children": [10, 21]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.1015625
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -348,10 +377,12 @@
           "node_id": "Node21-3170",
           "number": 21,
           "parent": 20,
-          "children": [1, 22]
+          "children": [2, 22]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.104166666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -359,10 +390,12 @@
           "node_id": "Node22-3170",
           "number": 22,
           "parent": 21,
-          "children": [8, 23]
+          "children": [13, 23]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.104166666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -370,10 +403,12 @@
           "node_id": "Node23-3170",
           "number": 23,
           "parent": 22,
-          "children": [5, 24]
+          "children": [12, 24]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.104166666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -384,7 +419,9 @@
           "children": [3, 25]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.104166666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -392,10 +429,12 @@
           "node_id": "Node25-3170",
           "number": 25,
           "parent": 24,
-          "children": [6, 12]
+          "children": [4, 11]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0885416666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -403,10 +442,12 @@
           "node_id": "Node26-3170",
           "number": 26,
           "parent": 18,
-          "children": [10, 2]
+          "children": [9, 1]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0260416666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -414,7 +455,7 @@
           "node_id": "Node27-3170",
           "number": 27,
           "parent": 15,
-          "children": [9, 16]
+          "children": [8, 16]
         }
       ]
     },
@@ -424,7 +465,7 @@
       "repertoire_group_id": null,
       "data_processing_id": null,
       "clone_count": 12,
-      "sequences": ["GN5SHBT02EG426", "GN5SHBT08IJ1Y7", "GN5SHBT04DZF3V", "GN5SHBT05GXVL8", "GN5SHBT05HFFVW", "GN5SHBT02BRPBC", "GN5SHBT05I2VIN", "GN5SHBT02CU09E", "GN5SHBT01BNZJF", "GN5SHBT07I1OUI", "GN5SHBT06IJXOI", "GN5SHBT03EGV9V"],
+      "sequences": ["GN5SHBT03EGV9V", "GN5SHBT02BRPBC", "GN5SHBT04DZF3V", "GN5SHBT01BNZJF", "GN5SHBT05I2VIN", "GN5SHBT07I1OUI", "GN5SHBT02CU09E", "GN5SHBT06IJXOI", "GN5SHBT08IJ1Y7", "GN5SHBT05GXVL8", "GN5SHBT02EG426", "GN5SHBT05HFFVW"],
       "info": {
         "region": ["fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "fwr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "cdr1", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "fwr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "cdr2", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "fwr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "cdr3", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4", "fwr4"],
         "numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402],
@@ -437,49 +478,51 @@
         }
       },
       "program_origin": "dowser-phylo",
-      "program_version": "2.4.2.999",
+      "program_version": "2.5.0",
       "v_call": "IGHV3-49",
       "j_call": "IGHJ5",
       "junction_length": 60,
       "column_names": ["clone_id", "data", "locus", "seqs", "trees"],
       "clone_class": "Rearrangement",
-      "tree": "(Germline-3184:0,(GN5SHBT01BNZJF:0.002604166667,(GN5SHBT04DZF3V:0,(GN5SHBT05I2VIN:0,((GN5SHBT08IJ1Y7:0.002604166667,(GN5SHBT07I1OUI:0.002604166667,GN5SHBT02CU09E:0.002604166667)Node17-3184:0)Node16-3184:0,((GN5SHBT03EGV9V:0.002604166667,GN5SHBT02EG426:0.005208333333)Node22-3184:0.002604166667,(GN5SHBT05GXVL8:0.002604166667,(GN5SHBT06IJXOI:0,(GN5SHBT02BRPBC:0.002604166667,GN5SHBT05HFFVW:0.002604166667)Node21-3184:0)Node20-3184:0)Node19-3184:0)Node18-3184:0)Node15-3184:0.002604166667)Node25-3184:0.002604166667)Node23-3184:0.005208333333)Node24-3184:0.046875)Node14-3184;",
+      "tree": "(Germline-3184:0,(GN5SHBT04DZF3V:0,(GN5SHBT05I2VIN:0,(GN5SHBT08IJ1Y7:0.002604166667,((GN5SHBT02CU09E:0.002604166667,(GN5SHBT01BNZJF:0.002604166667,GN5SHBT07I1OUI:0.002604166667)Node25-3184:0)Node15-3184:0,((GN5SHBT02EG426:0.005208333333,GN5SHBT03EGV9V:0.002604166667)Node24-3184:0.002604166667,(GN5SHBT05GXVL8:0.002604166667,(GN5SHBT02BRPBC:0.002604166667,(GN5SHBT05HFFVW:0.002604166667,GN5SHBT06IJXOI:0)Node23-3184:0)Node22-3184:0)Node21-3184:0)Node20-3184:0)Node16-3184:0)Node17-3184:0.002604166667)Node18-3184:0.002604166667)Node19-3184:0.05208333333)Node14-3184;",
       "inferred_ancestor": "Germline-3184",
       "nodes": [
         {
           "info": {
             "tipdata": {
-              "sequence_id": "GN5SHBT02EG426",
-              "c_call": "IGHG3",
+              "sequence_id": "GN5SHBT03EGV9V",
+              "c_call": "IGHG1",
               "collapse_count": 1,
               "tip_order": 1
-            }
+            },
+            "divergence": 0.0625
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
-          "node_id": "GN5SHBT02EG426",
-          "sequence_id": "GN5SHBT02EG426",
+          "node_id": "GN5SHBT03EGV9V",
+          "sequence_id": "GN5SHBT03EGV9V",
           "number": 1,
-          "parent": 22,
+          "parent": 24,
           "children": []
         },
         {
           "info": {
             "tipdata": {
-              "sequence_id": "GN5SHBT08IJ1Y7",
-              "c_call": "IGHG4",
+              "sequence_id": "GN5SHBT02BRPBC",
+              "c_call": "IGHG2",
               "collapse_count": 1,
               "tip_order": 2
-            }
+            },
+            "divergence": 0.0598958333333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
-          "node_id": "GN5SHBT08IJ1Y7",
-          "sequence_id": "GN5SHBT08IJ1Y7",
+          "node_id": "GN5SHBT02BRPBC",
+          "sequence_id": "GN5SHBT02BRPBC",
           "number": 2,
-          "parent": 16,
+          "parent": 22,
           "children": []
         },
         {
@@ -489,7 +532,8 @@
               "c_call": "IGHG2",
               "collapse_count": 1,
               "tip_order": 3
-            }
+            },
+            "divergence": 0.0520833333333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
@@ -497,61 +541,26 @@
           "node_id": "GN5SHBT04DZF3V",
           "sequence_id": "GN5SHBT04DZF3V",
           "number": 3,
-          "parent": 23,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT05GXVL8",
-              "c_call": "IGHG2",
-              "collapse_count": 1,
-              "tip_order": 4
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT05GXVL8",
-          "sequence_id": "GN5SHBT05GXVL8",
-          "number": 4,
           "parent": 19,
           "children": []
         },
         {
           "info": {
             "tipdata": {
-              "sequence_id": "GN5SHBT05HFFVW",
-              "c_call": "IGHG1",
+              "sequence_id": "GN5SHBT01BNZJF",
+              "c_call": "IGHG4",
               "collapse_count": 1,
-              "tip_order": 5
-            }
+              "tip_order": 4
+            },
+            "divergence": 0.0598958333333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
-          "node_id": "GN5SHBT05HFFVW",
-          "sequence_id": "GN5SHBT05HFFVW",
-          "number": 5,
-          "parent": 21,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT02BRPBC",
-              "c_call": "IGHG2",
-              "collapse_count": 1,
-              "tip_order": 6
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT02BRPBC",
-          "sequence_id": "GN5SHBT02BRPBC",
-          "number": 6,
-          "parent": 21,
+          "node_id": "GN5SHBT01BNZJF",
+          "sequence_id": "GN5SHBT01BNZJF",
+          "number": 4,
+          "parent": 25,
           "children": []
         },
         {
@@ -560,15 +569,35 @@
               "sequence_id": "GN5SHBT05I2VIN",
               "c_call": "IGHG3",
               "collapse_count": 1,
-              "tip_order": 7
-            }
+              "tip_order": 5
+            },
+            "divergence": 0.0546875
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT05I2VIN",
           "sequence_id": "GN5SHBT05I2VIN",
-          "number": 7,
+          "number": 5,
+          "parent": 18,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT07I1OUI",
+              "c_call": "IGHG2",
+              "collapse_count": 1,
+              "tip_order": 6
+            },
+            "divergence": 0.0598958333333333
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT07I1OUI",
+          "sequence_id": "GN5SHBT07I1OUI",
+          "number": 6,
           "parent": 25,
           "children": []
         },
@@ -578,52 +607,17 @@
               "sequence_id": "GN5SHBT02CU09E",
               "c_call": "IGHG3",
               "collapse_count": 1,
-              "tip_order": 8
-            }
+              "tip_order": 7
+            },
+            "divergence": 0.0598958333333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT02CU09E",
           "sequence_id": "GN5SHBT02CU09E",
-          "number": 8,
-          "parent": 17,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT01BNZJF",
-              "c_call": "IGHG4",
-              "collapse_count": 1,
-              "tip_order": 9
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT01BNZJF",
-          "sequence_id": "GN5SHBT01BNZJF",
-          "number": 9,
-          "parent": 24,
-          "children": []
-        },
-        {
-          "info": {
-            "tipdata": {
-              "sequence_id": "GN5SHBT07I1OUI",
-              "c_call": "IGHG2",
-              "collapse_count": 1,
-              "tip_order": 10
-            }
-          },
-          "node_class": "Rearrangement",
-          "repertoire_id": "sample",
-          "node_type": "observed",
-          "node_id": "GN5SHBT07I1OUI",
-          "sequence_id": "GN5SHBT07I1OUI",
-          "number": 10,
-          "parent": 17,
+          "number": 7,
+          "parent": 15,
           "children": []
         },
         {
@@ -632,38 +626,99 @@
               "sequence_id": "GN5SHBT06IJXOI",
               "c_call": "IGHG1",
               "collapse_count": 1,
-              "tip_order": 11
-            }
+              "tip_order": 8
+            },
+            "divergence": 0.0572916666666667
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
           "node_id": "GN5SHBT06IJXOI",
           "sequence_id": "GN5SHBT06IJXOI",
-          "number": 11,
-          "parent": 20,
+          "number": 8,
+          "parent": 23,
           "children": []
         },
         {
           "info": {
             "tipdata": {
-              "sequence_id": "GN5SHBT03EGV9V",
-              "c_call": "IGHG1",
+              "sequence_id": "GN5SHBT08IJ1Y7",
+              "c_call": "IGHG4",
               "collapse_count": 1,
-              "tip_order": 12
-            }
+              "tip_order": 9
+            },
+            "divergence": 0.0598958333333333
           },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "observed",
-          "node_id": "GN5SHBT03EGV9V",
-          "sequence_id": "GN5SHBT03EGV9V",
-          "number": 12,
-          "parent": 22,
+          "node_id": "GN5SHBT08IJ1Y7",
+          "sequence_id": "GN5SHBT08IJ1Y7",
+          "number": 9,
+          "parent": 17,
           "children": []
         },
         {
-          "info": [],
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT05GXVL8",
+              "c_call": "IGHG2",
+              "collapse_count": 1,
+              "tip_order": 10
+            },
+            "divergence": 0.0598958333333333
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT05GXVL8",
+          "sequence_id": "GN5SHBT05GXVL8",
+          "number": 10,
+          "parent": 21,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT02EG426",
+              "c_call": "IGHG3",
+              "collapse_count": 1,
+              "tip_order": 11
+            },
+            "divergence": 0.0651041666666667
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT02EG426",
+          "sequence_id": "GN5SHBT02EG426",
+          "number": 11,
+          "parent": 24,
+          "children": []
+        },
+        {
+          "info": {
+            "tipdata": {
+              "sequence_id": "GN5SHBT05HFFVW",
+              "c_call": "IGHG1",
+              "collapse_count": 1,
+              "tip_order": 12
+            },
+            "divergence": 0.0598958333333333
+          },
+          "node_class": "Rearrangement",
+          "repertoire_id": "sample",
+          "node_type": "observed",
+          "node_id": "GN5SHBT05HFFVW",
+          "sequence_id": "GN5SHBT05HFFVW",
+          "number": 12,
+          "parent": 23,
+          "children": []
+        },
+        {
+          "info": {
+            "divergence": 0
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -674,7 +729,9 @@
           "children": []
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -682,76 +739,90 @@
           "node_id": "Node14-3184",
           "number": 14,
           "parent": [],
-          "children": [13, 24]
+          "children": [13, 19]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node15-3184",
           "node_id": "Node15-3184",
           "number": 15,
-          "parent": 25,
-          "children": [16, 18]
+          "parent": 16,
+          "children": [7, 25]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node16-3184",
           "node_id": "Node16-3184",
           "number": 16,
-          "parent": 15,
-          "children": [2, 17]
+          "parent": 17,
+          "children": [15, 20]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node17-3184",
           "node_id": "Node17-3184",
           "number": 17,
-          "parent": 16,
-          "children": [10, 8]
+          "parent": 18,
+          "children": [9, 16]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0546875
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node18-3184",
           "node_id": "Node18-3184",
           "number": 18,
-          "parent": 15,
-          "children": [22, 19]
+          "parent": 19,
+          "children": [5, 17]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0520833333333333
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node19-3184",
           "node_id": "Node19-3184",
           "number": 19,
-          "parent": 18,
-          "children": [4, 20]
+          "parent": 14,
+          "children": [3, 18]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node20-3184",
           "node_id": "Node20-3184",
           "number": 20,
-          "parent": 19,
-          "children": [11, 21]
+          "parent": 16,
+          "children": [24, 21]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
@@ -759,60 +830,68 @@
           "node_id": "Node21-3184",
           "number": 21,
           "parent": 20,
-          "children": [6, 5]
+          "children": [10, 22]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node22-3184",
           "node_id": "Node22-3184",
           "number": 22,
-          "parent": 18,
-          "children": [12, 1]
+          "parent": 21,
+          "children": [2, 23]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node23-3184",
           "node_id": "Node23-3184",
           "number": 23,
-          "parent": 24,
-          "children": [3, 25]
+          "parent": 22,
+          "children": [12, 8]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0598958333333333
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node24-3184",
           "node_id": "Node24-3184",
           "number": 24,
-          "parent": 14,
-          "children": [9, 23]
+          "parent": 20,
+          "children": [11, 1]
         },
         {
-          "info": [],
+          "info": {
+            "divergence": 0.0572916666666667
+          },
           "node_class": "Rearrangement",
           "repertoire_id": "sample",
           "node_type": "inferred",
           "sequence_id": "Node25-3184",
           "node_id": "Node25-3184",
           "number": 25,
-          "parent": 23,
-          "children": [7, 15]
+          "parent": 15,
+          "children": [4, 6]
         }
       ]
     }
   ],
   "Rearrangement": [
     {
-      "sequence_id": "GN5SHBT03CD0X0",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGTCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGTCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence_id": "GN5SHBT05JRVYI",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAGTTCGCCGCGTCTGTGAAG...GGCAGATTCACCATCTCAAGAGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAAAGCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCATTGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAGTTCGCCGCGTCTGTGAAGGGCAGATTCACCATCTCAAGAGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAAAGCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCATTGTGTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -829,9 +908,9 @@
       "rearrangement_type": "observed"
     },
     {
-      "sequence_id": "GN5SHBT05JRVYI",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAGTTCGCCGCGTCTGTGAAG...GGCAGATTCACCATCTCAAGAGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAAAGCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCATTGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAGTTCGCCGCGTCTGTGAAGGGCAGATTCACCATCTCAAGAGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAAAGCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCATTGTGTCCTCAGNN",
+      "sequence_id": "GN5SHBT03CD0X0",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGTCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGTCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -867,47 +946,28 @@
       "rearrangement_type": "observed"
     },
     {
+      "sequence_id": "GN5SHBT08H09N9",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
       "sequence_id": "GN5SHBT05JBJ6C",
       "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAGTTCGCCGCGTCTGTGAAG...GGCAGATTCACCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
       "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAGTTCGCCGCGTCTGTGAAGGGCAGATTCACCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT06HRA91",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATACGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCGAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATACGCCGCGTCTGTGCAGGGCAGATTCTCCATCTCGAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT03D53SO",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCCGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCCGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -943,9 +1003,9 @@
       "rearrangement_type": "observed"
     },
     {
-      "sequence_id": "GN5SHBT04BVB8W",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGNTTCATTAGAAGCAAAACTNNTCGGTGGACAGCAGAATTCGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGNTTCATTAGAAGCAAAACTNNTCGGTGGACAGCAGAATTCGCCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence_id": "GN5SHBT02D1O6O",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAACTTCCGGGTACAACTTT............GCTGGATATGCTGTGACCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGAGGGACAGCAGAGCTCGCCGCGTCTGTGAAG...GGCAGATTCACCATCTCAAGAGATGATTTCACAAGCATCGCCTATCTGCAAATGAACGACCTGAAAACCGAAGACACAGGCGTATATTTTTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAACTTCCGGGTACAACTTTGCTGGATATGCTGTGACCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGAGGGACAGCAGAGCTCGCCGCGTCTGTGAAGGGCAGATTCACCATCTCAAGAGATGATTTCACAAGCATCGCCTATCTGCAAATGAACGACCTGAAAACCGAAGACACAGGCGTATATTTTTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1000,47 +1060,66 @@
       "rearrangement_type": "observed"
     },
     {
-      "sequence_id": "GN5SHBT02D1O6O",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAACTTCCGGGTACAACTTT............GCTGGATATGCTGTGACCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGAGGGACAGCAGAGCTCGCCGCGTCTGTGAAG...GGCAGATTCACCATCTCAAGAGATGATTTCACAAGCATCGCCTATCTGCAAATGAACGACCTGAAAACCGAAGACACAGGCGTATATTTTTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAACTTCCGGGTACAACTTTGCTGGATATGCTGTGACCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGAGGGACAGCAGAGCTCGCCGCGTCTGTGAAGGGCAGATTCACCATCTCAAGAGATGATTTCACAAGCATCGCCTATCTGCAAATGAACGACCTGAAAACCGAAGACACAGGCGTATATTTTTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT08H09N9",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
       "sequence_id": "GN5SHBT01C1K1O",
       "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGAAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
       "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCTGTGAAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT03D53SO",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCCGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATTCGCCGCGTCCGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT06HRA91",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATACGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCGAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGTTTCATTAGAAGCAAAACTTTCGGTGGGACAGCAGAATACGCCGCGTCTGTGCAGGGCAGATTCTCCATCTCGAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT04BVB8W",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTT............GCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGNTTCATTAGAAGCAAAACTNNTCGGTGGACAGCAGAATTCGCCGCGTCTGTGCAG...GGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGATACAGCCAGGGCGGTCCCTCAGACTCTCCTGTACAGCTTCCGGGTTCAACTTTGCTGGTTATGCTGTGACCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGATAGGNTTCATTAGAAGCAAAACTNNTCGGTGGACAGCAGAATTCGCCGCGTCTGTGCAGGGCAGATTCTCCATCTCAAGGGATGATTTCAGAAGCATCGCCTATCTGCAAATGAATGACCTGAAGACCGAAGACACAGCCGTATATTTCTGTAGTAGAGATCTCGCGGTTAGTTCCACAGTTGCTGGGACTAATTGGTTCGACCCCCGGGGCCAGGGAACCCGGGTCACCGTGTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1323,85 +1402,9 @@
       "rearrangement_type": "inferred"
     },
     {
-      "sequence_id": "GN5SHBT02EG426",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCGTGGGGG...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCGTGGGGGGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT08IJ1Y7",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGNNNTACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGNNNTACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT04DZF3V",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCAAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCAAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT05GXVL8",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTTGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTTGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT05HFFVW",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCCGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCCGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence_id": "GN5SHBT03EGV9V",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGAG...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGAGGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1437,28 +1440,9 @@
       "rearrangement_type": "observed"
     },
     {
-      "sequence_id": "GN5SHBT05I2VIN",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "observed"
-    },
-    {
-      "sequence_id": "GN5SHBT02CU09E",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence_id": "GN5SHBT04DZF3V",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCAAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCAAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1494,9 +1478,47 @@
       "rearrangement_type": "observed"
     },
     {
+      "sequence_id": "GN5SHBT05I2VIN",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
       "sequence_id": "GN5SHBT07I1OUI",
       "sequence_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "sequence": "GAGGTGCAGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT02CU09E",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GGCTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGGCTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1532,9 +1554,66 @@
       "rearrangement_type": "observed"
     },
     {
-      "sequence_id": "GN5SHBT03EGV9V",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGAG...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGAGGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence_id": "GN5SHBT08IJ1Y7",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGNNNTACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGNNNTACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT05GXVL8",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTTGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTTGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT02EG426",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCGTGGGGG...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCGTGGGGGGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "observed"
+    },
+    {
+      "sequence_id": "GN5SHBT05HFFVW",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCCGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCCGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1647,8 +1726,8 @@
     },
     {
       "sequence_id": "Node18-3184",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1666,8 +1745,8 @@
     },
     {
       "sequence_id": "Node19-3184",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCAAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCAAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
@@ -1723,6 +1802,44 @@
     },
     {
       "sequence_id": "Node22-3184",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "inferred"
+    },
+    {
+      "sequence_id": "Node23-3184",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
+      "locus": "N",
+      "rev_comp": null,
+      "productive": null,
+      "v_call": null,
+      "d_call": null,
+      "j_call": null,
+      "junction": null,
+      "junction_aa": null,
+      "junction_length": null,
+      "v_cigar": null,
+      "d_cigar": null,
+      "j_cigar": null,
+      "rearrangement_type": "inferred"
+    },
+    {
+      "sequence_id": "Node24-3184",
       "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGG...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGGGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
@@ -1741,47 +1858,9 @@
       "rearrangement_type": "inferred"
     },
     {
-      "sequence_id": "Node23-3184",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCRAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCRAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "inferred"
-    },
-    {
-      "sequence_id": "Node24-3184",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAKCTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCRAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAKCTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCRAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
-      "locus": "N",
-      "rev_comp": null,
-      "productive": null,
-      "v_call": null,
-      "d_call": null,
-      "j_call": null,
-      "junction": null,
-      "junction_aa": null,
-      "junction_length": null,
-      "v_cigar": null,
-      "d_cigar": null,
-      "j_cigar": null,
-      "rearrangement_type": "inferred"
-    },
-    {
       "sequence_id": "Node25-3184",
-      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
-      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAATTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence_alignment": "GAGGTGCGGCTGGTGGAGTCTGGGGGA...GACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTT............GGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAA...GGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
+      "sequence": "GAGGTGCGGCTGGTGGAGTCTGGGGGAGACTTGGTCCAGCCAGGGCGGTCTCTGAGACTCTCCTGTACAGCTTCTGGATTCGCCTTTGGTGATTATGCTGTGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAACTTTTTGGTGGGACAGCAGAGTACGCCGCGTCAGTGAAAGGCAGATTCACCATCTCAAGAGAAGATTCCGAAAGCATCGCCTATCTGCAAATGAATAGCCTGAAAACCGAGGACACAGGCGTGTATCACTGTAGTAGAGATCTTCGGGTTAGTTCCACAGTAGCTGGCACTAACTGGTTCGACCCCCGGGGCCAGGGAGCCCTGGTCATCGTCTCCTCAGNN",
       "germline_alignment": "GAGGTGCAGCTGGTGGAGTCTGGGGGA...GGCTTGGTACAGCCAGGGCGGTCCCTGAGACTCTCCTGTACAGCTTCTGGATTCACCTTT............GGTGATTATGCTATGAGCTGGTTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTAGGTTTCATTAGAAGCAAAGCTTATGGTGGGACAACAGAATACGCCGCGTCTGTGAAA...GGCAGATTCACCATCTCAAGAGATGATTCCAAAAGCATCGCCTATCTGCAAATGAACAGCCTGAAAACCGAGGACACAGCCGTGTATTACTGTACTAGAGANNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAACTGGTTCGACCCCTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGNN",
       "locus": "N",
       "rev_comp": null,
