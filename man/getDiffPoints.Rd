@@ -13,7 +13,7 @@ getDiffPoints(
   tip_traits = NULL,
   eo_adjust = FALSE,
   eo_type = NULL,
-  full_posterior = TRUE,
+  full_posterior = FALSE,
   summarize = TRUE,
   nproc = 1
 )
