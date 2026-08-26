@@ -50,11 +50,28 @@ clone_id = clone id for that tree
 tip = tip name
 tip_tip = trait value for that tip
 tip_height = height value for that tip
-diff_node = most recent ancestor node with different trait value, or root
+parent_node = most recent ancestor node with different trait value, or root
+parent_type = type of parent_node, will be "root" if at root node
+parent_height = height of parent_node 
+child_node = most recent ancestor node before parent_node, or root
+child_type = type of child_node, will be "root" if at root node
+child_height = height of child_node 
 root = 1 if at root node, 0 otherwise
-node_type = type of diff_node, will be "root" if at root node
-node_height = height of diff_node 
-<other columns> copied over from airrClone object for each tip
+#' <other columns> copied over from airrClone object for each tip
+
+if summarize=TRUE, parent_node and child_node will not be available
+instead:
+tip_type = type of tip
+parent_type = type of parent at different node
+samples = number of samples using this tip, tip_type, parent_type
+tip_height = height of tip           
+parent_height_mean = mean of parent_height
+parent_height_95HPDlo = lower 95% HPD interval of parent_height
+parent_height_95HPDup = upper 95% HPD interval of parent_height
+child_height_mean = mean of parent_height     
+child_height_95HPDlo = lower 95% HPD interval of parent_height  
+child_height_95HPDup = upper 95% HPD interval of parent_height  
+root_freq = frequency at which root == 1
 }
 \examples{
 

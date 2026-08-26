@@ -1714,6 +1714,7 @@ getHeightsAndLengths = function(tree){
 #' @param verbose  print out run info
 #' @param eo_adjust adjust heights using expectOccupancies (recommended, requires eo_type)
 #' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
+#' 
 #' @export
 getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
   eo_adjust=FALSE, eo_type=NULL){
@@ -1724,8 +1725,12 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
     print(edge)
   }
   if(length(edge) == 0){
-    return(dplyr::tibble(diff_node=targetnode, root=1, node_type=type, 
-      node_height=as.numeric(filter(tree@data, !!rlang::sym("node")==targetnode)[[height]])))
+    return(dplyr::tibble(parent_node=targetnode, parent_type=type, 
+      parent_height=as.numeric(filter(tree@data, !!rlang::sym("node")==targetnode)[[height]]),
+      child_node=targetnode, child_type=type, 
+      child_height=as.numeric(filter(tree@data, !!rlang::sym("node")==targetnode)[[height]]),
+      root=1
+      ))
   }
   if(!is.null(nrow(edge))){
     stop("weird")
@@ -1733,6 +1738,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
   parent <- as.character(edge[1])
   parent_type <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[trait]]
   parent_height <- as.numeric(dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[height]])
+  child_height <- as.numeric(dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)[[height]])
   if(parent_type == type){
     return(getDiffPoint(tree=tree, targetnode=parent, trait=trait, 
       height=height, verbose=verbose, eo_adjust=eo_adjust, eo_type=eo_type))
@@ -1740,16 +1746,25 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
     if(eo_adjust){
       child <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)
       if(type == eo_type){
-        adjust <- (1-as.numeric(child$expectedOccupancies)) * 
+        parent_height <- parent_height - 
+          (1-as.numeric(child$expectedOccupancies)) * 
+          as.numeric(child$length)
+        child_height <- child_height + 
+          (as.numeric(child$expectedOccupancies)) * 
           as.numeric(child$length)
       }else{ # if parent is EO type (i.e. tip is not, assumes only 2 types)
-        adjust <- as.numeric(child$expectedOccupancies) * 
+        parent_height <- parent_height - 
+          as.numeric(child$expectedOccupancies) * 
+          as.numeric(child$length)
+        child_height <- child_height + 
+          (1-as.numeric(child$expectedOccupancies)) * 
           as.numeric(child$length)
       }
-      parent_height <- as.numeric(parent_height) - adjust
     }
-    return(dplyr::tibble(diff_node=parent, root=0, node_type=parent_type, 
-      node_height=parent_height))
+    return(dplyr::tibble(parent_node=parent, 
+      parent_type=parent_type, parent_height=parent_height,
+      child_type=type, child_height=child_height, child_node=targetnode,
+      root=0))
   }
 }
 
@@ -1775,11 +1790,28 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 #' tip = tip name
 #' tip_tip = trait value for that tip
 #' tip_height = height value for that tip
-#' diff_node = most recent ancestor node with different trait value, or root
+#' parent_node = most recent ancestor node with different trait value, or root
+#' parent_type = type of parent_node, will be "root" if at root node
+#' parent_height = height of parent_node 
+#' child_node = most recent ancestor node before parent_node, or root
+#' child_type = type of child_node, will be "root" if at root node
+#' child_height = height of child_node 
 #' root = 1 if at root node, 0 otherwise
-#' node_type = type of diff_node, will be "root" if at root node
-#' node_height = height of diff_node 
-#' <other columns> copied over from airrClone object for each tip
+#' #' <other columns> copied over from airrClone object for each tip
+#' 
+#' if summarize=TRUE, parent_node and child_node will not be available
+#' instead:
+#' tip_type = type of tip
+#' parent_type = type of parent at different node
+#' samples = number of samples using this tip, tip_type, parent_type
+#' tip_height = height of tip           
+#' parent_height_mean = mean of parent_height
+#' parent_height_95HPDlo = lower 95% HPD interval of parent_height
+#' parent_height_95HPDup = upper 95% HPD interval of parent_height
+#' child_height_mean = mean of parent_height     
+#' child_height_95HPDlo = lower 95% HPD interval of parent_height  
+#' child_height_95HPDup = upper 95% HPD interval of parent_height  
+#' root_freq = frequency at which root == 1            
 #' 
 #' @examples
 #' 
@@ -1790,8 +1822,7 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
 getDiffPoints = function(data, trait, height="height", verbose=FALSE,
   tip_traits=NULL, eo_adjust=FALSE, eo_type=NULL, full_posterior=FALSE,
   summarize=TRUE, nproc=1){
-  #results <- dplyr::tibble()
-  #for(row in 1:nrow(data)){
+  
   results_list <- parallel::mclapply(1:nrow(data),function(x){
     if(verbose)print(data$clone_id[x])
     trees <- data$trees[[x]]
@@ -1816,7 +1847,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
         #}
         d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
           which(tree@phylo$tip.label == l))
-        df <- getDiffPoint(tree, targetnode=which(tree@phylo$tip.label == l), 
+        df <- getDiffPoint(tree, targetnode=as.character(which(tree@phylo$tip.label == l)), 
           trait=trait, height=height, verbose=FALSE, eo_adjust=eo_adjust,
           eo_type=eo_type)
         temp <- dplyr::tibble(clone_id=data$clone_id[x], tip=l, 
@@ -1825,7 +1856,8 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
         treecounter <- treecounter + 1
       }
     }
-    diffpoints$node_height <- as.numeric(diffpoints$node_height)
+    diffpoints$parent_height <- as.numeric(diffpoints$parent_height)
+    diffpoints$child_height <- as.numeric(diffpoints$child_height)
     diffpoints$tip_height <- as.numeric(diffpoints$tip_height)
 
     getHPD = function(x){
@@ -1839,14 +1871,17 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
     
     if(summarize & length(trees) > 1){
       diffpoints <- diffpoints %>%
-        group_by(!!rlang::sym("tip"), !!rlang::sym("tip_type"), !!rlang::sym("node_type")) %>%
+        group_by(!!rlang::sym("tip"), !!rlang::sym("tip_type"), !!rlang::sym("parent_type")) %>%
         summarize(
           samples = n(),
-          tip_tip = unique(!!rlang::sym("tip_type")),
+          tip_type = unique(!!rlang::sym("tip_type")),
           tip_height = mean(!!rlang::sym("tip_height")),
-          node_height_mean = mean(!!rlang::sym("node_height")),
-          node_height_95HPDlo = getHPD(!!rlang::sym("node_height"))[1],
-          node_height_95HPDup = getHPD(!!rlang::sym("node_height"))[2],
+          parent_height_mean = mean(!!rlang::sym("parent_height")),
+          parent_height_95HPDlo = getHPD(!!rlang::sym("parent_height"))[1],
+          parent_height_95HPDup = getHPD(!!rlang::sym("parent_height"))[2],
+          child_height_mean = mean(!!rlang::sym("child_height")),
+          child_height_95HPDlo = getHPD(!!rlang::sym("child_height"))[1],
+          child_height_95HPDup = getHPD(!!rlang::sym("child_height"))[2],
           root_freq = mean(!!rlang::sym("root")),
           .groups = "drop_last"
           )
