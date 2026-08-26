@@ -1683,7 +1683,7 @@ getSkylines <- function(clones, time, bins=100, verbose=0, forward=TRUE,
 
 #' Add height and length columns to a tree@data data frame
 #' @param  tree    a treedata objects from read.beast
-# @export
+#' @export
 getHeightsAndLengths = function(tree){
   phylo <- tree@phylo
   uca <- ape::getMRCA(phylo, tip=phylo$tip.label)
@@ -1714,7 +1714,7 @@ getHeightsAndLengths = function(tree){
 #' @param verbose  print out run info
 #' @param eo_adjust adjust heights using expectOccupancies (recommended, requires eo_type)
 #' @param eo_type  if eo_adjust, trait value described by expectedOccupancies (typically state 1 of 2)
-# @export
+#' @export
 getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
   eo_adjust=FALSE, eo_type=NULL){
   type <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)[[trait]]
@@ -1734,7 +1734,8 @@ getDiffPoint = function(tree, targetnode, trait, height="height", verbose=FALSE,
   parent_type <- dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[trait]]
   parent_height <- as.numeric(dplyr::filter(tree@data, !!rlang::sym("node")==parent)[[height]])
   if(parent_type == type){
-    return(getDiffPoint(tree, parent, trait, height, verbose, eo_adjust, eo_type))
+    return(getDiffPoint(tree=tree, targetnode=parent, trait=trait, 
+      height=height, verbose=verbose, eo_adjust=eo_adjust, eo_type=eo_type))
   }else{
     if(eo_adjust){
       child <- dplyr::filter(tree@data, !!rlang::sym("node")==targetnode)
@@ -1815,7 +1816,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
         #}
         d <- dplyr::filter(tree@data, !!rlang::sym("node") == 
           which(tree@phylo$tip.label == l))
-        df <- getDiffPoint(tree, which(tree@phylo$tip.label == l), 
+        df <- getDiffPoint(tree, targetnode=which(tree@phylo$tip.label == l), 
           trait=trait, height=height, verbose=FALSE, eo_adjust=eo_adjust,
           eo_type=eo_type)
         temp <- dplyr::tibble(clone_id=data$clone_id[x], tip=l, 
@@ -1826,17 +1827,26 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
     }
     diffpoints$node_height <- as.numeric(diffpoints$node_height)
     diffpoints$tip_height <- as.numeric(diffpoints$tip_height)
+
+    getHPD = function(x){
+      if(length(x) == 1){
+        warning("Singular value in HPD calculation")
+        return(c(x,x))
+      }else{
+        return(coda::HPDinterval(coda::as.mcmc(x), prob = 0.95))
+      }
+    }
     
     if(summarize & length(trees) > 1){
       diffpoints <- diffpoints %>%
         group_by(!!rlang::sym("tip"), !!rlang::sym("tip_type"), !!rlang::sym("node_type")) %>%
         summarize(
-          trees = n(),
+          samples = n(),
           tip_tip = unique(!!rlang::sym("tip_type")),
           tip_height = mean(!!rlang::sym("tip_height")),
           node_height_mean = mean(!!rlang::sym("node_height")),
-          node_height_95HPDlo = coda::HPDinterval(coda::as.mcmc(!!rlang::sym("node_height")), prob = 0.95)[1],
-          node_height_95HPDup = coda::HPDinterval(coda::as.mcmc(!!rlang::sym("node_height")), prob = 0.95)[2],
+          node_height_95HPDlo = getHPD(!!rlang::sym("node_height"))[1],
+          node_height_95HPDup = getHPD(!!rlang::sym("node_height"))[2],
           root_freq = mean(!!rlang::sym("root")),
           .groups = "drop_last"
           )
