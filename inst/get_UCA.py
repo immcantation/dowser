@@ -448,7 +448,9 @@ def process_row(row):
             with open(base_string + "/UCA.txt", "w") as f:
                 f.write(new_germline + "\n")
             with open(base_string + "/UCA_lhoods.txt", "w") as f:
-                f.write(str(new_lhoods) + "\n")
+                # different numpy versions write out differently 
+                # float(x) always writes a bare number regardless of numpy version.
+                f.write(str([float(x) for x in new_lhoods]) + "\n")
             data.to_csv(base_string + "/UCA_data.csv", index=False)
             iteration_df.to_csv(base_string + "/recombination_stats.csv", index=False)
             pwm.to_csv(base_string + "/logo_plot_pwm.csv", index=False) 
@@ -457,7 +459,7 @@ def process_row(row):
             with open(base_string + "/UCA_light.txt", "w") as f:
                 f.write(new_germline + "\n")
             with open(base_string + "/UCA_lhoods_light.txt", "w") as f:
-                f.write(str(new_lhoods) + "\n")
+                f.write(str([float(x) for x in new_lhoods]) + "\n")
             data.to_csv(base_string + "/UCA_data_light.csv", index=False)
             iteration_df.to_csv(base_string + "/recombination_stats_light.csv", index=False)
             pwm.to_csv(base_string + "/logo_plot_pwm_light.csv", index=False) 
@@ -631,7 +633,9 @@ if __name__ == '__main__':
                     with open(base_string + "/UCA.txt", "w") as f:
                         f.write(new_germline + "\n")
                     with open(base_string + "/UCA_lhoods.txt", "w") as f:
-                        f.write(str(new_lhoods) + "\n")
+                        # different numpy versions write out differently 
+                        # float(x) always writes a bare number regardless of numpy version.
+                        f.write(str([float(x) for x in new_lhoods]) + "\n")
                     data.to_csv(base_string + "/UCA_data.csv", index=False)
                     iteration_df.to_csv(base_string + "/recombination_stats.csv", index=False)
                     pwm.to_csv(base_string + "/logo_plot_pwm.csv", index=False)
@@ -641,7 +645,7 @@ if __name__ == '__main__':
                     with open(base_string + "/UCA_light.txt", "w") as f:
                         f.write(new_germline + "\n")
                     with open(base_string + "/UCA_lhoods_light.txt", "w") as f:
-                        f.write(str(new_lhoods) + "\n")
+                        f.write(str([float(x) for x in new_lhoods]) + "\n")
                     data.to_csv(base_string + "/UCA_data_light.csv", index=False)
                     iteration_df.to_csv(base_string + "/recombination_stats_light.csv", index=False)
                     pwm.to_csv(base_string + "/logo_plot_pwm_light.csv", index=False)
