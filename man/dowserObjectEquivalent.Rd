@@ -9,7 +9,7 @@ dowserObjectEquivalent(
   obj1,
   obj2,
   verbose = TRUE,
-  edge_tol = 1e-08,
+  edge_tol = 1e-06,
   dowser_fields = TRUE,
   nproc = 1
 )

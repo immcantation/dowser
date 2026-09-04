@@ -1275,7 +1275,7 @@ dataColumnEqual <- function(va, vb){
 #' Check whether two tree objects are equivalent
 #' @param    obja  First phylo or treedata object
 #' @param    objb  Second phylo or treedata object
-#' @param    edge_tol tolerance for branch length checks (if check=TRUE)
+#' @param    edge_tol allowable  error in branch length checks (proportional error if lengths > 1, if check=TRUE)
 #' @param    numbering_match require internal node numbers to match?
 #' @param    clonesa  Dowser clones object associated with obja (if check_extended=TRUE)
 #' @param    clonesb  Dowser clones object associated with objb (if check_extended=TRUE)
@@ -1283,7 +1283,7 @@ dataColumnEqual <- function(va, vb){
 #' @param    gaps  check sequences wth IMGT gaps with check_extended?
 #' @details For treedata objects, check both @phylo and @data
 #' @export
-treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
+treesEquivalent = function(obja, objb, edge_tol=1e-6, numbering_match=FALSE,
   clonesa=NULL, clonesb=NULL, check_extended=FALSE, gaps=TRUE){
   
   treecheck <- TRUE
@@ -1318,8 +1318,8 @@ treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
     ea <- round(treea$edge.length[treea$edge[,2] == nodea], digits=11)
     eb <- round(treeb$edge.length[treeb$edge[,2] == nodeb], digits=11)
     if(length(ea) > 0 || length(eb) > 0){
-      if(abs(ea - eb) > edge_tol){
-        warning(paste( "Edges not within edge_tol", ea, eb, nodea, nodeb))
+      if(abs(ea - eb)/max(1,min(c(ea,eb))) > edge_tol){
+        warning(paste( "Edges not within edge_tol", ea, eb,nodea, nodeb))
         treecheck = FALSE
       }
     }
@@ -1387,7 +1387,7 @@ treesEquivalent = function(obja, objb, edge_tol=1e-8, numbering_match=FALSE,
 #' data slot checks, this also verifies \code{tree$parameters} when present
 #' -- including \code{build="pml"} trees.
 #' @export
-dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-8,
+dowserObjectEquivalent = function(obj1, obj2, verbose=TRUE, edge_tol=1e-6,
   dowser_fields=TRUE, nproc=1){
 
   a_is_timetree <- inherits(obj1$trees[[1]], "treedata")

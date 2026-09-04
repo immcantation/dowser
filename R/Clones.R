@@ -1851,8 +1851,8 @@ filterCombs = function(data, dup_count_thresh=100, exponent=1,
   allbc <- dplyr::tibble()
   bseqs <- data[data[[duplicate]] >= dup_count_thresh,][[id]]
   rmseqs <- c()
-  for(sequence in bseqs){
-    temp <- dplyr::filter(data, !!rlang::sym("sequence_id")==sequence)
+  for(this_seq in bseqs){
+    temp <- dplyr::filter(data, !!rlang::sym("sequence_id")==this_seq)
     if(nrow(temp) == 0){ #if sequence has already been filtered
       next;
     }

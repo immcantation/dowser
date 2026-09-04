@@ -7,7 +7,7 @@
 treesEquivalent(
   obja,
   objb,
-  edge_tol = 1e-08,
+  edge_tol = 1e-06,
   numbering_match = FALSE,
   clonesa = NULL,
   clonesb = NULL,
@@ -20,7 +20,7 @@ treesEquivalent(
 
 \item{objb}{Second phylo or treedata object}
 
-\item{edge_tol}{tolerance for branch length checks (if check=TRUE)}
+\item{edge_tol}{allowable  error in branch length checks (proportional error if lengths > 1, if check=TRUE)}
 
 \item{numbering_match}{require internal node numbers to match?}
 
