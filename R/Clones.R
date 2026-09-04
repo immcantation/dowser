@@ -1859,7 +1859,7 @@ filterCombs = function(data, dup_count_thresh=100, exponent=1,
     maxs <- temp[[seq]]
     # other seqs in clone
     bc <- dplyr::filter(data, !!rlang::sym("clone_id") == temp[[clone]] & 
-      !!rlang::sym("sequence_id") != seq)
+      !!rlang::sym("sequence_id") != id)
     if(nrow(bc) == 0){
       next;
     }
