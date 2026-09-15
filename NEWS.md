@@ -1,4 +1,10 @@
-Version 2.5.0 August 10, 2026
+Version 2.5.2 September 15, 2026
+-------------------------------------------------------------------------------
++ Fix error from rmarkdown update
++ Removed vignettes from CRAN versions, now redirect to readthedocs.
++ Minor bug fixes
+
+Version 2.5.1 August 10, 2026
 -------------------------------------------------------------------------------
 
 + Fix due to phangorn changes
