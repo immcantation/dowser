@@ -1059,7 +1059,14 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
 
   for (var in template_variables) {
     if (!var %in% names(kwargs)) {
-      stop(paste("Variable", var, "not provided but is required by the template."))
+      msg <- paste("Variable", var, "not provided but is required by the template.")
+      hint <- .templateVarLookup(xml, var)
+      if (!is.null(hint) && nchar(hint) > 0) {
+        msg <- paste0(msg, " (", hint, ")")
+      } else {
+        msg <- paste0(msg, " Run describeTemplate() on this template file for a full list of what it needs.")
+      }
+      stop(msg)
     }
     if (var %in% replacements) {
       next # skip replacements, they are handled later
@@ -1070,6 +1077,9 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
     # replace the ${VAR} placeholder with the value from kwargs
     xml <- gsub(paste0("\\$\\{", var, "\\}"), value, xml)
   }
+
+  # strip out any template info comments from the xml as they are not useful in the final xml file, but do it before replacements since those are often large and we want to keep string operations involving them to a minimum
+  xml <- .stripTemplateInfo(xml)
 
   # this is useful for e.g. GIBLE templates where we want to replace some variables later than others
   if (!is.null(replacements)) {
@@ -1918,6 +1928,357 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
   return(results)
 }
 
+
+#' Parse a dowser-template-info comment block out of a template's raw lines
+#'
+#' @param    xml   character vector, one element per line (as from
+#'                  \code{readLines})
+#' @return   a list with \code{$vars} (named list, each element a list with
+#'           \code{tier} and \code{description}), \code{$structs} (named
+#'           list of free-text notes), \code{$description} (character
+#'           scalar, or NULL if no \code{@description} entry was found), and
+#'           \code{$found} (logical)
+#' @keywords internal
+.parseTemplateInfo <- function(xml) {
+ 
+  empty <- list(vars = list(), structs = list(), description = NULL, found = FALSE)
+ 
+  start_idx <- grep("^\\s*<!--\\s*dowser-template-info\\s*$", xml)
+  if (length(start_idx) == 0) {
+    return(empty)
+  }
+  start_idx <- start_idx[1]
+ 
+  end_idx <- grep("^\\s*-->\\s*$", xml)
+  end_idx <- end_idx[end_idx > start_idx]
+  if (length(end_idx) == 0) {
+    warning("Found a dowser-template-info block with no closing '-->'; ignoring it.")
+    return(empty)
+  }
+  end_idx <- end_idx[1]
+ 
+  if (end_idx == start_idx + 1) {
+    return(list(vars = list(), structs = list(), description = NULL, found = TRUE)) # empty block
+  }
+  block <- xml[(start_idx + 1):(end_idx - 1)]
+ 
+  vars <- list()
+  structs <- list()
+  description <- NULL
+  last_entry <- NULL # list(type="var"|"struct"|"description", name=...)
+ 
+  var_pattern         <- "^\\s*@var\\s+(\\S+)\\s*\\|\\s*([^|]+?)\\s*\\|\\s*(.*)$"
+  struct_pattern      <- "^\\s*@struct\\s+(\\S+)\\s*\\|\\s*(.*)$"
+  description_pattern <- "^\\s*@description\\s*\\|\\s*(.*)$"
+ 
+  for (line in block) {
+    if (grepl("^\\s*$", line)) {
+      next # blank lines don't break a continuation, but add nothing either
+    }
+    if (grepl(var_pattern, line)) {
+      m <- regmatches(line, regexec(var_pattern, line))[[1]]
+      name <- m[2]
+      vars[[name]] <- list(tier = trimws(m[3]), description = trimws(m[4]))
+      last_entry <- list(type = "var", name = name)
+    } else if (grepl(struct_pattern, line)) {
+      m <- regmatches(line, regexec(struct_pattern, line))[[1]]
+      name <- m[2]
+      structs[[name]] <- trimws(m[3])
+      last_entry <- list(type = "struct", name = name)
+    } else if (grepl(description_pattern, line)) {
+      m <- regmatches(line, regexec(description_pattern, line))[[1]]
+      description <- trimws(m[2])
+      last_entry <- list(type = "description")
+    } else if (!is.null(last_entry)) {
+      extra <- trimws(line)
+      if (last_entry$type == "var") {
+        vars[[last_entry$name]]$description <-
+          paste(vars[[last_entry$name]]$description, extra)
+      } else if (last_entry$type == "struct") {
+        structs[[last_entry$name]] <- paste(structs[[last_entry$name]], extra)
+      } else {
+        description <- paste(description, extra)
+      }
+    }
+    # a malformed line with no prior entry to attach to is silently skipped;
+    # describeTemplate()'s "undocumented" reporting will surface the gap
+    # for any real ${VAR} that ends up with no parsed entry.
+  }
+ 
+  list(vars = vars, structs = structs, description = description, found = TRUE)
+}
+ 
+#' Look up a single variable's documentation, for use in error messages
+#'
+#' @param    xml   character vector of template lines
+#' @param    var   variable name (bare, no ${})
+#' @return   the description string, or NULL if undocumented/no block found
+#' @keywords internal
+.templateVarLookup <- function(xml, var) {
+  info <- .parseTemplateInfo(xml)
+  if (!is.null(info$vars[[var]])) {
+    info$vars[[var]]$description
+  } else {
+    NULL
+  }
+}
+ 
+#' Built-in checklist of Dowser-recognized structural template elements
+#'
+#' Unlike free-form \code{${VAR}}s, these elements' behavior is defined by
+#' Dowser's own substitution code (\code{write_clone_to_xml}), not by the
+#' template author -- so this checklist works on any template, annotated or
+#' not.
+#'
+#' @param    xml   character vector of template lines
+#' @return   a list of check results, each a list with \code{name},
+#'           \code{present} (logical), and \code{effect} (character)
+#' @keywords internal
+.structuralChecklist <- function(xml) {
+ 
+  has <- function(pattern) any(grepl(pattern, xml))
+ 
+  checks <- list(
+    list(
+      name = "<init> tag",
+      present = has("<init") && has("</init>"),
+      if_present = "Custom starting trees (the `tree` argument) are supported.",
+      if_absent  = "Passing `tree=` will error (\"Could not find <init> tag in the template file\"). Fine if you never supply a starting tree -- every shipped template has this tag."
+    ),
+    list(
+      name = "nodeTypes parameter (id='nodeTypes')",
+      present = has("id='nodeTypes'"),
+      if_present = "Starting trees with pre-specified type states (`tree_states=TRUE`) are supported.",
+      if_absent  = "`tree_states=TRUE` with a starting tree will error (\"Could not find nodeTypes parameter in the template file\"). None of the shipped xml-templates base files declare this -- add a `<parameter id='nodeTypes' .../>` node if you need it."
+    ),
+    list(
+      name = "GermlineRootTree",
+      present = has("GermlineRootTree"),
+      if_present = "Dowser will NOT add a germline TipDatesRandomWalker operator when `include_germline_as_tip=TRUE` -- this template's own GRT operators handle tip/root dating jointly (Dowser prints a warning noting the skip).",
+      if_absent  = "If `include_germline_as_tip=TRUE`, Dowser will add a TipDatesRandomWalker operator via the OPERATORS placeholder, if present (see below)."
+    ),
+    list(
+      name = "MRCA placeholder",
+      present = has("\\$\\{MRCA\\}"),
+      if_present = "`start_date`, `max_start_date`, and germline-tip MRCA priors (`include_germline_as_tip=TRUE`) will take effect.",
+      if_absent  = "`start_date`, `max_start_date`, and germline-tip MRCA priors (`include_germline_as_tip=TRUE`) will be silently ignored if supplied -- no error is raised, no MRCA prior is added."
+    ),
+    list(
+      name = "ROOTFREQS placeholder",
+      present = has("\\$\\{ROOTFREQS\\}"),
+      if_present = "`include_germline_as_root=TRUE` will take effect (root nucleotide frequencies enforced via the external rootfreqs package).",
+      if_absent  = "`include_germline_as_root=TRUE` will be silently ignored -- the germline will NOT be enforced as the root state."
+    ),
+    list(
+      name = "OPERATORS placeholder",
+      present = has("\\$\\{OPERATORS\\}"),
+      if_present = "A germline tip-dating operator can be added when `include_germline_as_tip=TRUE` (unless GermlineRootTree is present, see above).",
+      if_absent  = "No germline tip-dating operator will ever be added, even if `include_germline_as_tip=TRUE`."
+    ),
+    list(
+      name = "ROOT_TYPE_PROBABILITIES placeholder",
+      present = has("\\$\\{ROOT_TYPE_PROBABILITIES\\}"),
+      if_present = "`root_trait=` will take effect (root type pinned via a one-hot prior).",
+      if_absent  = "`root_trait=` will raise a warning and be ignored -- this is the one case in this checklist that warns rather than silently doing nothing."
+    ),
+    list(
+      name = "EMP_EQFREQS placeholder",
+      present = has("\\$\\{EMP_EQFREQS\\}"),
+      if_present = "Empirical per-clone nucleotide frequencies are computed from your sequence data at runtime.",
+      if_absent  = "Nucleotide frequencies come from whatever is already fixed or estimated in the template; nothing is computed from your data."
+    ),
+    list(
+      name = "DATE placeholder",
+      present = has("\\$\\{DATE\\}"),
+      if_present = "`time=` sample dates will be attached to tips. (If `time=` is NULL, this template will error.)",
+      if_absent  = "`time=` will be silently ignored if supplied -- no dates attached, no error."
+    ),
+    list(
+      name = "TRAIT / TRAIT_NAME placeholder",
+      present = has("\\$\\{TRAIT\\}"),
+      if_present = "`trait=` (with `trait_data_type=`) will be attached and reconstructed. If TRAIT_NAME is also present the trait column name is substituted directly; if only TRAIT is present, Dowser falls back to replacing tag=\"location\" (older-style templates). (If `trait=` is NULL, this template will error.)",
+      if_absent  = "`trait=` will be silently ignored if supplied -- no discrete trait reconstructed, no error."
+    ),
+    list(
+      name = "NODES placeholder",
+      present = has("\\$\\{NODES\\}"),
+      if_present = "Per-node parameter dimensioning for type-linked models (e.g. nodeTypes, expectedOccupancies) is filled in automatically.",
+      if_absent  = "Not used by this template -- expected for non-type-linked (StrictClock/UCLD) templates."
+    ),
+    list(
+      name = "NODES_TYPE_INIT placeholder",
+      present = has("\\$\\{NODES_TYPE_INIT\\}"),
+      if_present = "Initial internal-node type index at MCMC start can be set via the `NODES_TYPE_INIT` argument; defaults to 0 if omitted even when this placeholder is present.",
+      if_absent  = "Not used by this template."
+    )
+  )
+ 
+  checks
+}
+ 
+#' Describe an xml-templates file: what it needs and what it supports
+#'
+#' Reports every free-form \code{${VAR}} placeholder in a template, with
+#' descriptions pulled from an embedded \code{dowser-template-info} comment
+#' block if the template author provided one, plus a built-in checklist of
+#' structural elements Dowser recognizes (MRCA, ROOTFREQS, OPERATORS,
+#' ROOT_TYPE_PROBABILITIES, a \code{nodeTypes} parameter, and whether
+#' the template uses \code{GermlineRootTree}). The structural checklist
+#' works on any template, documented or not, since that behavior is defined
+#' by Dowser's own code rather than by the template author -- several of
+#' these are silent no-ops rather than errors when an argument is supplied
+#' but the template doesn't support it, which is exactly what this function
+#' is meant to catch before a long MCMC run rather than after. If the
+#' template's \code{dowser-template-info} block has an overall
+#' \code{@description} entry, that's printed first, before the structural
+#' checklist and variable list.
+#'
+#' @param    template   path to an xml-templates file
+#' @param    print      print a human-readable summary? Default TRUE. Set
+#'                       FALSE if you only want the returned object.
+#'
+#' @return   invisibly, a list with \code{$description} (character scalar,
+#'           or NULL if the template has no \code{@description}),
+#'           \code{$vars} (data.frame: name, tier, documented, description),
+#'           and \code{$structural} (data.frame: element, present, effect)
+#'
+#' @details
+#' See the xml-templates variant reference at https://tyche.readthedocs.io
+#' for the \code{dowser-template-info} format if you're documenting your own
+#' template.
+#'
+#' @examples
+#' \dontrun{
+#' describeTemplate("TypeLinked/TypeLinkedExpectedOccupancy_EstTraitClockRates_EmpFreq.xml")
+#' }
+#' @export
+describeTemplate <- function(template, print = TRUE) {
+ 
+  if (!file.exists(template)) {
+    stop(paste("Template file", template, "does not exist."))
+  }
+  xml <- readLines(template)
+ 
+  info <- .parseTemplateInfo(xml)
+  checklist <- .structuralChecklist(xml)
+ 
+  # every ${VAR} actually present, using the same regex the real
+  # substitution step (write_clone_to_xml) uses to find required variables
+  matches <- unlist(regmatches(xml, gregexpr("\\$\\{([^}]+)\\}", xml)))
+  found_vars <- unique(sub("\\$\\{([^}]+)\\}", "\\1", matches))
+ 
+  # Dowser-special placeholders aren't free-form kwargs -- drop them here,
+  # they're already covered by the structural checklist above.
+  special <- c("DATA", "CLONE", "DATE", "TRAIT", "TRAIT_NAME", "NODES", "MRCA",
+               "OPERATORS", "ROOTFREQS", "EMP_EQFREQS", "ROOT_TYPE_PROBABILITIES",
+               "NODES_TYPE_INIT")
+  free_vars <- sort(setdiff(found_vars, special))
+ 
+  get_field <- function(v, field, default) {
+    if (!is.null(info$vars[[v]])) info$vars[[v]][[field]] else default
+  }
+ 
+  vars_df <- data.frame(
+    name        = free_vars,
+    documented  = vapply(free_vars, function(v) !is.null(info$vars[[v]]), logical(1)),
+    tier        = vapply(free_vars, get_field, character(1), field = "tier", default = "undocumented"),
+    description = vapply(free_vars, get_field, character(1), field = "description", default = ""),
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+ 
+  struct_df <- data.frame(
+    element = vapply(checklist, function(x) x$name, character(1)),
+    present = vapply(checklist, function(x) x$present, logical(1)),
+    effect  = vapply(checklist, function(x) if (x$present) x$if_present else x$if_absent, character(1)),
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+  # append any author @struct notes for elements they chose to annotate
+  for (nm in names(info$structs)) {
+    idx <- which(vapply(struct_df$element, function(e) grepl(nm, e, fixed = TRUE), logical(1)))
+    if (length(idx) > 0) {
+      struct_df$effect[idx[1]] <- paste0(struct_df$effect[idx[1]], " Author note: ", info$structs[[nm]])
+    } else {
+      # note about something the checklist doesn't track by name (e.g. a
+      # non-Dowser-special XML element the author wants to flag) -- append
+      # as its own row rather than dropping it silently
+      struct_df <- rbind(struct_df, data.frame(
+        element = nm, present = NA, effect = paste("Author note:", info$structs[[nm]]),
+        stringsAsFactors = FALSE
+      ))
+    }
+  }
+ 
+  result <- list(description = info$description, vars = vars_df, structural = struct_df)
+ 
+  if (print) {
+    cat(basename(template), "\n\n")
+ 
+    if (!is.null(info$description) && nchar(info$description) > 0) {
+      cat(info$description, "\n\n")
+    } else {
+      cat("(no @description provided for this template)\n\n")
+    }
+ 
+    cat("Structural elements (built-in Dowser behavior):\n")
+    for (i in seq_len(nrow(struct_df))) {
+      status <- if (is.na(struct_df$present[i])) "[note]   "
+                else if (struct_df$present[i]) "[present]" else "[absent] "
+      cat(" ", status, struct_df$element[i], "-", struct_df$effect[i], "\n")
+    }
+    cat("\n")
+    n_doc <- sum(vars_df$documented)
+    n_var <- nrow(vars_df)
+    cat("Variables (", n_var, " found, ", n_doc, " documented):\n", sep = "")
+    for (i in seq_len(n_var)) {
+      tag  <- if (vars_df$documented[i]) vars_df$tier[i] else "UNDOCUMENTED"
+      desc <- if (vars_df$documented[i]) vars_df$description[i]
+              else "(no dowser-template-info entry for this variable)"
+      cat("  ", vars_df$name[i], " [", tag, "]  ", desc, "\n", sep = "")
+    }
+    if (n_var == 0) {
+      cat("  (no free-form variables found in this template)\n")
+    } else if (n_doc < n_var) {
+      cat("\n", n_var - n_doc, " of ", n_var,
+          " variables are undocumented in this template's dowser-template-info block.\n", sep = "")
+    } else {
+      cat("\nAll ", n_var, " variables are documented in this template's dowser-template-info block.\n", sep = "")
+    }
+  }
+ 
+  invisible(result)
+}
+
+#' Strip a dowser-template-info comment block out of the final output XML
+#'
+#' Called at the end of write_clone_to_xml(), after the doc block has
+#' already served its purpose (the missing-variable error hint). BEAST2
+#' would just ignore an XML comment anyway, so this isn't required for
+#' correctness -- it's here so the .xml files a person actually runs and
+#' inspects don't carry documentation meant for template authors, and so a
+#' stray literal ${VAR} written in comment prose (see the convention's
+#' warning in TemplateInfo.R) can never linger in a real run's output.
+#'
+#' @param    xml   character vector of template lines
+#' @return   character vector with the block (if any) removed entirely
+#' @keywords internal
+.stripTemplateInfo <- function(xml) {
+  start_idx <- grep("^\\s*<!--\\s*dowser-template-info\\s*$", xml)
+  if (length(start_idx) == 0) {
+    return(xml) # nothing to strip
+  }
+  start_idx <- start_idx[1]
+
+  end_idx <- grep("^\\s*-->\\s*$", xml)
+  end_idx <- end_idx[end_idx > start_idx]
+  if (length(end_idx) == 0) {
+    return(xml) # malformed block; leave it alone rather than guess how much to remove
+  }
+  end_idx <- end_idx[1]
+
+  xml[-(start_idx:end_idx)]
+}
 
 
 
