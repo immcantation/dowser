@@ -916,8 +916,8 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
     # replace the ${MRCA} placeholder with the mrca prior
     mrca_priors <- ""
     if (include_germline_as_tip) {
-      mrca_priors <- paste0(create_MRCA_prior_observed(clone, id), 
-        create_MRCA_prior_germline(clone, id, germline_range), sep="\n")
+      mrca_priors <- paste0(create_MRCA_prior_observed(clone, id), "\n",
+        create_MRCA_prior_germline(clone, id, germline_range), "\n")
     }
     if(!is.null(start_date)){
       mrca_priors <- paste0(mrca_priors, "\n",
@@ -1001,15 +1001,15 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
           warning("States not found in starting tree, setting to 0")
           starting_traits <- rep(0, nodes)
         }
-        # replace the value of the traitCategories parameter with the starting traits
-        trait_categories_index <- grep("id='traitCategories'", xml)
-        if (length(trait_categories_index) > 0) {
-          xml[trait_categories_index] <- 
+        # replace the value of the nodeTypes parameter with the starting traits
+        node_types_index <- grep("id='nodeTypes'", xml)
+        if (length(node_types_index) > 0) {
+          xml[node_types_index] <- 
             gsub('value="[^"]*"', 
                  paste0('value="', paste(starting_traits, collapse=" "), '"'), 
-                 xml[trait_categories_index])
+                 xml[node_types_index])
         } else {
-          stop("Could not find traitCategories parameter in the template file")
+          stop("Could not find nodeTypes parameter in the template file")
         }
       }
     } else {
@@ -1031,7 +1031,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
       root_trait_probabilities[root_trait_index] <- 1
       root_trait_probabilities_string <- paste0(root_trait_probabilities, collapse=" ")
       root_trait_probabilities_string <- paste0('<rootFrequencies id="rootfreqs.s:newTrait" spec="Frequencies">
-                        <parameter id="rootFrequencies.s:newTrait" spec="parameter.RealParameter" dimension="2" name="frequencies">', root_trait_probabilities_string, '</parameter>
+                        <parameter id="rootFrequencies.s:newTrait" spec="parameter.RealParameter" dimension="', length(trait_list), '" name="frequencies">', root_trait_probabilities_string, '</parameter>
                     </rootFrequencies>')
       xml <- gsub("\\$\\{ROOT_TYPE_PROBABILITIES\\}", root_trait_probabilities_string, xml)
     } else {
