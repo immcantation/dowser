@@ -2136,11 +2136,24 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
 #' @param    template   path to an xml-templates file
 #' @param    print      print a human-readable summary? Default TRUE. Set
 #'                       FALSE if you only want the returned object.
+#' @param    var        optional: a single variable name (bare, no
+#'                       \code{${}}), free-form or Dowser-special (e.g.
+#'                       \code{"EMP_EQFREQS"}). If supplied, instead of the
+#'                       full dump, this looks up just that one variable and
+#'                       prints/returns a focused answer: whether it's in
+#'                       the template at all, and either its
+#'                       \code{dowser-template-info} description (free-form)
+#'                       or its built-in structural effect (Dowser-special).
 #'
-#' @return   invisibly, a list with \code{$description} (character scalar,
-#'           or NULL if the template has no \code{@description}),
-#'           \code{$vars} (data.frame: name, tier, documented, description),
-#'           and \code{$structural} (data.frame: element, present, effect)
+#' @return   invisibly: if \code{var} is NULL, a list with
+#'           \code{$description} (character scalar, or NULL if the template
+#'           has no \code{@description}), \code{$vars} (data.frame: name,
+#'           tier, documented, description), and \code{$structural}
+#'           (data.frame: element, present, effect). If \code{var} is
+#'           supplied, a list with \code{$name}, \code{$kind} ("free",
+#'           "structural", or "not_found"), \code{$present}, and whichever
+#'           of \code{$documented}/\code{$tier}/\code{$description} (free)
+#'           or \code{$effect} (structural) applies.
 #'
 #' @details
 #' See the xml-templates variant reference at https://tyche.readthedocs.io
@@ -2150,9 +2163,11 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
 #' @examples
 #' \dontrun{
 #' describeTemplate("TypeLinked/TypeLinkedExpectedOccupancy_EstTraitClockRates_EmpFreq.xml")
+#' describeTemplate("TypeLinked/TypeLinkedExpectedOccupancy_EstTraitClockRates_EmpFreq.xml",
+#'                   var = "TRAIT_RATE_MEAN_1")
 #' }
 #' @export
-describeTemplate <- function(template, print = TRUE) {
+describeTemplate <- function(template, print = TRUE, var = NULL) {
  
   if (!file.exists(template)) {
     stop(paste("Template file", template, "does not exist."))
@@ -2208,6 +2223,63 @@ describeTemplate <- function(template, print = TRUE) {
         stringsAsFactors = FALSE
       ))
     }
+  }
+ 
+  if (!is.null(var)) {
+    # Dowser-special placeholders map onto one row of the structural
+    # checklist each (TRAIT and TRAIT_NAME share a row, since Dowser
+    # treats them as one combined check). DATA and CLONE aren't in the
+    # checklist at all -- they're unconditionally required, not optional
+    # features, so there's no present/absent variability to report on.
+    special_checklist_map <- c(
+      DATE = "DATE placeholder",
+      TRAIT = "TRAIT / TRAIT_NAME placeholder",
+      TRAIT_NAME = "TRAIT / TRAIT_NAME placeholder",
+      NODES = "NODES placeholder",
+      MRCA = "MRCA placeholder",
+      OPERATORS = "OPERATORS placeholder",
+      ROOTFREQS = "ROOTFREQS placeholder",
+      EMP_EQFREQS = "EMP_EQFREQS placeholder",
+      ROOT_TYPE_PROBABILITIES = "ROOT_TYPE_PROBABILITIES placeholder",
+      NODES_TYPE_INIT = "NODES_TYPE_INIT placeholder"
+    )
+
+    if (var %in% c("DATA", "CLONE")) {
+      present <- any(grepl(paste0("\\$\\{", var, "\\}"), xml))
+      effect <- if (present) {
+        "Always required by Dowser. Present in this template."
+      } else {
+        "Always required by Dowser, but NOT present in this template -- this template cannot be used by Dowser at all."
+      }
+      var_result <- list(name = var, kind = "structural", present = present, effect = effect)
+    } else if (var %in% names(special_checklist_map)) {
+      row <- struct_df[struct_df$element == special_checklist_map[[var]], , drop = FALSE]
+      var_result <- list(name = var, kind = "structural", present = row$present[1], effect = row$effect[1])
+    } else if (var %in% vars_df$name) {
+      row <- vars_df[vars_df$name == var, , drop = FALSE]
+      var_result <- list(name = var, kind = "free", present = TRUE,
+                          documented = row$documented[1], tier = row$tier[1],
+                          description = row$description[1])
+    } else {
+      var_result <- list(name = var, kind = "not_found", present = FALSE)
+    }
+
+    if (print) {
+      cat(var, " (in ", basename(template), "):\n", sep = "")
+      if (var_result$kind == "not_found") {
+        cat("  Not found -- no ${", var, "} placeholder anywhere in this template.\n", sep = "")
+      } else if (var_result$kind == "structural") {
+        status <- if (var_result$present) "[present]" else "[absent] "
+        cat("  ", status, " (Dowser-recognized, not a free-form variable) - ", var_result$effect, "\n", sep = "")
+      } else {
+        tag  <- if (var_result$documented) var_result$tier else "UNDOCUMENTED"
+        desc <- if (var_result$documented) var_result$description
+                else "(no dowser-template-info entry for this variable)"
+        cat("  [", tag, "]  ", desc, "\n", sep = "")
+      }
+    }
+
+    return(invisible(var_result))
   }
  
   result <- list(description = info$description, vars = vars_df, structural = struct_df)
