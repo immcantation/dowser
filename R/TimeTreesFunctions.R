@@ -194,7 +194,8 @@ setUpIterateResume <- function(clones, dir, id, ...){
 #' @param    log_every    Frequency of states logged. "auto" will divide
 #'                        mcmc_length by log_target         
 #' @param    burnin       Burnin percent (default 10)                 
-#' @param    trait        Trait column to be used         
+#' @param    trait        Trait column to be used. The value "?" is treated as ambiguous
+#'                        (any type) and is not counted as a type.
 #' @param    resume_clones  Clones to resume for \code{mcmc_length} more steps            
 #' @param    include_germline Include germline sequence in analysis?     
 #' @param    seq          Sequence column in data      
@@ -450,7 +451,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
 
   trait_list <- NULL
   if(!is.null(trait)){
-    trait_list <- sort(unique(unlist(lapply(data, function(x)x@data[[trait]]))))
+    trait_list <- makeTraitList(lapply(data, function(x)x@data[[trait]]))
   }
 
   if(!is.null(resume_clones)){
@@ -1103,6 +1104,22 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   return(file)
 }
 
+#' Make the sorted list of types for a trait from the values in all clones
+#' 
+#' In BEAST XMLs, "?" is ambiguous, so should not be counted as a type itself.
+#'
+#' @param    values   list of vectors of trait values, one vector per clone
+#'
+#' @return   Sorted vector of the unique trait values, without "?"
+#' @noRd
+makeTraitList <- function(values){
+  values <- setdiff(sort(unique(unlist(values))), "?")
+  if(length(values) == 0){
+    stop("No trait values found other than '?'. At least one type is required.")
+  }
+  values
+}
+
 #' Wrapper to write multiple clones to XML files 
 #' 
 #' @param    data                     a list of \code{airrClone} objects
@@ -1141,11 +1158,13 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
   if (!is.null(trait)) {
     if (is.null(trait_list)) {
       # get all the possible values of the trait
-      traits <- c()
-      for (i in 1:length(data)) {
-        traits <- c(traits, unique(data[[i]]@data[[trait]]))
+      trait_list <- makeTraitList(lapply(data, function(x)x@data[[trait]]))
+    } else {
+      # "?" is never a type, even if the caller put it in the list
+      if ("?" %in% trait_list) {
+        warning("Trait list contains '?', which is not a valid type. Removing it from the list.")
+        trait_list <- setdiff(trait_list, "?")
       }
-      trait_list <- sort(unique(traits))
     }
     codeMap <- paste(trait_list, 0:(length(trait_list)-1), collapse=",\n", sep="=")
     codeMap <- paste0(codeMap, ",\n? = ", paste0(0:(length(trait_list)-1), collapse=" "))
