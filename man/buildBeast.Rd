@@ -32,6 +32,8 @@ buildBeast(
   start_date = NULL,
   max_start_date = NULL,
   germline_trait_value = "?",
+  trait_list = NULL,
+  xml_check = NULL,
   ...
 )
 }
@@ -91,6 +93,12 @@ combination of "parameters", "trees_with_traits", and "trees".}
 \item{max_start_date}{Maximum starting date of time tree if desired}
 
 \item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
+
+\item{trait_list}{optional vector of all types of the trait. If NULL, it is made from the values in \code{data}.}
+
+\item{xml_check}{optional function called with the paths of the XML files after they are
+written and before BEAST starts. If it stops, BEAST is not started. 
+getTimeTreesIterate uses this to get the XML of a clone without running BEAST.}
 
 \item{...}{Additional arguments for XML writing functions}
 }

@@ -29,6 +29,7 @@ getTimeTrees(
   tree_states = FALSE,
   trees = NULL,
   germline_trait_value = "?",
+  trait_list = NULL,
   ...
 )
 }
@@ -53,7 +54,8 @@ mcmc_length by log_target}
 
 \item{burnin}{Burnin percent (default 10)}
 
-\item{trait}{Trait column to be used}
+\item{trait}{Trait column to be used. The value "?" is treated as ambiguous
+(any type) and is not counted as a type.}
 
 \item{resume_clones}{Clones to resume for \code{mcmc_length} more steps}
 
@@ -80,6 +82,8 @@ mcmc_length by log_target}
 \item{trees}{optional list of starting trees, either phylo objects or newick strings}
 
 \item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
+
+\item{trait_list}{optional vector of all types of the trait. If NULL, it is made from the values in \code{clones}.}
 
 \item{...}{Additional arguments passed to tree building programs}
 }
