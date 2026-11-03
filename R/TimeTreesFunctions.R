@@ -1999,6 +1999,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
 #'           scalar, or NULL if no \code{@description} entry was found), and
 #'           \code{$found} (logical)
 #' @keywords internal
+#' @noRd
 .parseTemplateInfo <- function(xml) {
  
   empty <- list(vars = list(), structs = list(), description = NULL, found = FALSE)
@@ -2074,6 +2075,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
 #' @param    var   variable name (bare, no ${})
 #' @return   the description string, or NULL if undocumented/no block found
 #' @keywords internal
+#' @noRd
 .templateVarLookup <- function(xml, var) {
   info <- .parseTemplateInfo(xml)
   if (!is.null(info$vars[[var]])) {
@@ -2094,6 +2096,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
 #' @return   a list of check results, each a list with \code{name},
 #'           \code{present} (logical), and \code{effect} (character)
 #' @keywords internal
+#' @noRd
 .structuralChecklist <- function(xml) {
  
   has <- function(pattern) any(grepl(pattern, xml))
@@ -2395,6 +2398,7 @@ describeTemplate <- function(template, print = TRUE, var = NULL) {
 #' @param    xml   character vector of template lines
 #' @return   character vector with the block (if any) removed entirely
 #' @keywords internal
+#' @noRd
 .stripTemplateInfo <- function(xml) {
   start_idx <- grep("^\\s*<!--\\s*dowser-template-info\\s*$", xml)
   if (length(start_idx) == 0) {
