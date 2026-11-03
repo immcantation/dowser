@@ -13,27 +13,72 @@
 #' @param    id         unique identifer for this analysis
 #' @param    time       Name of sample time column        
 #' @param    burnin     Burnin percent (default 10)                 
-#' @param    trait      Trait column to be used         
-#' @param    nproc      Number of cores for parallelization. At most 1 core/tree can be used.
+#' @param    trait      Trait column to be used. "?" is treated as 
+#'                      ambiguous (any type) and is not counted as a type.         
+#' @param    nproc      Number of processes for parallelization. At most 1 process/tree can be used. Use nproc=1 for Windows.
 #' @param    posterior  Read un full distribution of parameters and trees? Can be "none" to just have
 #'                      summary objects, "all" to have parameters, trees, and trees_with_traits, or a vector with the desired
 #'                      combination of "parameters", "trees_with_traits", and "trees".
 #' @param    quiet      amount of rubbish to print to console
-#' @param    iterations Maximum number of times to resume MCMC chain
+#' @param    iterations Maximum number of times to run MCMC chain for each clone. The first run counts as 1.
 #' @param    ess_cutoff Minimum number of ESS for all parameters
 #' @param    ignore     Vector of parameters to ignore for ESS calculation
 #' @param    quiet      quiet notifications if > 0
-#' @param    continue   If TRUE, will check for iteration folder and resume from last iteration if found (default FALSE)
+#' @param    continue   If TRUE, continue an earlier run of the same \code{id} in \code{dir}
+#'                      from saved checkpoints. (default FALSE) Warning: if the settings or
+#'                      the data are not the same as in the earlier run, files may be overwritten, as if continue=FALSE.
+#'                      See details. 
 #' @param    asr          Log ancestral sequences?
 #' @param    low_ram    run with less memory (slightly slower)  
 #' @param    trim_ids    remove last _ group from tips?      
-#' @param    ...        Additional arguments for getTimeTrees
+#' @param    skip_errors If TRUE, a clone that fails is dropped with a warning and the other clones
+#'                      continue. If FALSE (default), any failing clone stops the analysis.
+#' @param    backup      If TRUE, a backup folder with the existing files of this analysis (BEAST files and
+#'                      checkpoint folder) is made before the run starts. The files are moved if \code{continue}
+#'                      is FALSE and copied if it is TRUE. See details. (default FALSE)
+#' @param    trait_list  Optional vector of all types of the trait. If NULL, it is made from the values
+#'                      in all clones, so that every clone uses the same types.
+#' @param    ...        Additional arguments for getTimeTrees. If an argument is a function, it is
+#'                      called with the one-row tibble of each clone, and the value that it returns
+#'                      is used for that clone. A list in \code{trees} is cut to the tree of each clone.
 #'
 #' @details
 #' 
 #' For a full list of options (of which there are many more), see \code{getTimeTrees}
 #' 
-#' @return   A tibble of \code{tidytree} and \code{airrClone} objects.
+#' Each clone runs as its own BEAST job. A clone with ESS below \code{ess_cutoff} is resumed (its MCMC
+#' chain continues) until it converges or has run \code{iterations} times. For resumability in case of interruption, some intermediate and checkpoint files are saved. 
+#' 
+#' \strong{continue=TRUE} is for resuming a job that was cancelled, or for running more \code{iterations}.
+#' Repeat the original call, with the same \code{clones}, \code{dir}, \code{id} and settings, and add
+#' \code{continue=TRUE} (with a larger \code{iterations} to run more). Clones with a checkpoint resume from
+#' it, unless they already converged or reached \code{iterations}. Clones without one start from the
+#' beginning.
+#' You can also change \code{ess_cutoff} or \code{ignore}: convergence is checked again from the last
+#' checkpoint of each clone, and clones that are now below the cutoff run again if they have run fewer than
+#' \code{iterations} times.
+#' 
+#' Do not use \code{continue=TRUE} when changing settings (e.g. \code{seed}, \code{mcmc_length} or
+#' \code{template}) or the data of an analysis that you want to keep. Each checkpoint has the XML that was
+#' used for the clone, and the seed, the java flag and the BEAST path. If any of them is not the same in this
+#' call, the checkpoint and the BEAST files of that clone are deleted, and the clone starts again from round 1.
+#' The other clones continue, and a message lists the clones. Use a new \code{id} or \code{dir} instead. Do not
+#' use if you have edited the BEAST files in \code{dir}.
+#' Checkpoints from older versions of dowser cannot be used.
+#' 
+#' \strong{backup=TRUE} makes the folder \code{backup_<id>_<date>_<time>} in \code{dir} before the run starts, with the
+#' BEAST and checkpoint files of \code{id}. Use it if your job may be
+#' restarted automatically (for example by a job scheduler), e.g. the restarted job starts a new run, you cancel it and
+#' use \code{\link{restoreIterateBackup}} to put the files back, and then call the function again with
+#' \code{continue=TRUE}. Use it also for insurance if \code{dir} may not be empty before this call.
+#' 
+#' If a clone fails and \code{skip_errors=FALSE}, running clones finish their current round, no new clone
+#' starts, and then the function stops with the error. 
+#' 
+#' If you interrupt R (for example with Ctrl-C), BEAST processes that the workers started can keep running.
+#' Check for them with the appropriate tools for your system.
+#' 
+#' @return   A tibble of \code{tidytree} and \code{airrClone} objects. Clones that failed with \code{skip_errors=TRUE} are not in the tibble.
 #'
 #' @details
 #' For examples and vignettes, see https://dowser.readthedocs.io
@@ -43,140 +88,116 @@ getTimeTreesIterate <- function(clones, template, beast, dir, id, time,
   iterations=10, ess_cutoff=200, burnin=10,
   ignore = c("traitfrequencies"), continue=FALSE, 
   posterior=c("none","all","parameters","trees_with_traits","trees"), 
-  trait=NULL, nproc=1, quiet=0, asr=FALSE, low_ram=TRUE, trim_ids=FALSE,...){
+  trait=NULL, nproc=1, quiet=0, asr=FALSE, low_ram=TRUE, trim_ids=FALSE,
+  skip_errors=FALSE, trait_list=NULL, backup=FALSE, ...){
 
-  resume <- NULL
-  iter <- 0
+  if(is.null(dir)){
+    stop("dir must be specified when running BEAST")
+  }
+  dir <- path.expand(dir)
+  if(is.null(id)){
+    id <- "sample"
+  }
 
-  # check for iteration folder if resuming
-  if(!is.null(continue) && continue){
-    info <- setUpIterateResume(clones, dir=dir, id=id, ...)
-    iter <- info$iteration
-    rds <- info$clones_path
-    if(!is.null(rds)){
-      clones <- readRDS(rds)
+  dots <- list(...)
+  all_ids <- as.character(clones$clone_id)
+  # make the backup first
+  if (isTRUE(backup)) {
+    makeBackup(dir, id, all_ids, continue)
+  }
+
+  # one list of types for all clones, so that every clone has the same codes
+  if(!is.null(trait) && is.null(trait_list) && nrow(clones) > 0){
+    trait_list <- makeTraitList(lapply(clones$data, function(x)x@data[[trait]]))
+  }
+
+  # one round of one clone. The engine saves the checkpoint afterwards.
+  work <- function(cs, resume_id){
+    clone_dots <- iterateCloneDots(dots, cs, all_ids)
+    do.call(getTimeTrees, c(list(clones=cs, resume_clones=resume_id, 
+      posterior="none", template=template, dir=dir, id=id, beast=beast, 
+      burnin=burnin, time=time, trait=trait, trait_list=trait_list, 
+      quiet=quiet, nproc=1, asr=asr, trim_ids=trim_ids, low_ram=low_ram), 
+      clone_dots))
+  }
+
+  # record options that are not in the xml, for the checkpoint manifest
+  clone_options <- function(cs){
+    clone_dots <- iterateCloneDots(dots, cs, all_ids)
+    value <- function(name){
+      x <- if(name %in% names(clone_dots)) clone_dots[[name]] else eval(formals(getTimeTrees)[[name]])
+      if(is.numeric(x)) x <- as.numeric(x)   # 1e5 and 100000L are the same
+      paste(x, collapse=",")
     }
-    if(iter > 0) {
-      resume <- getClonesToResume(clones, ignore=ignore, ess_cutoff=ess_cutoff, quiet=quiet)
+    paste0("seed=", value("seed"), " java=", value("java"),
+      " beast=", normalizePath(path.expand(beast), mustWork=FALSE))
+  }
+
+  # The md5 sum of the XML that dowser would use for a clone. BEAST is not
+  # started: the function xml_check stops getTimeTrees after the XML is
+  # written. The XML is written in a temporary folder. NA if the XML cannot be made.
+  xml_md5 <- function(cid){
+    cs <- clones[match(cid, all_ids), ]
+    tmp <- tempfile("iterate_xml_")
+    dir.create(tmp)
+    on.exit(unlink(tmp, recursive=TRUE))
+    stop_after_xml <- function(paths){
+      stop(structure(class=c("iterate_xml_only", "error", "condition"),
+        list(message="XML written", call=NULL, paths=paths)))
+    }
+    paths <- NULL
+    utils::capture.output(paths <- tryCatch(
+      do.call(getTimeTrees, c(list(clones=cs, resume_clones=NULL, 
+        posterior="none", template=template, dir=tmp, id=id, beast=beast, 
+        burnin=burnin, time=time, trait=trait, trait_list=trait_list, 
+        quiet=1, nproc=1, asr=asr, trim_ids=trim_ids, low_ram=low_ram, 
+        xml_check=stop_after_xml), iterateCloneDots(dots, cs, all_ids))),
+      iterate_xml_only=function(cnd)cnd$paths, error=function(e)NULL))
+    if(!is.character(paths) || length(paths) == 0){
+      return(NA_character_)
+    }
+    unname(tools::md5sum(paths[1]))
+  }
+
+  # With continue=TRUE, a clone whose checkpoint has other options or another XML starts again
+  restarted <- character(0)
+  if(isTRUE(continue)){
+    restarted <- getClonesToRestart(dir, id, all_ids,
+      function(cid) clone_options(clones[match(cid, all_ids), ]), xml_md5)
+    # delete the checkpoint and the BEAST files of these clones, so they start again
+    cp_dir <- getCheckpointDir(dir, id)
+    clone_files <- getCloneFiles(dir, id, all_ids)
+    for(cid in restarted){
+      unlink(file.path(cp_dir, paste0("clone_", cid, c("", ".new"))), recursive=TRUE)
+      unlink(file.path(dir, clone_files[[cid]]))
     }
   }
 
-  while((length(resume) > 0 || iter == 0 ) && iter < iterations){
-        
-        if(quiet < 1){
-          print(paste("Starting iteration", iter))
-        }
-
-        clones <- getTimeTrees(clones, resume_clones=resume, posterior="none", template=template,
-            dir=dir, id=id, beast=beast, burnin=burnin, time=time, 
-          trait=trait, quiet=quiet, nproc=nproc, asr=asr, trim_ids=trim_ids,
-          low_ram=low_ram, ...)
-
-        resume <- getClonesToResume(clones, ignore=ignore, ess_cutoff=ess_cutoff)
-        saveIteration(clones, iter, dir=dir, id=id, ...)
-        iter <- iter + 1
+  # In parallel runs, output of workers goes to log files, so have main
+  # process show the nucleotide frequencies that the XML will use, if the
+  # template uses them.
+  describe <- NULL
+  uses_freqs <- tryCatch(any(grepl("\\$\\{EMP_EQFREQS\\}", 
+    readLines(template, warn=FALSE))), error=function(e)FALSE, warning=function(w)FALSE)
+  if(uses_freqs){
+    describe <- function(cs){
+      freqs <- getEmpNucleotideFreqs(cs$data[[1]]@data$sequence)
+      paste0("nucleotide frequencies A C G T: ", paste(freqs, collapse=" "))
     }
-    if(iter == iterations & length(resume) != 0){
-      warning(paste(paste(resume, collapse=","), "failed to converge after",
-        iterations, "iterations"))
-    }
-    # cleanUpIterateResume(...)
-
-    # add in final readBEAST with full posterior options if specified
-    if(!"none" %in% posterior){
-      clones <- readBEAST(clones=clones, dir=dir, id=id, beast=beast, burnin=burnin, 
-        trait=trait, quiet=quiet, nproc=nproc, posterior=posterior, asr=asr, 
-        low_ram=low_ram, trim_ids=trim_ids)
-    }
-    return(clones)
-}
-
-cleanUpIterateResume <- function(dir, id, ...){
-  iter_dir <- file.path(dir, paste0("iterations_", id))
-  if(dir.exists(iter_dir)){
-    unlink(iter_dir, recursive=TRUE)
   }
-}
 
-getClonesToResume <- function(clones, ignore, ess_cutoff, quiet=0){
-    params <- clones$parameters
-    for(regex in ignore){
-        params <- lapply(params, function(x){
-            dplyr::filter(x, !grepl(regex, !!rlang::sym("item")))
-            })
-    }
-      
-    clones$below_ESS <- sapply(params, 
-      function(x)sum(x$ESS[!x$item %in% ignore] < ess_cutoff, na.rm=TRUE))
-    if(quiet < 1){
-      print(clones$below_ESS)
-      ess_items <- unlist(sapply(params, function(x)x$item[x$ESS[!x$item %in% ignore] < ess_cutoff]))
-      if(length(ess_items) > 0){
-        print(table(ess_items))
-      }
-    }
-    resume <- dplyr::filter(clones, !!rlang::sym("below_ESS") > 0)$clone_id
-    return(resume)
-}
+  clones <- runTimeTreesIterate(clones, work, dir=dir, id=id, iterations=iterations, 
+    ess_cutoff=ess_cutoff, ignore=ignore, continue=continue, nproc=nproc, 
+    quiet=quiet, skip_errors=skip_errors, describe=describe, beast_options=clone_options)
 
-saveIteration <- function(clones, iter, dir, id, ...){
-  iter_dir <- file.path(dir, paste0("iterations_", id))
-  if(!dir.exists(iter_dir)){
-    dir.create(iter_dir)
+  # add in final readBEAST with full posterior options if specified
+  if(!"none" %in% posterior && nrow(clones) > 0){
+    clones <- readBEAST(clones=clones, dir=dir, id=id, beast=beast, burnin=burnin, 
+      trait=trait, quiet=quiet, nproc=nproc, posterior=posterior, asr=asr, 
+      low_ram=low_ram, trim_ids=trim_ids)
+    clones$below_ESS <- vapply(clones$parameters, countParametersBelowESS, integer(1), ignore=ignore, ess_cutoff=ess_cutoff)
   }
-  curr_iter_dir <- file.path(iter_dir, paste0("iteration_", iter))
-  if(!dir.exists(curr_iter_dir)){
-    dir.create(curr_iter_dir)
-  }
-  saveRDS(clones, file.path(iter_dir, paste0("rds_", iter, ".rds")))
-  iter_files <- list.files(dir)
-  iter_files <- iter_files[grepl(id, iter_files) & !grepl("iterations", iter_files)]
-  for (f in iter_files) {
-    file.copy(file.path(dir, f), file.path(curr_iter_dir, f))
-  }
-}
-
-setUpIterateResume <- function(clones, dir, id, ...){
-  # this should probably delete existing files in the main dir for clarity but
-  # i think that should be done in the main function
-  iter_dir <- file.path(dir, paste0("iterations_", id))
-  if(!dir.exists(iter_dir)){
-    dir.create(iter_dir)
-  }
-  iter_folder <- list.files(path = iter_dir)
-
-  if(length(iter_folder) > 0) {
-    # get the highest iteration number from the folder names, which should be in the format "iteration_X"
-    max_iter <- -1
-    for (iter in iter_folder) {
-      iter_num <- as.numeric(gsub("iteration_(.*)", "\\1", iter))
-      if(!is.na(iter_num)){
-        if (iter_num > max_iter) {
-          if (file.exists(file.path(iter_dir, paste0("rds_", iter_num, ".rds")))) {
-            max_iter <- iter_num
-          }
-        }
-      }
-    }
-    if (max_iter == -1){
-      return(list(iteration=0, clones_path=NULL))
-    }
-    # copy all the files from the max iteration folder to the main dir for resuming
-    last_iter_dir <- file.path(iter_dir, paste0("iteration_", max_iter))
-    iter_files <- list.files(path = last_iter_dir, full.names = TRUE)
-    iter_files <- iter_files[grepl(id, iter_files) & !grepl("iterations", iter_files)]
-    for(file in iter_files){
-      # delete existing file if we should overwrite it
-      unlink(file.path(dir, basename(file)))
-      file.copy(file, dir, overwrite = TRUE)
-    }
-    # re-read in the clones from the last iteration to get the resume clones
-    clones_path <- file.path(iter_dir, paste0("rds_", max_iter, ".rds"))
-    return(list(iteration=max_iter + 1, clones_path=clones_path))
-  }
-  else{
-    return(list(iteration=0, clones_path=NULL))
-  }
+  return(clones)
 }
 
 #' Estimate time trees by running BEAST on each clone
@@ -209,6 +230,7 @@ setUpIterateResume <- function(clones, dir, id, ...){
 #' @param    rm_temp    remove temporary files (default=TRUE)
 #' @param    trees      optional list of starting trees, either phylo objects or newick strings
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
+#' @param    trait_list   optional vector of all types of the trait. If NULL, it is made from the values in \code{clones}.
 #' @param    ...        Additional arguments passed to tree building programs
 #'
 #' @return   A tibble with a column of \code{phylo} objects and \code{parameters} column
@@ -222,7 +244,7 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
         burnin=10, trait=NULL, resume_clones=NULL, nproc=1, quiet=0, 
         rm_temp=FALSE, include_germline=TRUE, seq="sequence", 
         germline_range=c(-10000,10000), java=TRUE, seed=NULL, log_target=10000, 
-        tree_states=FALSE, trees=NULL, germline_trait_value='?', ...) {
+        tree_states=FALSE, trees=NULL, germline_trait_value='?', trait_list=NULL, ...) {
 
   if(is.null(beast)){
     stop("BEAST bin directory must be specified for this build option")
@@ -331,6 +353,7 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
                             tree_states=tree_states,
                             trees=trees,
                             germline_trait_value=germline_trait_value,
+                            trait_list=trait_list,
                             ...
                             ),error=function(e)e)
 
@@ -409,6 +432,10 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    trees                    optional list of starting trees, either phylo objects or newick strings
 #' @param    start_edge_length        edge length to use for all branches in starting tree 
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
+#' @param    trait_list               optional vector of all types of the trait. If NULL, it is made from the values in \code{data}.
+#' @param    xml_check                optional function called with the paths of the XML files after they are
+#'                                    written and before BEAST starts. If it stops, BEAST is not started. 
+#'                                    getTimeTreesIterate uses this to get the XML of a clone without running BEAST.
 #' @param    ...      Additional arguments for XML writing functions
 #'
 #' @return   The input clones tibble with an additional column for the bootstrap replicate trees.
@@ -422,7 +449,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
                    start_edge_length=100, start_date=NULL, max_start_date=NULL,
-                   germline_trait_value='?',...) {
+                   germline_trait_value='?', trait_list=NULL, xml_check=NULL, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -449,10 +476,13 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
     warning("most templates only compatible with only beast 2.7")
   }
 
-  trait_list <- NULL
-  if(!is.null(trait)){
+  # made before the clones are cut to resume_clones, so that all clones in
+  # an analysis have the same types
+  if(is.null(trait)){
+    trait_list <- NULL
+  } else if(is.null(trait_list)){
     trait_list <- makeTraitList(lapply(data, function(x)x@data[[trait]]))
-  }
+  } 
 
   if(!is.null(resume_clones)){
     not_found = resume_clones[!resume_clones %in% sapply(data, function(x)x@clone)]
@@ -496,6 +526,11 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       ...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
+
+  # lets the caller stop before BEAST runs, for example if the XML changed
+  if(!is.null(xml_check)){
+    xml_check(xml_filepath)
+  }
 
   # Run BEAST on each tree in parallel
   capture <- parallel::mclapply(1:length(xml_filepath), function(x) {
@@ -961,14 +996,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
     xml <- gsub("\\$\\{ROOTFREQS\\}", root_freqs, xml)
   }
   if (any(grepl("\\$\\{EMP_EQFREQS\\}", xml))) { 
-    getFreqs = function(seqs){
-      nts <- c("A", "C","G","T")
-      splits <- strsplit(seqs, split="")
-      counts <- table(unlist(splits))[nts]
-      freqs <- counts/sum(counts)
-      freqs
-    }
-    freqs <- getFreqs(clone@data$sequence)
+    freqs <- getEmpNucleotideFreqs(clone@data$sequence)
     freqstring <- paste(freqs, collapse=" ")
     print(freqstring)
     xml <- gsub("\\$\\{EMP_EQFREQS\\}", freqstring, xml)
@@ -1102,6 +1130,19 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   close(con)
 
   return(file)
+}
+
+#' Empirical frequencies of the nucleotides A, C, G and T in sequences
+#'
+#' @param    seqs   vector of sequences
+#'
+#' @return   Table of the frequencies of A, C, G and T, in this order
+#' @noRd
+getEmpNucleotideFreqs <- function(seqs){
+  nts <- c("A", "C", "G", "T")
+  splits <- strsplit(seqs, split="")
+  counts <- table(unlist(splits))[nts]
+  counts/sum(counts)
 }
 
 #' Make the sorted list of types for a trait from the values in all clones
