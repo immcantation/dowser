@@ -101,6 +101,19 @@ getTimeTreesIterate <- function(clones, template, beast, dir, id, time,
 
   dots <- list(...)
   all_ids <- as.character(clones$clone_id)
+
+  # getTimeTrees runs for each clone in each round (and to get the XML), so the
+  # class of the sequence likelihood is decided once here and passed on
+  if(is.null(dots[["rootfreqs_class"]])){
+    germline_arg <- dots[["include_germline"]]
+    if(is.null(germline_arg) || is.function(germline_arg)){
+      germline_arg <- TRUE
+    }
+    rootfreqs_class <- resolve_rootfreqs_class(beast, template, germline_arg, NULL, quiet)
+    if(!is.null(rootfreqs_class)){
+      dots[["rootfreqs_class"]] <- rootfreqs_class
+    }
+  }
   # make the backup first
   if (isTRUE(backup)) {
     makeBackup(dir, id, all_ids, continue)
@@ -231,7 +244,7 @@ getTimeTreesIterate <- function(clones, template, beast, dir, id, time,
 #' @param    trees      optional list of starting trees, either phylo objects or newick strings
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    trait_list   optional vector of all types of the trait. If NULL, it is made from the values in \code{clones}.
-#' @param    ...        Additional arguments passed to tree building programs
+#' @param    ...        Additional arguments passed to tree building programs, e.g. \code{rootfreqs_class} (see \link{buildBeast})
 #'
 #' @return   A tibble with a column of \code{phylo} objects and \code{parameters} column
 #' @details
@@ -433,6 +446,12 @@ getTimeTrees <- function(clones, template, beast, dir, id, time,
 #' @param    start_edge_length        edge length to use for all branches in starting tree 
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    trait_list               optional vector of all types of the trait. If NULL, it is made from the values in \code{data}.
+#' @param    rootfreqs_class          BEAST class for the sequence likelihood when the germline is the root
+#'                                    (\code{include_germline=TRUE} and the template has \code{${ROOTFREQS}}). \code{NULL} (default)
+#'                                    runs \code{beast -version} once and uses
+#'                                    \code{tyche.evolution.likelihood.RootFreqsTreeLikelihood} for TyCHE 1.0.1 or later,
+#'                                    otherwise \code{rootfreqs.TreeLikelihood} (needs the \code{rootfreqs} BEAST package).
+#'                                    If given, BEAST is not run to find the version.
 #' @param    xml_check                optional function called with the paths of the XML files after they are
 #'                                    written and before BEAST starts. If it stops, BEAST is not started. 
 #'                                    getTimeTreesIterate uses this to get the XML of a clone without running BEAST.
@@ -449,7 +468,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
                    burnin=10, low_ram=TRUE, germline_range=c(-10000,10000), java=TRUE, 
                    seed=NULL, log_target=10000, trees=NULL, tree_states=FALSE, 
                    start_edge_length=100, start_date=NULL, max_start_date=NULL,
-                   germline_trait_value='?', trait_list=NULL, xml_check=NULL, ...) {
+                   germline_trait_value='?', trait_list=NULL, rootfreqs_class=NULL, xml_check=NULL, ...) {
 
   beast <- path.expand(beast)
   beast_exec <- file.path(beast,"beast")
@@ -467,6 +486,10 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
   if(burnin > 100 || burnin < 0){
     stop("burnin must be between 0 and 100 (represents %)")
   }
+
+  # once per call (not per clone), and only if the template needs it
+  rootfreqs_class <- resolve_rootfreqs_class(beast, template, include_germline,
+    rootfreqs_class, quiet)
 
   # setting log_every to get log_target samples given chain length
   if(log_every == "auto"){
@@ -523,6 +546,7 @@ buildBeast <- function(data, beast, time, template, dir, id, mcmc_length = 10000
       start_date=start_date, 
       max_start_date=max_start_date,
       germline_trait_value=germline_trait_value,
+      rootfreqs_class=rootfreqs_class,
       ...)
 
   xml_filepath <- xml_filepath[!is.na(xml_filepath)]
@@ -641,6 +665,160 @@ create_alignment <- function(clone, id, include_germline_as_tip) {
   return(paste0(alignment_xml, '\n', taxon_set, '\n'))
 }
 
+
+# Version of TyCHE that first has tyche.evolution.likelihood.RootFreqsTreeLikelihood
+# (a copy of rootfreqs.TreeLikelihood, so the rootfreqs BEAST package is not needed)
+.ROOTFREQS_LEGACY_CLASS <- "rootfreqs.TreeLikelihood"
+.ROOTFREQS_TYCHE_CLASS <- "tyche.evolution.likelihood.RootFreqsTreeLikelihood"
+.ROOTFREQS_TYCHE_MIN_VERSION <- c(1, 0, 1)
+
+#' Take the TyCHE version string out of the output of \code{beast -version}
+#'
+#' Only a line that starts with \code{TyCHE v} is used (not a substring match), because
+#' BEAST 3 and Java print other lines around the package list.
+#'
+#' @param    output   character vector, the lines printed by \code{beast -version}
+#'
+#' @return   The rest of the first \code{TyCHE v} line (e.g. \code{"1.0.1-ab12cd3-built-10271545"}),
+#'  or \code{NULL} if there is no such line
+#' @noRd
+extract_tyche_version <- function(output){
+  lines <- trimws(as.character(output))
+  hit <- grep("^TyCHE v", lines)
+  if(length(hit) == 0){
+    return(NULL)
+  }
+  sub("^TyCHE v", "", lines[hit[1]])
+}
+
+#' Parse the leading MAJOR.MINOR.PATCH of a TyCHE version string
+#'
+#' Everything after the leading numbers (such as a dev suffix \code{-ab12cd3-dirty-built-10271545})
+#' is ignored. Missing components are 0 (\code{1.1} is \code{1.1.0}).
+#'
+#' @param    x   version string, the text after \code{TyCHE v}
+#'
+#' @return   Numeric vector of length 3, or \code{NULL} if \code{x} does not start with a number
+#' @noRd
+parse_tyche_version <- function(x){
+  if(is.null(x) || length(x) != 1 || is.na(x)){
+    return(NULL)
+  }
+  m <- regmatches(x, regexec("^([0-9]+)(?:\\.([0-9]+))?(?:\\.([0-9]+))?", x, perl=TRUE))[[1]]
+  if(length(m) == 0){
+    return(NULL)
+  }
+  m[m == ""] <- "0"
+  as.numeric(m[2:4])
+}
+
+#' Choose the class of the sequence likelihood that uses root frequencies
+#'
+#' @param    version   TyCHE version string (text after \code{TyCHE v}), or \code{NULL}/\code{NA}
+#'
+#' @return   \code{tyche.evolution.likelihood.RootFreqsTreeLikelihood} for TyCHE >= 1.0.1,
+#'  otherwise (older, or version cannot be read) \code{rootfreqs.TreeLikelihood}
+#' @noRd
+choose_rootfreqs_class <- function(version){
+  v <- parse_tyche_version(version)
+  if(is.null(v)){
+    return(.ROOTFREQS_LEGACY_CLASS)
+  }
+  # numeric comparison, component by component (1.0.10 > 1.0.2)
+  min_v <- .ROOTFREQS_TYCHE_MIN_VERSION
+  for(i in 1:3){
+    if(v[i] > min_v[i]){
+      return(.ROOTFREQS_TYCHE_CLASS)
+    }
+    if(v[i] < min_v[i]){
+      return(.ROOTFREQS_LEGACY_CLASS)
+    }
+  }
+  .ROOTFREQS_TYCHE_CLASS
+}
+
+#' Check a user supplied class name for the sequence likelihood
+#' @noRd
+check_rootfreqs_class <- function(x){
+  if(!is.character(x) || length(x) != 1 || is.na(x) ||
+     !grepl("^[A-Za-z_][A-Za-z0-9_.]*$", x)){
+    stop("rootfreqs_class must be a single BEAST class name such as '",
+      .ROOTFREQS_TYCHE_CLASS, "' or '", .ROOTFREQS_LEGACY_CLASS, "'")
+  }
+  x
+}
+
+#' Run \code{beast -version} and return what it printed (stdout and stderr)
+#'
+#' @param    beast   location of beast binary directory (beast/bin)
+#'
+#' @return   Character vector of output lines. Has attribute \code{error} if BEAST could not be run.
+#' @noRd
+run_beast_version <- function(beast){
+  beast_exec <- file.path(path.expand(beast), "beast")
+  out <- tryCatch(
+    suppressWarnings(system2(beast_exec, "-version", stdout=TRUE, stderr=TRUE)),
+    error=function(e)e)
+  if(inherits(out, "error")){
+    res <- character(0)
+    attr(res, "error") <- conditionMessage(out)
+    return(res)
+  }
+  out
+}
+
+#' Decide the class of the sequence likelihood for a germline-rooted analysis
+#'
+#' BEAST is only run (once) if the class has to be detected: the analysis uses the
+#' germline as root, the template has a \code{${ROOTFREQS}} placeholder, and
+#' \code{rootfreqs_class} was not given.
+#'
+#' @param    beast             location of beast binary directory (beast/bin)
+#' @param    template          XML template file
+#' @param    include_germline  is the germline used as root?
+#' @param    rootfreqs_class   class chosen by the caller, or \code{NULL} to detect it
+#' @param    quiet             amount of rubbish to print to console
+#'
+#' @return   Class name, or \code{NULL} if no class is needed
+#' @noRd
+resolve_rootfreqs_class <- function(beast, template, include_germline=TRUE,
+  rootfreqs_class=NULL, quiet=0){
+
+  if(!is.null(rootfreqs_class)){
+    return(check_rootfreqs_class(rootfreqs_class))
+  }
+  if(!isTRUE(include_germline) || is.null(beast)){
+    return(NULL) # a missing beast is reported by getTimeTrees
+  }
+  tmpl <- if(is.null(template)) "template.xml" else template
+  if(!is.character(tmpl) || length(tmpl) != 1 || !file.exists(tmpl)){
+    return(NULL) # write_clone_to_xml reports a missing template
+  }
+  if(!any(grepl("\\$\\{ROOTFREQS\\}", readLines(tmpl, warn=FALSE)))){
+    return(NULL)
+  }
+
+  output <- run_beast_version(beast)
+  version <- extract_tyche_version(output)
+  if(is.null(version) || is.null(parse_tyche_version(version))){
+    reason <- if(!is.null(attr(output, "error"))){
+      paste0("could not run 'beast -version': ", attr(output, "error"))
+    }else if(is.null(version)){
+      "'beast -version' printed no line starting with 'TyCHE v'"
+    }else{
+      paste0("the TyCHE version '", version, "' does not start with a number")
+    }
+    message("Could not decide which sequence likelihood class to use (", reason,
+      "). Using ", .ROOTFREQS_LEGACY_CLASS, ", which needs the 'rootfreqs' BEAST package. ",
+      "Use rootfreqs_class to set the class.")
+    return(.ROOTFREQS_LEGACY_CLASS)
+  }
+  class <- choose_rootfreqs_class(version)
+  if(quiet < 1){
+    message("TyCHE v", version, " found, using ", class)
+  }
+  class
+}
 
 #' Takes an airr clone object and returns BEAST2 rootfreqs xml of the germline
 #' 
@@ -875,6 +1053,10 @@ create_starting_tree <- function(clone, id, tree, include_germline_as_tip, tree_
 #' @param    max_start_date           max starting date to use as prior, in forward time
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
 #' @param    root_trait               trait value of the root, if a fixed root state desired
+#' @param    rootfreqs_class          BEAST class that replaces \code{spec="TreeLikelihood"} when
+#'                                    \code{include_germline_as_root=TRUE} and the template has \code{${ROOTFREQS}}.
+#'                                    \code{NULL} (default) uses \code{rootfreqs.TreeLikelihood}. This function does not run
+#'                                    BEAST; \code{\link{buildBeast}} detects the class from the installed TyCHE.
 #' @param    ...                      additional arguments for XML writing functions
 #'
 #' @return   File path of the written XML file
@@ -883,7 +1065,7 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   trait_data_type=NULL, template=NULL, mcmc_length=1000000, log_every=1000, replacements=NULL, 
   include_germline_as_root=FALSE, include_germline_as_tip=FALSE, 
   germline_range=c(-10000,10000), tree=NULL, trait_list=NULL, log_every_trait=10, tree_states=FALSE,
-  start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?', root_trait=NULL, ...) {
+  start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?', root_trait=NULL, rootfreqs_class=NULL, ...) {
   
   kwargs <- list(...)
 
@@ -988,8 +1170,13 @@ write_clone_to_xml <- function(clone, file, id, time=NULL, trait=NULL,
   if (any(grepl("\\$\\{ROOTFREQS\\}", xml))) { 
     root_freqs <- ""
     if (include_germline_as_root) {
-      # replace spec="TreeLikelihood" with spec="rootfreqs.TreeLikelihood"
-      xml <- gsub('spec="TreeLikelihood"', 'spec="rootfreqs.TreeLikelihood"', xml)
+      # replace spec="TreeLikelihood" with the likelihood class that has root frequencies
+      # (rootfreqs.TreeLikelihood, or the copy of it in TyCHE >= 1.0.1)
+      if(is.null(rootfreqs_class)){
+        rootfreqs_class <- .ROOTFREQS_LEGACY_CLASS
+      }
+      rootfreqs_class <- check_rootfreqs_class(rootfreqs_class)
+      xml <- gsub('spec="TreeLikelihood"', paste0('spec="', rootfreqs_class, '"'), xml, fixed=TRUE)
       # replace the ${ROOTFREQS} placeholder with the root frequencies
       root_freqs <- create_root_freqs(clone, id)
     }
@@ -1182,6 +1369,8 @@ makeTraitList <- function(values){
 #' @param    start_date               starting date to use as prior, in forward time
 #' @param    max_start_date           max starting date to use as prior, in forward time
 #' @param    germline_trait_value     trait value for germline, default '?' for ambiguous
+#' @param    rootfreqs_class          BEAST class used for the sequence likelihood with root frequencies,
+#'                                    see \code{write_clone_to_xml}
 #' @param    ...                      additional arguments for XML writing functions
 #'
 #' @return   File paths of the written XML files
@@ -1191,7 +1380,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
   mcmc_length=1000000, log_every=1000, include_germline_as_root=FALSE, 
   include_germline_as_tip=FALSE, germline_range=c(-10000,10000), 
   tree_states=FALSE, start_edge_length=100, start_date=NULL, max_start_date=NULL, germline_trait_value='?',
-  ...) {
+  rootfreqs_class=NULL, ...) {
 
   kwargs <- list(...)
 
@@ -1240,6 +1429,7 @@ write_clones_to_xmls <- function(data, id, trees=NULL, time=NULL, trait=NULL, te
                      start_date=start_date,
                      max_start_date=max_start_date,
                      germline_trait_value=germline_trait_value,
+                     rootfreqs_class=rootfreqs_class,
                      ...))
   }
   return(xmls)
@@ -2129,7 +2319,7 @@ getDiffPoints = function(data, trait, height="height", verbose=FALSE,
     list(
       name = "ROOTFREQS placeholder",
       present = has("\\$\\{ROOTFREQS\\}"),
-      if_present = "`include_germline_as_root=TRUE` will take effect (root nucleotide frequencies enforced via the external rootfreqs package).",
+      if_present = "`include_germline_as_root=TRUE` will take effect (root nucleotide frequencies enforced via a likelihood class with root frequencies: tyche.evolution.likelihood.RootFreqsTreeLikelihood for TyCHE >= 1.0.1, otherwise rootfreqs.TreeLikelihood from the external rootfreqs package; see the rootfreqs_class argument of buildBeast).",
       if_absent  = "`include_germline_as_root=TRUE` will be silently ignored -- the germline will NOT be enforced as the root state."
     ),
     list(

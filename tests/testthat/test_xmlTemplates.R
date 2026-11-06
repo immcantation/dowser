@@ -531,6 +531,54 @@ test_that("${ROOTFREQS}: rewrites TreeLikelihood -> rootfreqs.TreeLikelihood and
   expect_true(grepl('value="AACCGGTT"/>', content, fixed = TRUE))
 })
 
+test_that("${ROOTFREQS}: rootfreqs_class sets the class that replaces TreeLikelihood, rest of the XML is unchanged", {
+  write_with <- function(...) {
+    path <- write_clone_to_xml(clone1, file = tempfile(), id = "run",
+      template = tmpl_grt_full_path, mcmc_length = 5000, log_every = 100,
+      time = "collection_date", trait = "celltype", trait_data_type = trait_data_type_toy,
+      include_germline_as_tip = FALSE, include_germline_as_root = TRUE, ...)
+    .read_all(path)
+  }
+  tyche_class <- "tyche.evolution.likelihood.RootFreqsTreeLikelihood"
+  old <- write_with()                                   # default: today's behavior
+  explicit_old <- write_with(rootfreqs_class = "rootfreqs.TreeLikelihood")
+  new <- write_with(rootfreqs_class = tyche_class)
+
+  expect_true(grepl('spec="rootfreqs.TreeLikelihood"', old, fixed = TRUE))
+  expect_identical(old, explicit_old)
+  expect_true(grepl(paste0('spec="', tyche_class, '"'), new, fixed = TRUE))
+  expect_false(grepl("rootfreqs.TreeLikelihood", new, fixed = TRUE))
+  expect_false(grepl('spec="TreeLikelihood"', new, fixed = TRUE))
+
+  # the <rootfreqseq> element and everything else is the same: only the spec differs
+  expect_identical(
+    gsub(tyche_class, "rootfreqs.TreeLikelihood", new, fixed = TRUE),
+    old)
+  expect_true(grepl('<rootfreqseq id="seq_Root" spec="Sequence" taxon="Root"', new, fixed = TRUE))
+  expect_true(grepl('value="AACCGGTT"/>', new, fixed = TRUE))
+})
+
+test_that("${ROOTFREQS}: rootfreqs_class is ignored when include_germline_as_root=FALSE, and bad names are rejected", {
+  path <- write_clone_to_xml(clone1, file = tempfile(), id = "run",
+    template = tmpl_grt_full_path, mcmc_length = 5000, log_every = 100,
+    time = "collection_date", trait = "celltype", trait_data_type = trait_data_type_toy,
+    include_germline_as_tip = FALSE, include_germline_as_root = FALSE,
+    rootfreqs_class = "tyche.evolution.likelihood.RootFreqsTreeLikelihood")
+  content <- .read_all(path)
+  expect_true(grepl('spec="TreeLikelihood"', content, fixed = TRUE))
+  expect_false(grepl("RootFreqsTreeLikelihood", content, fixed = TRUE))
+
+  for (bad in list("", NA_character_, c("a.B", "c.D"), 1, 'x"/><evil', "a\\1b")) {
+    expect_error(
+      write_clone_to_xml(clone1, file = tempfile(), id = "run",
+        template = tmpl_grt_full_path, mcmc_length = 5000, log_every = 100,
+        time = "collection_date", trait = "celltype", trait_data_type = trait_data_type_toy,
+        include_germline_as_tip = FALSE, include_germline_as_root = TRUE,
+        rootfreqs_class = bad),
+      "rootfreqs_class must be a single BEAST class name")
+  }
+})
+
 test_that("${ROOTFREQS}: germline containing 'N' is expanded into per-site probability vectors", {
   clone_n <- .new_toy_clone(clone_id = "2", germline = "AANCCGGT")
   outfile <- tempfile()
