@@ -24,6 +24,7 @@ write_clones_to_xmls(
   start_date = NULL,
   max_start_date = NULL,
   germline_trait_value = "?",
+  rootfreqs_class = NULL,
   ...
 )
 }
@@ -65,6 +66,9 @@ write_clones_to_xmls(
 \item{max_start_date}{max starting date to use as prior, in forward time}
 
 \item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
+
+\item{rootfreqs_class}{BEAST class used for the sequence likelihood with root frequencies,
+see \code{write_clone_to_xml}}
 
 \item{...}{additional arguments for XML writing functions}
 }

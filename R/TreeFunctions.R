@@ -1119,6 +1119,7 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 #' @param    rm_dir     remove temporary directory?
 #' @param    partition  How to partition omegas along sequences (see details)
 #' @param    omega      omega parameters to estimate (see IgPhyML docs)
+#' @param    kappa      kappa parameters to estimate (see IgPhyML docs)
 #' @param    optimize   optimize HLP rates (r), lengths (l), topology (t)
 #' @param    motifs     motifs to consider (see IgPhyML docs)
 #' @param    hotness    hotness parameters to estimate (see IgPhyML docs)
@@ -1145,13 +1146,13 @@ buildPML <- function(clone, seq="sequence", sub_model="GTR", gamma=FALSE, asr="s
 buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL, 
                          id=NULL, rseed=NULL, quiet=0, rm_files=TRUE, rm_dir=NULL, 
                          partition=c("single", "cf", "hl", "hlf", "hlc", "hlcf"), 
-                         omega=NULL, optimize="lr", motifs="FCH", hotness="e,e,e,e,e,e", 
-                         rates=NULL, asrc=0.95, splitfreqs=FALSE, asrp=FALSE, 
-                         ...){
+                         omega=NULL, kappa=NULL, optimize="lr", motifs="FCH", 
+                         hotness="e,e,e,e,e,e", rates=NULL, asrc=0.95, 
+                         splitfreqs=FALSE, asrp=FALSE, ...){
   warning("Dowser igphyml doesn't mask split codons!")
   partition <- match.arg(partition)
   
-  valid_o <- c("r","lr","tlr")
+  valid_o <- c("r","l", "lr","tl", "tlr")
   if(!optimize %in% valid_o){
     stop(paste("Invalid optimize specification, must be one of:",valid_o))
   }
@@ -1162,11 +1163,18 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
                "remove before continuing"))
   }
   
+  if(!is.null(kappa)){
+    kappastring <- paste("--ts/tv", kappa)
+  } else{
+    kappastring <- ""
+  }
+  
   if(!is.null(omega)){
     os <- strsplit(omega,split=",")[[1]]
   } else {
     os <- NULL
   }
+  
   file <- writeLineageFile(clone,trees,dir=temp_path,id=id,rep=id,empty=FALSE,
                            partition=partition)
   if(length(os) != 2 && (partition == "cf" | partition == "hl")){ 
@@ -1214,10 +1222,10 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   }
   gyrep <- paste0(file,"_gyrep")
   if(!is.null(trees)){
-    command <- paste("--repfile",file,"--outrep",gyrep,
+    command <- paste("--repfile",file,"--outrep",gyrep, kappastring,
                      "--threads",nproc,"-o lr -m GY --run_id gy",rseed,log)
   }else{
-    command <- paste("--repfile",file,"--outrep",gyrep,
+    command <- paste("--repfile",file,"--outrep",gyrep, kappastring,
                      "--threads",nproc,"-o tlr -m GY --run_id gy",rseed,log)
   }
   params <- list(igphyml,command,stdout=TRUE,stderr=TRUE)
@@ -1257,13 +1265,13 @@ buildIgphyml <- function(clone, igphyml, trees=NULL, nproc=1, temp_path=NULL,
   if(asrp){
     command <- paste("--repfile", gyrep,
                      "--threads",nproc,"--omega",omega,"-o", optimize,"--motifs", motifs, 
-                     "--hotness", hotness, 
+                     "--hotness", hotness, kappastring, 
                      "-m HLP --run_id hlp --oformat tab --ASRp --ASRc",
                      asrc, ratestring,splitf,rseed,log)
   } else{
     command <- paste("--repfile",gyrep,
                      "--threads",nproc,"--omega",omega,"-o",optimize,"--motifs",motifs,
-                     "--hotness",hotness, 
+                     "--hotness",hotness, kappastring,
                      "-m HLP --run_id hlp --oformat tab --ASRc",asrc,
                      ratestring,splitf,rseed,log)
   }

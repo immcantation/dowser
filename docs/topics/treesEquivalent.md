@@ -12,7 +12,7 @@ Usage
 treesEquivalent(
 obja,
 objb,
-edge_tol = 1e-08,
+edge_tol = 1e-06,
 numbering_match = FALSE,
 clonesa = NULL,
 clonesb = NULL,
@@ -31,7 +31,7 @@ objb
 :   Second phylo or treedata object
 
 edge_tol
-:   tolerance for branch length checks (if check=TRUE)
+:   allowable  error in branch length checks (proportional error if lengths > 1, if check=TRUE)
 
 numbering_match
 :   require internal node numbers to match?

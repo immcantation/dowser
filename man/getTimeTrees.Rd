@@ -85,7 +85,7 @@ mcmc_length by log_target}
 
 \item{trait_list}{optional vector of all types of the trait. If NULL, it is made from the values in \code{clones}.}
 
-\item{...}{Additional arguments passed to tree building programs}
+\item{...}{Additional arguments passed to tree building programs, e.g. \code{rootfreqs_class} (see \link{buildBeast})}
 }
 \value{
 A tibble with a column of \code{phylo} objects and \code{parameters} column

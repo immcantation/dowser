@@ -34,6 +34,7 @@ log_target = 10000,
 tree_states = FALSE,
 trees = NULL,
 germline_trait_value = "?",
+trait_list = NULL,
 ...
 )
 ```
@@ -71,7 +72,8 @@ burnin
 :   Burnin percent (default 10)
 
 trait
-:   Trait column to be used
+:   Trait column to be used. The value "?" is treated as ambiguous
+(any type) and is not counted as a type.
 
 resume_clones
 :   Clones to resume for `mcmc_length` more steps
@@ -112,8 +114,11 @@ trees
 germline_trait_value
 :   trait value for germline, default '?' for ambiguous
 
+trait_list
+:   optional vector of all types of the trait. If NULL, it is made from the values in `clones`.
+
 ...
-:   Additional arguments passed to tree building programs
+:   Additional arguments passed to tree building programs, e.g. `rootfreqs_class` (see [buildBeast](buildBeast.md))
 
 
 

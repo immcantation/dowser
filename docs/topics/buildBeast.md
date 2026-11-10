@@ -37,6 +37,9 @@ start_edge_length = 100,
 start_date = NULL,
 max_start_date = NULL,
 germline_trait_value = "?",
+trait_list = NULL,
+rootfreqs_class = NULL,
+xml_check = NULL,
 ...
 )
 ```
@@ -126,6 +129,22 @@ max_start_date
 
 germline_trait_value
 :   trait value for germline, default '?' for ambiguous
+
+trait_list
+:   optional vector of all types of the trait. If NULL, it is made from the values in `data`.
+
+rootfreqs_class
+:   BEAST class for the sequence likelihood when the germline is the root
+(`include_germline=TRUE` and the template has `${ROOTFREQS}`). `NULL` (default)
+runs `beast -version` once and uses
+`tyche.evolution.likelihood.RootFreqsTreeLikelihood` for TyCHE 1.0.1 or later,
+otherwise `rootfreqs.TreeLikelihood` (needs the `rootfreqs` BEAST package).
+If given, BEAST is not run to find the version.
+
+xml_check
+:   optional function called with the paths of the XML files after they are
+written and before BEAST starts. If it stops, BEAST is not started. 
+getTimeTreesIterate uses this to get the XML of a clone without running BEAST.
 
 ...
 :   Additional arguments for XML writing functions

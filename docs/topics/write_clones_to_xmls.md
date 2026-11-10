@@ -29,6 +29,7 @@ start_edge_length = 100,
 start_date = NULL,
 max_start_date = NULL,
 germline_trait_value = "?",
+rootfreqs_class = NULL,
 ...
 )
 ```
@@ -92,6 +93,10 @@ max_start_date
 
 germline_trait_value
 :   trait value for germline, default '?' for ambiguous
+
+rootfreqs_class
+:   BEAST class used for the sequence likelihood with root frequencies,
+see `write_clone_to_xml`
 
 ...
 :   additional arguments for XML writing functions

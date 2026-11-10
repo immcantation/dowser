@@ -32,6 +32,7 @@ start_date = NULL,
 max_start_date = NULL,
 germline_trait_value = "?",
 root_trait = NULL,
+rootfreqs_class = NULL,
 ...
 )
 ```
@@ -104,6 +105,12 @@ germline_trait_value
 
 root_trait
 :   trait value of the root, if a fixed root state desired
+
+rootfreqs_class
+:   BEAST class that replaces `spec="TreeLikelihood"` when
+`include_germline_as_root=TRUE` and the template has `${ROOTFREQS}`.
+`NULL` (default) uses `rootfreqs.TreeLikelihood`. This function does not run
+BEAST; `[buildBeast](buildBeast.md)` detects the class from the installed TyCHE.
 
 ...
 :   additional arguments for XML writing functions

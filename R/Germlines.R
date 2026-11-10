@@ -853,7 +853,7 @@ findConsensus <- function(receptors, v_call = "v_call", j_call = "j_call",
                           v_germ_length="v_germline_length", 
                           d_germ_length="d_germline_length", 
                           j_germ_length="j_germline_length", 
-                          np1_length="np1_length", np2_length="np2_length"){
+                          np1_length="np1_length", np2_length="np2_length", ...){
   
   if (nrow(receptors) == 0) {
     stop("findConsensus received an empty data frame. ",
@@ -2196,12 +2196,16 @@ make_locus_checker <- function(data, references, data_by_clone_locus, seq_id_ind
   }
 }
 
-# Helper: parse a UCA_lhoods*.txt file and return the joint UCA log-likelihood
-# @param path  File path to the UCA_lhoods text file
-readUcaLhood <- function(path){
+# Helper: parse a UCA_lhoods*.txt file and return the UCA log-likelihoods
+# @param path    File path to the UCA_lhoods text file
+# @param prefix  Prefix for the returned names (e.g. "uca" or "uca_light")
+# @return A named numeric vector: the UCA pgen, UCA tree, and joint UCA 
+#         log-likelihoods, in the order written by get_UCA.py
+readUcaLhood <- function(path, prefix = "uca"){
   line <- readLines(path, n = 1L, warn = FALSE)
   values <- as.numeric(strsplit(gsub("\\[|\\]", "", line), ",")[[1]])
-  values[3]
+  stats::setNames(values[1:3],
+                  paste0(prefix, c("_log_pgen", "_tree_log_likelihood", "_log_likelihood")))
 }
 
 # Adds the UCA to the clones object
@@ -2266,14 +2270,11 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
     }
 
     # UCA log-likelihood(s), added to the tree's parameters
-    lhoods <- stats::setNames(
-      readUcaLhood(file.path(clone_dir,
-                             if(phylo == "lsequence") "UCA_lhoods_light.txt" else "UCA_lhoods.txt")),
-      "uca_log_likelihood")
+    lhoods <- readUcaLhood(file.path(clone_dir,
+                                     if(phylo == "lsequence") "UCA_lhoods_light.txt" else "UCA_lhoods.txt"))
     if(phylo == "hlsequence"){
-      lhoods <- c(lhoods, stats::setNames(
-        readUcaLhood(file.path(clone_dir, "UCA_lhoods_light.txt")),
-        "uca_light_log_likelihood"))
+      lhoods <- c(lhoods, readUcaLhood(file.path(clone_dir, "UCA_lhoods_light.txt"),
+                                       prefix = "uca_light"))
     }
 
     parameters <- clone$trees[[1]]$parameters
@@ -2965,7 +2966,7 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 
     sub <- formatClones(sub_data, chain = chain, germ = "germline_alignment_d_mask",
                         clone = clone, nproc = 1, split_light = split_light,
-                        minseq = 1, ...)
+                        minseq = 1, dup_singles = TRUE, ...)
     
     return(sub)
   }, mc.cores = nproc))

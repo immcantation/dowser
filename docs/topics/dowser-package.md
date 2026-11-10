@@ -33,7 +33,6 @@ Author
 
 Authors:
 
-+  Kenneth Hoehn [kenneth.b.hoehn@dartmouth.edu](kenneth.b.hoehn@dartmouth.edu)
 +  Cole Jensen [cole.jensen@yale.edu](cole.jensen@yale.edu)
 +  Jessie Fielding [jessie.jo.fielding@dartmouth.edu](jessie.jo.fielding@dartmouth.edu)
 +  Hunter Melton [hunter.j.melton@dartmouth.edu](hunter.j.melton@dartmouth.edu)

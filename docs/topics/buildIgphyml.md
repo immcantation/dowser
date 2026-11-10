@@ -22,6 +22,7 @@ rm_files = TRUE,
 rm_dir = NULL,
 partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
 omega = NULL,
+kappa = NULL,
 optimize = "lr",
 motifs = "FCH",
 hotness = "e,e,e,e,e,e",
@@ -71,6 +72,9 @@ partition
 
 omega
 :   omega parameters to estimate (see IgPhyML docs)
+
+kappa
+:   kappa parameters to estimate (see IgPhyML docs)
 
 optimize
 :   optimize HLP rates (r), lengths (l), topology (t)

@@ -33,6 +33,7 @@ buildBeast(
   max_start_date = NULL,
   germline_trait_value = "?",
   trait_list = NULL,
+  rootfreqs_class = NULL,
   xml_check = NULL,
   ...
 )
@@ -95,6 +96,13 @@ combination of "parameters", "trees_with_traits", and "trees".}
 \item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
 
 \item{trait_list}{optional vector of all types of the trait. If NULL, it is made from the values in \code{data}.}
+
+\item{rootfreqs_class}{BEAST class for the sequence likelihood when the germline is the root
+(\code{include_germline=TRUE} and the template has \code{${ROOTFREQS}}). \code{NULL} (default)
+runs \code{beast -version} once and uses
+\code{tyche.evolution.likelihood.RootFreqsTreeLikelihood} for TyCHE 1.0.1 or later,
+otherwise \code{rootfreqs.TreeLikelihood} (needs the \code{rootfreqs} BEAST package).
+If given, BEAST is not run to find the version.}
 
 \item{xml_check}{optional function called with the paths of the XML files after they are
 written and before BEAST starts. If it stops, BEAST is not started. 

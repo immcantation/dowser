@@ -27,6 +27,7 @@ write_clone_to_xml(
   max_start_date = NULL,
   germline_trait_value = "?",
   root_trait = NULL,
+  rootfreqs_class = NULL,
   ...
 )
 }
@@ -74,6 +75,11 @@ write_clone_to_xml(
 \item{germline_trait_value}{trait value for germline, default '?' for ambiguous}
 
 \item{root_trait}{trait value of the root, if a fixed root state desired}
+
+\item{rootfreqs_class}{BEAST class that replaces \code{spec="TreeLikelihood"} when
+\code{include_germline_as_root=TRUE} and the template has \code{${ROOTFREQS}}.
+\code{NULL} (default) uses \code{rootfreqs.TreeLikelihood}. This function does not run
+BEAST; \code{\link{buildBeast}} detects the class from the installed TyCHE.}
 
 \item{...}{additional arguments for XML writing functions}
 }

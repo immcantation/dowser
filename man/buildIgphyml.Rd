@@ -17,6 +17,7 @@ buildIgphyml(
   rm_dir = NULL,
   partition = c("single", "cf", "hl", "hlf", "hlc", "hlcf"),
   omega = NULL,
+  kappa = NULL,
   optimize = "lr",
   motifs = "FCH",
   hotness = "e,e,e,e,e,e",
@@ -51,6 +52,8 @@ buildIgphyml(
 \item{partition}{How to partition omegas along sequences (see details)}
 
 \item{omega}{omega parameters to estimate (see IgPhyML docs)}
+
+\item{kappa}{kappa parameters to estimate (see IgPhyML docs)}
 
 \item{optimize}{optimize HLP rates (r), lengths (l), topology (t)}
 
