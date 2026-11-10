@@ -19,6 +19,7 @@ getTreesAndUCAs(
   id = "sample",
   max_iters = 100,
   nproc = 1,
+  refit = TRUE,
   rm_temp = TRUE,
   quiet = 0,
   chain = "H",
@@ -65,6 +66,8 @@ on command line that issues the python you want to use.
 100 by default}
 
 \item{nproc}{The number of cores to use}
+
+\item{refit}{Refit the trees using the inferred UCA as the germline? See \link{refitUCA}. TRUE by default.}
 
 \item{rm_temp}{Remove the generated files?}
 

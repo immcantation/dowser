@@ -24,6 +24,7 @@ python = "python3",
 id = "sample",
 max_iters = 100,
 nproc = 1,
+refit = TRUE,
 rm_temp = TRUE,
 quiet = 0,
 chain = "H",
@@ -87,6 +88,9 @@ max_iters
 
 nproc
 :   The number of cores to use
+
+refit
+:   Refit the trees using the inferred UCA as the germline? See [refitUCA](refitUCA.md). TRUE by default.
 
 rm_temp
 :   Remove the generated files?

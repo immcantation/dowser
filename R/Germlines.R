@@ -2378,7 +2378,12 @@ updateClone <- function(clones, data, references, dir, id, nproc = 1,
       
       uca_gapped <- unlist(full_ucas)
       uca_gapped_aa <- alakazam::translateDNA(uca_gapped)
-    } 
+
+      # make the ungapped UCA full length too. The germline slots and the
+      # germline node keep the partial UCA so they match the tip sequences
+      uca <- gsub(".", "", uca_gapped, fixed = TRUE)
+      uca_aa <- alakazam::translateDNA(uca)
+    }
     
     clone$UCA <- list(list(
       ungapped = uca,
@@ -2991,6 +2996,7 @@ maskAmbiguousReferenceSites <- function(clones, data, all_germlines,
 #' @param max_iters     The maximum number of iterations to run before ending. 
 #'                      100 by default
 #' @param nproc         The number of cores to use 
+#' @param refit         Refit the trees using the inferred UCA as the germline? See \link{refitUCA}. TRUE by default.
 #' @param rm_temp       Remove the generated files?
 #' @param quiet         Amount of noise to print out
 #' @param chain         Set to HL to use both heavy and light chain sequences
@@ -3020,7 +3026,7 @@ getTreesAndUCAs <- function(clones, data, exec, model_folder, references,
                             model_folder_igl = NULL,  partition = "single",
                             repertoire_wide = FALSE, python = "python3",
                             id = "sample", max_iters = 100, nproc = 1, 
-                            rm_temp = TRUE, quiet = 0, chain = "H",
+                            refit = TRUE, rm_temp = TRUE, quiet = 0, chain = "H",
                             clone = "clone_id", cell = "cell_id", 
                             subsample_size = NA, 
                             subsampling_method = c("random", "weighted", "least_mutated"), 
@@ -3255,10 +3261,84 @@ getTreesAndUCAs <- function(clones, data, exec, model_folder, references,
                         dir = dir, id = id, nproc = nproc, clone_id = data_clone_val, 
                         resolve_vj = resolve_vj, fill_partials = fill_partials)
 
+  if(refit){
+    if(quiet > 0){
+      print("refitting trees using the UCA as the germline")
+    }
+    clones <- refitUCA(clones = clones, exec = exec, dir = dir, partition = partition,
+                       id = paste0(id, "_refit"), nproc = nproc, rm_temp = rm_temp,
+                       quiet = quiet, ...)
+  }
+
   unlink(rm_dir,recursive=TRUE)
   return(clones)
 }
 
+#' \link{refitUCA} Refit the tree and ancestral sequence reconstruction using the inferred UCA
+#' @param clones     The output of \link{getTreesAndUCAs}
+#' @param exec       File path to the IgPhyML executable
+#' @param dir        The file path of the directory of where data is saved. NULL is default.
+#' @param partition  The partition model to use with IgPhyML. "single" is the default.
+#' @param id         The run ID, sample by default
+#' @param nproc      The number of cores to use
+#' @param rm_temp    Remove the generated files?
+#' @param quiet      Amount of noise to print out
+#' @param ...        Additional arguments passed to \link{getTrees}
+#' @return An \code{airrClone} object with trees refit using the UCA as the germline
+#' @details The UCA stored in the germline slots by \link{getTreesAndUCAs} is used
+#' as the germline for each clone and the trees are rebuilt with IgPhyML. The
+#' germline slots hold the UCA trimmed to the sites in the tip sequences, rather
+#' than the full length UCA in \code{UCA$ungapped}. The germline node of each refit
+#' tree is set to this UCA and the UCA log-likelihoods are carried over to the new
+#' tree parameters. The \code{UCA} column is not changed.
+#' @seealso \link{getTreesAndUCAs} \link{getTrees}
+#' @export
+refitUCA <- function(clones, exec, dir = NULL, partition = "single", id = "sample",
+                     nproc = 1, rm_temp = TRUE, quiet = 0, ...){
+  if(!"UCA" %in% colnames(clones)){
+    stop("No UCA column found. Please run getTreesAndUCAs first")
+  }
+
+  # save the UCA related values since getTrees replaces the tree parameters
+  uca_lhoods <- lapply(clones$trees, function(x){
+    parameters <- x$parameters
+    parameters[grepl("^uca_", names(parameters))]
+  })
+  names(uca_lhoods) <- clones$clone_id
+
+  if(quiet > 0){
+    print("refitting trees with the UCA")
+  }
+  clones <- getTrees(clones, build = "igphyml", exec = exec, dir = dir, id = id,
+                     partition = partition, nproc = nproc, rm_temp = rm_temp,
+                     quiet = quiet, ...)
+
+  # getTrees may reorder clones, so match by clone id
+  for(i in seq_len(nrow(clones))){
+    tree <- clones$trees[[i]]
+    clone_data <- clones$data[[i]]
+    # the germline slots hold the UCA trimmed to the tip sites
+    uca <- switch(clone_data@phylo_seq,
+                  lsequence = clone_data@lgermline,
+                  hlsequence = clone_data@hlgermline,
+                  clone_data@germline)
+    germline_node <- ape::getMRCA(tree, tree$tip.label)
+    tree$nodes[[germline_node]]$sequence <- uca
+
+    parameters <- tree$parameters
+    if(is.null(parameters)){
+      parameters <- list()
+    }
+    lhoods <- uca_lhoods[[clones$clone_id[i]]]
+    parameters[names(lhoods)] <- lhoods
+    tree$parameters <- parameters
+
+    clones$trees[[i]] <- tree
+    clones$parameters[[i]] <- parameters
+  }
+
+  return(clones)
+}
 
 #' \link{installPythonDependencies} Checks for and installs the Python dependencies
 #'                                  for UCA estimation
