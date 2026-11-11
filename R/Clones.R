@@ -1811,9 +1811,12 @@ filterPartialSeqs = function(data, seq="sequence_alignment", cutoff=250, pattern
   }
   counts <- stringr::str_count(data[[seq]], pattern)
   if(verbose){
-    print(paste(sum(counts < cutoff), "partial sequences removed"))
+    print(paste(sum(counts < cutoff, na.rm=TRUE), "partial sequences removed"))
+    if(sum(is.na(counts)) > 0){
+      warning(paste(sum(is.na(counts)),"sequences with missing values detected - will be removed"))
+    }
   }
-  data <- data[counts >= cutoff,]
+  data <- data[counts >= cutoff | is.na(cutoff),]
   return(data)
 }
 
