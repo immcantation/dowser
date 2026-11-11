@@ -1816,7 +1816,7 @@ filterPartialSeqs = function(data, seq="sequence_alignment", cutoff=250, pattern
       warning(paste(sum(is.na(counts)),"sequences with missing values detected - will be removed"))
     }
   }
-  data <- data[counts >= cutoff | is.na(cutoff),]
+  data <- data[counts >= cutoff | !is.na(cutoff),]
   return(data)
 }
 
